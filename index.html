@@ -343,7 +343,7 @@ async function loadData(){
   pp(2,'Probando conexión con backend...');
   let connOk=false;
   // ✅ DEBERÍA SER
-try{const d=await fetch(`${BASE_URL}/api/quote?symbols=AAPL`);connOk=(await d.json()).quoteResponse?.result?.length>0;}
+try{const d=await fetch(`${BASE_URL}/api/quote?symbols=AAPL`);connOk=(await d.json()).quoteResponse?.result?.length>0;}catch(e){}
 
   if(!connOk){
     showErr('Error de conectividad',
