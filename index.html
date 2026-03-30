@@ -340,9 +340,8 @@ async function loadData(){
   document.getElementById('pFill').style.width='0%';
   document.getElementById('tWrap').innerHTML=`<div class="sc"><div class="spin"></div><div class="sm" id="loadMsg">Probando conexión...</div></div>`;
 
-  pp(2,'Probando conexión con backend...');
-  let connOk=false;
-  // ✅ DEBERÍA SER
+ pp(2,'Probando conexión con backend...');
+let connOk=false;
 try{const d=await fetch(`${BASE_URL}/api/quote?symbols=AAPL`);connOk=(await d.json()).quoteResponse?.result?.length>0;}catch(e){}
 
   if(!connOk){
