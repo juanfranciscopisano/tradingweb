@@ -233,7 +233,7 @@ td:nth-child(-n+4){text-align:left}
 
 <!-- FOOTER -->
 <div class="footer">
-  <span>FUENTE: YAHOO FINANCE · JUAN FRANCISCO PISANO · EQUITY RESEARCH</span>
+  <span>DATOS: API · JUAN FRANCISCO PISANO · EQUITY RESEARCH</span>
   <span id="fCnt">—</span>
 </div>
 
@@ -294,11 +294,12 @@ async function fp(target){
   }
   throw new Error(last);
 }
+// ✅ NUEVO - pasando por tu backend
 async function fQ(syms){
-  try{const d=await fp(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${syms.join(',')}&lang=en-US&region=US`);return d.quoteResponse?.result||[];}catch(e){return[];}
+  try{const d=await fetch(`${BASE_URL}/api/quote?symbols=${syms.join(',')}`);return (await d.json()).quoteResponse?.result||[];}catch(e){return[];}
 }
 async function fS(syms){
-  try{const d=await fp(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${syms.join(',')}&range=1y&interval=1d`);return d.spark?.result||[];}catch(e){return[];}
+  try{const d=await fetch(`${BASE_URL}/api/spark?symbols=${syms.join(',')}`);return (await d.json()).spark?.result||[];}catch(e){return[];}
 }
 
 // ── Math ──
@@ -339,7 +340,7 @@ async function loadData(){
   document.getElementById('pFill').style.width='0%';
   document.getElementById('tWrap').innerHTML=`<div class="sc"><div class="spin"></div><div class="sm" id="loadMsg">Probando conexión...</div></div>`;
 
-  pp(2,'Probando conexión con Yahoo Finance...');
+  pp(2,'Probando conexión con backend...');
   let connOk=false;
   try{const d=await fp('https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL&lang=en-US&region=US');connOk=d.quoteResponse?.result?.length>0;}catch(e){}
 
@@ -407,7 +408,7 @@ function updateStats(){
   const aY=avg(ytds);
   const eY=document.getElementById('sYTD');
   if(aY!=null){eY.textContent=(aY>=0?'+':'')+aY.toFixed(2)+'%';eY.className='stat-val '+(aY>=0?'up':'dn');}
-  sv('fCnt',`${n} EMPRESAS CARGADAS · DATOS: YAHOO FINANCE`);
+  sv('fCnt',`${n} EMPRESAS CARGADAS · DATOS: API`);
 }
 
 // ── Format ──
