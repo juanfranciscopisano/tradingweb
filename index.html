@@ -342,7 +342,8 @@ async function loadData(){
 
   pp(2,'Probando conexión con backend...');
   let connOk=false;
-  try{const d=await fp('https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL&lang=en-US&region=US');connOk=d.quoteResponse?.result?.length>0;}catch(e){}
+  // ✅ DEBERÍA SER
+try{const d=await fetch(`${BASE_URL}/api/quote?symbols=AAPL`);connOk=(await d.json()).quoteResponse?.result?.length>0;}
 
   if(!connOk){
     showErr('Error de conectividad',
