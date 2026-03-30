@@ -1,4 +1,6 @@
 const BASE_URL = "https://tradingweb.onrender.com";
+const BASE_URL = "https://tradingweb.onrender.com";
+let okP=-1;
 
 
 <!DOCTYPE html>
@@ -267,7 +269,7 @@ const SI = {
   'Utilities':['UTIL','s-UT'],'Real Estate':['RE','s-RE'],'Communication Services':['COMM','s-CO'],
 };
 
-let rows=[], sKey='marketCap', sDir=-1, okP=-1;
+let rows=[], sKey='marketCap', sDir=-1;
 
 // ── Fetch helpers ──
 function ftm(url,ms=20000){
