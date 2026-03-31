@@ -343,30 +343,28 @@ async function loadData() {
   rows=[];
   const tks=[...new Set(TKS)];
   const bats=[]; for(let i=0;i<tks.length;i+=50) bats.push(tks.slice(i,i+50));
-  const rgBatCount = Math.ceil(tks.length/20);
-  const total = bats.length + spBats.length + rgBatCount + 1; let done=0;
+  const spBats=[]; for(let i=0;i<tks.length;i+=20) spBats.push(tks.slice(i,i+20));
+  const total = bats.length + spBats.length + spBats.length + 1; let done=0;
   const tick=msg=>{ done++; pp(Math.round(done/total*100),msg); };
   const qM={};
   for(let i=0;i<bats.length;i++) { tick('Cotizaciones ['+(i+1)+'/'+bats.length+'] — '+Object.keys(qM).length+' cargadas'); (await fQ(bats[i])).forEach(q=>{qM[q.symbol]=q;}); if(i<bats.length-1)await sl(80); }
   if(!Object.keys(qM).length){ showErr('Sin datos','Backend respondio vacio. Intenta en unos minutos.'); btn.disabled=false; return; }
   const spM={};
-  const spBats=[]; for(let i=0;i<tks.length;i+=20) spBats.push(tks.slice(i,i+20));
-  const rgBats = spBats; // same batching size
   for(let i=0;i<spBats.length;i++) {
     tick('Retornos historicos ['+(i+1)+'/'+spBats.length+']');
     try{ const res=await fS(spBats[i]); res.forEach(s=>{ const r0=s.response?.[0]; if(!r0)return; const closes=r0.indicators?.quote?.[0]?.close||[]; const timestamps=r0.timestamp||[]; if(closes.filter(x=>x!=null).length>10) spM[s.symbol]={closes,timestamps}; }); }catch(e){}
     if(i<spBats.length-1)await sl(120);
   }
-  // Phase 3: Revenue Growth — v11/quoteSummary financialData (one per ticker, batched 20)
+  // Phase 3: Revenue Growth via v11/quoteSummary financialData
   tick('Crecimiento de revenue...');
   const rgM = {};
-  for(let i=0;i<rgBats.length;i++) {
+  for(let i=0;i<spBats.length;i++) {
     try{
-      const r = await fetch(BASE_URL+'/api/revgrowth?symbols='+rgBats[i].join(','));
+      const r = await fetch(BASE_URL+'/api/revgrowth?symbols='+spBats[i].join(','));
       const d = await r.json();
       Object.assign(rgM, d);
     }catch(e){}
-    if(i<rgBats.length-1) await sl(100);
+    if(i<spBats.length-1) await sl(100);
   }
 
   tick('Procesando...');
