@@ -108,6 +108,17 @@ td:nth-child(-n+4){text-align:left}
 @keyframes spin{to{transform:rotate(360deg)}}
 .sm{font-size:11px;letter-spacing:.5px}
 .chart-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px}
+.hm-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hm-legend{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--label)}
+.hm-swatch{display:inline-block;width:14px;height:14px;border-radius:2px;vertical-align:middle}
+.hm-hint{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto}
+#hmContainer{flex:1;overflow:hidden;position:relative}
+.hm-sector{position:absolute;box-sizing:border-box;border:2px solid var(--bg);overflow:hidden}
+.hm-sector-label{font-family:var(--mono);font-size:9px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;padding:4px 6px;position:absolute;top:0;left:0;z-index:2;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hm-cell{position:absolute;box-sizing:border-box;border:1px solid rgba(0,0,0,.3);cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .15s}
+.hm-cell:hover{opacity:.8;z-index:10}
+.hm-cell-sym{font-family:var(--mono);font-weight:700;color:#fff;text-align:center;line-height:1.1}
+.hm-cell-pct{font-family:var(--mono);color:rgba(255,255,255,.85);text-align:center;line-height:1.1}
 .chart-search{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:6px 12px;color:var(--text);font-size:13px;font-family:var(--mono);outline:none;width:130px;text-transform:uppercase;transition:border-color .15s}
 .chart-search:focus{border-color:var(--amber)}
 .chart-search::placeholder{text-transform:none;color:var(--muted)}
@@ -130,6 +141,7 @@ td:nth-child(-n+4){text-align:left}
   <div class="tab-divider"></div>
   <div class="tab active" id="tab-screener" onclick="switchTab('screener')">&#8862; Screener</div>
   <div class="tab" id="tab-chart" onclick="switchTab('chart')">&#9672; Grafico</div>
+  <div class="tab" id="tab-heatmap" onclick="switchTab('heatmap')">&#9641; Heatmap</div>
   <div class="tab-spacer"></div>
   <span class="hdr-time" id="lastUpd">&mdash;</span>
   <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
@@ -244,6 +256,22 @@ td:nth-child(-n+4){text-align:left}
   <div id="tvContainer"></div>
 </div>
 
+<div class="view" id="view-heatmap">
+  <div class="hm-controls">
+    <span class="hm-legend">
+      <span class="hm-swatch" style="background:#B22222"></span> &lt;-3%
+      <span class="hm-swatch" style="background:#CC4444"></span> -2%
+      <span class="hm-swatch" style="background:#994444"></span> -1%
+      <span class="hm-swatch" style="background:#3a3a3a"></span> 0%
+      <span class="hm-swatch" style="background:#2d6e3e"></span> +1%
+      <span class="hm-swatch" style="background:#1a9e4a"></span> +2%
+      <span class="hm-swatch" style="background:#00C853"></span> &gt;+3%
+    </span>
+    <span class="hm-hint">Tamaño = Market Cap &nbsp;·&nbsp; Click para ver gráfico</span>
+  </div>
+  <div id="hmContainer"></div>
+</div>
+
 <div class="footer">
   <span>FUENTE: YAHOO FINANCE VIA RENDER &middot; JUAN FRANCISCO PISANO &middot; EQUITY RESEARCH</span>
   <span id="fCnt">&mdash;</span>
@@ -302,6 +330,7 @@ function switchTab(t) {
   document.getElementById('tab-'+t).classList.add('active');
   document.getElementById('view-'+t).classList.add('active');
   if(t==='chart') initChart(currentSym);
+  if(t==='heatmap') renderHeatmap();
 }
 
 function initChart(sym) {
@@ -462,6 +491,174 @@ function render() {
 }
 
 function ss(k){ if(sKey===k){sDir=-sDir;}else{sKey=k;sDir=(k==='symbol'||k==='name'||k==='sector')?1:-1;} render(); }
+
+// ── HEATMAP ──────────────────────────────────────────────
+function retColor(v) {
+  if(v==null) return '#2a2a2a';
+  const pct = Math.max(-5, Math.min(5, v));
+  if(pct >= 0) {
+    const t = pct / 5;
+    const r = Math.round(20  + (0   - 20)  * t);
+    const g = Math.round(80  + (200 - 80)  * t);
+    const b = Math.round(40  + (80  - 40)  * t);
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const t = -pct / 5;
+    const r = Math.round(80  + (210 - 80)  * t);
+    const g = Math.round(20  + (30  - 20)  * t);
+    const b = Math.round(30  + (30  - 30)  * t);
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+// Squarified treemap algorithm
+function squarify(items, x, y, w, h) {
+  if(!items.length) return [];
+  const total = items.reduce((s,i)=>s+i.v, 0);
+  if(!total || w<=0 || h<=0) return [];
+  const result = [];
+  let remaining = [...items];
+  let rx=x, ry=y, rw=w, rh=h;
+
+  while(remaining.length) {
+    const isWide = rw >= rh;
+    const strip = [];
+    let stripSum = 0;
+    let best = Infinity;
+
+    for(let i=0; i<remaining.length; i++) {
+      strip.push(remaining[i]);
+      stripSum += remaining[i].v;
+      const stripTotal = (stripSum / total) * (rw * rh);
+      const side = isWide ? rh : rw;
+      const stripW = stripTotal / side;
+      let worst = 0;
+      for(const s of strip) {
+        const sArea = (s.v / total) * (rw * rh);
+        const sh = sArea / stripW;
+        const r = Math.max(stripW/sh, sh/stripW);
+        if(r > worst) worst = r;
+      }
+      if(worst > best && i > 0) { strip.pop(); stripSum -= remaining[i].v; break; }
+      best = worst;
+    }
+
+    remaining = remaining.slice(strip.length);
+    const stripTotalArea = (stripSum / total) * (rw * rh);
+    const side = isWide ? rh : rw;
+    const stripW = stripTotalArea / side;
+    let pos = isWide ? ry : rx;
+
+    for(const s of strip) {
+      const area = (s.v / total) * (rw * rh);
+      const len = area / stripW;
+      if(isWide) {
+        result.push({...s, x:rx, y:pos, w:stripW, h:len});
+        pos += len;
+      } else {
+        result.push({...s, x:pos, y:ry, w:len, h:stripW});
+        pos += len;
+      }
+    }
+
+    if(isWide) { rx += stripW; rw -= stripW; }
+    else        { ry += stripW; rh -= stripW; }
+  }
+  return result;
+}
+
+function renderHeatmap() {
+  const container = document.getElementById('hmContainer');
+  if(!rows.length) { container.innerHTML='<div class="sc"><div class="sm">Cargá el screener primero</div></div>'; return; }
+  container.innerHTML = '';
+
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  if(!W || !H) { setTimeout(renderHeatmap, 100); return; }
+
+  // Group by sector
+  const SECTOR_ORDER = ['Technology','Financial Services','Healthcare','Consumer Cyclical','Communication Services','Industrials','Consumer Defensive','Energy','Basic Materials','Real Estate','Utilities'];
+  const sectorMap = {};
+  for(const r of rows) {
+    if(!r.marketCap || !r.sector) continue;
+    if(!sectorMap[r.sector]) sectorMap[r.sector] = [];
+    sectorMap[r.sector].push(r);
+  }
+
+  // Build sector nodes with total market cap
+  const sectors = SECTOR_ORDER
+    .filter(s => sectorMap[s]?.length)
+    .map(s => ({ name:s, v: sectorMap[s].reduce((a,r)=>a+(r.marketCap||0),0), rows:sectorMap[s] }));
+  // Add any unknown sectors
+  for(const [s,rs] of Object.entries(sectorMap)) {
+    if(!SECTOR_ORDER.includes(s)) sectors.push({name:s, v:rs.reduce((a,r)=>a+(r.marketCap||0),0), rows:rs});
+  }
+  sectors.sort((a,b)=>b.v-a.v);
+
+  // Layout sectors
+  const sLayout = squarify(sectors, 0, 0, W, H);
+
+  const PAD = 20; // padding for sector label
+
+  for(const sl of sLayout) {
+    // Sector container
+    const secDiv = document.createElement('div');
+    secDiv.className = 'hm-sector';
+    secDiv.style.cssText = `left:${sl.x}px;top:${sl.y}px;width:${sl.w}px;height:${sl.h}px`;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'hm-sector-label';
+    lbl.textContent = SI[sl.name]?.[0] || sl.name;
+    secDiv.appendChild(lbl);
+
+    // Layout companies inside sector
+    const innerW = sl.w - 2;
+    const innerH = sl.h - 2;
+    const availH = innerH - PAD;
+    if(availH < 4 || innerW < 4) { container.appendChild(secDiv); continue; }
+
+    const items = sl.rows
+      .filter(r=>r.marketCap>0)
+      .sort((a,b)=>b.marketCap-a.marketCap)
+      .map(r=>({...r, v:r.marketCap}));
+
+    const cells = squarify(items, 0, PAD, innerW, availH);
+
+    for(const c of cells) {
+      if(c.w < 4 || c.h < 4) continue;
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell';
+      cell.style.cssText = `left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;background:${retColor(c.ret1d)}`;
+      cell.title = `${c.symbol} · ${c.name}\n1D: ${c.ret1d!=null?(c.ret1d>=0?'+':'')+c.ret1d.toFixed(2)+'%':'—'}\nMkt Cap: ${fMC(c.marketCap)}`;
+      cell.onclick = () => openChart(c.symbol, c.name);
+
+      const symSize = Math.min(13, Math.max(7, Math.floor(Math.min(c.w, c.h) / 4)));
+      const pctSize = Math.max(6, symSize - 2);
+      const showSym = c.w > 28 && c.h > 16;
+      const showPct = c.w > 32 && c.h > 28;
+
+      if(showSym) {
+        const s = document.createElement('div');
+        s.className = 'hm-cell-sym';
+        s.style.fontSize = symSize+'px';
+        s.textContent = c.symbol;
+        cell.appendChild(s);
+      }
+      if(showPct && c.ret1d!=null) {
+        const p = document.createElement('div');
+        p.className = 'hm-cell-pct';
+        p.style.fontSize = pctSize+'px';
+        p.textContent = (c.ret1d>=0?'+':'')+c.ret1d.toFixed(2)+'%';
+        cell.appendChild(p);
+      }
+      secDiv.appendChild(cell);
+    }
+    container.appendChild(secDiv);
+  }
+}
+
+window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
+
 document.getElementById('srch').addEventListener('input',render);
 document.getElementById('secF').addEventListener('change',render);
 document.getElementById('mcF').addEventListener('change',render);
