@@ -343,25 +343,40 @@ async function loadData() {
   rows=[];
   const tks=[...new Set(TKS)];
   const bats=[]; for(let i=0;i<tks.length;i+=50) bats.push(tks.slice(i,i+50));
-  const total=bats.length*2; let done=0;
+  const rgBatCount = Math.ceil(tks.length/20);
+  const total = bats.length + spBats.length + rgBatCount + 1; let done=0;
   const tick=msg=>{ done++; pp(Math.round(done/total*100),msg); };
   const qM={};
   for(let i=0;i<bats.length;i++) { tick('Cotizaciones ['+(i+1)+'/'+bats.length+'] — '+Object.keys(qM).length+' cargadas'); (await fQ(bats[i])).forEach(q=>{qM[q.symbol]=q;}); if(i<bats.length-1)await sl(80); }
   if(!Object.keys(qM).length){ showErr('Sin datos','Backend respondio vacio. Intenta en unos minutos.'); btn.disabled=false; return; }
   const spM={};
   const spBats=[]; for(let i=0;i<tks.length;i+=20) spBats.push(tks.slice(i,i+20));
+  const rgBats = spBats; // same batching size
   for(let i=0;i<spBats.length;i++) {
     tick('Retornos historicos ['+(i+1)+'/'+spBats.length+']');
     try{ const res=await fS(spBats[i]); res.forEach(s=>{ const r0=s.response?.[0]; if(!r0)return; const closes=r0.indicators?.quote?.[0]?.close||[]; const timestamps=r0.timestamp||[]; if(closes.filter(x=>x!=null).length>10) spM[s.symbol]={closes,timestamps}; }); }catch(e){}
     if(i<spBats.length-1)await sl(120);
   }
+  // Phase 3: Revenue Growth — v11/quoteSummary financialData (one per ticker, batched 20)
+  tick('Crecimiento de revenue...');
+  const rgM = {};
+  for(let i=0;i<rgBats.length;i++) {
+    try{
+      const r = await fetch(BASE_URL+'/api/revgrowth?symbols='+rgBats[i].join(','));
+      const d = await r.json();
+      Object.assign(rgM, d);
+    }catch(e){}
+    if(i<rgBats.length-1) await sl(100);
+  }
+
   tick('Procesando...');
   for(const sym of tks) {
     const q=qM[sym]; if(!q)continue;
     const sp=spM[sym], c=sp?.closes||[], ts=sp?.timestamps||[];
     const sector=q.sector||SECTOR_MAP[sym]||'';
     const ret1yS=rN(c,252), ret1yQ=q.fiftyTwoWeekChangePercent!=null?q.fiftyTwoWeekChangePercent*100:null;
-    rows.push({symbol:q.symbol, name:q.shortName||q.longName||sym, sector, price:q.regularMarketPrice, marketCap:q.marketCap, pe:q.trailingPE, fwdPE:q.forwardPE, pb:q.priceToBook, ret1d:q.regularMarketChangePercent, ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:ret1yS??ret1yQ, revG:q.revenueGrowth!=null?q.revenueGrowth*100:null});
+    const revRaw = rgM[sym] ?? q.revenueGrowth ?? null;
+    rows.push({symbol:q.symbol, name:q.shortName||q.longName||sym, sector, price:q.regularMarketPrice, marketCap:q.marketCap, pe:q.trailingPE, fwdPE:q.forwardPE, pb:q.priceToBook, ret1d:q.regularMarketChangePercent, ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:ret1yS??ret1yQ, revG:revRaw!=null?revRaw*100:null});
   }
   document.getElementById('pWrap').style.display='none';
   document.getElementById('liveBadge').style.opacity='1';
@@ -373,15 +388,25 @@ function updateStats() {
   const n=rows.length; sv('sN',n);
   const mcs=rows.map(r=>r.marketCap||0);
   const fmx=v=>v!=null?v.toFixed(1)+'x':'—';
-  sv('sPE', fmx(wmean(rows.map(r=>(r.pe>0&&r.pe<500)?r.pe:null), mcs)));
-  sv('sFwd', fmx(wmean(rows.map(r=>(r.fwdPE>0&&r.fwdPE<200)?r.fwdPE:null), mcs)));
-  sv('sPB', fmx(wmean(rows.map(r=>(r.pb>0&&r.pb<200)?r.pb:null), mcs)));
+  const avg=arr=>{ const v=arr.filter(x=>x!=null&&isFinite(x)); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+
+  // P/E y P/BV: ponderados por MC, cap razonable para excluir outliers
+  sv('sPE',  fmx(wmean(rows.map(r=>(r.pe>0&&r.pe<60)?r.pe:null),   mcs)));
+  sv('sFwd', fmx(wmean(rows.map(r=>(r.fwdPE>0&&r.fwdPE<60)?r.fwdPE:null), mcs)));
+  sv('sPB',  fmx(wmean(rows.map(r=>(r.pb>0&&r.pb<200)?r.pb:null),  mcs)));
+
   sv('sG', rows.filter(r=>r.ret1d>0).length);
   sv('sL', rows.filter(r=>r.ret1d<0).length);
-  const r1W=wmean(rows.map(r=>r.ret1d), mcs), e1=document.getElementById('s1D');
-  if(r1W!=null){ e1.textContent=(r1W>=0?'+':'')+r1W.toFixed(2)+'%'; e1.className='stat-val '+(r1W>=0?'up':'dn'); }
-  const ytW=wmean(rows.map(r=>r.retYTD), mcs), eY=document.getElementById('sYTD');
-  if(ytW!=null){ eY.textContent=(ytW>=0?'+':'')+ytW.toFixed(2)+'%'; eY.className='stat-val '+(ytW>=0?'up':'dn'); }
+
+  // Retornos: promedio simple
+  const a1d = avg(rows.map(r=>r.ret1d));
+  const e1=document.getElementById('s1D');
+  if(a1d!=null){ e1.textContent=(a1d>=0?'+':'')+a1d.toFixed(2)+'%'; e1.className='stat-val '+(a1d>=0?'up':'dn'); }
+
+  const aYTD = avg(rows.map(r=>r.retYTD));
+  const eY=document.getElementById('sYTD');
+  if(aYTD!=null){ eY.textContent=(aYTD>=0?'+':'')+aYTD.toFixed(2)+'%'; eY.className='stat-val '+(aYTD>=0?'up':'dn'); }
+
   sv('fCnt', n+' EMPRESAS · YAHOO FINANCE VIA RENDER');
 }
 
