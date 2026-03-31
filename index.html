@@ -49,9 +49,11 @@ select.ctrl-input{padding-left:9px;width:auto;cursor:pointer;appearance:none;bac
 .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--label)}
 .btn-ghost:hover{border-color:var(--label);background:rgba(122,150,180,.08)}
 .cs{flex:1}.rtag{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
-.flt-panel{flex-shrink:0;background:var(--card);border-bottom:1px solid var(--border);padding:10px 16px;display:none;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.flt-panel{flex-shrink:0;background:var(--card);border-bottom:1px solid var(--border);padding:8px 16px;display:none;flex-wrap:nowrap;gap:16px;align-items:flex-start;overflow-x:auto}
 .flt-panel.open{display:flex}
-.flt-group{display:flex;flex-direction:column;gap:4px}
+.flt-panel::-webkit-scrollbar{height:3px}
+.flt-panel::-webkit-scrollbar-thumb{background:var(--border2)}
+.flt-group{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 .flt-label{font-size:9px;color:var(--amber);font-family:var(--mono);font-weight:600;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
 .flt-clear{color:var(--muted);cursor:pointer;text-decoration:underline;font-weight:400;font-size:8px}.flt-clear:hover{color:var(--label)}
 .flt-row{display:flex;align-items:center;gap:5px}
@@ -173,6 +175,23 @@ td:nth-child(-n+4){text-align:left}
     <div class="rtag" id="rCnt">&mdash;</div>
   </div>
   <div class="flt-panel" id="fltPanel">
+    <div class="flt-group" style="flex-shrink:0">
+      <div class="flt-label">Excluir sectores <span class="flt-clear" onclick="clearExcl()">limpiar</span></div>
+      <div class="preset-row" style="flex-wrap:wrap;max-width:220px">
+        <span class="xsec preset" data-s="Technology" onclick="toggleExcl(this)">IT</span>
+        <span class="xsec preset" data-s="Healthcare" onclick="toggleExcl(this)">HC</span>
+        <span class="xsec preset" data-s="Financial Services" onclick="toggleExcl(this)">FIN</span>
+        <span class="xsec preset" data-s="Consumer Cyclical" onclick="toggleExcl(this)">C.DIS</span>
+        <span class="xsec preset" data-s="Consumer Defensive" onclick="toggleExcl(this)">C.STP</span>
+        <span class="xsec preset" data-s="Communication Services" onclick="toggleExcl(this)">COMM</span>
+        <span class="xsec preset" data-s="Industrials" onclick="toggleExcl(this)">IND</span>
+        <span class="xsec preset" data-s="Energy" onclick="toggleExcl(this)">ENRG</span>
+        <span class="xsec preset" data-s="Basic Materials" onclick="toggleExcl(this)">MAT</span>
+        <span class="xsec preset" data-s="Utilities" onclick="toggleExcl(this)">UTIL</span>
+        <span class="xsec preset" data-s="Real Estate" onclick="toggleExcl(this)">RE</span>
+      </div>
+    </div>
+    <div style="align-self:stretch;width:1px;background:var(--border);flex-shrink:0"></div>
     <div class="flt-group">
       <div class="flt-label">P/E <span class="flt-clear" onclick="clearFlt('pe')">limpiar</span></div>
       <div class="flt-row"><input class="flt-num" type="number" id="pe_min" placeholder="min" oninput="applyFlt()"><span class="flt-sep">&ndash;</span><input class="flt-num" type="number" id="pe_max" placeholder="max" oninput="applyFlt()"></div>
@@ -203,8 +222,7 @@ td:nth-child(-n+4){text-align:left}
       <div class="flt-row"><input class="flt-num" type="number" id="ret1y_min" placeholder="min" step="1" oninput="applyFlt()"><span class="flt-sep">&ndash;</span><input class="flt-num" type="number" id="ret1y_max" placeholder="max" step="1" oninput="applyFlt()"></div>
       <div class="preset-row"><span class="preset" onclick="setFlt('ret1y',0,null)">1Y +</span><span class="preset" onclick="setFlt('ret1y',50,null)">&gt;50%</span><span class="preset" onclick="setFlt('ret1y',null,-10)">&lt;-10%</span></div>
     </div>
-
-    <div style="align-self:flex-end;margin-left:auto"><button class="btn btn-ghost" style="font-size:9px" onclick="clearAllFlt()">Limpiar todo</button></div>
+    <div style="align-self:center;flex-shrink:0;margin-left:4px"><button class="btn btn-ghost" style="font-size:9px;white-space:nowrap" onclick="clearAllFlt();clearExcl()">Limpiar todo</button></div>
   </div>
   <div class="prog-wrap" id="pWrap">
     <div class="prog-track"><div class="prog-fill" id="pFill"></div></div>
@@ -255,6 +273,19 @@ const TKS = ['AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','QCOM','TXN','INTC',
 const SI = {'Technology':['IT','s-IT'],'Healthcare':['HC','s-HC'],'Financial Services':['FIN','s-FI'],'Consumer Cyclical':['C.DIS','s-CD'],'Consumer Defensive':['C.STP','s-CS'],'Energy':['ENRG','s-EN'],'Industrials':['IND','s-IN'],'Basic Materials':['MAT','s-MA'],'Utilities':['UTIL','s-UT'],'Real Estate':['RE','s-RE'],'Communication Services':['COMM','s-CO']};
 
 let rows = [], sKey = 'marketCap', sDir = -1, currentSym = 'AAPL';
+let excludedSectors = new Set();
+
+function toggleExcl(el) {
+  const s = el.dataset.s;
+  if (excludedSectors.has(s)) { excludedSectors.delete(s); el.style.background=''; el.style.borderColor=''; el.style.color=''; }
+  else { excludedSectors.add(s); el.style.background='rgba(240,78,106,.18)'; el.style.borderColor='rgba(240,78,106,.5)'; el.style.color='#F04E6A'; }
+  render();
+}
+function clearExcl() {
+  excludedSectors.clear();
+  document.querySelectorAll('.xsec').forEach(el=>{ el.style.background=''; el.style.borderColor=''; el.style.color=''; });
+  render();
+}
 
 const FLT = {pe:{min:null,max:null},fwdpe:{min:null,max:null},pb:{min:null,max:null},ret1d:{min:null,max:null},retytd:{min:null,max:null},ret1y:{min:null,max:null}};
 const FLT_FIELD = {pe:'pe',fwdpe:'fwdPE',pb:'pb',ret1d:'ret1d',retytd:'retYTD',ret1y:'ret1y'};
@@ -290,7 +321,10 @@ function initChart(sym) {
     container_id: d.id, width:'100%', height:'100%',
     symbol: sym, interval:'D', timezone:'America/New_York',
     theme:'dark', style:'1', locale:'es',
-    enable_publishing:false, save_image:false,
+    enable_publishing:false, save_image:true,
+    hide_side_toolbar: false,
+    allow_symbol_change: true,
+    withdateranges: true,
     studies:['RSI@tv-basicstudies'],
     overrides:{'paneProperties.background':'#06090F','paneProperties.backgroundType':'solid','scalesProperties.textColor':'#7A96B4'}
   });
@@ -406,6 +440,7 @@ function getF() {
   return rows.filter(r=>{
     if(q&&!r.symbol.toLowerCase().includes(q)&&!r.name.toLowerCase().includes(q))return false;
     if(sec&&r.sector!==sec)return false;
+    if(excludedSectors.size>0&&excludedSectors.has(r.sector))return false;
     if(mc){ const m=r.marketCap; if(!m)return false; if(mc==='mega'&&m<200e9)return false; if(mc==='large'&&(m<10e9||m>=200e9))return false; if(mc==='mid'&&(m<2e9||m>=10e9))return false; if(mc==='small'&&m>=2e9)return false; }
     for(const [fk,fv] of Object.entries(FLT)){ const field=FLT_FIELD[fk], val=r[field]; if(fv.min!==null&&(val==null||val<fv.min))return false; if(fv.max!==null&&(val==null||val>fv.max))return false; }
     return true;
