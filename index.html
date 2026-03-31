@@ -203,11 +203,7 @@ td:nth-child(-n+4){text-align:left}
       <div class="flt-row"><input class="flt-num" type="number" id="ret1y_min" placeholder="min" step="1" oninput="applyFlt()"><span class="flt-sep">&ndash;</span><input class="flt-num" type="number" id="ret1y_max" placeholder="max" step="1" oninput="applyFlt()"></div>
       <div class="preset-row"><span class="preset" onclick="setFlt('ret1y',0,null)">1Y +</span><span class="preset" onclick="setFlt('ret1y',50,null)">&gt;50%</span><span class="preset" onclick="setFlt('ret1y',null,-10)">&lt;-10%</span></div>
     </div>
-    <div class="flt-group">
-      <div class="flt-label">Rev. Growth <span class="flt-clear" onclick="clearFlt('revg')">limpiar</span></div>
-      <div class="flt-row"><input class="flt-num" type="number" id="revg_min" placeholder="min" step="1" oninput="applyFlt()"><span class="flt-sep">&ndash;</span><input class="flt-num" type="number" id="revg_max" placeholder="max" step="1" oninput="applyFlt()"></div>
-      <div class="preset-row"><span class="preset" onclick="setFlt('revg',10,null)">&gt;10%</span><span class="preset" onclick="setFlt('revg',20,null)">&gt;20%</span><span class="preset" onclick="setFlt('revg',null,0)">Negativo</span></div>
-    </div>
+
     <div style="align-self:flex-end;margin-left:auto"><button class="btn btn-ghost" style="font-size:9px" onclick="clearAllFlt()">Limpiar todo</button></div>
   </div>
   <div class="prog-wrap" id="pWrap">
@@ -260,8 +256,8 @@ const SI = {'Technology':['IT','s-IT'],'Healthcare':['HC','s-HC'],'Financial Ser
 
 let rows = [], sKey = 'marketCap', sDir = -1, currentSym = 'AAPL';
 
-const FLT = {pe:{min:null,max:null},fwdpe:{min:null,max:null},pb:{min:null,max:null},ret1d:{min:null,max:null},retytd:{min:null,max:null},ret1y:{min:null,max:null},revg:{min:null,max:null}};
-const FLT_FIELD = {pe:'pe',fwdpe:'fwdPE',pb:'pb',ret1d:'ret1d',retytd:'retYTD',ret1y:'ret1y',revg:'revG'};
+const FLT = {pe:{min:null,max:null},fwdpe:{min:null,max:null},pb:{min:null,max:null},ret1d:{min:null,max:null},retytd:{min:null,max:null},ret1y:{min:null,max:null}};
+const FLT_FIELD = {pe:'pe',fwdpe:'fwdPE',pb:'pb',ret1d:'ret1d',retytd:'retYTD',ret1y:'ret1y'};
 
 function toggleFilters() { document.getElementById('fltPanel').classList.toggle('open'); }
 function setFlt(k, mn, mx) { FLT[k].min=mn; FLT[k].max=mx; const mi=document.getElementById(k+'_min'), ma=document.getElementById(k+'_max'); if(mi)mi.value=mn??''; if(ma)ma.value=mx??''; render(); }
@@ -295,7 +291,7 @@ function initChart(sym) {
     symbol: sym, interval:'D', timezone:'America/New_York',
     theme:'dark', style:'1', locale:'es',
     enable_publishing:false, save_image:false,
-    studies:['RSI@tv-basicstudies','MACD@tv-basicstudies'],
+    studies:['RSI@tv-basicstudies'],
     overrides:{'paneProperties.background':'#06090F','paneProperties.backgroundType':'solid','scalesProperties.textColor':'#7A96B4'}
   });
 }
@@ -356,26 +352,13 @@ async function loadData() {
     try{ const res=await fS(spBats[i]); res.forEach(s=>{ const r0=s.response?.[0]; if(!r0)return; const closes=r0.indicators?.quote?.[0]?.close||[]; const timestamps=r0.timestamp||[]; if(closes.filter(x=>x!=null).length>10) spM[s.symbol]={closes,timestamps}; }); }catch(e){}
     if(i<spBats.length-1)await sl(120);
   }
-  // Phase 3: Revenue Growth via v11/quoteSummary financialData
-  tick('Crecimiento de revenue...');
-  const rgM = {};
-  for(let i=0;i<spBats.length;i++) {
-    try{
-      const r = await fetch(BASE_URL+'/api/revgrowth?symbols='+spBats[i].join(','));
-      const d = await r.json();
-      Object.assign(rgM, d);
-    }catch(e){}
-    if(i<spBats.length-1) await sl(100);
-  }
-
   tick('Procesando...');
   for(const sym of tks) {
     const q=qM[sym]; if(!q)continue;
     const sp=spM[sym], c=sp?.closes||[], ts=sp?.timestamps||[];
     const sector=q.sector||SECTOR_MAP[sym]||'';
     const ret1yS=rN(c,252), ret1yQ=q.fiftyTwoWeekChangePercent!=null?q.fiftyTwoWeekChangePercent*100:null;
-    const revRaw = rgM[sym] ?? q.revenueGrowth ?? null;
-    rows.push({symbol:q.symbol, name:q.shortName||q.longName||sym, sector, price:q.regularMarketPrice, marketCap:q.marketCap, pe:q.trailingPE, fwdPE:q.forwardPE, pb:q.priceToBook, ret1d:q.regularMarketChangePercent, ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:ret1yS??ret1yQ, revG:revRaw!=null?revRaw*100:null});
+    rows.push({symbol:q.symbol, name:q.shortName||q.longName||sym, sector, price:q.regularMarketPrice, marketCap:q.marketCap, pe:q.trailingPE, fwdPE:q.forwardPE, pb:q.priceToBook, ret1d:q.regularMarketChangePercent, ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:ret1yS??ret1yQ});
   }
   document.getElementById('pWrap').style.display='none';
   document.getElementById('liveBadge').style.opacity='1';
@@ -416,7 +399,7 @@ function fMx(v,c=999){ if(!v||!isFinite(v)||v<=0||v>c)return NA; return v.toFixe
 function fPct(v){ if(v==null||!isFinite(v))return NA; const cl=v>0?'pp':v<0?'pn':''; return '<span class="'+cl+'">'+(v>=0?'+':'')+v.toFixed(2)+'%</span>'; }
 function fPill(sec){ const i=SI[sec]; if(!i)return '<span class="na">'+(sec||'—')+'</span>'; return '<span class="pill '+i[1]+'">'+i[0]+'</span>'; }
 
-const COLS=[{k:'_r',l:'#',s:false},{k:'symbol',l:'Ticker',s:true},{k:'name',l:'Empresa',s:true},{k:'sector',l:'Sector',s:true},{k:'price',l:'Precio',s:true,f:fPx},{k:'marketCap',l:'Mkt Cap',s:true,f:fMC},{k:'pe',l:'P/E',s:true,f:v=>fMx(v,1000)},{k:'fwdPE',l:'Fw P/E',s:true,f:v=>fMx(v,500)},{k:'pb',l:'P/BV',s:true,f:v=>fMx(v,200)},{k:'ret1d',l:'1D %',s:true,f:fPct},{k:'ret5d',l:'5D %',s:true,f:fPct},{k:'ret1m',l:'1M %',s:true,f:fPct},{k:'retYTD',l:'YTD %',s:true,f:fPct},{k:'ret1y',l:'1Y %',s:true,f:fPct},{k:'revG',l:'Rev. Growth',s:true,f:fPct}];
+const COLS=[{k:'_r',l:'#',s:false},{k:'symbol',l:'Ticker',s:true},{k:'name',l:'Empresa',s:true},{k:'sector',l:'Sector',s:true},{k:'price',l:'Precio',s:true,f:fPx},{k:'marketCap',l:'Mkt Cap',s:true,f:fMC},{k:'pe',l:'P/E',s:true,f:v=>fMx(v,1000)},{k:'fwdPE',l:'Fw P/E',s:true,f:v=>fMx(v,500)},{k:'pb',l:'P/BV',s:true,f:v=>fMx(v,200)},{k:'ret1d',l:'1D %',s:true,f:fPct},{k:'ret5d',l:'5D %',s:true,f:fPct},{k:'ret1m',l:'1M %',s:true,f:fPct},{k:'retYTD',l:'YTD %',s:true,f:fPct},{k:'ret1y',l:'1Y %',s:true,f:fPct}];
 
 function getF() {
   const q=document.getElementById('srch').value.trim().toLowerCase(), sec=document.getElementById('secF').value, mc=document.getElementById('mcF').value;
