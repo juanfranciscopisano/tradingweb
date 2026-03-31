@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,64 +20,94 @@
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 body{display:flex;flex-direction:column;font-family:var(--sans)}
-.header{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:relative}
+
+/* HEADER */
+.header{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:0 16px;height:50px;display:flex;align-items:center;justify-content:space-between;position:relative}
 .header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent 60%)}
 .logo{display:flex;align-items:center;gap:10px}
-.logo-mark{width:30px;height:30px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--bg);font-family:var(--mono);flex-shrink:0;letter-spacing:-.5px}
-.logo-text{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2)}
+.logo-mark{width:28px;height:28px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--bg);font-family:var(--mono);flex-shrink:0}
+.logo-text{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text2)}
 .logo-text span{color:var(--amber)}
-.logo-sub{font-size:10px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
-.hdr-right{display:flex;align-items:center;gap:18px;font-family:var(--mono);font-size:11px;color:var(--muted)}
-.live-badge{display:flex;align-items:center;gap:6px;color:var(--green);font-size:10px;font-weight:600;letter-spacing:1px;opacity:0;transition:opacity .3s}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.hdr-right{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.live-badge{display:flex;align-items:center;gap:5px;color:var(--green);font-size:10px;font-weight:600;letter-spacing:1px;opacity:0;transition:opacity .3s}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:lp 2s ease-in-out infinite}
 @keyframes lp{0%,100%{opacity:1}50%{opacity:.4}}
-.stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;overflow-x:auto}
+
+/* San Lorenzo shield SVG */
+.sanlor{width:24px;height:24px;flex-shrink:0}
+
+/* STATS */
+.stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;overflow-x:auto;gap:0}
 .stats-bar::-webkit-scrollbar{height:3px}
 .stats-bar::-webkit-scrollbar-thumb{background:var(--border2)}
-.stat{padding:0 20px 0 0;margin-right:20px;border-right:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+.stat{padding:0 16px 0 0;margin-right:16px;border-right:1px solid var(--border);white-space:nowrap;flex-shrink:0}
 .stat:last-child{border-right:none}
-.stat-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text2);line-height:1}
-.stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.stat-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text2);line-height:1}
+.stat-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .up{color:var(--green)!important}.dn{color:var(--red)!important}
-.controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.ctrl-input{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 10px 6px 28px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none;width:220px;transition:border-color .15s}
+
+/* CONTROLS */
+.controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.ctrl-input{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:5px 9px 5px 26px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;width:190px;transition:border-color .15s}
 .ctrl-input::placeholder{color:var(--muted)}
 .ctrl-input:focus{border-color:var(--amber)}
 .sw{position:relative;flex-shrink:0}
-.si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none}
-select.ctrl-input{padding-left:10px;width:auto;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234A6480' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
-.btn{background:var(--amberglow);border:1px solid var(--amber2);border-radius:6px;color:var(--amber);font-family:var(--mono);font-size:11px;font-weight:600;padding:6px 14px;cursor:pointer;letter-spacing:.5px;transition:background .15s}
+.si{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:11px;pointer-events:none}
+select.ctrl-input{padding-left:9px;width:auto;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234A6480' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+.btn{background:var(--amberglow);border:1px solid var(--amber2);border-radius:5px;color:var(--amber);font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 12px;cursor:pointer;letter-spacing:.5px;transition:background .15s;white-space:nowrap}
 .btn:hover{background:rgba(242,169,30,.22)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--label)}
+.btn-ghost:hover{border-color:var(--label);background:rgba(122,150,180,.08)}
 .cs{flex:1}.rtag{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
-.prog-wrap{flex-shrink:0;background:var(--surf);padding:0 20px 10px;display:none}
+
+/* FILTER PANEL */
+.flt-panel{flex-shrink:0;background:var(--card);border-bottom:1px solid var(--border);padding:10px 16px;display:none;flex-wrap:wrap;gap:12px;align-items:flex-start}
+.flt-panel.open{display:flex}
+.flt-group{display:flex;flex-direction:column;gap:5px}
+.flt-label{font-size:9px;color:var(--amber);font-family:var(--mono);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.flt-row{display:flex;align-items:center;gap:5px}
+.flt-num{background:var(--surf);border:1px solid var(--border);border-radius:4px;padding:4px 7px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;width:72px;transition:border-color .15s}
+.flt-num:focus{border-color:var(--amber)}
+.flt-sep{font-size:10px;color:var(--muted)}
+.preset-row{display:flex;gap:4px;margin-top:2px;flex-wrap:wrap}
+.preset{background:var(--surf);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-size:9px;font-family:var(--mono);color:var(--label);cursor:pointer;transition:all .12s}
+.preset:hover,.preset.active{background:var(--amberglow);border-color:var(--amber2);color:var(--amber)}
+.flt-clear{font-size:9px;color:var(--muted);cursor:pointer;margin-left:2px;text-decoration:underline}
+.flt-clear:hover{color:var(--label)}
+
+/* PROGRESS */
+.prog-wrap{flex-shrink:0;background:var(--surf);padding:0 16px 8px;display:none}
 .prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--amber),#F8C95A);border-radius:2px;width:0%;transition:width .4s ease}
-.prog-msg{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px}
+.prog-msg{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px}
+
+/* TABLE */
 .table-wrap{flex:1;overflow:auto}
-.table-wrap::-webkit-scrollbar{width:6px;height:6px}
+.table-wrap::-webkit-scrollbar{width:5px;height:5px}
 .table-wrap::-webkit-scrollbar-track{background:var(--bg)}
 .table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
 thead{position:sticky;top:0;z-index:20}
 thead tr{background:var(--surf);border-bottom:1px solid var(--amber)}
-th{color:var(--label);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:9px 12px;text-align:right;cursor:pointer;user-select:none;white-space:nowrap;border-right:1px solid var(--border);transition:color .15s}
+th{color:var(--label);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 10px;text-align:right;cursor:pointer;user-select:none;white-space:nowrap;border-right:1px solid var(--border);transition:color .15s}
 th:last-child{border-right:none}
 th:hover{color:var(--text2)}
 th.active{color:var(--amber)}
 th:nth-child(-n+4){text-align:left}
-.sa{font-size:8px;margin-left:4px;opacity:.4}
+.sa{font-size:7px;margin-left:3px;opacity:.4}
 th.active .sa{opacity:1}
-tbody tr{border-bottom:1px solid rgba(26,45,71,.6);transition:background .1s}
+tbody tr{border-bottom:1px solid rgba(26,45,71,.5);transition:background .1s}
 tbody tr:hover{background:var(--card2)}
 tbody tr:nth-child(even){background:rgba(11,17,32,.4)}
 tbody tr:nth-child(even):hover{background:var(--card2)}
-td{padding:9px 12px;text-align:right;color:var(--text);white-space:nowrap;border-right:1px solid rgba(26,45,71,.4)}
+td{padding:7px 10px;text-align:right;color:var(--text);white-space:nowrap;border-right:1px solid rgba(26,45,71,.35)}
 td:last-child{border-right:none}
 td:nth-child(-n+4){text-align:left}
-.rk{color:var(--muted);font-size:10px;min-width:36px}
-.tk{font-weight:700;color:var(--amber);font-size:12px;min-width:70px}
-.nm{color:var(--text2);font-family:var(--sans);font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.pill{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.4px;font-family:var(--sans);text-transform:uppercase}
+.rk{color:var(--muted);font-size:9px;min-width:30px}
+.tk{font-weight:700;color:var(--amber);font-size:12px;min-width:62px}
+.nm{color:var(--text2);font-family:var(--sans);font-size:11px;max-width:175px;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-block;padding:2px 6px;border-radius:8px;font-size:8.5px;font-weight:600;letter-spacing:.3px;font-family:var(--sans);text-transform:uppercase}
 .s-IT{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.25)}
 .s-HC{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
 .s-FI{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
@@ -89,17 +120,28 @@ td:nth-child(-n+4){text-align:left}
 .s-RE{background:rgba(251,191,36,.15);color:#fcd34d;border:1px solid rgba(251,191,36,.25)}
 .s-CO{background:rgba(96,165,250,.15);color:#bfdbfe;border:1px solid rgba(96,165,250,.25)}
 .pp{color:var(--green);font-weight:600}.pn{color:var(--red);font-weight:600}.na{color:var(--muted)}
-.sc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:80px;color:var(--muted);font-family:var(--mono)}
-.spin{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite}
+.sc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:70px;color:var(--muted);font-family:var(--mono)}
+.spin{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.sm{font-size:12px;letter-spacing:.5px}
-.footer{flex-shrink:0;background:var(--surf);border-top:1px solid var(--border);padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.sm{font-size:11px;letter-spacing:.5px}
+.footer{flex-shrink:0;background:var(--surf);border-top:1px solid var(--border);padding:4px 16px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:8px;color:var(--muted)}
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">
+    <!-- San Lorenzo shield -->
+    <svg class="sanlor" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 1L2 5v10c0 6 4.5 10.5 10 12 5.5-1.5 10-6 10-12V5L12 1z" fill="#CC0000"/>
+      <clipPath id="sh"><path d="M12 1L2 5v10c0 6 4.5 10.5 10 12 5.5-1.5 10-6 10-12V5L12 1z"/></clipPath>
+      <g clip-path="url(#sh)">
+        <rect x="2" y="1" width="10" height="27" fill="#003087"/>
+        <rect x="12" y="1" width="10" height="27" fill="#CC0000"/>
+        <line x1="2" y1="1" x2="22" y2="28" stroke="white" stroke-width="1.5"/>
+      </g>
+      <path d="M12 1L2 5v10c0 6 4.5 10.5 10 12 5.5-1.5 10-6 10-12V5L12 1z" stroke="white" stroke-width=".8" fill="none"/>
+    </svg>
     <div class="logo-mark">JFP</div>
     <div>
       <div class="logo-text">S&amp;P 500 <span>SCREENER</span></div>
@@ -114,20 +156,20 @@ td:nth-child(-n+4){text-align:left}
 
 <div class="stats-bar">
   <div class="stat"><div class="stat-val" id="sN">—</div><div class="stat-lbl">Empresas</div></div>
-  <div class="stat"><div class="stat-val" id="sPE">—</div><div class="stat-lbl">P/E Prom.</div></div>
-  <div class="stat"><div class="stat-val" id="sFwd">—</div><div class="stat-lbl">Fw P/E Prom.</div></div>
-  <div class="stat"><div class="stat-val up" id="sG">—</div><div class="stat-lbl">▲ Hoy</div></div>
-  <div class="stat"><div class="stat-val dn" id="sL">—</div><div class="stat-lbl">▼ Hoy</div></div>
-  <div class="stat"><div class="stat-val" id="s1D">—</div><div class="stat-lbl">1D Prom.</div></div>
-  <div class="stat"><div class="stat-val" id="sPB">—</div><div class="stat-lbl">P/BV Prom.</div></div>
-  <div class="stat"><div class="stat-val" id="sYTD">—</div><div class="stat-lbl">YTD Prom.</div></div>
+  <div class="stat"><div class="stat-val" id="sPE">—</div><div class="stat-lbl">P/E pond. MC</div></div>
+  <div class="stat"><div class="stat-val" id="sFwd">—</div><div class="stat-lbl">Fw P/E pond. MC</div></div>
+  <div class="stat"><div class="stat-val up" id="sG">—</div><div class="stat-lbl">▲ hoy</div></div>
+  <div class="stat"><div class="stat-val dn" id="sL">—</div><div class="stat-lbl">▼ hoy</div></div>
+  <div class="stat"><div class="stat-val" id="s1D">—</div><div class="stat-lbl">1D pond. MC</div></div>
+  <div class="stat"><div class="stat-val" id="sPB">—</div><div class="stat-lbl">P/BV pond. MC</div></div>
+  <div class="stat"><div class="stat-val" id="sYTD">—</div><div class="stat-lbl">YTD pond. MC</div></div>
 </div>
 
 <div class="controls">
   <div class="sw"><span class="si">⌕</span><input class="ctrl-input" type="text" id="srch" placeholder="Buscar ticker / empresa..."></div>
   <select class="ctrl-input" id="secF">
     <option value="">Todos los sectores</option>
-    <option value="Technology">Info. Technology</option>
+    <option value="Technology">Info Technology</option>
     <option value="Healthcare">Health Care</option>
     <option value="Financial Services">Financials</option>
     <option value="Consumer Cyclical">Consumer Disc.</option>
@@ -146,9 +188,107 @@ td:nth-child(-n+4){text-align:left}
     <option value="mid">Mid (2–10B)</option>
     <option value="small">Small (&lt;2B)</option>
   </select>
+  <button class="btn btn-ghost" id="fltBtn" onclick="toggleFilters()">⚙ Filtros avanzados</button>
   <button class="btn" id="rfBtn" onclick="loadData()">↻ Actualizar</button>
   <div class="cs"></div>
   <div class="rtag" id="rCnt">—</div>
+</div>
+
+<!-- ADVANCED FILTER PANEL -->
+<div class="flt-panel" id="fltPanel">
+  <!-- P/E -->
+  <div class="flt-group">
+    <div class="flt-label">P/E <span class="flt-clear" onclick="clearFlt('pe')">limpiar</span></div>
+    <div class="flt-row">
+      <input class="flt-num" type="number" id="pe_min" placeholder="min" oninput="applyFlt()">
+      <span class="flt-sep">–</span>
+      <input class="flt-num" type="number" id="pe_max" placeholder="max" oninput="applyFlt()">
+    </div>
+    <div class="preset-row">
+      <span class="preset" onclick="setFlt('pe',null,10)">＜10x</span>
+      <span class="preset" onclick="setFlt('pe',null,15)">＜15x</span>
+      <span class="preset" onclick="setFlt('pe',null,20)">＜20x</span>
+      <span class="preset" onclick="setFlt('pe',null,25)">＜25x</span>
+      <span class="preset" onclick="setFlt('pe',20,null)">＞20x</span>
+    </div>
+  </div>
+  <!-- Fw P/E -->
+  <div class="flt-group">
+    <div class="flt-label">Fw P/E <span class="flt-clear" onclick="clearFlt('fwdpe')">limpiar</span></div>
+    <div class="flt-row">
+      <input class="flt-num" type="number" id="fwdpe_min" placeholder="min" oninput="applyFlt()">
+      <span class="flt-sep">–</span>
+      <input class="flt-num" type="number" id="fwdpe_max" placeholder="max" oninput="applyFlt()">
+    </div>
+    <div class="preset-row">
+      <span class="preset" onclick="setFlt('fwdpe',null,10)">＜10x</span>
+      <span class="preset" onclick="setFlt('fwdpe',null,15)">＜15x</span>
+      <span class="preset" onclick="setFlt('fwdpe',null,20)">＜20x</span>
+      <span class="preset" onclick="setFlt('fwdpe',15,25)">15–25x</span>
+    </div>
+  </div>
+  <!-- P/BV -->
+  <div class="flt-group">
+    <div class="flt-label">P/BV <span class="flt-clear" onclick="clearFlt('pb')">limpiar</span></div>
+    <div class="flt-row">
+      <input class="flt-num" type="number" id="pb_min" placeholder="min" oninput="applyFlt()">
+      <span class="flt-sep">–</span>
+      <input class="flt-num" type="number" id="pb_max" placeholder="max" oninput="applyFlt()">
+    </div>
+    <div class="preset-row">
+      <span class="preset" onclick="setFlt('pb',null,1)">＜1x</span>
+      <span class="preset" onclick="setFlt('pb',null,2)">＜2x</span>
+      <span class="preset" onclick="setFlt('pb',null,3)">＜3x</span>
+      <span class="preset" onclick="setFlt('pb',3,null)">＞3x</span>
+    </div>
+  </div>
+  <!-- 1D % -->
+  <div class="flt-group">
+    <div class="flt-label">1D % <span class="flt-clear" onclick="clearFlt('ret1d')">limpiar</span></div>
+    <div class="flt-row">
+      <input class="flt-num" type="number" id="ret1d_min" placeholder="min" step="0.1" oninput="applyFlt()">
+      <span class="flt-sep">–</span>
+      <input class="flt-num" type="number" id="ret1d_max" placeholder="max" step="0.1" oninput="applyFlt()">
+    </div>
+    <div class="preset-row">
+      <span class="preset" onclick="setFlt('ret1d',0,null)">Solo + hoy</span>
+      <span class="preset" onclick="setFlt('ret1d',null,0)">Solo - hoy</span>
+      <span class="preset" onclick="setFlt('ret1d',2,null)">＞+2%</span>
+      <span class="preset" onclick="setFlt('ret1d',null,-2)">＜-2%</span>
+    </div>
+  </div>
+  <!-- YTD -->
+  <div class="flt-group">
+    <div class="flt-label">YTD % <span class="flt-clear" onclick="clearFlt('retytd')">limpiar</span></div>
+    <div class="flt-row">
+      <input class="flt-num" type="number" id="retytd_min" placeholder="min" step="1" oninput="applyFlt()">
+      <span class="flt-sep">–</span>
+      <input class="flt-num" type="number" id="retytd_max" placeholder="max" step="1" oninput="applyFlt()">
+    </div>
+    <div class="preset-row">
+      <span class="preset" onclick="setFlt('retytd',0,null)">YTD positivo</span>
+      <span class="preset" onclick="setFlt('retytd',null,0)">YTD negativo</span>
+      <span class="preset" onclick="setFlt('retytd',20,null)">＞+20%</span>
+      <span class="preset" onclick="setFlt('retytd',null,-20)">＜-20%</span>
+    </div>
+  </div>
+  <!-- Rev Growth -->
+  <div class="flt-group">
+    <div class="flt-label">Rev. Growth <span class="flt-clear" onclick="clearFlt('revg')">limpiar</span></div>
+    <div class="flt-row">
+      <input class="flt-num" type="number" id="revg_min" placeholder="min" step="1" oninput="applyFlt()">
+      <span class="flt-sep">–</span>
+      <input class="flt-num" type="number" id="revg_max" placeholder="max" step="1" oninput="applyFlt()">
+    </div>
+    <div class="preset-row">
+      <span class="preset" onclick="setFlt('revg',10,null)">＞10%</span>
+      <span class="preset" onclick="setFlt('revg',20,null)">＞20%</span>
+      <span class="preset" onclick="setFlt('revg',null,0)">Negativo</span>
+    </div>
+  </div>
+  <div style="align-self:flex-end;margin-left:auto">
+    <button class="btn btn-ghost" style="font-size:9px" onclick="clearAllFlt()">Limpiar todo</button>
+  </div>
 </div>
 
 <div class="prog-wrap" id="pWrap">
@@ -161,54 +301,63 @@ td:nth-child(-n+4){text-align:left}
 </div>
 
 <div class="footer">
-  <span>FUENTE: YAHOO FINANCE · JUAN FRANCISCO PISANO · EQUITY RESEARCH</span>
+  <span>FUENTE: YAHOO FINANCE VÍA RENDER · JUAN FRANCISCO PISANO · EQUITY RESEARCH</span>
   <span id="fCnt">—</span>
 </div>
 
 <script>
-// ── CONFIG ── URL correcta del backend en Render
 const BASE_URL = "https://tradingweb-fv3l.onrender.com";
 
-// ── Tickers ──
-const TKS = [
-  'AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','QCOM','TXN','INTC','IBM','ADBE','NOW','CSCO','AMAT','MU','LRCX','KLAC','ADI','MRVL','CDNS','SNPS','INTU','HPQ','HPE','FTNT','PANW','CRWD','JNPR','KEYS','ANSS','TER','SWKS','QRVO','MPWR','ON','NTAP','STX','WDC','AKAM','ZBRA','GEN','TRMB','EPAM','CTSH','ACN','IT','GDDY','DXC','VRSN','BR','PYPL','FSLR','ENPH','PLTR','NET','DDOG','ZS','WDAY','ANET','GLW','TEL','APH','CDW','FFIV',
-  'JPM','BAC','WFC','GS','MS','BLK','C','AXP','COF','USB','TFC','PNC','SCHW','BK','STT','MTB','RF','CFG','HBAN','KEY','FITB','CMA','ZION','WRB','ALL','PGR','MET','PRU','AFL','AIG','HIG','LNC','UNM','GL','CB','TRV','MMC','AON','AJG','CINF','WTW','RJF','NTRS','SEIC','FDS','ICE','CME','CBOE','NDAQ','SPGI','MCO','V','MA','DFS','SYF','ALLY','WEX','SLM','FNF','FHN',
-  'JNJ','UNH','LLY','MRK','ABBV','TMO','DHR','ABT','PFE','BMY','AMGN','GILD','MDT','BSX','SYK','EW','ISRG','ZBH','BAX','BDX','HOLX','IDXX','IQV','LH','DGX','MTD','ALGN','HSIC','VTRS','MRNA','BIO','GEHC','HCA','UHS','CNC','CI','HUM','ELV','CVS','MOH','RMD','DXCM','PODD','INCY','REGN','VRTX','BIIB','ILMN','A','CTLT','WBA','MCK','CAH','ABC','RVTY','ZTS','TECH','PKI',
-  'AMZN','TSLA','HD','MCD','NKE','LOW','SBUX','BKNG','TJX','ROST','CMG','DHI','LEN','PHM','PVH','RL','BBWI','AZO','ORLY','GPC','AN','KMX','APTV','BWA','F','GM','LVS','MGM','WYNN','CZR','HLT','MAR','H','CCL','RCL','NCLH','YUM','DRI','LYV','ETSY','EBAY','W','TPR','CHDN','QSR','WING','LULU','POOL',
-  'GOOGL','GOOG','META','NFLX','CMCSA','T','VZ','TMUS','WBD','CHTR','OMC','IPG','TTWO','EA','MTCH','IAC','PINS','SNAP','FOXA','FOX','NWS','NWSA','DIS','PARA',
-  'PG','KO','PEP','COST','WMT','PM','MO','MDLZ','CL','EL','KMB','CHD','CLX','SJM','CAG','CPB','GIS','K','KHC','HSY','MKC','HRL','TSN','LW','INGR','STZ','TAP','SYY','KR','CASY','USFD',
-  'XOM','CVX','COP','EOG','SLB','MPC','VLO','PSX','OXY','DVN','BKR','HAL','HES','FANG','APA','MRO','EQT','RRC','AR','NOV','TRGP','OKE','KMI','WMB','LNG','CQP','CTRA',
-  'RTX','HON','UPS','CAT','DE','BA','LMT','NOC','GD','TXT','HWM','GE','EMR','ETN','ROK','PH','ITW','IR','FTV','AME','ROP','LDOS','SAIC','TDG','SWK','SNA','PNR','FAST','GWW','XYL','NDSN','GNRC','EFX','ADP','PAYX','CTAS','UNP','NSC','CSX','FDX','CHRW','EXPD','JBHT','R','AL','AAL','DAL','UAL','LUV','ALK','GEV','AXON','PWR','VRT','MTZ','J','WAB','OTIS','CARR','TT','CPRT','VRSK','RSG','WM','FLR','JCI','HUBB','MAS',
-  'LIN','APD','SHW','DD','DOW','CTVA','NUE','STLD','RS','CF','MOS','FMC','PPG','ECL','IFF','BLL','PKG','IP','WRK','SEE','AVY','ALB','FCX','NEM','AA','CE','EMN',
-  'NEE','D','DUK','SO','AEP','EXC','XEL','SRE','ES','WEC','ETR','FE','PPL','CMS','LNT','EVRG','AEE','PNW','NI','ATO','AWK','SWX','NWE','BKH','POR',
-  'AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WY','EQR','AVB','ESS','MAA','UDR','CPT','INVH','AMH','WELL','VTR','PEAK','DOC','HR','OHI','VICI','GLPI','EXR','IRM','ARE','BXP','SLG','KIM','REG','FRT','NNN','CBRE','SBAC',
-];
-
-const SI = {
-  'Technology':['IT','s-IT'],'Healthcare':['HC','s-HC'],'Financial Services':['FIN','s-FI'],
-  'Consumer Cyclical':['C.DIS','s-CD'],'Consumer Defensive':['C.STP','s-CS'],
-  'Energy':['ENRG','s-EN'],'Industrials':['IND','s-IN'],'Basic Materials':['MAT','s-MA'],
-  'Utilities':['UTIL','s-UT'],'Real Estate':['RE','s-RE'],'Communication Services':['COMM','s-CO'],
+// ── Sector lookup (fallback cuando YF no devuelve sector) ──
+const SECTOR_MAP = {
+  AAPL:'Technology',MSFT:'Technology',NVDA:'Technology',AVGO:'Technology',ORCL:'Technology',CRM:'Technology',AMD:'Technology',QCOM:'Technology',TXN:'Technology',INTC:'Technology',IBM:'Technology',ADBE:'Technology',NOW:'Technology',CSCO:'Technology',AMAT:'Technology',MU:'Technology',LRCX:'Technology',KLAC:'Technology',ADI:'Technology',MRVL:'Technology',CDNS:'Technology',SNPS:'Technology',INTU:'Technology',HPQ:'Technology',HPE:'Technology',FTNT:'Technology',PANW:'Technology',CRWD:'Technology',JNPR:'Technology',KEYS:'Technology',ANSS:'Technology',TER:'Technology',SWKS:'Technology',QRVO:'Technology',MPWR:'Technology',ON:'Technology',NTAP:'Technology',STX:'Technology',WDC:'Technology',AKAM:'Technology',ZBRA:'Technology',GEN:'Technology',TRMB:'Technology',EPAM:'Technology',CTSH:'Technology',ACN:'Technology',IT:'Technology',GDDY:'Technology',DXC:'Technology',VRSN:'Technology',BR:'Technology',PYPL:'Technology',FSLR:'Technology',ENPH:'Technology',PLTR:'Technology',NET:'Technology',DDOG:'Technology',ZS:'Technology',WDAY:'Technology',ANET:'Technology',GLW:'Technology',TEL:'Technology',APH:'Technology',CDW:'Technology',FFIV:'Technology',
+  JPM:'Financial Services',BAC:'Financial Services',WFC:'Financial Services',GS:'Financial Services',MS:'Financial Services',BLK:'Financial Services',C:'Financial Services',AXP:'Financial Services',COF:'Financial Services',USB:'Financial Services',TFC:'Financial Services',PNC:'Financial Services',SCHW:'Financial Services',BK:'Financial Services',STT:'Financial Services',MTB:'Financial Services',RF:'Financial Services',CFG:'Financial Services',HBAN:'Financial Services',KEY:'Financial Services',FITB:'Financial Services',CMA:'Financial Services',ZION:'Financial Services',WRB:'Financial Services',ALL:'Financial Services',PGR:'Financial Services',MET:'Financial Services',PRU:'Financial Services',AFL:'Financial Services',AIG:'Financial Services',HIG:'Financial Services',LNC:'Financial Services',UNM:'Financial Services',GL:'Financial Services',CB:'Financial Services',TRV:'Financial Services',MMC:'Financial Services',AON:'Financial Services',AJG:'Financial Services',CINF:'Financial Services',WTW:'Financial Services',RJF:'Financial Services',NTRS:'Financial Services',SEIC:'Financial Services',FDS:'Financial Services',ICE:'Financial Services',CME:'Financial Services',CBOE:'Financial Services',NDAQ:'Financial Services',SPGI:'Financial Services',MCO:'Financial Services',V:'Financial Services',MA:'Financial Services',DFS:'Financial Services',SYF:'Financial Services',ALLY:'Financial Services',WEX:'Financial Services',SLM:'Financial Services',FNF:'Financial Services',FHN:'Financial Services',
+  JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',MRK:'Healthcare',ABBV:'Healthcare',TMO:'Healthcare',DHR:'Healthcare',ABT:'Healthcare',PFE:'Healthcare',BMY:'Healthcare',AMGN:'Healthcare',GILD:'Healthcare',MDT:'Healthcare',BSX:'Healthcare',SYK:'Healthcare',EW:'Healthcare',ISRG:'Healthcare',ZBH:'Healthcare',BAX:'Healthcare',BDX:'Healthcare',HOLX:'Healthcare',IDXX:'Healthcare',IQV:'Healthcare',LH:'Healthcare',DGX:'Healthcare',MTD:'Healthcare',ALGN:'Healthcare',HSIC:'Healthcare',VTRS:'Healthcare',MRNA:'Healthcare',BIO:'Healthcare',GEHC:'Healthcare',HCA:'Healthcare',UHS:'Healthcare',CNC:'Healthcare',CI:'Healthcare',HUM:'Healthcare',ELV:'Healthcare',CVS:'Healthcare',MOH:'Healthcare',RMD:'Healthcare',DXCM:'Healthcare',PODD:'Healthcare',INCY:'Healthcare',REGN:'Healthcare',VRTX:'Healthcare',BIIB:'Healthcare',ILMN:'Healthcare',A:'Healthcare',CTLT:'Healthcare',WBA:'Healthcare',MCK:'Healthcare',CAH:'Healthcare',ABC:'Healthcare',RVTY:'Healthcare',ZTS:'Healthcare',TECH:'Healthcare',PKI:'Healthcare',
+  AMZN:'Consumer Cyclical',TSLA:'Consumer Cyclical',HD:'Consumer Cyclical',MCD:'Consumer Cyclical',NKE:'Consumer Cyclical',LOW:'Consumer Cyclical',SBUX:'Consumer Cyclical',BKNG:'Consumer Cyclical',TJX:'Consumer Cyclical',ROST:'Consumer Cyclical',CMG:'Consumer Cyclical',DHI:'Consumer Cyclical',LEN:'Consumer Cyclical',PHM:'Consumer Cyclical',PVH:'Consumer Cyclical',RL:'Consumer Cyclical',BBWI:'Consumer Cyclical',AZO:'Consumer Cyclical',ORLY:'Consumer Cyclical',GPC:'Consumer Cyclical',AN:'Consumer Cyclical',KMX:'Consumer Cyclical',APTV:'Consumer Cyclical',BWA:'Consumer Cyclical',F:'Consumer Cyclical',GM:'Consumer Cyclical',LVS:'Consumer Cyclical',MGM:'Consumer Cyclical',WYNN:'Consumer Cyclical',CZR:'Consumer Cyclical',HLT:'Consumer Cyclical',MAR:'Consumer Cyclical',H:'Consumer Cyclical',CCL:'Consumer Cyclical',RCL:'Consumer Cyclical',NCLH:'Consumer Cyclical',YUM:'Consumer Cyclical',DRI:'Consumer Cyclical',LYV:'Consumer Cyclical',ETSY:'Consumer Cyclical',EBAY:'Consumer Cyclical',W:'Consumer Cyclical',TPR:'Consumer Cyclical',CHDN:'Consumer Cyclical',QSR:'Consumer Cyclical',WING:'Consumer Cyclical',LULU:'Consumer Cyclical',POOL:'Consumer Cyclical',
+  GOOGL:'Communication Services',GOOG:'Communication Services',META:'Communication Services',NFLX:'Communication Services',CMCSA:'Communication Services',T:'Communication Services',VZ:'Communication Services',TMUS:'Communication Services',WBD:'Communication Services',CHTR:'Communication Services',OMC:'Communication Services',IPG:'Communication Services',TTWO:'Communication Services',EA:'Communication Services',MTCH:'Communication Services',IAC:'Communication Services',PINS:'Communication Services',SNAP:'Communication Services',FOXA:'Communication Services',FOX:'Communication Services',NWS:'Communication Services',NWSA:'Communication Services',DIS:'Communication Services',PARA:'Communication Services',
+  PG:'Consumer Defensive',KO:'Consumer Defensive',PEP:'Consumer Defensive',COST:'Consumer Defensive',WMT:'Consumer Defensive',PM:'Consumer Defensive',MO:'Consumer Defensive',MDLZ:'Consumer Defensive',CL:'Consumer Defensive',EL:'Consumer Defensive',KMB:'Consumer Defensive',CHD:'Consumer Defensive',CLX:'Consumer Defensive',SJM:'Consumer Defensive',CAG:'Consumer Defensive',CPB:'Consumer Defensive',GIS:'Consumer Defensive',K:'Consumer Defensive',KHC:'Consumer Defensive',HSY:'Consumer Defensive',MKC:'Consumer Defensive',HRL:'Consumer Defensive',TSN:'Consumer Defensive',LW:'Consumer Defensive',INGR:'Consumer Defensive',STZ:'Consumer Defensive',TAP:'Consumer Defensive',SYY:'Consumer Defensive',KR:'Consumer Defensive',CASY:'Consumer Defensive',USFD:'Consumer Defensive',
+  XOM:'Energy',CVX:'Energy',COP:'Energy',EOG:'Energy',SLB:'Energy',MPC:'Energy',VLO:'Energy',PSX:'Energy',OXY:'Energy',DVN:'Energy',BKR:'Energy',HAL:'Energy',HES:'Energy',FANG:'Energy',APA:'Energy',MRO:'Energy',EQT:'Energy',RRC:'Energy',AR:'Energy',NOV:'Energy',TRGP:'Energy',OKE:'Energy',KMI:'Energy',WMB:'Energy',LNG:'Energy',CQP:'Energy',CTRA:'Energy',
+  RTX:'Industrials',HON:'Industrials',UPS:'Industrials',CAT:'Industrials',DE:'Industrials',BA:'Industrials',LMT:'Industrials',NOC:'Industrials',GD:'Industrials',TXT:'Industrials',HWM:'Industrials',GE:'Industrials',EMR:'Industrials',ETN:'Industrials',ROK:'Industrials',PH:'Industrials',ITW:'Industrials',IR:'Industrials',FTV:'Industrials',AME:'Industrials',ROP:'Industrials',LDOS:'Industrials',SAIC:'Industrials',TDG:'Industrials',SWK:'Industrials',SNA:'Industrials',PNR:'Industrials',FAST:'Industrials',GWW:'Industrials',XYL:'Industrials',NDSN:'Industrials',GNRC:'Industrials',EFX:'Industrials',ADP:'Industrials',PAYX:'Industrials',CTAS:'Industrials',UNP:'Industrials',NSC:'Industrials',CSX:'Industrials',FDX:'Industrials',CHRW:'Industrials',EXPD:'Industrials',JBHT:'Industrials',R:'Industrials',AL:'Industrials',AAL:'Industrials',DAL:'Industrials',UAL:'Industrials',LUV:'Industrials',ALK:'Industrials',GEV:'Industrials',AXON:'Industrials',PWR:'Industrials',VRT:'Industrials',MTZ:'Industrials',J:'Industrials',WAB:'Industrials',OTIS:'Industrials',CARR:'Industrials',TT:'Industrials',CPRT:'Industrials',VRSK:'Industrials',RSG:'Industrials',WM:'Industrials',FLR:'Industrials',JCI:'Industrials',HUBB:'Industrials',MAS:'Industrials',
+  LIN:'Basic Materials',APD:'Basic Materials',SHW:'Basic Materials',DD:'Basic Materials',DOW:'Basic Materials',CTVA:'Basic Materials',NUE:'Basic Materials',STLD:'Basic Materials',RS:'Basic Materials',CF:'Basic Materials',MOS:'Basic Materials',FMC:'Basic Materials',PPG:'Basic Materials',ECL:'Basic Materials',IFF:'Basic Materials',BLL:'Basic Materials',PKG:'Basic Materials',IP:'Basic Materials',WRK:'Basic Materials',SEE:'Basic Materials',AVY:'Basic Materials',ALB:'Basic Materials',FCX:'Basic Materials',NEM:'Basic Materials',AA:'Basic Materials',CE:'Basic Materials',EMN:'Basic Materials',
+  NEE:'Utilities',D:'Utilities',DUK:'Utilities',SO:'Utilities',AEP:'Utilities',EXC:'Utilities',XEL:'Utilities',SRE:'Utilities',ES:'Utilities',WEC:'Utilities',ETR:'Utilities',FE:'Utilities',PPL:'Utilities',CMS:'Utilities',LNT:'Utilities',EVRG:'Utilities',AEE:'Utilities',PNW:'Utilities',NI:'Utilities',ATO:'Utilities',AWK:'Utilities',SWX:'Utilities',NWE:'Utilities',BKH:'Utilities',POR:'Utilities',
+  AMT:'Real Estate',PLD:'Real Estate',CCI:'Real Estate',EQIX:'Real Estate',PSA:'Real Estate',SPG:'Real Estate',O:'Real Estate',DLR:'Real Estate',WY:'Real Estate',EQR:'Real Estate',AVB:'Real Estate',ESS:'Real Estate',MAA:'Real Estate',UDR:'Real Estate',CPT:'Real Estate',INVH:'Real Estate',AMH:'Real Estate',WELL:'Real Estate',VTR:'Real Estate',PEAK:'Real Estate',DOC:'Real Estate',HR:'Real Estate',OHI:'Real Estate',VICI:'Real Estate',GLPI:'Real Estate',EXR:'Real Estate',IRM:'Real Estate',ARE:'Real Estate',BXP:'Real Estate',SLG:'Real Estate',KIM:'Real Estate',REG:'Real Estate',FRT:'Real Estate',NNN:'Real Estate',CBRE:'Real Estate',SBAC:'Real Estate',
 };
+
+const TKS=['AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','QCOM','TXN','INTC','IBM','ADBE','NOW','CSCO','AMAT','MU','LRCX','KLAC','ADI','MRVL','CDNS','SNPS','INTU','HPQ','HPE','FTNT','PANW','CRWD','JNPR','KEYS','ANSS','TER','SWKS','QRVO','MPWR','ON','NTAP','STX','WDC','AKAM','ZBRA','GEN','TRMB','EPAM','CTSH','ACN','IT','GDDY','DXC','VRSN','BR','PYPL','FSLR','ENPH','PLTR','NET','DDOG','ZS','WDAY','ANET','GLW','TEL','APH','CDW','FFIV','JPM','BAC','WFC','GS','MS','BLK','C','AXP','COF','USB','TFC','PNC','SCHW','BK','STT','MTB','RF','CFG','HBAN','KEY','FITB','CMA','ZION','WRB','ALL','PGR','MET','PRU','AFL','AIG','HIG','LNC','UNM','GL','CB','TRV','MMC','AON','AJG','CINF','WTW','RJF','NTRS','SEIC','FDS','ICE','CME','CBOE','NDAQ','SPGI','MCO','V','MA','DFS','SYF','ALLY','WEX','SLM','FNF','FHN','JNJ','UNH','LLY','MRK','ABBV','TMO','DHR','ABT','PFE','BMY','AMGN','GILD','MDT','BSX','SYK','EW','ISRG','ZBH','BAX','BDX','HOLX','IDXX','IQV','LH','DGX','MTD','ALGN','HSIC','VTRS','MRNA','BIO','GEHC','HCA','UHS','CNC','CI','HUM','ELV','CVS','MOH','RMD','DXCM','PODD','INCY','REGN','VRTX','BIIB','ILMN','A','CTLT','WBA','MCK','CAH','ABC','RVTY','ZTS','TECH','PKI','AMZN','TSLA','HD','MCD','NKE','LOW','SBUX','BKNG','TJX','ROST','CMG','DHI','LEN','PHM','PVH','RL','BBWI','AZO','ORLY','GPC','AN','KMX','APTV','BWA','F','GM','LVS','MGM','WYNN','CZR','HLT','MAR','H','CCL','RCL','NCLH','YUM','DRI','LYV','ETSY','EBAY','W','TPR','CHDN','QSR','WING','LULU','POOL','GOOGL','GOOG','META','NFLX','CMCSA','T','VZ','TMUS','WBD','CHTR','OMC','IPG','TTWO','EA','MTCH','IAC','PINS','SNAP','FOXA','FOX','NWS','NWSA','DIS','PARA','PG','KO','PEP','COST','WMT','PM','MO','MDLZ','CL','EL','KMB','CHD','CLX','SJM','CAG','CPB','GIS','K','KHC','HSY','MKC','HRL','TSN','LW','INGR','STZ','TAP','SYY','KR','CASY','USFD','XOM','CVX','COP','EOG','SLB','MPC','VLO','PSX','OXY','DVN','BKR','HAL','HES','FANG','APA','MRO','EQT','RRC','AR','NOV','TRGP','OKE','KMI','WMB','LNG','CQP','CTRA','RTX','HON','UPS','CAT','DE','BA','LMT','NOC','GD','TXT','HWM','GE','EMR','ETN','ROK','PH','ITW','IR','FTV','AME','ROP','LDOS','SAIC','TDG','SWK','SNA','PNR','FAST','GWW','XYL','NDSN','GNRC','EFX','ADP','PAYX','CTAS','UNP','NSC','CSX','FDX','CHRW','EXPD','JBHT','R','AL','AAL','DAL','UAL','LUV','ALK','GEV','AXON','PWR','VRT','MTZ','J','WAB','OTIS','CARR','TT','CPRT','VRSK','RSG','WM','FLR','JCI','HUBB','MAS','LIN','APD','SHW','DD','DOW','CTVA','NUE','STLD','RS','CF','MOS','FMC','PPG','ECL','IFF','BLL','PKG','IP','WRK','SEE','AVY','ALB','FCX','NEM','AA','CE','EMN','NEE','D','DUK','SO','AEP','EXC','XEL','SRE','ES','WEC','ETR','FE','PPL','CMS','LNT','EVRG','AEE','PNW','NI','ATO','AWK','SWX','NWE','BKH','POR','AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WY','EQR','AVB','ESS','MAA','UDR','CPT','INVH','AMH','WELL','VTR','PEAK','DOC','HR','OHI','VICI','GLPI','EXR','IRM','ARE','BXP','SLG','KIM','REG','FRT','NNN','CBRE','SBAC'];
+
+const SI={'Technology':['IT','s-IT'],'Healthcare':['HC','s-HC'],'Financial Services':['FIN','s-FI'],'Consumer Cyclical':['C.DIS','s-CD'],'Consumer Defensive':['C.STP','s-CS'],'Energy':['ENRG','s-EN'],'Industrials':['IND','s-IN'],'Basic Materials':['MAT','s-MA'],'Utilities':['UTIL','s-UT'],'Real Estate':['RE','s-RE'],'Communication Services':['COMM','s-CO']};
 
 let rows=[], sKey='marketCap', sDir=-1;
 
-// ── Fetch via backend ──
+// ── Advanced filter state ──
+const FLT = { pe:{min:null,max:null}, fwdpe:{min:null,max:null}, pb:{min:null,max:null}, ret1d:{min:null,max:null}, retytd:{min:null,max:null}, revg:{min:null,max:null} };
+const FLT_FIELD = { pe:'pe', fwdpe:'fwdPE', pb:'pb', ret1d:'ret1d', retytd:'retYTD', revg:'revG' };
+
+function toggleFilters(){ document.getElementById('fltPanel').classList.toggle('open'); }
+function setFlt(key,mn,mx){
+  FLT[key].min=mn; FLT[key].max=mx;
+  const mi=document.getElementById(key+'_min'), ma=document.getElementById(key+'_max');
+  if(mi) mi.value = mn??'';
+  if(ma) ma.value = mx??'';
+  render();
+}
+function clearFlt(key){ setFlt(key,null,null); }
+function clearAllFlt(){ Object.keys(FLT).forEach(k=>clearFlt(k)); }
+function applyFlt(){
+  Object.keys(FLT).forEach(k=>{
+    const mi=document.getElementById(k+'_min'), ma=document.getElementById(k+'_max');
+    FLT[k].min = mi&&mi.value!==''?parseFloat(mi.value):null;
+    FLT[k].max = ma&&ma.value!==''?parseFloat(ma.value):null;
+  });
+  render();
+}
+
+// ── Fetch ──
 async function fQ(syms){
-  try{
-    const r=await fetch(`${BASE_URL}/api/quote?symbols=${syms.join(',')}`);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    return d.quoteResponse?.result||[];
-  }catch(e){console.error('fQ:',e.message);return[];}
+  try{ const r=await fetch(`${BASE_URL}/api/quote?symbols=${syms.join(',')}`); return (await r.json()).quoteResponse?.result||[]; }catch(e){return[];}
 }
 async function fS(syms){
-  try{
-    const r=await fetch(`${BASE_URL}/api/spark?symbols=${syms.join(',')}`);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    return d.spark?.result||[];
-  }catch(e){console.error('fS:',e.message);return[];}
+  try{ const r=await fetch(`${BASE_URL}/api/spark?symbols=${syms.join(',')}`); return (await r.json()).spark?.result||[]; }catch(e){return[];}
 }
 
 // ── Math ──
@@ -222,7 +371,15 @@ function rY(c,ts){
   if(!sc||!lc)return null;return(lc-sc)/sc*100;
 }
 
-// ── UI helpers ──
+// ── Weighted mean by market cap ──
+function wmean(vals, mcs){
+  const pairs=vals.map((v,i)=>({v,w:mcs[i]})).filter(p=>p.v!=null&&isFinite(p.v)&&p.w>0&&isFinite(p.w));
+  if(!pairs.length)return null;
+  const sw=pairs.reduce((s,p)=>s+p.w,0);
+  return pairs.reduce((s,p)=>s+p.v*p.w,0)/sw;
+}
+
+// ── UI ──
 function pp(p,t){
   const f=document.getElementById('pFill'),m=document.getElementById('pMsg'),lm=document.getElementById('loadMsg');
   if(f)f.style.width=p+'%';if(m)m.textContent=t;if(lm)lm.textContent=t;
@@ -231,15 +388,10 @@ function sv(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function sl(ms){return new Promise(r=>setTimeout(r,ms));}
 function showErr(ttl,det){
   document.getElementById('pWrap').style.display='none';
-  document.getElementById('tWrap').innerHTML=`<div class="sc" style="gap:12px">
-    <div style="font-size:28px">⚠</div>
-    <div class="sm" style="color:var(--amber);font-size:13px">${ttl}</div>
-    <div style="font-size:11px;color:var(--muted);max-width:500px;text-align:center;line-height:1.7">${det}</div>
-    <button class="btn" style="margin-top:8px" onclick="loadData()">↻ Reintentar</button>
-  </div>`;
+  document.getElementById('tWrap').innerHTML=`<div class="sc" style="gap:12px"><div style="font-size:28px">⚠</div><div class="sm" style="color:var(--amber);font-size:13px">${ttl}</div><div style="font-size:11px;color:var(--muted);max-width:500px;text-align:center;line-height:1.7">${det}</div><button class="btn" style="margin-top:8px" onclick="loadData()">↻ Reintentar</button></div>`;
 }
 
-// ── Main load ──
+// ── Load ──
 async function loadData(){
   const btn=document.getElementById('rfBtn');btn.disabled=true;
   document.getElementById('liveBadge').style.opacity='0';
@@ -247,28 +399,13 @@ async function loadData(){
   document.getElementById('pFill').style.width='0%';
   document.getElementById('tWrap').innerHTML=`<div class="sc"><div class="spin"></div><div class="sm" id="loadMsg">Conectando con backend...</div></div>`;
 
-  // Test de conexión — Render puede tardar en despertar (free tier)
-  pp(2,'Conectando con backend... (puede tardar ~15s si estaba inactivo)');
+  pp(2,'Conectando con backend... (puede tardar ~20s si estaba inactivo)');
   let connOk=false;
-  for(let attempt=0;attempt<3;attempt++){
-    try{
-      const r=await fetch(`${BASE_URL}/api/quote?symbols=AAPL`,{signal:AbortSignal.timeout?AbortSignal.timeout(25000):undefined});
-      const d=await r.json();
-      if(d.quoteResponse?.result?.length>0){connOk=true;break;}
-    }catch(e){console.warn('Attempt',attempt+1,e.message);}
-    if(attempt<2){pp(5+attempt*5,'Reintentando conexión...');await sl(3000);}
+  for(let a=0;a<3;a++){
+    try{const r=await fetch(`${BASE_URL}/api/quote?symbols=AAPL`);const d=await r.json();if(d.quoteResponse?.result?.length>0){connOk=true;break;}}catch(e){}
+    if(a<2){pp(5+a*5,'Reintentando conexión...');await sl(4000);}
   }
-
-  if(!connOk){
-    showErr('Error de conectividad',
-      `No se pudo conectar con el backend en Render.<br><br>
-       <b>Posibles causas:</b><br>
-       • El servidor en Render está tardando en despertar (free tier — esperá 30s y reintentá)<br>
-       • Yahoo Finance bloqueó las peticiones desde el servidor<br>
-       • El URL del backend cambió<br><br>
-       Backend: <code style="color:var(--amber)">${BASE_URL}</code>`);
-    btn.disabled=false;return;
-  }
+  if(!connOk){showErr('Error de conectividad',`No se pudo conectar con el backend.<br><br>El servidor puede estar despertando (free tier). Esperá 30s y reintentá.<br><br>Backend: <code style="color:var(--amber)">${BASE_URL}</code>`);btn.disabled=false;return;}
 
   rows=[];
   const tks=[...new Set(TKS)];
@@ -276,40 +413,51 @@ async function loadData(){
   const total=bats.length*2;let done=0;
   const tick=msg=>{done++;pp(Math.round(done/total*100),msg);};
 
-  // Phase 1: Quotes
   const qM={};
   for(let i=0;i<bats.length;i++){
     tick(`Cotizaciones [${i+1}/${bats.length}] — ${Object.keys(qM).length} cargadas`);
     (await fQ(bats[i])).forEach(q=>{qM[q.symbol]=q;});
-    if(i<bats.length-1)await sl(100);
+    if(i<bats.length-1)await sl(80);
   }
-  if(!Object.keys(qM).length){
-    showErr('Sin datos de cotizaciones','El backend respondió pero Yahoo Finance devolvió vacío. Intentá en unos minutos.');
-    btn.disabled=false;return;
-  }
+  if(!Object.keys(qM).length){showErr('Sin datos','Backend respondió vacío. Intentá en unos minutos.');btn.disabled=false;return;}
 
-  // Phase 2: Spark
   const spM={};
   for(let i=0;i<bats.length;i++){
-    tick(`Retornos históricos [${i+1}/${bats.length}] — ${Object.keys(qM).length} OK`);
-    (await fS(bats[i])).forEach(s=>{
-      if(s.response?.[0]){const r=s.response[0];spM[s.symbol]={closes:r.indicators?.quote?.[0]?.close||[],timestamps:r.timestamp||[]};}
+    tick(`Retornos históricos [${i+1}/${bats.length}]`);
+    const res=await fS(bats[i]);
+    res.forEach(s=>{
+      if(s.response?.[0]){
+        const r=s.response[0];
+        const closes=r.indicators?.quote?.[0]?.close||[];
+        const timestamps=r.timestamp||[];
+        if(closes.length>0) spM[s.symbol]={closes,timestamps};
+      }
     });
-    if(i<bats.length-1)await sl(100);
+    if(i<bats.length-1)await sl(80);
   }
 
-  // Merge
   tick('Procesando...');
   for(const sym of tks){
     const q=qM[sym];if(!q)continue;
-    const sp=spM[sym],c=sp?.closes||[],ts=sp?.timestamps||[];
+    const sp=spM[sym];
+    const c=sp?.closes||[], ts=sp?.timestamps||[];
+    // Sector: primero de YF, sino del mapa hardcodeado
+    const sector=q.sector||SECTOR_MAP[sym]||'';
     rows.push({
-      symbol:q.symbol,name:q.shortName||q.longName||sym,sector:q.sector||'',
-      price:q.regularMarketPrice,marketCap:q.marketCap,pe:q.trailingPE,
-      fwdPE:q.forwardPE,pb:q.priceToBook,
-      ret1d:q.regularMarketChangePercent,ret5d:rN(c,5),ret1m:rN(c,21),
-      retYTD:rY(c,ts),ret1y:rN(c,252),
-      revG:q.revenueGrowth!=null?q.revenueGrowth*100:null
+      symbol:q.symbol,
+      name:q.shortName||q.longName||sym,
+      sector,
+      price:q.regularMarketPrice,
+      marketCap:q.marketCap,
+      pe:q.trailingPE,
+      fwdPE:q.forwardPE,
+      pb:q.priceToBook,
+      ret1d:q.regularMarketChangePercent,
+      ret5d:rN(c,5),
+      ret1m:rN(c,21),
+      retYTD:rY(c,ts),
+      ret1y:rN(c,252),
+      revG:q.revenueGrowth!=null?q.revenueGrowth*100:null,
     });
   }
 
@@ -319,24 +467,29 @@ async function loadData(){
   render();updateStats();btn.disabled=false;
 }
 
-// ── Stats ──
-function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null;}
+// ── Stats (market cap weighted) ──
 function updateStats(){
-  const n=rows.length;sv('sN',n);
-  const pes=rows.filter(r=>r.pe>0&&r.pe<500).map(r=>r.pe);
-  const fwds=rows.filter(r=>r.fwdPE>0&&r.fwdPE<200).map(r=>r.fwdPE);
-  const pbs=rows.filter(r=>r.pb>0&&r.pb<200).map(r=>r.pb);
-  const ytds=rows.filter(r=>r.retYTD!=null).map(r=>r.retYTD);
+  const n=rows.length; sv('sN',n);
+  const mcs=rows.map(r=>r.marketCap||0);
   const fmx=v=>v!=null?v.toFixed(1)+'x':'—';
-  sv('sPE',fmx(avg(pes)));sv('sFwd',fmx(avg(fwds)));sv('sPB',fmx(avg(pbs)));
-  sv('sG',rows.filter(r=>r.ret1d>0).length);sv('sL',rows.filter(r=>r.ret1d<0).length);
-  const a1=avg(rows.filter(r=>r.ret1d!=null).map(r=>r.ret1d));
+  const fpct=v=>v!=null?(v>=0?'+':'')+v.toFixed(2)+'%':'—';
+
+  const peW=wmean(rows.map(r=>(r.pe>0&&r.pe<500)?r.pe:null),mcs);
+  const fwW=wmean(rows.map(r=>(r.fwdPE>0&&r.fwdPE<200)?r.fwdPE:null),mcs);
+  const pbW=wmean(rows.map(r=>(r.pb>0&&r.pb<200)?r.pb:null),mcs);
+  const r1W=wmean(rows.map(r=>r.ret1d),mcs);
+  const ytW=wmean(rows.map(r=>r.retYTD),mcs);
+
+  sv('sPE',fmx(peW));sv('sFwd',fmx(fwW));sv('sPB',fmx(pbW));
+  sv('sG',rows.filter(r=>r.ret1d>0).length);
+  sv('sL',rows.filter(r=>r.ret1d<0).length);
+
   const e1=document.getElementById('s1D');
-  if(a1!=null){e1.textContent=(a1>=0?'+':'')+a1.toFixed(2)+'%';e1.className='stat-val '+(a1>=0?'up':'dn');}
-  const aY=avg(ytds);
+  if(r1W!=null){e1.textContent=(r1W>=0?'+':'')+r1W.toFixed(2)+'%';e1.className='stat-val '+(r1W>=0?'up':'dn');}
   const eY=document.getElementById('sYTD');
-  if(aY!=null){eY.textContent=(aY>=0?'+':'')+aY.toFixed(2)+'%';eY.className='stat-val '+(aY>=0?'up':'dn');}
-  sv('fCnt',`${n} EMPRESAS CARGADAS · YAHOO FINANCE VIA RENDER`);
+  if(ytW!=null){eY.textContent=(ytW>=0?'+':'')+ytW.toFixed(2)+'%';eY.className='stat-val '+(ytW>=0?'up':'dn');}
+
+  sv('fCnt',`${n} EMPRESAS · YAHOO FINANCE VÍA RENDER`);
 }
 
 // ── Format ──
@@ -345,7 +498,7 @@ function fMC(v){if(!v||!isFinite(v))return NA;if(v>=1e12)return(v/1e12).toFixed(
 function fPx(v){if(!v||!isFinite(v))return NA;return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fMx(v,c=999){if(!v||!isFinite(v)||v<=0||v>c)return NA;return v.toFixed(1)+'x';}
 function fPct(v){if(v==null||!isFinite(v))return NA;const cl=v>0?'pp':v<0?'pn':'';return`<span class="${cl}">${v>=0?'+':''}${v.toFixed(2)}%</span>`;}
-function fPill(sec){const i=SI[sec];if(!i)return NA;return`<span class="pill ${i[1]}">${i[0]}</span>`;}
+function fPill(sec){const i=SI[sec];if(!i)return`<span class="na">${sec||'—'}</span>`;return`<span class="pill ${i[1]}">${i[0]}</span>`;}
 
 const COLS=[
   {k:'_r',l:'#',s:false},{k:'symbol',l:'Ticker',s:true},{k:'name',l:'Empresa',s:true},{k:'sector',l:'Sector',s:true},
@@ -355,6 +508,7 @@ const COLS=[
   {k:'retYTD',l:'YTD %',s:true,f:fPct},{k:'ret1y',l:'1Y %',s:true,f:fPct},{k:'revG',l:'Rev. Growth',s:true,f:fPct},
 ];
 
+// ── Filter ──
 function getF(){
   const q=document.getElementById('srch').value.trim().toLowerCase();
   const sec=document.getElementById('secF').value;
@@ -365,10 +519,18 @@ function getF(){
     if(mc){const m=r.marketCap;if(!m)return false;
       if(mc==='mega'&&m<200e9)return false;if(mc==='large'&&(m<10e9||m>=200e9))return false;
       if(mc==='mid'&&(m<2e9||m>=10e9))return false;if(mc==='small'&&m>=2e9)return false;}
+    // Advanced filters
+    for(const [fk,fv] of Object.entries(FLT)){
+      const field=FLT_FIELD[fk];
+      const val=r[field];
+      if(fv.min!==null&&(val==null||val<fv.min))return false;
+      if(fv.max!==null&&(val==null||val>fv.max))return false;
+    }
     return true;
   });
 }
 
+// ── Render ──
 function render(){
   const filt=getF();
   const sorted=[...filt].sort((a,b)=>{
@@ -382,7 +544,7 @@ function render(){
   if(!sorted.length){
     document.getElementById('tWrap').innerHTML=rows.length===0?
       '<div class="sc"><div class="sm">Sin datos — presioná ↻ Actualizar</div></div>':
-      '<div class="sc"><div class="sm">Sin resultados para el filtro</div></div>';
+      '<div class="sc"><div class="sm">Sin resultados para el filtro aplicado</div></div>';
     return;
   }
   const th=COLS.map(c=>{
@@ -407,11 +569,9 @@ function render(){
 }
 
 function ss(k){if(sKey===k){sDir=-sDir;}else{sKey=k;sDir=(k==='symbol'||k==='name'||k==='sector')?1:-1;}render();}
-
 document.getElementById('srch').addEventListener('input',render);
 document.getElementById('secF').addEventListener('change',render);
 document.getElementById('mcF').addEventListener('change',render);
-
 loadData();
 </script>
 </body>
