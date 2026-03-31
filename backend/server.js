@@ -54,17 +54,11 @@ async function yf(url) {
 
 app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? "ready" : "missing" }));
 
-// Bulk quote — explicit fields to ensure revenueGrowth is included
-const FIELDS = [
-  "symbol","shortName","longName","regularMarketPrice","marketCap",
-  "trailingPE","forwardPE","priceToBook","regularMarketChangePercent",
-  "fiftyTwoWeekChangePercent","sector","revenueGrowth","earningsGrowth"
-].join(",");
-
+// Bulk quote
 app.get("/api/quote", async (req, res) => {
   try {
     const data = await yf(
-      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${req.query.symbols}&lang=en-US&region=US&fields=${FIELDS}`
+      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${req.query.symbols}&lang=en-US&region=US`
     );
     res.json(data);
   } catch (e) {
@@ -73,6 +67,7 @@ app.get("/api/quote", async (req, res) => {
   }
 });
 
+// Spark
 app.get("/api/spark", async (req, res) => {
   try {
     const data = await yf(
@@ -81,6 +76,41 @@ app.get("/api/spark", async (req, res) => {
     res.json(data);
   } catch (e) {
     console.error("spark:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Revenue growth — fetches financialData module for each symbol in parallel
+// Accepts up to 20 symbols per call to avoid rate limiting
+app.get("/api/revgrowth", async (req, res) => {
+  try {
+    const symbols = (req.query.symbols || "").split(",").filter(Boolean).slice(0, 20);
+
+    const results = await Promise.allSettled(
+      symbols.map(sym =>
+        yf(`https://query1.finance.yahoo.com/v11/finance/quoteSummary/${sym}?modules=financialData`)
+          .then(d => {
+            const fd = d?.quoteSummary?.result?.[0]?.financialData;
+            return {
+              symbol: sym,
+              revenueGrowth: fd?.revenueGrowth?.raw ?? null,
+            };
+          })
+      )
+    );
+
+    const out = {};
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") {
+        out[symbols[i]] = r.value.revenueGrowth;
+      } else {
+        out[symbols[i]] = null;
+      }
+    });
+
+    res.json(out);
+  } catch (e) {
+    console.error("revgrowth:", e.message);
     res.status(500).json({ error: e.message });
   }
 });
