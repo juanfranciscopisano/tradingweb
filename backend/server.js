@@ -86,6 +86,44 @@ app.get("/api/spark", async (req, res) => {
   }
 });
 
+// Overview: indices, futures, commodities, treasuries, Fed futures, news
+app.get("/api/overview", async (req, res) => {
+  try {
+    // Build ZQ tickers for next 6 months dynamically
+    const MONTH_CODES = ['F','G','H','J','K','M','N','Q','U','V','X','Z'];
+    const now = new Date();
+    const zqTickers = [];
+    for(let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const code = MONTH_CODES[d.getMonth()];
+      const yr = String(d.getFullYear()).slice(-2);
+      zqTickers.push(`ZQ${code}${yr}.CBT`);
+    }
+
+    const symbols = [
+      'ES=F','NQ=F','YM=F','RTY=F','^VIX',           // US futures + VIX
+      '^STOXX50E','^GDAXI','^FTSE','^N225','^HSI','^MERV', // World
+      'GC=F','CL=F','BZ=F','SI=F','HG=F','NG=F',     // Commodities
+      '^IRX','^FVX','^TNX','^TYX',                   // Treasuries 13w/5y/10y/30y
+      ...zqTickers                                    // Fed Funds futures
+    ].join(',');
+
+    const [quotesData, newsData] = await Promise.all([
+      yf(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`),
+      yf(`https://query1.finance.yahoo.com/v1/finance/search?q=markets+fed+economy&newsCount=10&lang=en-US&region=US&enableFuzzyQuery=false`).catch(() => ({ news: [] }))
+    ]);
+
+    res.json({
+      quotes: quotesData.quoteResponse?.result || [],
+      news: newsData.news || [],
+      zqTickers
+    });
+  } catch (e) {
+    console.error("overview:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Revenue growth — fetches financialData module for each symbol in parallel
 // Accepts up to 20 symbols per call to avoid rate limiting
 app.get("/api/revgrowth", async (req, res) => {
