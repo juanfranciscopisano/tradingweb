@@ -109,15 +109,27 @@ app.get("/api/overview", async (req, res) => {
       ...zqTickers                                    // Fed Funds futures
     ].join(',');
 
-    const [quotesData, newsData] = await Promise.all([
+    // Fetch EFFR (Effective Fed Funds Rate) from FRED - no API key needed
+    const fetchEffr = () => fetch(
+      'https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR',
+      { headers: { 'User-Agent': 'Mozilla/5.0' } }
+    ).then(r => r.text()).then(csv => {
+      const lines = csv.trim().split('\n').filter(l => !l.startsWith('DATE'));
+      const last = lines[lines.length - 1].split(',');
+      return last[1] !== '.' ? parseFloat(last[1]) : null;
+    }).catch(() => null);
+
+    const [quotesData, newsData, effr] = await Promise.all([
       yf(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`),
-      yf(`https://query1.finance.yahoo.com/v1/finance/search?q=markets+fed+economy&newsCount=10&lang=en-US&region=US&enableFuzzyQuery=false`).catch(() => ({ news: [] }))
+      yf(`https://query1.finance.yahoo.com/v1/finance/search?q=markets+fed+economy&newsCount=10&lang=en-US&region=US&enableFuzzyQuery=false`).catch(() => ({ news: [] })),
+      fetchEffr()
     ]);
 
     res.json({
       quotes: quotesData.quoteResponse?.result || [],
       news: newsData.news || [],
-      zqTickers
+      zqTickers,
+      effr  // Effective Fed Funds Rate from FRED
     });
   } catch (e) {
     console.error("overview:", e.message);
