@@ -101,6 +101,7 @@ app.get("/api/overview", async (req, res) => {
     }
 
     const symbols = [
+      '^GSPC','^IXIC','^DJI','^RUT',                // US real indices
       'ES=F','NQ=F','YM=F','RTY=F','^VIX',           // US futures + VIX
       '^STOXX50E','^GDAXI','^FTSE','^N225','^HSI','^MERV', // World
       'GC=F','CL=F','BZ=F','SI=F','HG=F','NG=F',     // Commodities
