@@ -24,6 +24,12 @@ async function refreshCrumb() {
       },
     });
     yfCrumb = await r2.text();
+    // Reject if Yahoo returned an error message instead of a real crumb
+    if(yfCrumb.length > 20 || yfCrumb.includes(' ') || yfCrumb.includes('<')) {
+      console.error("Bad crumb received:", yfCrumb.slice(0,30));
+      yfCrumb = '';
+      return false;
+    }
     console.log("Crumb OK:", yfCrumb.slice(0, 10));
     return yfCrumb.length > 3;
   } catch (e) {
@@ -117,6 +123,18 @@ app.get("/api/revgrowth", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log("Server on port", PORT);
-  await refreshCrumb();
-  setInterval(refreshCrumb, 30 * 60 * 1000);
+  // Try to get crumb with retries
+  let ok = false;
+  for(let i=0; i<5; i++) {
+    ok = await refreshCrumb();
+    if(ok) break;
+    const wait = (i+1) * 3000;
+    console.log(`Crumb failed, retrying in ${wait/1000}s...`);
+    await new Promise(r => setTimeout(r, wait));
+  }
+  // Refresh every 20 minutes
+  setInterval(async () => {
+    const ok = await refreshCrumb();
+    if(!ok) setTimeout(refreshCrumb, 5000); // retry once if fails
+  }, 20 * 60 * 1000);
 });
