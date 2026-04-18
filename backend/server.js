@@ -11,27 +11,37 @@ let yfCookie = "";
 let yfCrumb  = "";
 
 async function refreshCrumb() {
+  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
   try {
-    const r1 = await fetch("https://fc.yahoo.com", {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36" },
+    // Fetch Yahoo Finance page and extract crumb from HTML (avoids rate-limiting on crumb endpoint)
+    const r1 = await fetch("https://finance.yahoo.com/quote/AAPL/", {
+      headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9" },
       redirect: "follow",
     });
+    const html = await r1.text();
     yfCookie = (r1.headers.get("set-cookie") || "").split(",").map(c => c.split(";")[0]).join("; ");
-    const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36",
-        "Cookie": yfCookie,
-      },
-    });
-    yfCrumb = await r2.text();
-    // Reject if Yahoo returned an error message instead of a real crumb
-    if(yfCrumb.length > 20 || yfCrumb.includes(' ') || yfCrumb.includes('<')) {
-      console.error("Bad crumb received:", yfCrumb.slice(0,30));
-      yfCrumb = '';
-      return false;
+
+    // Crumb is embedded in page JS as "crumb":"XXXXXXXXXXX"
+    const m = html.match(/"crumb"\s*:\s*"([^"]{5,20})"/);
+    if (m) {
+      yfCrumb = m[1].replace(/\\u002F/g, "/");
+      console.log("Crumb from HTML:", yfCrumb.slice(0, 10));
+      return true;
     }
-    console.log("Crumb OK:", yfCrumb.slice(0, 10));
-    return yfCrumb.length > 3;
+
+    // Fallback: dedicated endpoint with cookies
+    await new Promise(r => setTimeout(r, 1500));
+    const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
+      headers: { "User-Agent": UA, "Cookie": yfCookie },
+    });
+    const text = (await r2.text()).trim();
+    if (text && text.length <= 20 && !text.includes(" ") && !text.includes("<")) {
+      yfCrumb = text;
+      console.log("Crumb from endpoint:", yfCrumb.slice(0, 10));
+      return true;
+    }
+    console.error("Bad crumb:", text.slice(0, 40));
+    return false;
   } catch (e) {
     console.error("refreshCrumb:", e.message);
     return false;
