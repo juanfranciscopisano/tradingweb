@@ -1,5 +1,4 @@
 
-
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
@@ -17,47 +16,31 @@ async function refreshCrumb() {
   if(crumbFetching) return yfCrumb.length > 3;
   crumbFetching = true;
   try {
-    // Step 1: get cookies via consent API (small response, no overflow)
-    const cookieRes = await fetch("https://consent.yahoo.com/v2/collectConsent?sessionId=1", {
-      headers: { "User-Agent": UA, "Accept": "application/json" },
-      redirect: "follow"
+    const r1 = await fetch("https://fc.yahoo.com", {
+      headers: { "User-Agent": UA }, redirect: "follow"
     });
-    const rawCookies = cookieRes.headers.get("set-cookie") || "";
-    if(rawCookies) {
-      yfCookie = rawCookies.split(",").map(c => c.split(";")[0]).filter(c => c.trim()).join("; ");
-    }
+    yfCookie = (r1.headers.get("set-cookie") || "").split(",").map(c => c.split(";")[0]).join("; ");
 
-    // Step 2: hit a lightweight Yahoo Finance endpoint to get session cookies
-    await new Promise(r => setTimeout(r, 800));
-    const sessionRes = await fetch("https://query2.finance.yahoo.com/v8/finance/chart/AAPL?interval=1d&range=1d", {
-      headers: { ...headers(), "Accept": "*/*" }
-    });
-    const newCookies = sessionRes.headers.get("set-cookie") || "";
-    if(newCookies) {
-      const parsed = newCookies.split(",").map(c => c.split(";")[0]).filter(c => c.trim());
-      yfCookie = [...new Set([...yfCookie.split("; "), ...parsed])].filter(Boolean).join("; ");
-    }
+    await new Promise(r => setTimeout(r, 2000));
 
-    // Step 3: try crumb endpoints with session cookies
-    await new Promise(r => setTimeout(r, 800));
-    for(const url of [
-      "https://query2.finance.yahoo.com/v1/test/getcrumb",
-      "https://query1.finance.yahoo.com/v1/test/getcrumb"
-    ]) {
-      try {
-        const r = await fetch(url, { headers: headers() });
-        const t = (await r.text()).trim();
-        if(t && t.length >= 3 && t.length <= 20 && !t.includes(" ") && !t.includes("<") && !t.toLowerCase().includes("too") && !t.toLowerCase().includes("error")) {
-          yfCrumb = t;
-          console.log("Crumb OK:", yfCrumb.slice(0,8));
-          crumbFetching = false;
-          return true;
-        }
-        console.log("Bad crumb:", t.slice(0,30));
-      } catch(e) { console.log("Crumb endpoint failed:", e.message); }
-      await new Promise(r => setTimeout(r, 1000));
+    for(const host of ["query2.finance.yahoo.com", "query1.finance.yahoo.com"]) {
+      const r2 = await fetch(`https://${host}/v1/test/getcrumb`, {
+        headers: { "User-Agent": UA, "Cookie": yfCookie }
+      });
+      const t = (await r2.text()).trim();
+      const valid = t.length >= 3 && t.length <= 20
+        && !t.includes(" ") && !t.includes("<")
+        && !t.toLowerCase().includes("too")
+        && !t.toLowerCase().includes("error");
+      if(valid) {
+        yfCrumb = t;
+        console.log("Crumb OK:", yfCrumb.slice(0,8));
+        crumbFetching = false;
+        return true;
+      }
+      console.log(`Bad crumb (${host}):`, t.slice(0,30));
+      await new Promise(r => setTimeout(r, 2000));
     }
-
     crumbFetching = false;
     return false;
   } catch(e) {
@@ -216,16 +199,29 @@ app.get("/api/pebg", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log("Server on port", PORT);
-  // Lazy: don't block startup, fetch crumb in background with long delays
+  // Wait 30s before first crumb attempt — avoids startup rate limiting
   const tryWithDelay = async (attempt, delay) => {
     await new Promise(r => setTimeout(r, delay));
+    console.log(`Crumb attempt ${attempt}...`);
     const ok = await refreshCrumb();
-    if(!ok && attempt < 8) tryWithDelay(attempt + 1, Math.min(delay * 1.5, 60000));
+    if(ok) {
+      console.log("Crumb ready after attempt", attempt);
+    } else if(attempt < 10) {
+      const next = Math.min(delay * 2, 120000); // max 2 min between retries
+      console.log(`Attempt ${attempt} failed, next in ${Math.round(next/1000)}s`);
+      tryWithDelay(attempt + 1, next);
+    } else {
+      console.error("Giving up after 10 attempts");
+    }
   };
-  tryWithDelay(1, 5000); // first attempt after 5s
-  // Refresh every 25 min
+  tryWithDelay(1, 30000); // first attempt after 30s
+  // Refresh every 20 min
   setInterval(async () => {
     const ok = await refreshCrumb();
-    if(!ok) setTimeout(refreshCrumb, 15000);
-  }, 25 * 60 * 1000);
+    if(!ok) {
+      console.log("Scheduled refresh failed, retrying in 2 min...");
+      setTimeout(refreshCrumb, 120000);
+    }
+  }, 20 * 60 * 1000);
 });
+
