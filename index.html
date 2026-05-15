@@ -1725,7 +1725,7 @@ async function loadPebg() {
     const d = await r.json();
     if(d.error) throw new Error(d.error);
     pebgData = d;
-    status.textContent = d.shortName || sym;
+    status.textContent = (d.shortName || sym) + (d.epsCount ? ' · ' + d.epsCount + ' trim. EPS' : '');
     renderPebg(d);
   } catch(e) {
     document.getElementById('pebgStatus').textContent = 'Error: ' + e.message;
@@ -1763,16 +1763,15 @@ function renderPebg(data) {
   const sigma = Math.sqrt(peW.reduce((s,v) => s + (v-mu)**2, 0) / peW.length);
 
   // 5 multiples
-  const multiples = [mu+2*sigma, mu+sigma, mu, mu-sigma, mu-2*sigma].map(v => Math.max(0, v));
+  // Keep negative multiples as null (don't show bands below 0)
+  const multipleVals = [mu+2*sigma, mu+sigma, mu, mu-sigma, mu-2*sigma];
+  const multiples = multipleVals.map(v => v > 0 ? v : null);
 
   // Current values
   const last = full[full.length-1];
   const currentPE = last.pe;
   const currentEPS = last.eps4q;
   const zScore = (currentPE - mu) / sigma;
-
-  // Current implied prices at each multiple
-  const impliedNow = multiples.map(m => (currentEPS * m).toFixed(2));
 
   // Update stats bar
   const fmtPE = v => v.toFixed(1) + 'x';
@@ -1790,8 +1789,14 @@ function renderPebg(data) {
   document.getElementById('psStat5').textContent = '$' + currentEPS.toFixed(2);
 
   const multIds = ['6','7','8','9','A'];
+  const impliedNow = multiples.map(m => m != null ? (currentEPS * m).toFixed(2) : null);
   multiples.forEach((m, i) => {
-    document.getElementById('psStat'+multIds[i]).textContent = fmtPE(m)+' → '+fmtP(impliedNow[i]);
+    if(m == null) {
+      document.getElementById('psStat'+multIds[i]).textContent = 'N/A';
+      document.getElementById('psStat'+multIds[i]).style.color = 'var(--muted)';
+    } else {
+      document.getElementById('psStat'+multIds[i]).textContent = fmtPE(m)+' → '+fmtP(impliedNow[i]);
+    }
     document.getElementById('psLbl'+multIds[i]).textContent = '@ '+BAND_LABELS[i];
   });
 
@@ -1801,7 +1806,7 @@ function renderPebg(data) {
   const leg = document.getElementById('pebgLegend');
   leg.innerHTML = [
     `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:#7AC3FF;height:2px"></div>Precio</div>`,
-    ...multiples.map((m,i) => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${BAND_COLORS[i]}"></div>@ ${BAND_LABELS[i]} = ${fmtPE(m)}</div>`)
+    ...multiples.map((m,i) => m != null ? `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${BAND_COLORS[i]}"></div>@ ${BAND_LABELS[i]} = ${fmtPE(m)}</div>` : '').filter(Boolean)
   ].join('');
   leg.style.display = 'flex';
 
@@ -1827,7 +1832,7 @@ function drawPebgChart(full, multiples, mu, sigma, years) {
   const cW = W-PAD.left-PAD.right, cH = H-PAD.top-PAD.bottom;
 
   // Y range: all prices + all implied price lines
-  const allImplied = series.flatMap(p => multiples.map(m => p.eps4q * m));
+  const allImplied = series.flatMap(p => multiples.filter(m => m != null).map(m => p.eps4q * m));
   const allPrices  = series.map(p => p.close);
   const yMin = Math.min(...allPrices, ...allImplied) * 0.92;
   const yMax = Math.max(...allPrices, ...allImplied) * 1.05;
@@ -1864,6 +1869,7 @@ function drawPebgChart(full, multiples, mu, sigma, years) {
 
   // Draw implied price bands (step functions — jump when EPS updates)
   multiples.forEach((mult, mi) => {
+    if(mult == null) return;
     ctx.strokeStyle = BAND_COLORS[mi];
     ctx.lineWidth = 1.5;
     ctx.globalAlpha = 0.85;
@@ -1917,11 +1923,11 @@ function drawPebgChart(full, multiples, mu, sigma, years) {
     const tipRows = [
       {color:'#7AC3FF', label:'Precio', val:'$'+p.close.toFixed(2)},
       {color:'transparent', label:'P/E TTM', val:p.pe.toFixed(1)+'x'},
-      ...multiples.map((m,i) => ({
+      ...multiples.map((m,i) => m != null ? {
         color:BAND_COLORS[i],
         label:'@ '+BAND_LABELS[i]+' ('+m.toFixed(1)+'x)',
         val:'$'+(p.eps4q*m).toFixed(2)
-      }))
+      } : null).filter(Boolean)
     ];
     rows.innerHTML = tipRows.map(r =>
       `<div class="pebg-tooltip-row">
