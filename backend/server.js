@@ -8,77 +8,70 @@ const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 3000;
 
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 let yfCookie = "";
 let yfCrumb  = "";
+let crumbFetching = false;
 
 async function refreshCrumb() {
-  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+  if(crumbFetching) return yfCrumb.length > 3;
+  crumbFetching = true;
   try {
-    // Step 1: get cookies from fc.yahoo.com (minimal headers, no overflow)
+    // Use query2 (separate rate limit pool from query1)
     const r1 = await fetch("https://fc.yahoo.com", {
-      headers: { "User-Agent": UA },
-      redirect: "follow",
+      headers: { "User-Agent": UA }, redirect: "follow"
     });
     yfCookie = (r1.headers.get("set-cookie") || "").split(",").map(c => c.split(";")[0]).join("; ");
 
-    // Step 2: get crumb
-    const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
-      headers: { "User-Agent": UA, "Cookie": yfCookie },
-    });
-    const text = (await r2.text()).trim();
-
-    // Valid crumb: short, no spaces, no HTML, not an error message
-    const isValid = text.length >= 3 && text.length <= 20
-      && !text.includes(" ") && !text.includes("<")
-      && !text.toLowerCase().includes("too") && !text.toLowerCase().includes("error");
-
-    if (isValid) {
-      yfCrumb = text;
-      console.log("Crumb OK:", yfCrumb.slice(0, 10));
-      return true;
+    for(const host of ["query2.finance.yahoo.com","query1.finance.yahoo.com"]) {
+      await new Promise(r => setTimeout(r, 1500));
+      const r2 = await fetch(`https://${host}/v1/test/getcrumb`, {
+        headers: { "User-Agent": UA, "Cookie": yfCookie }
+      });
+      const t = (await r2.text()).trim();
+      if(t.length >= 3 && t.length <= 20 && !t.includes(" ") && !t.includes("<") && !t.toLowerCase().includes("too")) {
+        yfCrumb = t;
+        console.log(`Crumb OK (${host}):`, yfCrumb.slice(0,8));
+        crumbFetching = false;
+        return true;
+      }
+      console.log(`Bad crumb (${host}):`, t.slice(0,30));
     }
-
-    // Fallback: try query2 which has separate rate limiting
-    const r3 = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
-      headers: { "User-Agent": UA, "Cookie": yfCookie },
-    });
-    const text2 = (await r3.text()).trim();
-    const isValid2 = text2.length >= 3 && text2.length <= 20
-      && !text2.includes(" ") && !text2.includes("<")
-      && !text2.toLowerCase().includes("too");
-
-    if (isValid2) {
-      yfCrumb = text2;
-      console.log("Crumb (q2) OK:", yfCrumb.slice(0, 10));
-      return true;
-    }
-
-    console.error("Bad crumb:", text.slice(0, 40));
+    crumbFetching = false;
     return false;
-  } catch (e) {
+  } catch(e) {
     console.error("refreshCrumb:", e.message);
+    crumbFetching = false;
     return false;
   }
 }
 
-function yh() {
-  return {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Accept": "application/json",
-    "Referer": "https://finance.yahoo.com/",
-    "Cookie": yfCookie,
-  };
+function headers() {
+  return { "User-Agent": UA, "Accept": "application/json", "Referer": "https://finance.yahoo.com/", "Cookie": yfCookie };
 }
 
 async function yf(url) {
-  const u = url + (url.includes("?") ? "&" : "?") + `crumb=${encodeURIComponent(yfCrumb)}`;
-  let r = await fetch(u, { headers: yh() });
-  if (r.status === 401 || r.status === 403) {
-    await refreshCrumb();
-    r = await fetch(url + (url.includes("?") ? "&" : "?") + `crumb=${encodeURIComponent(yfCrumb)}`, { headers: yh() });
+  // Try with crumb first
+  if(yfCrumb) {
+    const u = url + (url.includes("?") ? "&" : "?") + `crumb=${encodeURIComponent(yfCrumb)}`;
+    const r = await fetch(u, { headers: headers() });
+    if(r.ok) return r.json();
+    if(r.status === 401 || r.status === 403) {
+      console.log("Crumb rejected, refreshing...");
+      await refreshCrumb();
+    }
   }
-  if (!r.ok) throw new Error(`Yahoo ${r.status}`);
-  return r.json();
+  // Try without crumb (works on some endpoints)
+  const r = await fetch(url, { headers: headers() });
+  if(r.ok) return r.json();
+  // Last resort: with fresh crumb
+  if(yfCrumb) {
+    const u = url + (url.includes("?") ? "&" : "?") + `crumb=${encodeURIComponent(yfCrumb)}`;
+    const r2 = await fetch(u, { headers: headers() });
+    if(!r2.ok) throw new Error(`Yahoo ${r2.status}`);
+    return r2.json();
+  }
+  throw new Error(`Yahoo ${r.status}`);
 }
 
 app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? "ready" : "missing" }));
@@ -87,20 +80,14 @@ app.get("/api/quote", async (req, res) => {
   try {
     const data = await yf(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${req.query.symbols}&lang=en-US&region=US`);
     res.json(data);
-  } catch (e) {
-    console.error("quote:", e.message);
-    res.status(500).json({ error: e.message });
-  }
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get("/api/spark", async (req, res) => {
   try {
     const data = await yf(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${req.query.symbols}&range=1y&interval=1d`);
     res.json(data);
-  } catch (e) {
-    console.error("spark:", e.message);
-    res.status(500).json({ error: e.message });
-  }
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get("/api/overview", async (req, res) => {
@@ -128,7 +115,7 @@ app.get("/api/overview", async (req, res) => {
           { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal });
         const csv = await r.text();
         const lines = csv.trim().split('\n').filter(l => !l.startsWith('DATE'));
-        const last = lines[lines.length - 1]?.split(',');
+        const last = lines[lines.length-1]?.split(',');
         return (last && last[1] && last[1] !== '.') ? parseFloat(last[1]) : null;
       } catch(e) { return null; }
     };
@@ -138,66 +125,67 @@ app.get("/api/overview", async (req, res) => {
       yf(`https://query1.finance.yahoo.com/v1/finance/search?q=markets+fed+economy&newsCount=10&lang=en-US&region=US&enableFuzzyQuery=false`).catch(() => ({ news: [] })),
       fetchEffr()
     ]);
-
-    res.json({
-      quotes: quotesData.quoteResponse?.result || [],
-      news: newsData.news || [],
-      zqTickers,
-      effr
-    });
-  } catch (e) {
-    console.error("overview:", e.message);
-    res.status(500).json({ error: e.message });
-  }
+    res.json({ quotes: quotesData.quoteResponse?.result || [], news: newsData.news || [], zqTickers, effr });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// PEBG: price history + quarterly EPS for P/E TTM chart
 app.get("/api/pebg", async (req, res) => {
   try {
     const sym = (req.query.symbol || '').toUpperCase().trim();
     if(!sym) return res.status(400).json({ error: 'symbol required' });
 
-    // Fetch 3 years of daily prices + earnings history in parallel
-    const [priceData, summaryData] = await Promise.all([
+    const now = Math.floor(Date.now()/1000);
+    const from = now - 10*365*86400; // 10 years back for EPS history
+
+    const [priceData, epsData, summaryData] = await Promise.all([
       yf(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
-      yf(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earningsHistory,defaultKeyStatistics,financialData,price`)
+      // fundamentals-timeseries: full historical quarterly EPS
+      yf(`https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?type=quarterlyEpsActual&period1=${from}&period2=${now}`),
+      yf(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price`)
     ]);
 
-    // Extract daily closes
+    // Prices
     const chart = priceData.chart?.result?.[0];
     if(!chart) throw new Error('No price data');
     const timestamps = chart.timestamp || [];
     const closes = chart.indicators?.quote?.[0]?.close || [];
-    const prices = timestamps.map((t, i) => ({
-      date: t,
-      close: closes[i]
-    })).filter(p => p.close != null);
+    const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
 
-    // Extract quarterly EPS (actual reported)
-    const result = summaryData.quoteSummary?.result?.[0];
-    const history = result?.earningsHistory?.history || [];
-    const eps = history
-      .filter(e => e.epsActual?.raw != null)
+    // Historical quarterly EPS from timeseries
+    const tsResult = epsData?.timeseries?.result?.[0];
+    const epsRaw = tsResult?.quarterlyEpsActual || [];
+    let eps = epsRaw
+      .filter(e => e?.reportedValue?.raw != null)
       .map(e => ({
-        date: e.quarter?.raw || 0,        // unix timestamp of quarter end
-        eps: e.epsActual.raw
+        date: Math.floor(new Date(e.asOfDate).getTime()/1000),
+        eps: e.reportedValue.raw
       }))
-      .sort((a, b) => a.date - b.date);
+      .sort((a,b) => a.date - b.date);
 
-    // Current quote info
+    // Fallback: earningsHistory if timeseries empty
+    if(eps.length < 2) {
+      const sumFallback = await yf(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earningsHistory`);
+      const hist = sumFallback?.quoteSummary?.result?.[0]?.earningsHistory?.history || [];
+      eps = hist
+        .filter(e => e.epsActual?.raw != null)
+        .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
+        .sort((a,b) => a.date - b.date);
+    }
+
+    const result = summaryData.quoteSummary?.result?.[0];
     const priceInfo = result?.price || {};
-    const finData = result?.financialData || {};
     const keyStats = result?.defaultKeyStatistics || {};
+    const finData = result?.financialData || {};
 
     res.json({
       symbol: sym,
       shortName: priceInfo.shortName || sym,
-      prices,
-      eps,
+      prices, eps,
       currentPrice: priceInfo.regularMarketPrice?.raw,
       currentPE: keyStats.trailingPE?.raw,
       forwardPE: keyStats.forwardPE?.raw,
       epsTrailingTwelveMonths: finData.epsTrailingTwelveMonths?.raw,
+      epsCount: eps.length
     });
   } catch(e) {
     console.error("pebg:", e.message);
@@ -207,17 +195,16 @@ app.get("/api/pebg", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log("Server on port", PORT);
-  let ok = false;
-  for(let i = 0; i < 5; i++) {
-    ok = await refreshCrumb();
-    if(ok) break;
-    const wait = (i + 1) * 4000;
-    console.log(`Crumb attempt ${i+1} failed, waiting ${wait/1000}s...`);
-    await new Promise(r => setTimeout(r, wait));
-  }
-  if(!ok) console.error("WARNING: No crumb after 5 attempts");
+  // Lazy: don't block startup, fetch crumb in background with long delays
+  const tryWithDelay = async (attempt, delay) => {
+    await new Promise(r => setTimeout(r, delay));
+    const ok = await refreshCrumb();
+    if(!ok && attempt < 8) tryWithDelay(attempt + 1, Math.min(delay * 1.5, 60000));
+  };
+  tryWithDelay(1, 5000); // first attempt after 5s
+  // Refresh every 25 min
   setInterval(async () => {
     const ok = await refreshCrumb();
-    if(!ok) setTimeout(refreshCrumb, 8000);
+    if(!ok) setTimeout(refreshCrumb, 15000);
   }, 25 * 60 * 1000);
 });
