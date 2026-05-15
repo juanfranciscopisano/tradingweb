@@ -150,7 +150,59 @@ app.get("/api/overview", async (req, res) => {
   }
 });
 
-app.listen(PORT, async () => {
+// PEBG: price history + quarterly EPS for P/E TTM chart
+app.get("/api/pebg", async (req, res) => {
+  try {
+    const sym = (req.query.symbol || '').toUpperCase().trim();
+    if(!sym) return res.status(400).json({ error: 'symbol required' });
+
+    // Fetch 3 years of daily prices + earnings history in parallel
+    const [priceData, summaryData] = await Promise.all([
+      yf(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
+      yf(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earningsHistory,defaultKeyStatistics,financialData,price`)
+    ]);
+
+    // Extract daily closes
+    const chart = priceData.chart?.result?.[0];
+    if(!chart) throw new Error('No price data');
+    const timestamps = chart.timestamp || [];
+    const closes = chart.indicators?.quote?.[0]?.close || [];
+    const prices = timestamps.map((t, i) => ({
+      date: t,
+      close: closes[i]
+    })).filter(p => p.close != null);
+
+    // Extract quarterly EPS (actual reported)
+    const result = summaryData.quoteSummary?.result?.[0];
+    const history = result?.earningsHistory?.history || [];
+    const eps = history
+      .filter(e => e.epsActual?.raw != null)
+      .map(e => ({
+        date: e.quarter?.raw || 0,        // unix timestamp of quarter end
+        eps: e.epsActual.raw
+      }))
+      .sort((a, b) => a.date - b.date);
+
+    // Current quote info
+    const priceInfo = result?.price || {};
+    const finData = result?.financialData || {};
+    const keyStats = result?.defaultKeyStatistics || {};
+
+    res.json({
+      symbol: sym,
+      shortName: priceInfo.shortName || sym,
+      prices,
+      eps,
+      currentPrice: priceInfo.regularMarketPrice?.raw,
+      currentPE: keyStats.trailingPE?.raw,
+      forwardPE: keyStats.forwardPE?.raw,
+      epsTrailingTwelveMonths: finData.epsTrailingTwelveMonths?.raw,
+    });
+  } catch(e) {
+    console.error("pebg:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
   console.log("Server on port", PORT);
   let ok = false;
   for(let i = 0; i < 5; i++) {
