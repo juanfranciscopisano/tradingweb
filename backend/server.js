@@ -26,8 +26,14 @@ async function refreshCrumb() {
       },
     });
     yfCrumb = await r2.text();
-    console.log("Crumb OK:", yfCrumb, "| Cookie len:", yfCookie.length);
-    return yfCrumb.length > 3;
+    // Reject error messages — valid crumbs are short alphanumeric strings
+    if(yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
+      console.error("Bad crumb rejected:", yfCrumb.slice(0,30));
+      yfCrumb = "";
+      return false;
+    }
+    console.log("Crumb OK:", yfCrumb.slice(0,10), "| Cookie len:", yfCookie.length);
+    return true;
   } catch (e) {
     console.error("refreshCrumb error:", e.message);
     return false;
@@ -178,6 +184,15 @@ app.get("/api/pebg", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log("Server running on port", PORT);
-  await refreshCrumb();
+  // Retry crumb up to 5 times with increasing delays
+  for(let i = 0; i < 5; i++) {
+    if(i > 0) {
+      const wait = i * 8000;
+      console.log(`Waiting ${wait/1000}s before retry ${i+1}...`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+    const ok = await refreshCrumb();
+    if(ok) break;
+  }
   setInterval(refreshCrumb, 30 * 60 * 1000);
 });
