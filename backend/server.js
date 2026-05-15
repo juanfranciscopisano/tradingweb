@@ -199,29 +199,26 @@ app.get("/api/pebg", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log("Server on port", PORT);
-  // Wait 30s before first crumb attempt — avoids startup rate limiting
-  const tryWithDelay = async (attempt, delay) => {
-    await new Promise(r => setTimeout(r, delay));
-    console.log(`Crumb attempt ${attempt}...`);
-    const ok = await refreshCrumb();
-    if(ok) {
-      console.log("Crumb ready after attempt", attempt);
-    } else if(attempt < 10) {
-      const next = Math.min(delay * 2, 120000); // max 2 min between retries
-      console.log(`Attempt ${attempt} failed, next in ${Math.round(next/1000)}s`);
-      tryWithDelay(attempt + 1, next);
-    } else {
-      console.error("Giving up after 10 attempts");
+
+  // Background crumb loop — runs independently of request handling
+  (async () => {
+    const delays = [30, 60, 90, 120, 180, 240, 300, 300, 300, 300]; // seconds
+    for(let i = 0; i < delays.length; i++) {
+      await new Promise(r => setTimeout(r, delays[i] * 1000));
+      console.log(`Crumb attempt ${i+1} (after ${delays[i]}s)...`);
+      const ok = await refreshCrumb();
+      if(ok) {
+        console.log("Crumb obtained on attempt", i+1);
+        break;
+      }
     }
-  };
-  tryWithDelay(1, 30000); // first attempt after 30s
-  // Refresh every 20 min
+  })();
+
+  // Refresh every 20 min once obtained
   setInterval(async () => {
-    const ok = await refreshCrumb();
-    if(!ok) {
-      console.log("Scheduled refresh failed, retrying in 2 min...");
-      setTimeout(refreshCrumb, 120000);
+    if(yfCrumb.length > 3) {
+      const ok = await refreshCrumb();
+      if(!ok) console.log("Scheduled refresh failed");
     }
   }, 20 * 60 * 1000);
 });
-
