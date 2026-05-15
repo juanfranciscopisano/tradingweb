@@ -1707,7 +1707,7 @@ const BAND_COLORS = ['#C9A6FF','#8A9BB0','#4A9EFF','#22D688','#5DD9C1'];
 const BAND_LABELS = ['\u03bc+2\u03c3','\u03bc+1\u03c3','\u03bc','\u03bc-1\u03c3','\u03bc-2\u03c3'];
 
 function setPebgPeriod(el) {
-  document.querySelectorAll('.pebg-period').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('#pebgPeriodBtns .pebg-period').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
   pebgYears = parseInt(el.dataset.y);
   if(pebgData) renderPebg(pebgData);
@@ -1737,10 +1737,10 @@ function buildPESeries(data) {
   if(!eps.length) return [];
   return data.prices.map(p => {
     const available = eps.filter(e => e.date <= p.date);
-    if(available.length < 1) return null;
+    if(available.length < 4) return null;   // require full 4 quarters
     const last4 = available.slice(-4);
     const eps4q = last4.reduce((s,e) => s + e.eps, 0);
-    if(eps4q <= 0) return null;
+    if(eps4q <= 0.01) return null;
     return { date: p.date, close: p.close, pe: p.close / eps4q, eps4q };
   }).filter(Boolean);
 }
@@ -1758,7 +1758,7 @@ function renderPebg(data) {
   if(window.length < 5) return;
 
   // PE stats over selected window
-  const peW = window.map(p => p.pe).filter(x => x < 500);
+  const peW = window.map(p => p.pe).filter(x => x > 0 && x < 500);
   const mu = peW.reduce((a,b) => a+b, 0) / peW.length;
   const sigma = Math.sqrt(peW.reduce((s,v) => s + (v-mu)**2, 0) / peW.length);
 
