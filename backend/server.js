@@ -17,26 +17,47 @@ async function refreshCrumb() {
   if(crumbFetching) return yfCrumb.length > 3;
   crumbFetching = true;
   try {
-    // Use query2 (separate rate limit pool from query1)
-    const r1 = await fetch("https://fc.yahoo.com", {
-      headers: { "User-Agent": UA }, redirect: "follow"
+    // Step 1: get cookies via consent API (small response, no overflow)
+    const cookieRes = await fetch("https://consent.yahoo.com/v2/collectConsent?sessionId=1", {
+      headers: { "User-Agent": UA, "Accept": "application/json" },
+      redirect: "follow"
     });
-    yfCookie = (r1.headers.get("set-cookie") || "").split(",").map(c => c.split(";")[0]).join("; ");
-
-    for(const host of ["query2.finance.yahoo.com","query1.finance.yahoo.com"]) {
-      await new Promise(r => setTimeout(r, 1500));
-      const r2 = await fetch(`https://${host}/v1/test/getcrumb`, {
-        headers: { "User-Agent": UA, "Cookie": yfCookie }
-      });
-      const t = (await r2.text()).trim();
-      if(t.length >= 3 && t.length <= 20 && !t.includes(" ") && !t.includes("<") && !t.toLowerCase().includes("too")) {
-        yfCrumb = t;
-        console.log(`Crumb OK (${host}):`, yfCrumb.slice(0,8));
-        crumbFetching = false;
-        return true;
-      }
-      console.log(`Bad crumb (${host}):`, t.slice(0,30));
+    const rawCookies = cookieRes.headers.get("set-cookie") || "";
+    if(rawCookies) {
+      yfCookie = rawCookies.split(",").map(c => c.split(";")[0]).filter(c => c.trim()).join("; ");
     }
+
+    // Step 2: hit a lightweight Yahoo Finance endpoint to get session cookies
+    await new Promise(r => setTimeout(r, 800));
+    const sessionRes = await fetch("https://query2.finance.yahoo.com/v8/finance/chart/AAPL?interval=1d&range=1d", {
+      headers: { ...headers(), "Accept": "*/*" }
+    });
+    const newCookies = sessionRes.headers.get("set-cookie") || "";
+    if(newCookies) {
+      const parsed = newCookies.split(",").map(c => c.split(";")[0]).filter(c => c.trim());
+      yfCookie = [...new Set([...yfCookie.split("; "), ...parsed])].filter(Boolean).join("; ");
+    }
+
+    // Step 3: try crumb endpoints with session cookies
+    await new Promise(r => setTimeout(r, 800));
+    for(const url of [
+      "https://query2.finance.yahoo.com/v1/test/getcrumb",
+      "https://query1.finance.yahoo.com/v1/test/getcrumb"
+    ]) {
+      try {
+        const r = await fetch(url, { headers: headers() });
+        const t = (await r.text()).trim();
+        if(t && t.length >= 3 && t.length <= 20 && !t.includes(" ") && !t.includes("<") && !t.toLowerCase().includes("too") && !t.toLowerCase().includes("error")) {
+          yfCrumb = t;
+          console.log("Crumb OK:", yfCrumb.slice(0,8));
+          crumbFetching = false;
+          return true;
+        }
+        console.log("Bad crumb:", t.slice(0,30));
+      } catch(e) { console.log("Crumb endpoint failed:", e.message); }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
     crumbFetching = false;
     return false;
   } catch(e) {
