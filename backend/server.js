@@ -1,4 +1,5 @@
 
+
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
@@ -203,6 +204,8 @@ app.get("/api/pebg", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+app.listen(PORT, async () => {
   console.log("Server on port", PORT);
   let ok = false;
   for(let i = 0; i < 5; i++) {
