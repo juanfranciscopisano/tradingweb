@@ -153,82 +153,47 @@ app.get("/api/pebg", async (req, res) => {
     const sym = (req.query.symbol || "").toUpperCase().trim();
     if(!sym) return res.status(400).json({ error: "symbol required" });
 
-    const now = Math.floor(Date.now()/1000);
-    const from = now - 10*365*86400;
+    const FINNHUB_KEY = process.env.FINNHUB_KEY || "";
 
-    const [priceData, summaryData] = await Promise.all([
-      yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y&events=earnings`),
-      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price`).catch(() => null)
+    const [priceData, fhData, summaryData] = await Promise.all([
+      yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
+      FINNHUB_KEY
+        ? fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&token=${FINNHUB_KEY}`, { headers: { "User-Agent": UA } }).then(r => r.json()).catch(() => null)
+        : Promise.resolve(null),
+      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory`).catch(() => null)
     ]);
 
     const chart = priceData.chart?.result?.[0];
-    if(!chart) throw new Error("No price data");
+    if(!chart) throw new Error("No price data for " + sym);
     const timestamps = chart.timestamp || [];
     const closes = chart.indicators?.quote?.[0]?.close || [];
     const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
 
-    // EPS from chart events (upcoming/recent only — usually no historical epsActual)
+    // Finnhub quarterly EPS — full history, sorted oldest first
     let eps = [];
-    const earningsEvents = chart.events?.earnings;
-    if(earningsEvents) {
-      const fromEvents = Object.values(earningsEvents)
-        .filter(e => e.epsActual != null && !isNaN(e.epsActual))
-        .map(e => ({ date: e.date, eps: e.epsActual }))
+    if(Array.isArray(fhData) && fhData.length > 0) {
+      eps = fhData
+        .filter(e => e.actual != null && e.period)
+        .map(e => ({
+          date: Math.floor(new Date(e.period).getTime() / 1000),
+          eps: e.actual
+        }))
         .sort((a,b) => a.date - b.date);
-      if(fromEvents.length) eps = fromEvents;
-      console.log(`pebg ${sym}: events.earnings has ${Object.keys(earningsEvents).length} entries, ${fromEvents.length} with epsActual`);
+      console.log(`pebg ${sym}: Finnhub returned ${eps.length} EPS quarters`);
     }
 
-    // Primary: fundamentals-timeseries (full historical EPS) — try query2 without crumb
-    if(eps.length < 8) {
-      try {
-        const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?type=quarterlyEpsActual&period1=${from}&period2=${now}&lang=en-US&region=US`;
-        // Try without crumb first (this endpoint sometimes doesn't need it)
-        const tsRaw = await fetch(tsUrl, { headers: yfHeaders() });
-        console.log(`pebg ${sym}: fundamentals-timeseries status=${tsRaw.status}`);
-        if(tsRaw.ok) {
-          const tsData = await tsRaw.json();
-          const tsResult = tsData?.timeseries?.result?.[0];
-          const tsEps = (tsResult?.quarterlyEpsActual || [])
-            .filter(e => e?.reportedValue?.raw != null)
-            .map(e => ({ date: Math.floor(new Date(e.asOfDate).getTime()/1000), eps: e.reportedValue.raw }))
-            .sort((a,b) => a.date - b.date);
-          console.log(`pebg ${sym}: fundamentals-timeseries returned ${tsEps.length} EPS quarters`);
-          if(tsEps.length > eps.length) eps = tsEps;
-        } else {
-          const errText = await tsRaw.text();
-          console.log(`pebg ${sym}: fundamentals-timeseries error body:`, errText.slice(0,100));
-        }
-      } catch(e) { console.log(`pebg ${sym}: fundamentals-timeseries exception:`, e.message); }
-    }
-
-    // Fallback: earnings module (earningsChart.quarterly — typically 5-6 quarters)
+    // Fallback: earningsHistory from Yahoo (last 4 quarters)
     if(eps.length < 4) {
-      try {
-        const eData = await yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earnings,earningsHistory`);
-        const qEps = eData?.quoteSummary?.result?.[0]?.earnings?.earningsChart?.quarterly || [];
-        const fromEarnings = qEps
-          .filter(e => e.actual?.raw != null)
-          .map(e => {
-            // date format: "1Q2024" -> parse
-            const m = e.date?.match(/(\d)Q(\d{4})/);
-            const qDate = m ? new Date(parseInt(m[2]), parseInt(m[1])*3, 1).getTime()/1000 : 0;
-            return { date: qDate, eps: e.actual.raw };
-          })
-          .filter(e => e.date > 0)
-          .sort((a,b) => a.date - b.date);
-        // Also get earningsHistory
-        const hist = eData?.quoteSummary?.result?.[0]?.earningsHistory?.history || [];
-        const fromHist = hist.filter(e => e.epsActual?.raw != null)
-          .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
-          .sort((a,b) => a.date - b.date);
-        // Merge, deduplicate by closest date
-        const merged = [...fromEarnings, ...fromHist]
-          .sort((a,b) => a.date - b.date)
-          .filter((e,i,arr) => i===0 || Math.abs(e.date - arr[i-1].date) > 30*86400);
-        console.log(`pebg ${sym}: earnings module=${fromEarnings.length}, earningsHistory=${fromHist.length}, merged=${merged.length}`);
-        if(merged.length > eps.length) eps = merged;
-      } catch(e) { console.log(`pebg ${sym}: earnings fallback exception:`, e.message); }
+      const result = summaryData?.quoteSummary?.result?.[0];
+      const hist = result?.earningsHistory?.history || [];
+      const fbEps = hist
+        .filter(e => e.epsActual?.raw != null)
+        .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
+        .sort((a,b) => a.date - b.date);
+      if(fbEps.length > eps.length) {
+        eps = fbEps;
+        console.log(`pebg ${sym}: fallback to earningsHistory, ${eps.length} quarters`);
+      }
     }
 
     const result = summaryData?.quoteSummary?.result?.[0];
@@ -236,10 +201,12 @@ app.get("/api/pebg", async (req, res) => {
     const keyStats = result?.defaultKeyStatistics || {};
     const finData = result?.financialData || {};
     const meta = chart.meta || {};
+
     console.log(`pebg ${sym}: ${prices.length} prices, ${eps.length} EPS quarters`);
 
     res.json({
-      symbol: sym, shortName: priceInfo.shortName || meta.longName || sym,
+      symbol: sym,
+      shortName: priceInfo.shortName || meta.longName || sym,
       prices, eps, epsCount: eps.length,
       currentPrice: priceInfo.regularMarketPrice?.raw || meta.regularMarketPrice,
       currentPE: keyStats.trailingPE?.raw,
@@ -250,6 +217,7 @@ app.get("/api/pebg", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
