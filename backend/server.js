@@ -158,7 +158,7 @@ app.get("/api/pebg", async (req, res) => {
     const [priceData, fhData, summaryData] = await Promise.all([
       yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
       FINNHUB_KEY
-        ? fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&token=${FINNHUB_KEY}`, { headers: { "User-Agent": UA } }).then(r => r.json()).catch(() => null)
+        ? fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&token=${FINNHUB_KEY}`).then(r => r.json()).catch(() => null)
         : Promise.resolve(null),
       yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory`).catch(() => null)
     ]);
