@@ -1,4 +1,3 @@
-
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
@@ -12,21 +11,26 @@ let yfCrumb  = "";
 
 async function refreshCrumb() {
   try {
+    const ctrl1 = new AbortController();
+    setTimeout(() => ctrl1.abort(), 8000);
     const r1 = await fetch("https://fc.yahoo.com", {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36" },
       redirect: "follow",
+      signal: ctrl1.signal,
     });
     const cookies = r1.headers.get("set-cookie") || "";
     yfCookie = cookies.split(",").map(c => c.split(";")[0]).join("; ");
 
+    const ctrl2 = new AbortController();
+    setTimeout(() => ctrl2.abort(), 8000);
     const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36",
         "Cookie": yfCookie,
       },
+      signal: ctrl2.signal,
     });
     yfCrumb = await r2.text();
-    // Reject error messages — valid crumbs are short alphanumeric strings
     if(yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
       console.error("Bad crumb rejected:", yfCrumb.slice(0,30));
       yfCrumb = "";
@@ -38,6 +42,20 @@ async function refreshCrumb() {
     console.error("refreshCrumb error:", e.message);
     return false;
   }
+}
+
+// Run crumb retry loop independently at top level
+async function crumbLoop() {
+  for(let i = 0; i < 8; i++) {
+    if(i > 0) {
+      const wait = i * 10000; // 10s, 20s, 30s...
+      console.log(`Crumb retry ${i+1}/8 in ${wait/1000}s...`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+    const ok = await refreshCrumb();
+    if(ok) { console.log("Crumb ready after attempt", i+1); return; }
+  }
+  console.error("Could not get crumb after 8 attempts");
 }
 
 function yfHeaders() {
@@ -206,17 +224,9 @@ app.get("/api/pebg", async (req, res) => {
   }
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log("Server running on port", PORT);
-  // Retry crumb up to 5 times with increasing delays
-  for(let i = 0; i < 5; i++) {
-    if(i > 0) {
-      const wait = i * 8000;
-      console.log(`Waiting ${wait/1000}s before retry ${i+1}...`);
-      await new Promise(r => setTimeout(r, wait));
-    }
-    const ok = await refreshCrumb();
-    if(ok) break;
-  }
+  crumbLoop(); // runs independently, doesn't block server startup
   setInterval(refreshCrumb, 30 * 60 * 1000);
 });
+
