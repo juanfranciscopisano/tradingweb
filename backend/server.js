@@ -163,7 +163,7 @@ app.get("/api/pebg", async (req, res) => {
     const [priceData, fhData, summaryData] = await Promise.all([
       yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
       FINNHUB_KEY
-        ? fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&token=${FINNHUB_KEY}`).then(r => r.json()).catch(() => null)
+        ? fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&limit=40&token=${FINNHUB_KEY}`).then(r => r.json()).catch(() => null)
         : Promise.resolve(null),
       yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory`).catch(() => null)
     ]);
@@ -185,6 +185,8 @@ app.get("/api/pebg", async (req, res) => {
         }))
         .sort((a,b) => a.date - b.date);
       console.log(`pebg ${sym}: Finnhub returned ${eps.length} EPS quarters`);
+    } else {
+      console.log(`pebg ${sym}: Finnhub data invalid:`, JSON.stringify(fhData)?.slice(0,100));
     }
 
     // Fallback: earningsHistory from Yahoo (last 4 quarters)
