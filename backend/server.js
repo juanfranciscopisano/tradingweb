@@ -158,13 +158,48 @@ app.get("/api/pebg", async (req, res) => {
     const sym = (req.query.symbol || "").toUpperCase().trim();
     if(!sym) return res.status(400).json({ error: "symbol required" });
 
-    const FINNHUB_KEY = process.env.FINNHUB_KEY || "";
+    // SEC EDGAR: public API, no key needed, full quarterly EPS history
+    const getEdgarEPS = async (symbol) => {
+      try {
+        // Step 1: find CIK from ticker via SEC's public ticker map
+        const tickerMap = await fetch("https://www.sec.gov/files/company_tickers.json", {
+          headers: { "User-Agent": "tradingweb research@example.com" }
+        }).then(r => r.json());
 
-    const [priceData, fhData, summaryData] = await Promise.all([
+        const entry = Object.values(tickerMap).find(c => c.ticker.toUpperCase() === symbol);
+        if(!entry) return [];
+
+        const cik = String(entry.cik_str).padStart(10, '0');
+        const factsRes = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, {
+          headers: { "User-Agent": "tradingweb research@example.com" }
+        });
+        const facts = await factsRes.json();
+
+        // EPS diluted quarterly
+        const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
+        const quarterly = epsData
+          .filter(e => e.form === "10-Q" || e.form === "10-K")
+          .filter(e => e.fp?.startsWith("Q")) // quarterly only
+          .map(e => ({
+            date: Math.floor(new Date(e.end).getTime() / 1000),
+            eps: e.val
+          }))
+          .filter((e, i, arr) => // deduplicate by date
+            i === arr.findIndex(x => Math.abs(x.date - e.date) < 10*86400)
+          )
+          .sort((a,b) => a.date - b.date);
+
+        console.log(`pebg ${symbol}: SEC EDGAR returned ${quarterly.length} EPS quarters`);
+        return quarterly;
+      } catch(e) {
+        console.log(`pebg ${symbol}: SEC EDGAR error:`, e.message);
+        return [];
+      }
+    };
+
+    const [priceData, edgarEps, summaryData] = await Promise.all([
       yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
-      FINNHUB_KEY
-        ? fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&limit=40&token=${FINNHUB_KEY}`).then(r => r.json()).catch(() => null)
-        : Promise.resolve(null),
+      getEdgarEPS(sym),
       yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory`).catch(() => null)
     ]);
 
@@ -174,20 +209,7 @@ app.get("/api/pebg", async (req, res) => {
     const closes = chart.indicators?.quote?.[0]?.close || [];
     const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
 
-    // Finnhub quarterly EPS — full history, sorted oldest first
-    let eps = [];
-    if(Array.isArray(fhData) && fhData.length > 0) {
-      eps = fhData
-        .filter(e => e.actual != null && e.period)
-        .map(e => ({
-          date: Math.floor(new Date(e.period).getTime() / 1000),
-          eps: e.actual
-        }))
-        .sort((a,b) => a.date - b.date);
-      console.log(`pebg ${sym}: Finnhub returned ${eps.length} EPS quarters`);
-    } else {
-      console.log(`pebg ${sym}: Finnhub data invalid:`, JSON.stringify(fhData)?.slice(0,100));
-    }
+    let eps = edgarEps;
 
     // Fallback: earningsHistory from Yahoo (last 4 quarters)
     if(eps.length < 4) {
