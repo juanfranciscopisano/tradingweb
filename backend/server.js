@@ -83,6 +83,11 @@ async function yfFetch(url) {
 
 app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? "ready" : "missing" }));
 
+app.get("/debug", (req, res) => res.json({
+  finnhub: process.env.FINNHUB_KEY ? "set (len=" + process.env.FINNHUB_KEY.length + ")" : "missing",
+  crumb: yfCrumb.length > 3 ? "ready" : "missing"
+}));
+
 app.get("/api/quote", async (req, res) => {
   try {
     const { symbols } = req.query;
