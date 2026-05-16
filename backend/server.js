@@ -167,41 +167,68 @@ app.get("/api/pebg", async (req, res) => {
     const closes = chart.indicators?.quote?.[0]?.close || [];
     const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
 
-    // EPS from chart events (most reliable, included in same response)
+    // EPS from chart events (upcoming/recent only — usually no historical epsActual)
     let eps = [];
     const earningsEvents = chart.events?.earnings;
     if(earningsEvents) {
-      eps = Object.values(earningsEvents)
+      const fromEvents = Object.values(earningsEvents)
         .filter(e => e.epsActual != null && !isNaN(e.epsActual))
         .map(e => ({ date: e.date, eps: e.epsActual }))
         .sort((a,b) => a.date - b.date);
+      if(fromEvents.length) eps = fromEvents;
+      console.log(`pebg ${sym}: events.earnings has ${Object.keys(earningsEvents).length} entries, ${fromEvents.length} with epsActual`);
     }
 
-    // Fallback: try fundamentals-timeseries for longer history
+    // Primary: fundamentals-timeseries (full historical EPS) — try query2 without crumb
     if(eps.length < 8) {
       try {
-        const tsData = await yfFetch(
-          `https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?type=quarterlyEpsActual&period1=${from}&period2=${now}`
-        );
-        const tsResult = tsData?.timeseries?.result?.[0];
-        const tsEps = (tsResult?.quarterlyEpsActual || [])
-          .filter(e => e?.reportedValue?.raw != null)
-          .map(e => ({ date: Math.floor(new Date(e.asOfDate).getTime()/1000), eps: e.reportedValue.raw }))
-          .sort((a,b) => a.date - b.date);
-        if(tsEps.length > eps.length) eps = tsEps;
-      } catch(e) { /* ignore */ }
+        const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?type=quarterlyEpsActual&period1=${from}&period2=${now}&lang=en-US&region=US`;
+        // Try without crumb first (this endpoint sometimes doesn't need it)
+        const tsRaw = await fetch(tsUrl, { headers: yfHeaders() });
+        console.log(`pebg ${sym}: fundamentals-timeseries status=${tsRaw.status}`);
+        if(tsRaw.ok) {
+          const tsData = await tsRaw.json();
+          const tsResult = tsData?.timeseries?.result?.[0];
+          const tsEps = (tsResult?.quarterlyEpsActual || [])
+            .filter(e => e?.reportedValue?.raw != null)
+            .map(e => ({ date: Math.floor(new Date(e.asOfDate).getTime()/1000), eps: e.reportedValue.raw }))
+            .sort((a,b) => a.date - b.date);
+          console.log(`pebg ${sym}: fundamentals-timeseries returned ${tsEps.length} EPS quarters`);
+          if(tsEps.length > eps.length) eps = tsEps;
+        } else {
+          const errText = await tsRaw.text();
+          console.log(`pebg ${sym}: fundamentals-timeseries error body:`, errText.slice(0,100));
+        }
+      } catch(e) { console.log(`pebg ${sym}: fundamentals-timeseries exception:`, e.message); }
     }
 
-    // Last fallback: earningsHistory
+    // Fallback: earnings module (earningsChart.quarterly — typically 5-6 quarters)
     if(eps.length < 4) {
       try {
-        const fb = await yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earningsHistory`);
-        const hist = fb?.quoteSummary?.result?.[0]?.earningsHistory?.history || [];
-        const fbEps = hist.filter(e => e.epsActual?.raw != null)
+        const eData = await yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earnings,earningsHistory`);
+        const qEps = eData?.quoteSummary?.result?.[0]?.earnings?.earningsChart?.quarterly || [];
+        const fromEarnings = qEps
+          .filter(e => e.actual?.raw != null)
+          .map(e => {
+            // date format: "1Q2024" -> parse
+            const m = e.date?.match(/(\d)Q(\d{4})/);
+            const qDate = m ? new Date(parseInt(m[2]), parseInt(m[1])*3, 1).getTime()/1000 : 0;
+            return { date: qDate, eps: e.actual.raw };
+          })
+          .filter(e => e.date > 0)
+          .sort((a,b) => a.date - b.date);
+        // Also get earningsHistory
+        const hist = eData?.quoteSummary?.result?.[0]?.earningsHistory?.history || [];
+        const fromHist = hist.filter(e => e.epsActual?.raw != null)
           .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
           .sort((a,b) => a.date - b.date);
-        if(fbEps.length > eps.length) eps = fbEps;
-      } catch(e) { /* ignore */ }
+        // Merge, deduplicate by closest date
+        const merged = [...fromEarnings, ...fromHist]
+          .sort((a,b) => a.date - b.date)
+          .filter((e,i,arr) => i===0 || Math.abs(e.date - arr[i-1].date) > 30*86400);
+        console.log(`pebg ${sym}: earnings module=${fromEarnings.length}, earningsHistory=${fromHist.length}, merged=${merged.length}`);
+        if(merged.length > eps.length) eps = merged;
+      } catch(e) { console.log(`pebg ${sym}: earnings fallback exception:`, e.message); }
     }
 
     const result = summaryData?.quoteSummary?.result?.[0];
@@ -229,4 +256,3 @@ app.listen(PORT, () => {
   crumbLoop(); // runs independently, doesn't block server startup
   setInterval(refreshCrumb, 30 * 60 * 1000);
 });
-
