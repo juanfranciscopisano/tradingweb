@@ -138,33 +138,39 @@ app.get("/api/pebg", async (req, res) => {
     const now = Math.floor(Date.now()/1000);
     const from = now - 10*365*86400;
 
-    const [priceData, epsData, summaryData] = await Promise.all([
+    // Use allSettled so a 404 on one endpoint doesn't kill everything
+    const [priceRes, epsRes, summaryRes] = await Promise.allSettled([
       yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
       yfFetch(`https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?type=quarterlyEpsActual&period1=${from}&period2=${now}`),
-      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price`)
+      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory`)
     ]);
 
+    if(priceRes.status === 'rejected') throw new Error("No price data: " + priceRes.reason?.message);
+    const priceData = priceRes.value;
     const chart = priceData.chart?.result?.[0];
-    if(!chart) throw new Error("No price data");
+    if(!chart) throw new Error("No chart data");
     const timestamps = chart.timestamp || [];
     const closes = chart.indicators?.quote?.[0]?.close || [];
     const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
 
-    const tsResult = epsData?.timeseries?.result?.[0];
-    let eps = (tsResult?.quarterlyEpsActual || [])
-      .filter(e => e?.reportedValue?.raw != null)
-      .map(e => ({ date: Math.floor(new Date(e.asOfDate).getTime()/1000), eps: e.reportedValue.raw }))
-      .sort((a,b) => a.date - b.date);
-
-    if(eps.length < 2) {
-      const fb = await yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=earningsHistory`);
-      const hist = fb?.quoteSummary?.result?.[0]?.earningsHistory?.history || [];
+    // EPS: try timeseries first, fallback to earningsHistory
+    let eps = [];
+    if(epsRes.status === 'fulfilled') {
+      const tsResult = epsRes.value?.timeseries?.result?.[0];
+      eps = (tsResult?.quarterlyEpsActual || [])
+        .filter(e => e?.reportedValue?.raw != null)
+        .map(e => ({ date: Math.floor(new Date(e.asOfDate).getTime()/1000), eps: e.reportedValue.raw }))
+        .sort((a,b) => a.date - b.date);
+    }
+    if(eps.length < 2 && summaryRes.status === 'fulfilled') {
+      const hist = summaryRes.value?.quoteSummary?.result?.[0]?.earningsHistory?.history || [];
       eps = hist.filter(e => e.epsActual?.raw != null)
         .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
         .sort((a,b) => a.date - b.date);
     }
 
-    const result = summaryData.quoteSummary?.result?.[0];
+    const summaryData = summaryRes.status === 'fulfilled' ? summaryRes.value : null;
+    const result = summaryData?.quoteSummary?.result?.[0];
     const priceInfo = result?.price || {};
     const keyStats = result?.defaultKeyStatistics || {};
     const finData = result?.financialData || {};
