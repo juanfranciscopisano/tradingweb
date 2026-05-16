@@ -200,7 +200,7 @@ app.get("/api/pebg", async (req, res) => {
     const [priceData, edgarEps, summaryData] = await Promise.all([
       yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
       getEdgarEPS(sym),
-      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory`).catch(() => null)
+      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory,earnings`).catch(() => null)
     ]);
 
     const chart = priceData.chart?.result?.[0];
@@ -214,14 +214,36 @@ app.get("/api/pebg", async (req, res) => {
     // Fallback: earningsHistory from Yahoo (last 4 quarters)
     if(eps.length < 4) {
       const result = summaryData?.quoteSummary?.result?.[0];
+
+      // Try earnings module first — has earningsChart.quarterly with more history
+      const qEps = result?.earnings?.earningsChart?.quarterly || [];
+      const fromEarningsChart = qEps
+        .filter(e => e.actual?.raw != null)
+        .map(e => {
+          const m = String(e.date || '').match(/(\d)Q(\d{4})/);
+          if(!m) return null;
+          const qMonth = parseInt(m[1]) * 3;
+          const qDate = new Date(parseInt(m[2]), qMonth - 1, 1).getTime() / 1000;
+          return { date: Math.floor(qDate), eps: e.actual.raw };
+        })
+        .filter(Boolean)
+        .sort((a,b) => a.date - b.date);
+
+      // earningsHistory as secondary fallback
       const hist = result?.earningsHistory?.history || [];
-      const fbEps = hist
+      const fromHist = hist
         .filter(e => e.epsActual?.raw != null)
         .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
         .sort((a,b) => a.date - b.date);
-      if(fbEps.length > eps.length) {
-        eps = fbEps;
-        console.log(`pebg ${sym}: fallback to earningsHistory, ${eps.length} quarters`);
+
+      // Merge both, deduplicate by date proximity
+      const combined = [...fromEarningsChart, ...fromHist]
+        .sort((a,b) => a.date - b.date)
+        .filter((e,i,arr) => i === 0 || Math.abs(e.date - arr[i-1].date) > 30*86400);
+
+      if(combined.length > eps.length) {
+        eps = combined;
+        console.log(`pebg ${sym}: Yahoo fallback (earningsChart+hist), ${eps.length} quarters`);
       }
     }
 
