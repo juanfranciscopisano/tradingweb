@@ -169,6 +169,28 @@ td:nth-child(-n+4){text-align:left}
 .pebg-leg-row{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--label)}
 .pebg-leg-line{width:20px;height:2px;border-radius:1px}
 
+
+/* ── CARTERA ── */
+.cartera-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 48px;display:flex;align-items:center;gap:10px}
+.cartera-wrap{flex:1;overflow-y:auto;padding:0}
+.cartera-table{width:100%;border-collapse:collapse;font-family:var(--mono)}
+.cartera-table th{position:sticky;top:0;background:var(--surf);font-size:9px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+.cartera-table th:first-child,.cartera-table th:nth-child(2),.cartera-table th:nth-child(3){text-align:left}
+.cartera-table th:hover{color:var(--text2)}
+.cartera-table td{padding:9px 12px;font-size:12px;text-align:right;border-bottom:1px solid rgba(26,45,71,.5);white-space:nowrap}
+.cartera-table td:first-child,.cartera-table td:nth-child(2),.cartera-table td:nth-child(3){text-align:left}
+.cartera-table tr:hover td{background:rgba(26,45,71,.4)}
+.cartera-table td:first-child{padding-left:48px}
+.cartera-table td:last-child{padding-right:48px}
+.cartera-table th:first-child{padding-left:48px}
+.cartera-table th:last-child{padding-right:48px}
+.ct-ticker{font-weight:700;color:var(--amber);font-size:13px}
+.ct-signal{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px}
+.ct-barato{background:rgba(34,214,136,.15);color:#22D688}
+.ct-caro{background:rgba(255,80,80,.15);color:#FF5050}
+.ct-justo{background:rgba(74,158,255,.12);color:#4A9EFF}
+.ct-loading{color:var(--muted);font-size:10px}
+
 /* ── COMPARE ── */
 .cmp-price-bar{flex-shrink:0;background:var(--card);border-bottom:1px solid var(--border);padding:10px 48px;display:flex;align-items:center;gap:0}
 .cmp-price-block{display:flex;flex-direction:column;gap:2px;padding:0 24px}
@@ -306,6 +328,7 @@ td:nth-child(-n+4){text-align:left}
   <div class="tab" id="tab-chart" onclick="switchTab('chart')">&#9672; Grafico</div>
   <div class="tab" id="tab-compare" onclick="switchTab('compare')">&#9653; Comparar</div>
   <div class="tab" id="tab-heatmap" onclick="switchTab('heatmap')">&#9641; Heatmap</div>
+  <div class="tab" id="tab-cartera" onclick="switchTab('cartera')">&#9733; Cartera</div>
   <div class="tab" id="tab-pebg" onclick="switchTab('pebg')">&#9196; P/E Hist.</div>
   <div class="tab-spacer"></div>
   <span class="hdr-time" id="lastUpd">&mdash;</span>
@@ -502,6 +525,43 @@ td:nth-child(-n+4){text-align:left}
   <div id="hmContainer"></div>
 </div>
 
+<div class="view" id="view-cartera">
+  <div class="cartera-controls">
+    <div class="pebg-period-btns">
+      <span class="pebg-period active" id="carteraTab1" onclick="setCarteraMode('cartera')">Cartera</span>
+      <span class="pebg-period" id="carteraTab2" onclick="setCarteraMode('top50')">Top 50</span>
+    </div>
+    <button class="btn" onclick="loadCartera()">&#9654; Actualizar</button>
+    <span id="carteraStatus" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
+    <div class="cs"></div>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">P/E TTM real &middot; media y &sigma; sobre 1 a&ntilde;o &middot; EDGAR + Yahoo Finance</span>
+  </div>
+  <div class="cartera-wrap">
+    <table class="cartera-table" id="carteraTable">
+      <thead>
+        <tr>
+          <th onclick="sortCartera('ticker')">#</th>
+          <th onclick="sortCartera('ticker')">Ticker</th>
+          <th onclick="sortCartera('name')">Empresa</th>
+          <th onclick="sortCartera('pe')">P/E actual</th>
+          <th onclick="sortCartera('mu')">P/E media 1A</th>
+          <th onclick="sortCartera('sigma')">&sigma;</th>
+          <th onclick="sortCartera('z')">Z-score</th>
+          <th onclick="sortCartera('z')">Se&ntilde;al</th>
+          <th onclick="sortCartera('implied')">Precio @ &mu;</th>
+          <th onclick="sortCartera('varToMu')">Var. @ &mu;</th>
+          <th onclick="sortCartera('peAnual')">P/E anualizdo</th>
+          <th onclick="sortCartera('varAnual')">Var. anual. @ &mu;</th>
+          <th onclick="sortCartera('price')">Precio</th>
+        </tr>
+      </thead>
+      <tbody id="carteraTbody">
+        <tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted);font-family:var(--mono);font-size:11px">Presioná Actualizar para cargar</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <div class="view" id="view-pebg">
   <div class="pebg-controls">
     <span style="font-family:var(--mono);font-size:10px;color:var(--label)">Ticker</span>
@@ -572,6 +632,11 @@ td:nth-child(-n+4){text-align:left}
       <div class="pebg-stat-lbl" id="psLblA">@ &mu;-2&sigma;</div>
       <div class="pebg-stat-val" id="psStatA" style="color:#5DD9C1">—</div>
       <div class="pebg-stat-sub" id="psSubA">precio impl.</div>
+    </div>
+    <div class="pebg-stat-block">
+      <div class="pebg-stat-lbl">P/E anualizdo</div>
+      <div class="pebg-stat-val" id="psStatAnual">—</div>
+      <div class="pebg-stat-sub">último Q × 4</div>
     </div>
   </div>
   <div id="pebgOuter">
@@ -694,6 +759,7 @@ function switchTab(t) {
   if(t==='heatmap') renderHeatmap();
   if(t==='compare') initCompareTab();
   if(t==='pebg') { if(!pebgLoaded) loadPebg(); }
+  if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
 }
 
@@ -1722,6 +1788,142 @@ async function loadCompare() {
   renderCmpChart(symA, symB, cmpCurrentRange);
 }
 
+
+
+// ── CARTERA ──────────────────────────────────────────────
+const CARTERA_TICKERS = ['NVDA','META','GOOGL','NU','MELI','ORCL','MSFT','AAPL','TSLA','AMZN','PAM'];
+const TOP50_TICKERS = [
+  'NVDA','AAPL','MSFT','AMZN','GOOGL','META','TSLA','AVGO','JPM','LLY',
+  'V','UNH','XOM','WMT','MA','NFLX','COST','ORCL','HD','BAC',
+  'JNJ','PG','ABBV','KO','CVX','MRK','CSCO','CRM','WFC','AMD',
+  'ACN','LIN','IBM','ADBE','MCD','PEP','TMO','GE','DIS','GS',
+  'QCOM','INTU','CAT','AMGN','NOW','ISRG','TXN','SPGI','RTX','BLK'
+];
+let carteraLoaded = false;
+let carteraMode = 'cartera'; // 'cartera' | 'top50'
+let carteraCache = { cartera: null, top50: null };
+let carteraData = [];
+let carteraSortCol = 'z';
+let carteraSortAsc = true;
+
+function setCarteraMode(mode) {
+  carteraMode = mode;
+  document.getElementById('carteraTab1').classList.toggle('active', mode === 'cartera');
+  document.getElementById('carteraTab2').classList.toggle('active', mode === 'top50');
+  if(carteraCache[mode]) {
+    carteraData = carteraCache[mode];
+    renderCarteraTable();
+    document.getElementById('carteraStatus').textContent = carteraData.length + ' acciones';
+  } else {
+    loadCartera();
+  }
+}
+
+async function loadCartera() {
+  carteraLoaded = true;
+  const tickers = carteraMode === 'top50' ? TOP50_TICKERS : CARTERA_TICKERS;
+  const status = document.getElementById('carteraStatus');
+  const tbody = document.getElementById('carteraTbody');
+  carteraData = [];
+  tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted);font-family:var(--mono);font-size:11px">Cargando 0/${tickers.length}...</td></tr>`;
+
+  let done = 0;
+  const results = await Promise.allSettled(
+    tickers.map(sym =>
+      fetch(BASE_URL + '/api/pebg?symbol=' + sym)
+        .then(r => r.json())
+        .then(d => {
+          done++;
+          status.textContent = `Cargando ${done}/${tickers.length}...`;
+          return { sym, data: d };
+        })
+        .catch(e => ({ sym, error: e.message }))
+    )
+  );
+
+  for(const r of results) {
+    if(r.status !== 'fulfilled' || r.value.error || !r.value.data) continue;
+    const { sym, data } = r.value;
+    if(data.error) continue;
+
+    const full = buildPESeries(data);
+    if(full.length < 5) continue;
+
+    // 1-year window
+    const cutoff = full[full.length-1].date - 365*86400;
+    const win = full.filter(p => p.date >= cutoff);
+    if(win.length < 10) continue;
+
+    const peW = win.map(p => p.pe).filter(x => x > 0 && x < 500);
+    const mu = peW.reduce((a,b) => a+b,0) / peW.length;
+    const sigma = Math.sqrt(peW.reduce((s,v) => s+(v-mu)**2,0) / peW.length);
+    const last = full[full.length-1];
+    const z = (last.pe - mu) / sigma;
+
+    const lastQEps = data.eps[data.eps.length - 1]?.eps;
+    const peAnual = (lastQEps && lastQEps > 0) ? last.close / (lastQEps * 4) : null;
+    // Implied price if annualized PE reaches 1Y mean: lastQEps * 4 * mu
+    const impliedAnual = (lastQEps && lastQEps > 0) ? lastQEps * 4 * mu : null;
+    const varAnual = impliedAnual != null ? (impliedAnual - last.close) / last.close * 100 : null;
+    carteraData.push({
+      ticker: sym,
+      name: data.shortName || sym,
+      pe: last.pe,
+      mu, sigma, z,
+      price: last.close,
+      eps4q: last.eps4q,
+      implied: last.eps4q * mu,
+      varToMu: (last.eps4q * mu - last.close) / last.close * 100,
+      peAnual,
+      impliedAnual,
+      varAnual,
+    });
+  }
+
+  carteraCache[carteraMode] = carteraData;
+  status.textContent = `${carteraData.length} acciones cargadas`;
+  renderCarteraTable();
+}
+
+function sortCartera(col) {
+  if(carteraSortCol === col) carteraSortAsc = !carteraSortAsc;
+  else { carteraSortCol = col; carteraSortAsc = true; }
+  renderCarteraTable();
+}
+
+function renderCarteraTable() {
+  const sorted = [...carteraData].sort((a,b) => {
+    const av = a[carteraSortCol] ?? 0, bv = b[carteraSortCol] ?? 0;
+    if(typeof av === 'string') return carteraSortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return carteraSortAsc ? av - bv : bv - av;
+  });
+
+  const fmtPE = v => v != null ? v.toFixed(1)+'x' : '—';
+  const fmtP  = v => '$'+v.toFixed(2);
+  const tbody = document.getElementById('carteraTbody');
+  tbody.innerHTML = sorted.map((d, i) => {
+    const zCls = d.z < -1 ? 'pp' : d.z > 1 ? 'pn' : '';
+    const sig = d.z < -1 ? '<span class="ct-signal ct-barato">BARATO</span>'
+               : d.z > 1  ? '<span class="ct-signal ct-caro">CARO</span>'
+               : '<span class="ct-signal ct-justo">JUSTO</span>';
+    const zSign = d.z >= 0 ? '+' : '';
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td><span class="ct-ticker">${d.ticker}</span></td>
+      <td style="color:var(--label);font-size:11px">${d.name}</td>
+      <td>${fmtPE(d.pe)}</td>
+      <td style="color:var(--muted)">${fmtPE(d.mu)}</td>
+      <td style="color:var(--muted)">${d.sigma.toFixed(1)}x</td>
+      <td class="${zCls}" style="font-weight:700">${zSign}${d.z.toFixed(2)}σ</td>
+      <td>${sig}</td>
+      <td style="color:var(--text2)">${fmtP(d.implied)}</td>
+      <td class="${d.varToMu >= 0 ? 'pp' : 'pn'}" style="font-weight:600">${d.varToMu >= 0 ? '+' : ''}${d.varToMu.toFixed(1)}%</td>
+      <td style="color:var(--label)">${d.peAnual != null ? d.peAnual.toFixed(1)+'x' : '—'}</td>
+      <td class="${d.varAnual != null ? (d.varAnual >= 0 ? 'pp' : 'pn') : ''}" style="font-weight:600">${d.varAnual != null ? (d.varAnual >= 0 ? '+' : '') + d.varAnual.toFixed(1) + '%' : '—'}</td>
+      <td style="color:var(--text2)">${fmtP(d.price)}</td>
+    </tr>`;
+  }).join('');
+}
 
 // ── PEBG ──────────────────────────────────────────────────
 let pebgLoaded = false;
