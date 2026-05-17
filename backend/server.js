@@ -207,22 +207,25 @@ app.get("/api/pebg", async (req, res) => {
         const ytdQ3ByYear = {};
 
         epsData.forEach(e => {
+          const endYear = String(new Date(e.end).getFullYear());
           if(!e.frame) {
-            // No frame: YTD cumulative — use for Q4 derivation
-            if(e.fp === 'Q3' && (e.form === '10-Q')) {
-              const yr = String(new Date(e.end).getFullYear());
-              if(!ytdQ3ByYear[yr] || e.end > ytdQ3ByYear[yr].end)
-                ytdQ3ByYear[yr] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+            // No frame: YTD cumulative or non-calendar FY annual
+            if(e.fp === 'Q3' && e.form === '10-Q') {
+              if(!ytdQ3ByYear[endYear] || e.end > ytdQ3ByYear[endYear].end)
+                ytdQ3ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+            } else if(e.fp === 'FY' && e.form === '10-K') {
+              // Non-calendar FY annual (no CY#### frame) — still useful for Q4 derivation
+              if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
+                annualByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             }
           } else if(/^CY\d{4}Q\d$/.test(e.frame)) {
             // Single quarter frame
             if(!quarterly[e.frame] || e.end > quarterly[e.frame].end)
               quarterly[e.frame] = { date: Math.floor(new Date(e.end).getTime()/1000), eps: e.val, end: e.end };
           } else if(/^CY\d{4}$/.test(e.frame)) {
-            // Annual frame
-            const yr = e.frame.slice(2);
-            if(!annualByYear[yr] || e.end > annualByYear[yr].end)
-              annualByYear[yr] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+            // Calendar-year annual frame
+            if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
+              annualByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
           }
         });
 
