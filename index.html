@@ -142,7 +142,22 @@ td:nth-child(-n+4){text-align:left}
 .pebg-stat-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
 .pebg-stat-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text2);white-space:nowrap}
 .pebg-stat-sub{font-family:var(--mono);font-size:9px;color:var(--muted)}
-#pebgContainer{flex:1;position:relative;overflow:hidden;background:#06090F}
+.btn-amber{background:var(--amberglow);border:1px solid var(--amber2);color:var(--amber);font-weight:700}
+.btn-amber:hover{background:rgba(242,169,30,.25)}
+#pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden}
+#pebgContainer{flex:1;position:relative;overflow:hidden;background:#06090F;min-width:0}
+.pebg-panel{width:260px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column}
+.pebg-panel::-webkit-scrollbar{width:4px}.pebg-panel::-webkit-scrollbar-thumb{background:var(--border2)}
+.pebg-panel-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--amber);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.pebg-panel-sub{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.pebg-eps-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pebg-eps-row-lbl{font-family:var(--mono);font-size:10px;color:var(--label);flex:1;min-width:0}
+.pebg-eps-row-val{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2);text-align:right;min-width:50px}
+.pebg-eps-input{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:3px 7px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none;width:70px;text-align:right}
+.pebg-eps-input:focus{border-color:var(--amber)}
+.pebg-date-input{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:3px 7px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none;flex:1;min-width:0}
+.pebg-date-input:focus{border-color:var(--amber)}
+.pebg-date-input::placeholder{color:var(--muted)}
 #pebgCanvas{display:block;width:100%;height:100%}
 .pebg-tooltip{position:absolute;background:rgba(6,9,15,.95);border:1px solid var(--border2);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:10px;pointer-events:none;display:none;z-index:100;min-width:190px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .pebg-tooltip-date{color:var(--muted);font-size:9px;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px}
@@ -499,6 +514,7 @@ td:nth-child(-n+4){text-align:left}
     </div>
     <span id="pebgStatus" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
     <div class="cs"></div>
+    <button class="btn btn-amber" onclick="togglePebgPanel()" id="pebgPersonalizar">&#9998; Personalizar</button>
     <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Precio vs bandas de P/E hist&#243;rico &middot; Yahoo Finance</span>
   </div>
   <div class="pebg-stats-bar" id="pebgStatsBar" style="display:none">
@@ -558,13 +574,24 @@ td:nth-child(-n+4){text-align:left}
       <div class="pebg-stat-sub" id="psSubA">precio impl.</div>
     </div>
   </div>
-  <div id="pebgContainer">
-    <canvas id="pebgCanvas"></canvas>
-    <div class="pebg-tooltip" id="pebgTooltip">
-      <div class="pebg-tooltip-date" id="pebgTipDate"></div>
-      <div id="pebgTipRows"></div>
+  <div id="pebgOuter">
+    <div id="pebgContainer">
+      <canvas id="pebgCanvas"></canvas>
+      <div class="pebg-tooltip" id="pebgTooltip">
+        <div class="pebg-tooltip-date" id="pebgTipDate"></div>
+        <div id="pebgTipRows"></div>
+      </div>
+      <div class="pebg-legend" id="pebgLegend" style="display:none"></div>
     </div>
-    <div class="pebg-legend" id="pebgLegend" style="display:none"></div>
+    <div class="pebg-panel" id="pebgPanel" style="display:none">
+      <div class="pebg-panel-title">EPS Trimestral <span style="color:var(--muted);font-weight:400;font-size:9px">· editable</span></div>
+      <div class="pebg-panel-sub">Ú ltimos 4Q (auto)</div>
+      <div id="pebgAutoRows"></div>
+      <div class="pebg-panel-sub" style="margin-top:12px">4Q anteriores (manual)</div>
+      <div id="pebgManualRows"></div>
+      <button class="btn btn-amber" style="width:100%;margin-top:14px;justify-content:center" onclick="applyPebgManual()">&#10003; Aplicar</button>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;line-height:1.5">Fecha: fin del trimestre<br>Ej: 2023-03-31</div>
+    </div>
   </div>
 </div>
 </div>
@@ -1698,6 +1725,105 @@ async function loadCompare() {
 
 // ── PEBG ──────────────────────────────────────────────────
 let pebgLoaded = false;
+let pebgManualEps = []; // manually entered EPS quarters
+let pebgPanelOpen = false;
+
+function togglePebgPanel() {
+  pebgPanelOpen = !pebgPanelOpen;
+  const panel = document.getElementById('pebgPanel');
+  panel.style.display = pebgPanelOpen ? 'flex' : 'none';
+  document.getElementById('pebgPersonalizar').textContent = pebgPanelOpen ? '✕ Cerrar' : '✎ Personalizar';
+  if(pebgPanelOpen && pebgData) populatePebgPanel(pebgData);
+  // Redraw canvas at new size
+  setTimeout(() => { if(pebgData) renderPebg(pebgData); }, 50);
+}
+
+function getPrevQuarters(eps, n) {
+  const origEps = (pebgData._origEps || eps);
+  if(!origEps.length) return [];
+
+  // Find the quarter end of the earliest eps date
+  const earliest = new Date(origEps[0].date * 1000);
+  const m = earliest.getMonth(); // 0-indexed
+
+  // Snap to quarter end
+  let qYear = earliest.getFullYear();
+  let qMonth; // 0-indexed month of quarter end
+  if(m <= 2)      qMonth = 2;   // Q1 ends Mar
+  else if(m <= 5) qMonth = 5;   // Q2 ends Jun
+  else if(m <= 8) qMonth = 8;   // Q3 ends Sep
+  else            qMonth = 11;  // Q4 ends Dec
+
+  const quarters = [];
+  for(let i = 0; i < n; i++) {
+    // Go back one quarter
+    qMonth -= 3;
+    if(qMonth < 0) { qMonth += 12; qYear -= 1; }
+
+    const lastDay = new Date(qYear, qMonth + 1, 0); // last day of month
+    quarters.unshift({
+      date: Math.floor(lastDay.getTime() / 1000),
+      label: lastDay.toISOString().slice(0, 10)
+    });
+  }
+  return quarters;
+}
+
+function populatePebgPanel(data) {
+  const autoEps = data._origEps || data.eps;
+  // Last 4 quarters auto
+  const autoDiv = document.getElementById('pebgAutoRows');
+  autoDiv.innerHTML = autoEps.slice(-4).map(e => {
+    const d = new Date(e.date * 1000);
+    const lbl = d.toISOString().slice(0,10);
+    return '<div class="pebg-eps-row">'
+      + '<span class="pebg-eps-row-lbl">'+lbl+'</span>'
+      + '<span class="pebg-eps-row-val">$'+e.eps.toFixed(3)+'</span>'
+      + '</div>';
+  }).join('');
+
+  // Compute the 4 prior quarter dates automatically
+  const prevQ = getPrevQuarters(autoEps, 4);
+  const manDiv = document.getElementById('pebgManualRows');
+  manDiv.innerHTML = prevQ.map((q, i) => {
+    const saved = pebgManualEps.find(m => Math.abs(m.date - q.date) < 5*86400);
+    return '<div class="pebg-eps-row">'
+      + '<span class="pebg-eps-row-lbl" style="flex:1">'+q.label+'</span>'
+      + '<input class="pebg-eps-input" id="pebgEps'+i+'" type="text" inputmode="decimal" placeholder="0,000" value="'+(saved ? String(saved.eps).replace('.',',') : '')+'" data-date="'+q.date+'">'
+      + '</div>';
+  }).join('');
+}
+
+function applyPebgManual() {
+  const manual = [];
+  for(let i = 0; i < 4; i++) {
+    const inp = document.getElementById('pebgEps'+i);
+    if(!inp) continue;
+    const rawVal = inp.value.trim().replace(',', '.');
+    const epsVal = parseFloat(rawVal);
+    const ts = parseInt(inp.dataset.date || '0');
+    if(!isNaN(epsVal) && ts > 0) {
+      manual.push({ date: ts, eps: epsVal });
+    }
+  }
+  pebgManualEps = manual;
+  if(pebgData) {
+    // Merge manual EPS with original auto EPS (use original, not previously patched)
+    const autoEps = pebgData._origEps || pebgData.eps;
+    if(!pebgData._origEps) pebgData._origEps = [...pebgData.eps]; // save original
+    const merged = [...manual.map(e => ({date:e.date, eps:e.eps})), ...autoEps]
+      .sort((a,b) => a.date - b.date)
+      .filter((e,i,arr) => i===0 || Math.abs(e.date - arr[i-1].date) > 30*86400);
+    pebgData.eps = merged;
+    pebgData.epsCount = merged.length;
+    renderPebg(pebgData);
+    document.getElementById('pebgStatus').textContent =
+      (pebgData.shortName || pebgData.symbol) + ' · ' + merged.length + ' trim. EPS (' + manual.length + ' manual)';
+    // Refresh auto rows with current ticker's data
+    populatePebgPanel(pebgData);
+  }
+}
+
 let pebgData = null;
 let pebgYears = 1;
 
@@ -1718,6 +1844,8 @@ async function loadPebg() {
   const status = document.getElementById('pebgStatus');
   status.textContent = 'Cargando...';
   pebgLoaded = true;
+  pebgManualEps = []; // reset manual on new ticker
+  if(pebgData) { pebgData._origEps = null; }
 
   try {
     const r = await fetch(BASE_URL + '/api/pebg?symbol=' + sym);
@@ -1726,6 +1854,7 @@ async function loadPebg() {
     pebgData = d;
     status.textContent = (d.shortName || sym) + (d.epsCount ? ' · ' + d.epsCount + ' trim. EPS' : '');
     renderPebg(d);
+    if(pebgPanelOpen) populatePebgPanel(d);
   } catch(e) {
     document.getElementById('pebgStatus').textContent = 'Error: ' + e.message;
   }
