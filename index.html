@@ -36,7 +36,8 @@ body{display:flex;flex-direction:column;font-family:var(--sans)}
 .stat-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .up{color:var(--green)!important}.dn{color:var(--red)!important}
 .controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:7px 48px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-.ctrl-input{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:5px 9px 5px 26px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;width:190px;transition:border-color .15s}
+.mobile-flt-toggle { display: none }
+.mobile-flt-row { display: contents }
 .ctrl-input::placeholder{color:var(--muted)}.ctrl-input:focus{border-color:var(--amber)}
 .sw{position:relative;flex-shrink:0}
 .si{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:11px;pointer-events:none}
@@ -312,30 +313,45 @@ td:nth-child(-n+4){text-align:left}
 
 /* ── MOBILE ── */
 @media (max-width: 768px) {
-  /* Header: smaller height */
-  .logo-block { display: none }
-  .topbar { height: 34px !important; padding: 0 10px !important; gap: 8px }
-  .tabs { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none; height: 30px }
-  .tabs::-webkit-scrollbar { display: none }
-  .tab { flex-shrink: 0; font-size: 9px; padding: 0 10px; height: 30px; line-height: 30px }
+  /* Hide logo text — keep only JFP hexagon + tabs */
+  .logo-text, .logo-sub, .escudo, .tab-divider, .live-badge, .hdr-time, .tab-spacer { display: none }
+  .tab-logo { margin-right: 6px; padding: 4px 0 }
+  .logo-mark { width: 22px; height: 22px; font-size: 7px }
+  .tab-bar { padding: 0 8px; height: 36px; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none }
+  .tab-bar::-webkit-scrollbar { display: none }
+  .tab { padding: 0 8px; font-size: 9px; height: 36px; line-height: 36px; letter-spacing: 0; flex-shrink: 0 }
 
-  /* Reduce row padding/height across all control bars */
-  .controls, .pebg-controls, .cmp-controls, .cartera-controls
-    { padding: 5px 12px !important; flex-wrap: wrap; gap: 6px }
-  .stats-bar { padding: 4px 12px !important; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch }
-  .pebg-stats-bar { padding: 4px 12px !important; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch }
-  .stat { flex-shrink: 0 }
+  /* Stats bars: compact horizontal scroll */
+  .stats-bar { padding: 3px 12px !important; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none }
+  .stat { flex-shrink: 0; padding: 0 10px }
   .stat-val { font-size: 13px }
+  .stat-lbl { font-size: 8px }
+  .pebg-stats-bar { padding: 3px 12px !important; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none }
   .pebg-stat-block { flex-shrink: 0 }
   .pebg-stat-val { font-size: 12px }
   .pebg-stat-lbl { font-size: 8px }
+
+  /* Mobile filters: hide selects behind toggle */
+  .mobile-flt-toggle { display: inline-flex }
+  .mobile-flt-row { display: none; width: 100%; flex-wrap: wrap; gap: 6px }
+  .mobile-flt-row.open { display: flex }
+  .cs { display: none }
   .cartera-table td:first-child, .cartera-table th:first-child { padding-left: 12px }
   .cartera-table td:last-child, .cartera-table th:last-child { padding-right: 12px }
-  .cs { display: none }
 
-  /* Tables: force horizontal + vertical scroll */
-  .table-wrap { overflow: auto !important; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y }
-  .cartera-wrap { overflow: auto !important; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y }
+  /* SCROLL FIX: use position trick for iOS */
+  .view.active { position: relative }
+  .table-wrap {
+    position: absolute !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Wrap table-wrap in a relative container that fills remaining space */
+  /* Since view is flex column, make table-wrap fill via flex */
+  .view.active { display: flex; flex-direction: column }
+  .table-wrap { position: static !important; flex: 1; min-height: 0; overflow: auto !important; -webkit-overflow-scrolling: touch }
+  .cartera-wrap { flex: 1; min-height: 0; overflow: auto !important; -webkit-overflow-scrolling: touch }
   table { min-width: 900px }
   .cartera-table { min-width: 1000px }
 
@@ -346,19 +362,19 @@ td:nth-child(-n+4){text-align:left}
 
   /* PEBG panel: below chart */
   #pebgOuter { flex-direction: column }
-  .pebg-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 260px }
+  .pebg-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 240px }
 
   /* Compare price bar */
-  .cmp-price-bar { flex-wrap: wrap; padding: 6px 12px; gap: 8px }
+  .cmp-price-bar { flex-wrap: wrap; padding: 5px 12px; gap: 8px }
   .cmp-price-sep { display: none }
   .cmp-price-block { padding: 0 8px }
 
   /* Footer */
-  .footer { padding: 4px 12px; font-size: 7px }
+  .footer { padding: 3px 12px; font-size: 7px }
 }
 
 @media (max-width: 480px) {
-  .tab { font-size: 8px; padding: 0 8px }
+  .tab { font-size: 8px; padding: 0 6px }
   .pebg-stat-val { font-size: 11px }
   table { min-width: 800px }
   .cartera-table { min-width: 900px }
@@ -468,7 +484,12 @@ td:nth-child(-n+4){text-align:left}
   </div>
   <div class="controls">
     <div class="sw"><span class="si">&#8981;</span><input class="ctrl-input" type="text" id="srch" placeholder="Buscar ticker / empresa..."></div>
-    <select class="ctrl-input" id="secF">
+    <button class="btn btn-ghost mobile-flt-toggle" onclick="toggleMobileFilters()" id="mobileFltBtn">&#9881; Filtros</button>
+    <button class="btn" id="rfBtn" onclick="loadData()">&#8635; Actualizar</button>
+    <div class="cs"></div>
+    <div class="rtag" id="rCnt">&mdash;</div>
+    <div class="mobile-flt-row" id="mobileFltRow">
+      <select class="ctrl-input" id="secF">
       <option value="">Todos los sectores</option>
       <option value="Technology">Info Technology</option>
       <option value="Healthcare">Health Care</option>
@@ -489,10 +510,8 @@ td:nth-child(-n+4){text-align:left}
       <option value="mid">Mid (2-10B)</option>
       <option value="small">Small (&lt;2B)</option>
     </select>
-    <button class="btn btn-ghost" onclick="toggleFilters()">&#9881; Filtros</button>
-    <button class="btn" id="rfBtn" onclick="loadData()">&#8635; Actualizar</button>
-    <div class="cs"></div>
-    <div class="rtag" id="rCnt">&mdash;</div>
+    <button class="btn btn-ghost" onclick="toggleFilters()">&#9881; Filtros avanzados</button>
+    </div>
   </div>
   <div class="flt-panel" id="fltPanel">
     <div class="flt-group" style="flex-shrink:0">
@@ -805,6 +824,12 @@ const FLT = {pe:{min:null,max:null},fwdpe:{min:null,max:null},pb:{min:null,max:n
 const FLT_FIELD = {pe:'pe',fwdpe:'fwdPE',pb:'pb',ret1d:'ret1d',retytd:'retYTD',ret1y:'ret1y'};
 
 function toggleFilters() { document.getElementById('fltPanel').classList.toggle('open'); }
+function toggleMobileFilters() {
+  const row = document.getElementById('mobileFltRow');
+  const btn = document.getElementById('mobileFltBtn');
+  row.classList.toggle('open');
+  btn.textContent = row.classList.contains('open') ? '✕ Filtros' : '⚙ Filtros';
+}
 function setFlt(k, mn, mx) { FLT[k].min=mn; FLT[k].max=mx; const mi=document.getElementById(k+'_min'), ma=document.getElementById(k+'_max'); if(mi)mi.value=mn??''; if(ma)ma.value=mx??''; render(); }
 function clearFlt(k) { setFlt(k,null,null); }
 function clearAllFlt() { Object.keys(FLT).forEach(k=>clearFlt(k)); }
