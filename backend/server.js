@@ -201,29 +201,33 @@ app.get("/api/pebg", async (req, res) => {
         const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
 
         // Use frame="CY####Q#" entries for Q1/Q2/Q3 (true single-quarter values)
-        // Derive Q4 = FY_annual(frame=CY####) - Q3_YTD(no frame, fp=Q3)
+        // Derive Q4 = FY_annual - Q3_YTD, with support for all fiscal year end months
         const quarterly = {};
         const annualByYear = {};
+        const ytdQ1ByYear = {};
+        const ytdQ2ByYear = {};
         const ytdQ3ByYear = {};
 
         epsData.forEach(e => {
           const endYear = String(new Date(e.end).getFullYear());
           if(!e.frame) {
-            // No frame: YTD cumulative or non-calendar FY annual
-            if(e.fp === 'Q3' && e.form === '10-Q') {
+            if(e.fp === 'Q1' && e.form === '10-Q') {
+              if(!ytdQ1ByYear[endYear] || e.end > ytdQ1ByYear[endYear].end)
+                ytdQ1ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+            } else if(e.fp === 'Q2' && e.form === '10-Q') {
+              if(!ytdQ2ByYear[endYear] || e.end > ytdQ2ByYear[endYear].end)
+                ytdQ2ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+            } else if(e.fp === 'Q3' && e.form === '10-Q') {
               if(!ytdQ3ByYear[endYear] || e.end > ytdQ3ByYear[endYear].end)
                 ytdQ3ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'FY' && e.form === '10-K') {
-              // Non-calendar FY annual (no CY#### frame) — still useful for Q4 derivation
               if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
                 annualByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             }
           } else if(/^CY\d{4}Q\d$/.test(e.frame)) {
-            // Single quarter frame
             if(!quarterly[e.frame] || e.end > quarterly[e.frame].end)
               quarterly[e.frame] = { date: Math.floor(new Date(e.end).getTime()/1000), eps: e.val, end: e.end };
           } else if(/^CY\d{4}$/.test(e.frame)) {
-            // Calendar-year annual frame
             if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
               annualByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
           }
@@ -233,25 +237,38 @@ app.get("/api/pebg", async (req, res) => {
         const derived = Object.entries(quarterly)
           .map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
 
-        // Derive missing quarters based on fiscal year end month:
-        // - December FY: Annual = full CY → derive Q4 = Annual - Q3_YTD
-        // - September FY (QCOM): Annual covers Jan-Sep → derive Q3 = Annual - Q1 - Q2
-        // - Other months: skip
+        // Derive missing quarter based on fiscal year end month
+        // Formula: last_fiscal_quarter = FY_annual - YTD_of_previous_quarters
+        // Dec FY → Q4 missing → Q4 = Annual - Q3_YTD
+        // Sep FY (QCOM) → CY_Q3 missing → Q3 = Annual - Q3_YTD (fiscal)
+        // Jun FY (MSFT,NIKE) → CY_Q2 missing → Q2 = Annual - Q2_YTD (fiscal)
+        // Mar FY → CY_Q1 missing → Q1 = Annual - Q1_YTD (fiscal)
+        // Oct/Nov FY → same as Dec (Q4 = Annual - Q3_YTD)
         Object.keys(annualByYear).forEach(yr => {
           const ann = annualByYear[yr];
           const annMonth = new Date(ann.end * 1000).getMonth(); // 0-indexed
 
-          if(annMonth >= 10 && !quarterly[`CY${yr}Q4`]) {
-            // December FY: Q4 = Annual - Q3_YTD_cumulative
-            const q3ytd = ytdQ3ByYear[yr];
-            if(q3ytd && ann.date > q3ytd.date)
-              derived.push({ date: ann.date, eps: ann.val - q3ytd.val, frame: `CY${yr}Q4` });
-          } else if(annMonth >= 8 && annMonth <= 9 && !quarterly[`CY${yr}Q3`]) {
-            // September FY: Annual = Q1+Q2+Q3, so Q3 = Annual - Q1 - Q2
-            const q1 = quarterly[`CY${yr}Q1`];
-            const q2 = quarterly[`CY${yr}Q2`];
-            if(q1 && q2)
-              derived.push({ date: ann.date, eps: ann.val - q1.eps - q2.eps, frame: `CY${yr}Q3` });
+          let missingFrame, ytd;
+          if(annMonth >= 9) {
+            // Oct/Nov/Dec FY → last fiscal Q is calendar Q4 → Q4 = Annual - Q3_YTD
+            missingFrame = `CY${yr}Q4`;
+            ytd = ytdQ3ByYear[yr];
+          } else if(annMonth >= 6) {
+            // Jul/Aug/Sep FY (QCOM) → last fiscal Q is calendar Q3 → Q3 = Annual - Q3_YTD(fiscal)
+            missingFrame = `CY${yr}Q3`;
+            ytd = ytdQ3ByYear[yr];
+          } else if(annMonth >= 3) {
+            // Apr/May/Jun FY (MSFT,NIKE) → last fiscal Q is calendar Q2 → Q2 = Annual - Q2_YTD(fiscal)
+            missingFrame = `CY${yr}Q2`;
+            ytd = ytdQ2ByYear[yr];
+          } else {
+            // Jan/Feb/Mar FY → last fiscal Q is calendar Q1 → Q1 = Annual - Q1_YTD(fiscal)
+            missingFrame = `CY${yr}Q1`;
+            ytd = ytdQ1ByYear[yr];
+          }
+
+          if(ytd && ann.date > ytd.date && !quarterly[missingFrame]) {
+            derived.push({ date: ann.date, eps: ann.val - ytd.val, frame: missingFrame });
           }
         });
 
@@ -288,16 +305,19 @@ app.get("/api/pebg", async (req, res) => {
       .filter(e => e.date > 0)
       .sort((a,b) => a.date - b.date);
 
-    // Merge: EDGAR for history, Yahoo for recent (Yahoo is always up to date)
+    // Merge: prefer EDGAR (always GAAP) over Yahoo (may be non-GAAP for some companies like QCOM)
+    // Only use Yahoo to fill quarters that EDGAR doesn't cover
     let eps;
-    if(yahooEps.length > 0) {
-      const oldestYahoo = yahooEps[0].date;
-      const edgarOld = edgarEps.filter(e => e.date < oldestYahoo - 60*86400);
-      eps = [...edgarOld, ...yahooEps].sort((a,b) => a.date - b.date);
-      console.log(`pebg ${sym}: EDGAR_old(${edgarOld.length}) + Yahoo(${yahooEps.length}) = ${eps.length} quarters`);
+    if(edgarEps.length >= 4) {
+      const yahooOnly = yahooEps.filter(yq =>
+        !edgarEps.some(eq => Math.abs(eq.date - yq.date) < 75*86400)
+      );
+      eps = [...edgarEps, ...yahooOnly].sort((a,b) => a.date - b.date);
+      console.log(`pebg ${sym}: EDGAR(${edgarEps.length}) + Yahoo_gap(${yahooOnly.length}) = ${eps.length} quarters`);
     } else {
-      eps = edgarEps;
-      console.log(`pebg ${sym}: EDGAR only (${eps.length} quarters)`);
+      // EDGAR insufficient — use Yahoo as primary source
+      eps = yahooEps.length > 0 ? yahooEps : edgarEps;
+      console.log(`pebg ${sym}: Yahoo primary (${eps.length} quarters)`);
     }
     const result = summResult;
     const priceInfo = result?.price || {};
