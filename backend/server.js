@@ -233,7 +233,7 @@ app.get("/api/pebg", async (req, res) => {
       const hist = result?.earningsHistory?.history || [];
       const fromHist = hist
         .filter(e => e.epsActual?.raw != null)
-        .map(e => ({ date: e.quarter?.raw || 0, eps: e.epsActual.raw }))
+        .map(e => ({ date: e.reportDate?.raw || e.quarter?.raw || 0, eps: e.epsActual.raw }))
         .sort((a,b) => a.date - b.date);
 
       // Merge both, deduplicate by date proximity
