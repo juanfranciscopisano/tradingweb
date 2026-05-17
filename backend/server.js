@@ -200,76 +200,51 @@ app.get("/api/pebg", async (req, res) => {
         // EPS diluted — use frame field to get true quarterly (not YTD cumulative)
         const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
 
-        // EDGAR 10-Q reports cumulative YTD EPS (Q1=1Q, Q2=2Q, Q3=3Q)
-        // The `frame` field like "CY2024Q1" indicates a true single-quarter value
-        // Use frame-based entries when available, else derive from YTD differences
+        // Use frame="CY####Q#" entries for Q1/Q2/Q3 (true single-quarter values)
+        // Derive Q4 = FY_annual(frame=CY####) - Q3_YTD(no frame, fp=Q3)
+        const quarterly = {};
+        const annualByYear = {};
+        const ytdQ3ByYear = {};
 
-        // Approach: use entries that have a frame like CY####Q# (single quarter)
-        const framed = epsData
-          .filter(e => e.frame && /^CY\d{4}Q\d$/.test(e.frame))
-          .map(e => ({
-            date: Math.floor(new Date(e.end).getTime() / 1000),
-            eps: e.val,
-            frame: e.frame
-          }))
-          .filter((e, i, arr) =>
-            i === arr.findIndex(x => x.frame === e.frame)
-          )
-          .sort((a,b) => a.date - b.date);
-
-        // If framed data is sufficient, use it
-        let quarterly = framed;
-
-        // Always try to derive Q4 from Annual - Q3, and fill missing quarters
-        {
-          // Get all YTD entries from 10-Q (Q1/Q2/Q3) and annual from 10-K (FY)
-          const allEntries = epsData
-            .filter(e => e.form === "10-Q" || e.form === "10-K")
-            .map(e => ({
-              date: Math.floor(new Date(e.end).getTime() / 1000),
-              eps: e.val, fp: e.fp, fy: e.fy,
-              end: e.end
-            }))
-            .sort((a,b) => a.date - b.date);
-
-          // Deduplicate per (fy, fp) keeping latest filed
-          const byFyFp = {};
-          allEntries.forEach(e => {
-            const key = `${e.fy}-${e.fp}`;
-            byFyFp[key] = e; // last one wins (most recent amendment)
-          });
-          const deduped = Object.values(byFyFp).sort((a,b) => a.date - b.date);
-
-          // Group by fiscal year
-          const byYear = {};
-          deduped.forEach(e => {
-            if(!byYear[e.fy]) byYear[e.fy] = {};
-            byYear[e.fy][e.fp] = e;
-          });
-
-          const derived = [];
-          Object.keys(byYear).sort().forEach(fy => {
-            const yr = byYear[fy];
-            const q1 = yr['Q1'], q2 = yr['Q2'], q3 = yr['Q3'], fy_ = yr['FY'];
-            if(q1) derived.push({ date: q1.date, eps: q1.eps });
-            if(q2 && q1) derived.push({ date: q2.date, eps: q2.eps - q1.eps });
-            if(q3 && q2) derived.push({ date: q3.date, eps: q3.eps - q2.eps });
-            // Q4 = Annual - Q3 cumulative
-            if(fy_ && q3) {
-              // Q4 end date = fiscal year end date
-              derived.push({ date: fy_.date, eps: fy_.eps - q3.eps });
-            } else if(fy_ && q2 && !q3) {
-              // Only Q2 available: Q4 not derivable, skip
+        epsData.forEach(e => {
+          if(!e.frame) {
+            // No frame: YTD cumulative — use for Q4 derivation
+            if(e.fp === 'Q3' && (e.form === '10-Q')) {
+              const yr = String(new Date(e.end).getFullYear());
+              if(!ytdQ3ByYear[yr] || e.end > ytdQ3ByYear[yr].end)
+                ytdQ3ByYear[yr] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             }
-          });
+          } else if(/^CY\d{4}Q\d$/.test(e.frame)) {
+            // Single quarter frame
+            if(!quarterly[e.frame] || e.end > quarterly[e.frame].end)
+              quarterly[e.frame] = { date: Math.floor(new Date(e.end).getTime()/1000), eps: e.val, end: e.end };
+          } else if(/^CY\d{4}$/.test(e.frame)) {
+            // Annual frame
+            const yr = e.frame.slice(2);
+            if(!annualByYear[yr] || e.end > annualByYear[yr].end)
+              annualByYear[yr] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+          }
+        });
 
-          // Use derived if it has more valid data than framed
-          const validDerived = derived.filter(e => !isNaN(e.eps));
-          if(validDerived.length > quarterly.length) quarterly = validDerived;
-        }
+        // Build result: Q1+Q2+Q3 from frames, Q4 derived
+        const derived = Object.entries(quarterly)
+          .map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
 
-        console.log(`pebg ${symbol}: SEC EDGAR returned ${quarterly.length} EPS quarters`);
-        return quarterly;
+        // Add Q4 for each year where we have annual + Q3 YTD
+        Object.keys(annualByYear).forEach(yr => {
+          const ann = annualByYear[yr];
+          const q3ytd = ytdQ3ByYear[yr];
+          if(q3ytd) {
+            derived.push({ date: ann.date, eps: ann.val - q3ytd.val, frame: `CY${yr}Q4` });
+          }
+        });
+
+        const quarterly_result = derived
+          .filter(e => !isNaN(e.eps))
+          .sort((a,b) => a.date - b.date)
+          .filter((e,i,arr) => i === arr.findIndex(x => x.frame === e.frame));
+        console.log(`pebg ${symbol}: SEC EDGAR returned ${quarterly_result.length} EPS quarters`);
+        return quarterly_result;
       } catch(e) {
         console.log(`pebg ${symbol}: SEC EDGAR error:`, e.message);
         return [];
