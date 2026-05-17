@@ -212,13 +212,15 @@ app.get("/api/pebg", async (req, res) => {
           const endYear = String(new Date(e.end).getFullYear());
           if(!e.frame) {
             if(e.fp === 'Q1' && e.form === '10-Q') {
-              if(!ytdQ1ByYear[endYear] || e.end > ytdQ1ByYear[endYear].end)
+              if(!e.frame && (!ytdQ1ByYear[endYear] || e.end > ytdQ1ByYear[endYear].end))
                 ytdQ1ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'Q2' && e.form === '10-Q') {
-              if(!ytdQ2ByYear[endYear] || e.end > ytdQ2ByYear[endYear].end)
+              if(!e.frame && (!ytdQ2ByYear[endYear] || e.end > ytdQ2ByYear[endYear].end))
                 ytdQ2ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'Q3' && e.form === '10-Q') {
-              if(!ytdQ3ByYear[endYear] || e.end > ytdQ3ByYear[endYear].end)
+              // Only store entries WITHOUT frame — those are the YTD cumulative values
+              // Entries WITH frame (CY####Q#) are single-quarter values, not YTD
+              if(!e.frame && (!ytdQ3ByYear[endYear] || e.end > ytdQ3ByYear[endYear].end))
                 ytdQ3ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'FY' && e.form === '10-K') {
               if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
@@ -305,13 +307,17 @@ app.get("/api/pebg", async (req, res) => {
       .filter(e => e.date > 0)
       .sort((a,b) => a.date - b.date);
 
-    // Merge: prefer EDGAR (always GAAP) over Yahoo (may be non-GAAP for some companies like QCOM)
-    // Only use Yahoo to fill quarters that EDGAR doesn't cover
+    // Match quarters by calendar period (YYYY-Q#), not by date proximity
+    const toQKey = ts => {
+      const d = new Date(ts * 1000);
+      return d.getFullYear() + 'Q' + (Math.floor(d.getMonth() / 3) + 1);
+    };
+
+    // Merge: EDGAR (GAAP) preferred, Yahoo fills gaps EDGAR doesn't have
     let eps;
     if(edgarEps.length >= 4) {
-      const yahooOnly = yahooEps.filter(yq =>
-        !edgarEps.some(eq => Math.abs(eq.date - yq.date) < 75*86400)
-      );
+      const edgarKeys = new Set(edgarEps.map(e => toQKey(e.date)));
+      const yahooOnly = yahooEps.filter(yq => !edgarKeys.has(toQKey(yq.date)));
       eps = [...edgarEps, ...yahooOnly].sort((a,b) => a.date - b.date);
       console.log(`pebg ${sym}: EDGAR(${edgarEps.length}) + Yahoo_gap(${yahooOnly.length}) = ${eps.length} quarters`);
     } else {
