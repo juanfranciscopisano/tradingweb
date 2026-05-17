@@ -364,6 +364,31 @@ td:nth-child(-n+4){text-align:left}
 </style>
 </head>
 <body>
+<div id="authGate" style="position:fixed;inset:0;background:#06090F;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#F2A91E;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">S&P 500 Terminal</div>
+  <input id="pwdInput" type="password" placeholder="Contraseña" autofocus
+    style="background:#0D1421;border:1px solid #1A2D47;border-radius:5px;padding:8px 14px;color:#E2EAF4;font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;width:200px;text-align:center"
+    onkeydown="if(event.key==='Enter')checkPwd()">
+  <button onclick="checkPwd()" style="background:rgba(242,169,30,.15);border:1px solid rgba(242,169,30,.4);border-radius:5px;color:#F2A91E;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:6px 20px;cursor:pointer;letter-spacing:.5px">Ingresar</button>
+  <div id="pwdErr" style="color:#FF5050;font-family:'IBM Plex Mono',monospace;font-size:10px;display:none">Contraseña incorrecta</div>
+</div>
+<script>
+(function(){
+  if(sessionStorage.getItem('auth')==='ok'){
+    document.getElementById('authGate').style.display='none';
+  }
+})();
+function checkPwd(){
+  if(document.getElementById('pwdInput').value==='1234'){
+    sessionStorage.setItem('auth','ok');
+    document.getElementById('authGate').style.display='none';
+  } else {
+    document.getElementById('pwdErr').style.display='block';
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+  }
+}
+</script>
 
 <div class="tab-bar">
   <div class="tab-logo">
