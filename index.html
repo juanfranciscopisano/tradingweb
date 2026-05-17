@@ -312,63 +312,56 @@ td:nth-child(-n+4){text-align:left}
 
 /* ── MOBILE ── */
 @media (max-width: 768px) {
-  /* Header */
+  /* Header: smaller height */
   .logo-block { display: none }
-  .tabs { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none }
+  .topbar { height: 34px !important; padding: 0 10px !important; gap: 8px }
+  .tabs { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none; height: 30px }
   .tabs::-webkit-scrollbar { display: none }
-  .tab { flex-shrink: 0; font-size: 9px; padding: 0 10px }
+  .tab { flex-shrink: 0; font-size: 9px; padding: 0 10px; height: 30px; line-height: 30px }
 
-  /* Reduce padding everywhere */
-  .pebg-controls, .pebg-stats-bar, .cartera-controls,
-  .cmp-controls, .ov-bar { padding-left: 16px !important; padding-right: 16px !important }
-  .cartera-table td:first-child, .cartera-table th:first-child { padding-left: 16px }
-  .cartera-table td:last-child, .cartera-table th:last-child { padding-right: 16px }
+  /* Reduce row padding/height across all control bars */
+  .controls, .pebg-controls, .cmp-controls, .cartera-controls
+    { padding: 5px 12px !important; flex-wrap: wrap; gap: 6px }
+  .stats-bar { padding: 4px 12px !important; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch }
+  .pebg-stats-bar { padding: 4px 12px !important; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch }
+  .stat { flex-shrink: 0 }
+  .stat-val { font-size: 13px }
+  .pebg-stat-block { flex-shrink: 0 }
+  .pebg-stat-val { font-size: 12px }
+  .pebg-stat-lbl { font-size: 8px }
+  .cartera-table td:first-child, .cartera-table th:first-child { padding-left: 12px }
+  .cartera-table td:last-child, .cartera-table th:last-child { padding-right: 12px }
+  .cs { display: none }
+
+  /* Tables: force horizontal + vertical scroll */
+  .table-wrap { overflow: auto !important; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y }
+  .cartera-wrap { overflow: auto !important; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y }
+  table { min-width: 900px }
+  .cartera-table { min-width: 1000px }
 
   /* Overview: single column */
   .ov-grid { flex-direction: column }
   .ov-col-wide, .ov-col-mid, .ov-col-news { flex: none; width: 100% }
   .ov-card { border-right: none; border-bottom: 1px solid var(--border) }
 
-  /* Stats bars: wrap */
-  .pebg-stats-bar { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch }
-  .pebg-stat-block { flex-shrink: 0 }
-  .pebg-stat-val { font-size: 13px }
-
-  /* Controls: wrap */
-  .pebg-controls, .cmp-controls, .cartera-controls { flex-wrap: wrap; gap: 8px }
-  .cs { display: none }
-
-  /* Tables: horizontal scroll */
-  .cartera-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch }
-  .screener-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch }
-  .cartera-table { min-width: 900px }
-
-  /* Screener table */
-  .scr-table { min-width: 900px }
-  .scr-table td:first-child, .scr-table th:first-child { padding-left: 16px }
-  .scr-table td:last-child, .scr-table th:last-child { padding-right: 16px }
-
-  /* PEBG panel: full width on mobile, below chart */
+  /* PEBG panel: below chart */
   #pebgOuter { flex-direction: column }
-  .pebg-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 300px }
+  .pebg-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 260px }
 
-  /* Compare price bar wrap */
-  .cmp-price-bar { flex-wrap: wrap; padding: 8px 16px; gap: 8px }
+  /* Compare price bar */
+  .cmp-price-bar { flex-wrap: wrap; padding: 6px 12px; gap: 8px }
   .cmp-price-sep { display: none }
   .cmp-price-block { padding: 0 8px }
 
-  /* Heatmap: full width canvas */
-  #heatmapCanvas { touch-action: manipulation }
-
   /* Footer */
-  .footer { padding: 6px 16px; font-size: 7px }
+  .footer { padding: 4px 12px; font-size: 7px }
 }
 
 @media (max-width: 480px) {
   .tab { font-size: 8px; padding: 0 8px }
   .pebg-stat-val { font-size: 11px }
-  .cartera-table { min-width: 750px }
-  .scr-table { min-width: 750px }
+  table { min-width: 800px }
+  .cartera-table { min-width: 900px }
 }
 
 </style>
@@ -699,6 +692,11 @@ td:nth-child(-n+4){text-align:left}
       <div class="pebg-stat-lbl">P/E anualizdo</div>
       <div class="pebg-stat-val" id="psStatAnual">—</div>
       <div class="pebg-stat-sub">último Q × 4</div>
+    </div>
+    <div class="pebg-stat-block">
+      <div class="pebg-stat-lbl">Fw P/E</div>
+      <div class="pebg-stat-val" id="psStatFwd">—</div>
+      <div class="pebg-stat-sub">consenso anal.</div>
     </div>
   </div>
   <div id="pebgOuter">
@@ -2181,6 +2179,13 @@ function renderPebg(data) {
   document.getElementById('psSub3').textContent = zScore < -1 ? 'BARATO' : zScore > 1 ? 'CARO' : 'JUSTO';
   document.getElementById('psStat4').textContent = data.currentPrice ? '$'+data.currentPrice.toFixed(2) : '$'+last.close.toFixed(2);
   document.getElementById('psStat5').textContent = '$' + currentEPS.toFixed(2);
+
+  // Annualized PE: price / (last single quarter EPS × 4)
+  const lastSingleQ = data.eps[data.eps.length - 1]?.eps;
+  const peAnualizado = (lastSingleQ && lastSingleQ > 0) ? last.close / (lastSingleQ * 4) : null;
+  document.getElementById('psStatAnual').textContent = peAnualizado != null ? peAnualizado.toFixed(1)+'x' : '—';
+  // Forward PE from analyst consensus
+  document.getElementById('psStatFwd').textContent = data.forwardPE ? data.forwardPE.toFixed(1)+'x' : '—';
 
   const multIds = ['6','7','8','9','A'];
   const impliedNow = multiples.map(m => m != null ? (currentEPS * m).toFixed(2) : null);
