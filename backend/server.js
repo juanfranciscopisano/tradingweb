@@ -229,16 +229,29 @@ app.get("/api/pebg", async (req, res) => {
           }
         });
 
-        // Build result: Q1+Q2+Q3 from frames, Q4 derived
+        // Build result: quarters from CY frames
         const derived = Object.entries(quarterly)
           .map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
 
-        // Add Q4 for each year where we have annual + Q3 YTD
+        // Derive missing quarters based on fiscal year end month:
+        // - December FY: Annual = full CY → derive Q4 = Annual - Q3_YTD
+        // - September FY (QCOM): Annual covers Jan-Sep → derive Q3 = Annual - Q1 - Q2
+        // - Other months: skip
         Object.keys(annualByYear).forEach(yr => {
           const ann = annualByYear[yr];
-          const q3ytd = ytdQ3ByYear[yr];
-          if(q3ytd) {
-            derived.push({ date: ann.date, eps: ann.val - q3ytd.val, frame: `CY${yr}Q4` });
+          const annMonth = new Date(ann.end * 1000).getMonth(); // 0-indexed
+
+          if(annMonth >= 10 && !quarterly[`CY${yr}Q4`]) {
+            // December FY: Q4 = Annual - Q3_YTD_cumulative
+            const q3ytd = ytdQ3ByYear[yr];
+            if(q3ytd && ann.date > q3ytd.date)
+              derived.push({ date: ann.date, eps: ann.val - q3ytd.val, frame: `CY${yr}Q4` });
+          } else if(annMonth >= 8 && annMonth <= 9 && !quarterly[`CY${yr}Q3`]) {
+            // September FY: Annual = Q1+Q2+Q3, so Q3 = Annual - Q1 - Q2
+            const q1 = quarterly[`CY${yr}Q1`];
+            const q2 = quarterly[`CY${yr}Q2`];
+            if(q1 && q2)
+              derived.push({ date: ann.date, eps: ann.val - q1.eps - q2.eps, frame: `CY${yr}Q3` });
           }
         });
 
@@ -266,45 +279,27 @@ app.get("/api/pebg", async (req, res) => {
     const closes = chart.indicators?.quote?.[0]?.close || [];
     const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
 
-    let eps = edgarEps;
+    // Yahoo earningsHistory: authoritative for last 4 quarters
+    const summResult = summaryData?.quoteSummary?.result?.[0];
+    const hist = summResult?.earningsHistory?.history || [];
+    const yahooEps = hist
+      .filter(e => e.epsActual?.raw != null)
+      .map(e => ({ date: e.reportDate?.raw || e.quarter?.raw || 0, eps: e.epsActual.raw }))
+      .filter(e => e.date > 0)
+      .sort((a,b) => a.date - b.date);
 
-    // Fallback: earningsHistory from Yahoo (last 4 quarters)
-    if(eps.length < 4) {
-      const result = summaryData?.quoteSummary?.result?.[0];
-
-      // Try earnings module first — has earningsChart.quarterly with more history
-      const qEps = result?.earnings?.earningsChart?.quarterly || [];
-      const fromEarningsChart = qEps
-        .filter(e => e.actual?.raw != null)
-        .map(e => {
-          const m = String(e.date || '').match(/(\d)Q(\d{4})/);
-          if(!m) return null;
-          const qMonth = parseInt(m[1]) * 3;
-          const qDate = new Date(parseInt(m[2]), qMonth - 1, 1).getTime() / 1000;
-          return { date: Math.floor(qDate), eps: e.actual.raw };
-        })
-        .filter(Boolean)
-        .sort((a,b) => a.date - b.date);
-
-      // earningsHistory as secondary fallback
-      const hist = result?.earningsHistory?.history || [];
-      const fromHist = hist
-        .filter(e => e.epsActual?.raw != null)
-        .map(e => ({ date: e.reportDate?.raw || e.quarter?.raw || 0, eps: e.epsActual.raw }))
-        .sort((a,b) => a.date - b.date);
-
-      // Merge both, deduplicate by date proximity
-      const combined = [...fromEarningsChart, ...fromHist]
-        .sort((a,b) => a.date - b.date)
-        .filter((e,i,arr) => i === 0 || Math.abs(e.date - arr[i-1].date) > 30*86400);
-
-      if(combined.length > eps.length) {
-        eps = combined;
-        console.log(`pebg ${sym}: Yahoo fallback (earningsChart+hist), ${eps.length} quarters`);
-      }
+    // Merge: EDGAR for history, Yahoo for recent (Yahoo is always up to date)
+    let eps;
+    if(yahooEps.length > 0) {
+      const oldestYahoo = yahooEps[0].date;
+      const edgarOld = edgarEps.filter(e => e.date < oldestYahoo - 60*86400);
+      eps = [...edgarOld, ...yahooEps].sort((a,b) => a.date - b.date);
+      console.log(`pebg ${sym}: EDGAR_old(${edgarOld.length}) + Yahoo(${yahooEps.length}) = ${eps.length} quarters`);
+    } else {
+      eps = edgarEps;
+      console.log(`pebg ${sym}: EDGAR only (${eps.length} quarters)`);
     }
-
-    const result = summaryData?.quoteSummary?.result?.[0];
+    const result = summResult;
     const priceInfo = result?.price || {};
     const keyStats = result?.defaultKeyStatistics || {};
     const finData = result?.financialData || {};
