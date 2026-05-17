@@ -212,15 +212,13 @@ app.get("/api/pebg", async (req, res) => {
           const endYear = String(new Date(e.end).getFullYear());
           if(!e.frame) {
             if(e.fp === 'Q1' && e.form === '10-Q') {
-              if(!e.frame && (!ytdQ1ByYear[endYear] || e.end > ytdQ1ByYear[endYear].end))
+              if(!e.frame && (!ytdQ1ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ1ByYear[endYear].val)))
                 ytdQ1ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'Q2' && e.form === '10-Q') {
-              if(!e.frame && (!ytdQ2ByYear[endYear] || e.end > ytdQ2ByYear[endYear].end))
+              if(!e.frame && (!ytdQ2ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ2ByYear[endYear].val)))
                 ytdQ2ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'Q3' && e.form === '10-Q') {
-              // Only store entries WITHOUT frame — those are the YTD cumulative values
-              // Entries WITH frame (CY####Q#) are single-quarter values, not YTD
-              if(!e.frame && (!ytdQ3ByYear[endYear] || e.end > ytdQ3ByYear[endYear].end))
+              if(!e.frame && (!ytdQ3ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ3ByYear[endYear].val)))
                 ytdQ3ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
             } else if(e.fp === 'FY' && e.form === '10-K') {
               if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
@@ -270,7 +268,11 @@ app.get("/api/pebg", async (req, res) => {
           }
 
           if(ytd && ann.date > ytd.date && !quarterly[missingFrame]) {
-            derived.push({ date: ann.date, eps: ann.val - ytd.val, frame: missingFrame });
+            const derivedEps = ann.val - ytd.val;
+            console.log(`pebg ${symbol}: deriving ${missingFrame} = ${ann.val} - ${ytd.val} = ${derivedEps}`);
+            derived.push({ date: ann.date, eps: derivedEps, frame: missingFrame });
+          } else {
+            console.log(`pebg ${symbol}: skip deriving ${missingFrame}: ytd=${ytd?.val}, ann=${ann.val}, hasFrame=${!!quarterly[missingFrame]}`);
           }
         });
 
