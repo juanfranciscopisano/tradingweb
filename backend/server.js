@@ -341,6 +341,7 @@ app.get("/api/pebg", async (req, res) => {
       prices, eps, epsCount: eps.length,
       currentPrice: priceInfo.regularMarketPrice?.raw || meta.regularMarketPrice,
       currentPE: keyStats.trailingPE?.raw,
+      forwardPE: keyStats.forwardPE?.raw || null,
       epsTrailingTwelveMonths: finData.epsTrailingTwelveMonths?.raw,
     });
   } catch(e) {
