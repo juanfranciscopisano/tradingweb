@@ -198,32 +198,52 @@ app.get("/api/pebg", async (req, res) => {
         // If framed data is sufficient, use it
         let quarterly = framed;
 
-        // Fallback: derive quarterly from YTD cumulative by differencing
-        if(quarterly.length < 4) {
-          const ytd = epsData
-            .filter(e => (e.form === "10-Q" || e.form === "10-K") && e.fp?.startsWith("Q"))
-            .map(e => ({ date: Math.floor(new Date(e.end).getTime() / 1000), eps: e.val, fp: e.fp, fy: e.fy }))
+        // Always try to derive Q4 from Annual - Q3, and fill missing quarters
+        {
+          // Get all YTD entries from 10-Q (Q1/Q2/Q3) and annual from 10-K (FY)
+          const allEntries = epsData
+            .filter(e => e.form === "10-Q" || e.form === "10-K")
+            .map(e => ({
+              date: Math.floor(new Date(e.end).getTime() / 1000),
+              eps: e.val, fp: e.fp, fy: e.fy,
+              end: e.end
+            }))
             .sort((a,b) => a.date - b.date);
 
-          // Deduplicate by date (keep most recent filing)
-          const deduped = ytd.filter((e,i,arr) => i === arr.findLastIndex(x => Math.abs(x.date - e.date) < 10*86400));
+          // Deduplicate per (fy, fp) keeping latest filed
+          const byFyFp = {};
+          allEntries.forEach(e => {
+            const key = `${e.fy}-${e.fp}`;
+            byFyFp[key] = e; // last one wins (most recent amendment)
+          });
+          const deduped = Object.values(byFyFp).sort((a,b) => a.date - b.date);
 
-          // Derive single-quarter EPS from YTD
+          // Group by fiscal year
+          const byYear = {};
+          deduped.forEach(e => {
+            if(!byYear[e.fy]) byYear[e.fy] = {};
+            byYear[e.fy][e.fp] = e;
+          });
+
           const derived = [];
-          for(let i = 0; i < deduped.length; i++) {
-            const cur = deduped[i];
-            if(cur.fp === 'Q1' || cur.fp === 'FY') {
-              // Q1 is already single-quarter; FY from 10-K is annual (skip)
-              if(cur.fp === 'Q1') derived.push({ date: cur.date, eps: cur.eps });
-            } else {
-              // Q2 or Q3: subtract previous quarter's YTD
-              const prev = deduped[i-1];
-              if(prev && Math.abs(cur.fy - prev.fy) <= 1) {
-                derived.push({ date: cur.date, eps: cur.eps - prev.eps });
-              }
+          Object.keys(byYear).sort().forEach(fy => {
+            const yr = byYear[fy];
+            const q1 = yr['Q1'], q2 = yr['Q2'], q3 = yr['Q3'], fy_ = yr['FY'];
+            if(q1) derived.push({ date: q1.date, eps: q1.eps });
+            if(q2 && q1) derived.push({ date: q2.date, eps: q2.eps - q1.eps });
+            if(q3 && q2) derived.push({ date: q3.date, eps: q3.eps - q2.eps });
+            // Q4 = Annual - Q3 cumulative
+            if(fy_ && q3) {
+              // Q4 end date = fiscal year end date
+              derived.push({ date: fy_.date, eps: fy_.eps - q3.eps });
+            } else if(fy_ && q2 && !q3) {
+              // Only Q2 available: Q4 not derivable, skip
             }
-          }
-          if(derived.length > quarterly.length) quarterly = derived;
+          });
+
+          // Use derived if it has more valid data than framed
+          const validDerived = derived.filter(e => !isNaN(e.eps));
+          if(validDerived.length > quarterly.length) quarterly = validDerived;
         }
 
         console.log(`pebg ${symbol}: SEC EDGAR returned ${quarterly.length} EPS quarters`);
