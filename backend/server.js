@@ -175,19 +175,56 @@ app.get("/api/pebg", async (req, res) => {
         });
         const facts = await factsRes.json();
 
-        // EPS diluted quarterly
+        // EPS diluted — use frame field to get true quarterly (not YTD cumulative)
         const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
-        const quarterly = epsData
-          .filter(e => e.form === "10-Q" || e.form === "10-K")
-          .filter(e => e.fp?.startsWith("Q")) // quarterly only
+
+        // EDGAR 10-Q reports cumulative YTD EPS (Q1=1Q, Q2=2Q, Q3=3Q)
+        // The `frame` field like "CY2024Q1" indicates a true single-quarter value
+        // Use frame-based entries when available, else derive from YTD differences
+
+        // Approach: use entries that have a frame like CY####Q# (single quarter)
+        const framed = epsData
+          .filter(e => e.frame && /^CY\d{4}Q\d$/.test(e.frame))
           .map(e => ({
             date: Math.floor(new Date(e.end).getTime() / 1000),
-            eps: e.val
+            eps: e.val,
+            frame: e.frame
           }))
-          .filter((e, i, arr) => // deduplicate by date
-            i === arr.findIndex(x => Math.abs(x.date - e.date) < 10*86400)
+          .filter((e, i, arr) =>
+            i === arr.findIndex(x => x.frame === e.frame)
           )
           .sort((a,b) => a.date - b.date);
+
+        // If framed data is sufficient, use it
+        let quarterly = framed;
+
+        // Fallback: derive quarterly from YTD cumulative by differencing
+        if(quarterly.length < 4) {
+          const ytd = epsData
+            .filter(e => (e.form === "10-Q" || e.form === "10-K") && e.fp?.startsWith("Q"))
+            .map(e => ({ date: Math.floor(new Date(e.end).getTime() / 1000), eps: e.val, fp: e.fp, fy: e.fy }))
+            .sort((a,b) => a.date - b.date);
+
+          // Deduplicate by date (keep most recent filing)
+          const deduped = ytd.filter((e,i,arr) => i === arr.findLastIndex(x => Math.abs(x.date - e.date) < 10*86400));
+
+          // Derive single-quarter EPS from YTD
+          const derived = [];
+          for(let i = 0; i < deduped.length; i++) {
+            const cur = deduped[i];
+            if(cur.fp === 'Q1' || cur.fp === 'FY') {
+              // Q1 is already single-quarter; FY from 10-K is annual (skip)
+              if(cur.fp === 'Q1') derived.push({ date: cur.date, eps: cur.eps });
+            } else {
+              // Q2 or Q3: subtract previous quarter's YTD
+              const prev = deduped[i-1];
+              if(prev && Math.abs(cur.fy - prev.fy) <= 1) {
+                derived.push({ date: cur.date, eps: cur.eps - prev.eps });
+              }
+            }
+          }
+          if(derived.length > quarterly.length) quarterly = derived;
+        }
 
         console.log(`pebg ${symbol}: SEC EDGAR returned ${quarterly.length} EPS quarters`);
         return quarterly;
