@@ -287,6 +287,22 @@ td:nth-child(-n+4){text-align:left}
 .ov-news-pill:hover{border-color:var(--amber2);color:var(--amber)}
 .ov-news-pill.active{background:var(--amberglow);border-color:var(--amber2);color:var(--amber)}
 .ov-sym{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);width:82px;flex-shrink:0}
+.cartera-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 48px;display:flex;align-items:center;gap:10px}
+.cartera-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0}
+.cartera-table{width:100%;border-collapse:collapse;font-family:var(--mono);min-width:1000px;table-layout:auto}
+.cartera-table th{position:sticky;top:0;background:var(--surf);font-size:9px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+
+.cartera-table th:hover{color:var(--text2)}
+.cartera-table td{padding:9px 12px;font-size:12px;text-align:center;border-bottom:1px solid rgba(26,45,71,.5);white-space:nowrap}
+
+.cartera-table tr:hover td{background:rgba(26,45,71,.4)}
+.cartera-table td:first-child,.cartera-table th:first-child{padding-left:48px}
+.cartera-table td:last-child,.cartera-table th:last-child{padding-right:48px}
+.ct-ticker{font-weight:700;color:var(--amber);font-size:13px}
+.ct-signal{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px}
+.ct-barato{background:rgba(34,214,136,.15);color:#22D688}
+.ct-caro{background:rgba(255,80,80,.15);color:#FF5050}
+.ct-justo{background:rgba(74,158,255,.12);color:#4A9EFF}
 
 @media (max-width: 768px) {
   /* Hide logo text — keep only JFP hexagon + tabs */
@@ -586,8 +602,8 @@ td:nth-child(-n+4){text-align:left}
           <th onclick="sortCartera('z')">Se&ntilde;al</th>
           <th onclick="sortCartera('implied')">Precio @ &mu;</th>
           <th onclick="sortCartera('varToMu')">Var. @ &mu;</th>
-          <th onclick="sortCartera('peAnual')">P/E anualizdo</th>
-          <th onclick="sortCartera('varAnual')">Var. anual. @ &mu;</th>
+          <th id="thPEMode" onclick="toggleCarteraPE()" style="cursor:pointer;user-select:none;width:120px;min-width:120px;max-width:120px;white-space:nowrap">P/E anualizdo <span style="color:var(--amber)">&#9660;</span></th>
+          <th id="thVarMode" onclick="sortCartera('varAnual')" style="width:110px;min-width:110px;max-width:110px;white-space:nowrap">Var. anual. @ &mu;</th>
           <th onclick="sortCartera('price')">Precio</th>
         </tr>
       </thead>
@@ -664,7 +680,7 @@ td:nth-child(-n+4){text-align:left}
       <div class="pebg-stat-val" id="psStat9" style="color:#22D688">—</div>
       <div class="pebg-stat-sub" id="psSub9">precio impl.</div>
     </div>
-    <div class="pebg-stat-block">
+    <div class="pebg-stat-block" style="display:none">
       <div class="pebg-stat-lbl" id="psLblA">@ &mu;-2&sigma;</div>
       <div class="pebg-stat-val" id="psStatA" style="color:#5DD9C1">—</div>
       <div class="pebg-stat-sub" id="psSubA">precio impl.</div>
@@ -1846,6 +1862,18 @@ let carteraMode = 'cartera'; // 'cartera' | 'top50'
 let carteraCache = { cartera: null, top50: null };
 let carteraData = [];
 let carteraSortCol = 'z';
+let carteraPEMode = 'anual'; // 'anual' | 'fwd'
+
+function toggleCarteraPE() {
+  carteraPEMode = carteraPEMode === 'anual' ? 'fwd' : 'anual';
+  document.getElementById('thPEMode').innerHTML =
+    carteraPEMode === 'anual'
+      ? 'P/E anualizdo <span style="color:var(--amber)">&#9660;</span>'
+      : 'Fw P/E <span style="color:var(--amber)">&#9660;</span>';
+  document.getElementById('thVarMode').textContent =
+    carteraPEMode === 'anual' ? 'Var. anual. @ μ' : 'Var. fw @ μ';
+  renderCarteraTable();
+}
 let carteraSortAsc = true;
 
 function setCarteraMode(mode) {
@@ -1904,9 +1932,17 @@ async function loadCartera() {
 
     const lastQEps = data.eps[data.eps.length - 1]?.eps;
     const peAnual = (lastQEps && lastQEps > 0) ? last.close / (lastQEps * 4) : null;
-    // Implied price if annualized PE reaches 1Y mean: lastQEps * 4 * mu
     const impliedAnual = (lastQEps && lastQEps > 0) ? lastQEps * 4 * mu : null;
     const varAnual = impliedAnual != null ? (impliedAnual - last.close) / last.close * 100 : null;
+    // Forward PE from Yahoo + implied price at mu
+    const fwdPE = data.forwardPE || null;
+    const impliedFwd = (fwdPE && fwdPE > 0) ? last.eps4q * mu : null; // same EPS, same mu target
+    // Var fw: how much price needs to move for fw PE to reach historical mu
+    // price_target = EPS_fwd_implied * mu, but we don't have fwd EPS directly
+    // Use: fwd_eps = price / fwdPE, then target = fwd_eps * mu
+    const fwdEps = (fwdPE && fwdPE > 0) ? last.close / fwdPE : null;
+    const impliedFwdPrice = (fwdEps && mu > 0) ? fwdEps * mu : null;
+    const varFwd = impliedFwdPrice != null ? (impliedFwdPrice - last.close) / last.close * 100 : null;
     carteraData.push({
       ticker: sym,
       name: data.shortName || sym,
@@ -1919,6 +1955,8 @@ async function loadCartera() {
       peAnual,
       impliedAnual,
       varAnual,
+      forwardPE: fwdPE,
+      varFwd,
     });
   }
 
@@ -1962,8 +2000,15 @@ function renderCarteraTable() {
       <td>${sig}</td>
       <td style="color:var(--text2)">${fmtP(d.implied)}</td>
       <td class="${d.varToMu >= 0 ? 'pp' : 'pn'}" style="font-weight:600">${d.varToMu >= 0 ? '+' : ''}${d.varToMu.toFixed(1)}%</td>
-      <td style="color:var(--label)">${d.peAnual != null ? d.peAnual.toFixed(1)+'x' : '—'}</td>
-      <td class="${d.varAnual != null ? (d.varAnual >= 0 ? 'pp' : 'pn') : ''}" style="font-weight:600">${d.varAnual != null ? (d.varAnual >= 0 ? '+' : '') + d.varAnual.toFixed(1) + '%' : '—'}</td>
+      <td style="color:var(--label)">${carteraPEMode === 'fwd'
+        ? (d.forwardPE != null ? d.forwardPE.toFixed(1)+'x' : '—')
+        : (d.peAnual != null ? d.peAnual.toFixed(1)+'x' : '—')}</td>
+      <td class="${(carteraPEMode === 'fwd' ? d.varFwd : d.varAnual) != null ? ((carteraPEMode === 'fwd' ? d.varFwd : d.varAnual) >= 0 ? 'pp' : 'pn') : ''}" style="font-weight:600">${
+        (() => {
+          const v = carteraPEMode === 'fwd' ? d.varFwd : d.varAnual;
+          return v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '—';
+        })()
+      }</td>
       <td style="color:var(--text2)">${fmtP(d.price)}</td>
     </tr>`;
   }).join('');
