@@ -63,11 +63,11 @@ select.ctrl-input{padding-left:9px;width:auto;cursor:pointer;appearance:none;bac
 .prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--amber),#F8C95A);border-radius:2px;width:0%;transition:width .4s ease}
 .prog-msg{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px}
-.table-wrap{flex:1;overflow:auto}
+.table-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
 .table-wrap::-webkit-scrollbar{width:5px;height:5px}
 .table-wrap::-webkit-scrollbar-track{background:var(--bg)}
 .table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;min-width:900px}
 thead{position:sticky;top:0;z-index:20}
 thead tr{background:var(--surf);border-bottom:1px solid var(--amber)}
 th{color:var(--label);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;text-align:right;cursor:pointer;user-select:none;white-space:nowrap;border-right:1px solid var(--border);transition:color .15s}
@@ -172,7 +172,7 @@ td:nth-child(-n+4){text-align:left}
 
 /* ── CARTERA ── */
 .cartera-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 48px;display:flex;align-items:center;gap:10px}
-.cartera-wrap{flex:1;overflow-y:auto;padding:0}
+.cartera-wrap{flex:1;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0}
 .cartera-table{width:100%;border-collapse:collapse;font-family:var(--mono)}
 .cartera-table th{position:sticky;top:0;background:var(--surf);font-size:9px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
 .cartera-table th:first-child,.cartera-table th:nth-child(2),.cartera-table th:nth-child(3){text-align:left}
@@ -309,6 +309,68 @@ td:nth-child(-n+4){text-align:left}
 .ov-news-pill:hover{border-color:var(--amber2);color:var(--amber)}
 .ov-news-pill.active{background:var(--amberglow);border-color:var(--amber2);color:var(--amber)}
 .ov-sym{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);width:82px;flex-shrink:0}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  /* Header */
+  .logo-block { display: none }
+  .tabs { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none }
+  .tabs::-webkit-scrollbar { display: none }
+  .tab { flex-shrink: 0; font-size: 9px; padding: 0 10px }
+
+  /* Reduce padding everywhere */
+  .pebg-controls, .pebg-stats-bar, .cartera-controls,
+  .cmp-controls, .ov-bar { padding-left: 16px !important; padding-right: 16px !important }
+  .cartera-table td:first-child, .cartera-table th:first-child { padding-left: 16px }
+  .cartera-table td:last-child, .cartera-table th:last-child { padding-right: 16px }
+
+  /* Overview: single column */
+  .ov-grid { flex-direction: column }
+  .ov-col-wide, .ov-col-mid, .ov-col-news { flex: none; width: 100% }
+  .ov-card { border-right: none; border-bottom: 1px solid var(--border) }
+
+  /* Stats bars: wrap */
+  .pebg-stats-bar { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch }
+  .pebg-stat-block { flex-shrink: 0 }
+  .pebg-stat-val { font-size: 13px }
+
+  /* Controls: wrap */
+  .pebg-controls, .cmp-controls, .cartera-controls { flex-wrap: wrap; gap: 8px }
+  .cs { display: none }
+
+  /* Tables: horizontal scroll */
+  .cartera-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch }
+  .screener-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch }
+  .cartera-table { min-width: 900px }
+
+  /* Screener table */
+  .scr-table { min-width: 900px }
+  .scr-table td:first-child, .scr-table th:first-child { padding-left: 16px }
+  .scr-table td:last-child, .scr-table th:last-child { padding-right: 16px }
+
+  /* PEBG panel: full width on mobile, below chart */
+  #pebgOuter { flex-direction: column }
+  .pebg-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 300px }
+
+  /* Compare price bar wrap */
+  .cmp-price-bar { flex-wrap: wrap; padding: 8px 16px; gap: 8px }
+  .cmp-price-sep { display: none }
+  .cmp-price-block { padding: 0 8px }
+
+  /* Heatmap: full width canvas */
+  #heatmapCanvas { touch-action: manipulation }
+
+  /* Footer */
+  .footer { padding: 6px 16px; font-size: 7px }
+}
+
+@media (max-width: 480px) {
+  .tab { font-size: 8px; padding: 0 8px }
+  .pebg-stat-val { font-size: 11px }
+  .cartera-table { min-width: 750px }
+  .scr-table { min-width: 750px }
+}
+
 </style>
 </head>
 <body>
@@ -1880,6 +1942,8 @@ async function loadCartera() {
     });
   }
 
+  // Deduplicate by ticker (safety net)
+  carteraData = carteraData.filter((d,i,arr) => arr.findIndex(x => x.ticker === d.ticker) === i);
   carteraCache[carteraMode] = carteraData;
   status.textContent = `${carteraData.length} acciones cargadas`;
   renderCarteraTable();
