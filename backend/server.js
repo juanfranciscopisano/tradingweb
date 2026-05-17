@@ -246,7 +246,7 @@ app.get("/api/pebg", async (req, res) => {
         // Oct/Nov FY → same as Dec (Q4 = Annual - Q3_YTD)
         Object.keys(annualByYear).forEach(yr => {
           const ann = annualByYear[yr];
-          const annMonth = new Date(ann.end * 1000).getMonth(); // 0-indexed
+          const annMonth = new Date(ann.date * 1000).getMonth(); // 0-indexed
 
           let missingFrame, ytd;
           if(annMonth >= 9) {
