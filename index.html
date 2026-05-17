@@ -603,7 +603,7 @@ td:nth-child(-n+4){text-align:left}
           <th onclick="sortCartera('implied')">Precio @ &mu;</th>
           <th onclick="sortCartera('varToMu')">Var. @ &mu;</th>
           <th id="thPEMode" onclick="toggleCarteraPE()" style="cursor:pointer;user-select:none;width:120px;min-width:120px;max-width:120px;white-space:nowrap">P/E anualizdo <span style="color:var(--amber)">&#9660;</span></th>
-          <th id="thVarMode" onclick="sortCartera(carteraPEMode === 'fwd' ? 'varFwd' : 'varAnual')" style="width:110px;min-width:110px;max-width:110px;white-space:nowrap">Var. anual. @ &mu;</th>
+          <th id="thVarMode" onclick="sortCartera(carteraPEMode==='fwd'?'varFwd':'varAnual')" style="width:110px;min-width:110px;max-width:110px;white-space:nowrap">Var. anual. @ &mu;</th>
           <th onclick="sortCartera('price')">Precio</th>
         </tr>
       </thead>
@@ -1975,7 +1975,11 @@ function sortCartera(col) {
 
 function renderCarteraTable() {
   const sorted = [...carteraData].sort((a,b) => {
-    const av = a[carteraSortCol] ?? 0, bv = b[carteraSortCol] ?? 0;
+    const av = a[carteraSortCol], bv = b[carteraSortCol];
+    // nulls always go to the end
+    if(av == null && bv == null) return 0;
+    if(av == null) return 1;
+    if(bv == null) return -1;
     if(typeof av === 'string') return carteraSortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     return carteraSortAsc ? av - bv : bv - av;
   });
