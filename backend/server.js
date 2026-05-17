@@ -88,6 +88,28 @@ app.get("/debug", (req, res) => res.json({
   crumb: yfCrumb.length > 3 ? "ready" : "missing"
 }));
 
+app.get("/debug-edgar", async (req, res) => {
+  try {
+    const sym = (req.query.symbol || "META").toUpperCase();
+    const tickerMap = await fetch("https://www.sec.gov/files/company_tickers.json", {
+      headers: { "User-Agent": "tradingweb research@example.com" }
+    }).then(r => r.json());
+    const entry = Object.values(tickerMap).find(c => c.ticker.toUpperCase() === sym);
+    if(!entry) return res.json({ error: "ticker not found" });
+    const cik = String(entry.cik_str).padStart(10, '0');
+    const facts = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, {
+      headers: { "User-Agent": "tradingweb research@example.com" }
+    }).then(r => r.json());
+    const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
+    const recent = epsData
+      .filter(e => e.form === "10-Q" || e.form === "10-K")
+      .sort((a,b) => a.end.localeCompare(b.end))
+      .slice(-24)
+      .map(e => ({ end: e.end, fp: e.fp, fy: e.fy, val: e.val, frame: e.frame||'', form: e.form }));
+    res.json({ cik, sym, count: epsData.length, recent });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get("/api/quote", async (req, res) => {
   try {
     const { symbols } = req.query;
