@@ -8,8 +8,11 @@ const PORT = process.env.PORT || 3000;
 
 let yfCookie = "";
 let yfCrumb  = "";
+let crumbFetching = false;
 
 async function refreshCrumb() {
+  if(crumbFetching) return yfCrumb.length > 3; // already in progress
+  crumbFetching = true;
   try {
     const ctrl1 = new AbortController();
     setTimeout(() => ctrl1.abort(), 8000);
@@ -34,12 +37,15 @@ async function refreshCrumb() {
     if(yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
       console.error("Bad crumb rejected:", yfCrumb.slice(0,30));
       yfCrumb = "";
+      crumbFetching = false;
       return false;
     }
     console.log("Crumb OK:", yfCrumb.slice(0,10), "| Cookie len:", yfCookie.length);
+    crumbFetching = false;
     return true;
   } catch (e) {
     console.error("refreshCrumb error:", e.message);
+    crumbFetching = false;
     return false;
   }
 }
@@ -73,9 +79,15 @@ async function yfFetch(url) {
   const fullUrl = `${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`;
   let res = await fetch(fullUrl, { headers: yfHeaders() });
   if (res.status === 401 || res.status === 403) {
-    console.log("Auth error, refreshing crumb...");
-    await refreshCrumb();
-    res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
+    if(!crumbFetching) {
+      console.log("Auth error, refreshing crumb...");
+      await refreshCrumb();
+      res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
+    } else {
+      // crumbLoop is already refreshing, wait a bit and retry
+      await new Promise(r => setTimeout(r, 3000));
+      res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
+    }
   }
   if (!res.ok) throw new Error(`Yahoo returned ${res.status}`);
   return res.json();
