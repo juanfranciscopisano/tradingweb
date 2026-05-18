@@ -240,8 +240,10 @@ app.get("/api/pebg", async (req, res) => {
             if(!quarterly[e.frame] || e.end > quarterly[e.frame].end)
               quarterly[e.frame] = { date: Math.floor(new Date(e.end).getTime()/1000), eps: e.val, end: e.end };
           } else if(/^CY\d{4}$/.test(e.frame)) {
-            if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
-              annualByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
+            // Use FRAME year (not endYear) so Jan-FY companies like NVDA map correctly
+            const frameYr = e.frame.slice(2);
+            if(!annualByYear[frameYr] || e.end > annualByYear[frameYr].end)
+              annualByYear[frameYr] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
           }
         });
 
@@ -249,42 +251,33 @@ app.get("/api/pebg", async (req, res) => {
         const derived = Object.entries(quarterly)
           .map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
 
-        // Derive missing quarter based on fiscal year end month
-        // Formula: last_fiscal_quarter = FY_annual - YTD_of_previous_quarters
-        // Dec FY → Q4 missing → Q4 = Annual - Q3_YTD
-        // Sep FY (QCOM) → CY_Q3 missing → Q3 = Annual - Q3_YTD (fiscal)
-        // Jun FY (MSFT,NIKE) → CY_Q2 missing → Q2 = Annual - Q2_YTD (fiscal)
-        // Mar FY → CY_Q1 missing → Q1 = Annual - Q1_YTD (fiscal)
-        // Oct/Nov FY → same as Dec (Q4 = Annual - Q3_YTD)
+        // Derive missing last quarter = Annual - YTD
+        // Use Q3 YTD end month to determine which quarter is missing:
+        //   Month <= 3 (Mar or earlier) → missing = CY Q2 e.g. Jun-FY (MSFT,NIKE)
+        //   Month 4-6 (Jun or earlier)  → missing = CY Q3 e.g. Sep-FY (QCOM)
+        //   Month 7-10 (Sep/Oct)        → missing = CY Q4 e.g. Dec-FY, Jan-FY (NVDA)
         Object.keys(annualByYear).forEach(yr => {
           const ann = annualByYear[yr];
-          const annMonth = new Date(ann.date * 1000).getMonth(); // 0-indexed
+          const q3ytd = ytdQ3ByYear[yr];
+          if(!q3ytd || ann.date <= q3ytd.date) return;
 
+          const ytdMonth = new Date(q3ytd.end).getMonth(); // 0-indexed
           let missingFrame, ytd;
-          if(annMonth >= 9) {
-            // Oct/Nov/Dec FY → last fiscal Q is calendar Q4 → Q4 = Annual - Q3_YTD
-            missingFrame = `CY${yr}Q4`;
-            ytd = ytdQ3ByYear[yr];
-          } else if(annMonth >= 6) {
-            // Jul/Aug/Sep FY (QCOM) → last fiscal Q is calendar Q3 → Q3 = Annual - Q3_YTD(fiscal)
-            missingFrame = `CY${yr}Q3`;
-            ytd = ytdQ3ByYear[yr];
-          } else if(annMonth >= 3) {
-            // Apr/May/Jun FY (MSFT,NIKE) → last fiscal Q is calendar Q2 → Q2 = Annual - Q2_YTD(fiscal)
+          if(ytdMonth <= 3) {
             missingFrame = `CY${yr}Q2`;
-            ytd = ytdQ2ByYear[yr];
+            ytd = ytdQ2ByYear[yr] || q3ytd;
+          } else if(ytdMonth <= 6) {
+            missingFrame = `CY${yr}Q3`;
+            ytd = q3ytd;
           } else {
-            // Jan/Feb/Mar FY → last fiscal Q is calendar Q1 → Q1 = Annual - Q1_YTD(fiscal)
-            missingFrame = `CY${yr}Q1`;
-            ytd = ytdQ1ByYear[yr];
+            missingFrame = `CY${yr}Q4`;
+            ytd = q3ytd;
           }
 
-          if(ytd && ann.date > ytd.date && !quarterly[missingFrame]) {
+          if(!quarterly[missingFrame]) {
             const derivedEps = ann.val - ytd.val;
             console.log(`pebg ${symbol}: deriving ${missingFrame} = ${ann.val} - ${ytd.val} = ${derivedEps}`);
             derived.push({ date: ann.date, eps: derivedEps, frame: missingFrame });
-          } else {
-            console.log(`pebg ${symbol}: skip deriving ${missingFrame}: ytd=${ytd?.val}, ann=${ann.val}, hasFrame=${!!quarterly[missingFrame]}`);
           }
         });
 
