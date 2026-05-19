@@ -180,8 +180,9 @@ app.get("/api/overview", async (req, res) => {
       // Independent RSS sources — no Yahoo crumb needed
       fetchRSS('https://feeds.reuters.com/reuters/businessNews', 'Reuters'),
       fetchRSS('https://feeds.reuters.com/reuters/topNews', 'Reuters'),
+      fetchRSS('https://feeds.reuters.com/reuters/marketsNews', 'Reuters'),
       fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines', 'MarketWatch'),
-      fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_marketpulse', 'MarketWatch'),
+      fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_bulletins', 'MarketWatch'),
     ]);
 
     const normalizedNews = rssResults.flat();
