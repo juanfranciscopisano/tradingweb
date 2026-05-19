@@ -27,7 +27,7 @@ body{display:flex;flex-direction:column;font-family:var(--sans)}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:lp 2s ease-in-out infinite}
 @keyframes lp{0%,100%{opacity:1}50%{opacity:.4}}
 .hdr-time{font-family:var(--mono);font-size:10px;color:var(--muted);margin-right:6px}
-.view{display:none;flex:1;flex-direction:column;overflow:hidden}.view.active{display:flex}.view.active.view-scroll{overflow-y:auto}
+.view{display:none;flex:1;flex-direction:column;overflow:hidden}.view.active{display:flex}#view-overview.active{overflow-y:auto}.view.active.view-scroll{overflow-y:auto}
 .stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:6px 48px;display:flex;overflow-x:auto}
 .stats-bar::-webkit-scrollbar{height:3px}.stats-bar::-webkit-scrollbar-thumb{background:var(--border2)}
 .stat{padding:0 16px 0 0;margin-right:16px;border-right:1px solid var(--border);white-space:nowrap;flex-shrink:0}
