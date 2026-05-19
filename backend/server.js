@@ -174,13 +174,30 @@ app.get("/api/overview", async (req, res) => {
       } catch(e) { return null; }
     };
 
-    const [quotesData, newsData, effr] = await Promise.all([
+    const [quotesData, effr, ...rssResults] = await Promise.all([
       yfFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`),
-      yfFetch(`https://query1.finance.yahoo.com/v1/finance/search?q=markets+fed+economy&newsCount=10&lang=en-US&region=US&enableFuzzyQuery=false`).catch(() => ({ news: [] })),
-      fetchEffr()
+      fetchEffr(),
+      // Independent RSS sources — no Yahoo crumb needed
+      fetchRSS('https://feeds.reuters.com/reuters/businessNews', 'Reuters'),
+      fetchRSS('https://feeds.reuters.com/reuters/topNews', 'Reuters'),
+      fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines', 'MarketWatch'),
+      fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_marketpulse', 'MarketWatch'),
     ]);
 
-    res.json({ quotes: quotesData.quoteResponse?.result || [], news: newsData.news || [], zqTickers, effr });
+    const normalizedNews = rssResults.flat();
+
+    // Merge, deduplicate by title, sort by date, take top 25
+    const seenTitles = new Set();
+    const allNews = normalizedNews
+      .filter(n => {
+        if(!n.title || seenTitles.has(n.title)) return false;
+        seenTitles.add(n.title);
+        return true;
+      })
+      .sort((a, b) => (b.providerPublishTime || 0) - (a.providerPublishTime || 0))
+      .slice(0, 25);
+
+    res.json({ quotes: quotesData.quoteResponse?.result || [], news: allNews, zqTickers, effr });
   } catch(e) {
     console.error("overview:", e.message);
     res.status(500).json({ error: e.message });
