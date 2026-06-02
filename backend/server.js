@@ -6,9 +6,18 @@ const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 3000;
 
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
 let yfCookie = "";
 let yfCrumb  = "";
 let crumbFetching = false;
+
+app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? "ready" : "missing" }));
+app.get("/debug", (req, res) => res.json({ crumb: yfCrumb.length > 3 ? "ready" : "missing", crumbFetching }));
+app.get("/refresh-crumb", async (req, res) => {
+  if(!crumbFetching) crumbLoop();
+  res.json({ status: "started" });
+});
 
 async function refreshCrumb() {
   if(crumbFetching) return yfCrumb.length > 3;
