@@ -266,13 +266,29 @@ td:nth-child(-n+4){text-align:left}
 .ov-prob-pct{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);width:36px;text-align:right;flex-shrink:0}
 .ov-no-fed{font-family:var(--mono);font-size:10px;color:var(--muted);padding:8px 0}
 /* ── CALENDAR ── */
-.cal-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:9px 48px;display:flex;align-items:center;gap:12px}
-.cal-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase}
-.cal-hint{font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:auto}
-.cal-body{flex:1;overflow-y:auto;padding:24px 48px;min-height:0}
+.cal-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:9px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cal-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.cal-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-left:auto;align-items:center}
+.cal-leg-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--label);white-space:nowrap}
+.cal-dot{width:8px;height:8px;border-radius:2px;display:inline-block;flex-shrink:0}
+.cal-body{flex:1;overflow-y:auto;padding:18px 24px;min-height:0}
 .cal-body::-webkit-scrollbar{width:5px}.cal-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-.cal-empty{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:48px;text-align:center}
-@media (max-width: 768px){ .cal-bar{padding:8px 12px} .cal-body{padding:16px 12px} .cal-empty{padding:28px} }
+.cal-month-label{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text2);text-align:center;letter-spacing:1px;margin-bottom:14px}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cal-dow>div{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center}
+.cal-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-cell{background:var(--surf);border:1px solid var(--border);border-radius:6px;min-height:96px;padding:6px;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.cal-cell-empty{background:transparent;border-color:transparent}
+.cal-cell-today{border-color:var(--amber2);box-shadow:inset 0 0 0 1px var(--amber2)}
+.cal-daynum{font-family:var(--mono);font-size:11px;color:var(--text2);font-weight:600}
+.cal-cell-today .cal-daynum{color:var(--amber)}
+.cal-chip{font-family:var(--mono);font-size:8.5px;line-height:1.3;color:var(--text2);background:var(--card);border-left:3px solid var(--amber);border-radius:3px;padding:2px 5px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
+.cal-chip-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cal-nav{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:var(--surf);border-top:1px solid var(--border)}
+.cal-nav-btn{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 18px;cursor:pointer;transition:all .15s;letter-spacing:.5px}
+.cal-nav-btn:hover{border-color:var(--amber2);color:var(--amber);background:var(--amberglow)}
+.cal-today-btn{color:var(--amber);border-color:var(--amber2)}
+@media (max-width: 768px){ .cal-bar{padding:8px 12px} .cal-body{padding:12px 10px} .cal-cell{min-height:74px;padding:4px} .cal-chip{font-size:8px} .cal-nav{padding:10px} .cal-nav-btn{padding:7px 12px;font-size:10px} }
 .ov-th-1d{background:rgba(26,45,71,.6);border-radius:3px}
 .ov-sym{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);width:82px;flex-shrink:0}
 .cartera-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 48px;display:flex;align-items:center;gap:10px}
@@ -462,13 +478,19 @@ function checkPwd(){
   </div>
 </div>
 
-<div class="view view-scroll" id="view-calendar">
+<div class="view" id="view-calendar">
   <div class="cal-bar">
     <span class="cal-title">&#9638; Calendario económico</span>
-    <span class="cal-hint">En construcción</span>
+    <div class="cal-legend" id="calLegend"></div>
   </div>
   <div class="cal-body" id="calBody">
-    <div class="cal-empty">El calendario se va a armar acá.</div>
+    <div class="cal-month-label" id="calMonthLabel">—</div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calShift(-1)">&#8249; Mes anterior</button>
+    <button class="cal-nav-btn cal-today-btn" onclick="calToday()">Hoy</button>
+    <button class="cal-nav-btn" onclick="calShift(1)">Mes siguiente &#8250;</button>
   </div>
 </div>
 
@@ -843,10 +865,93 @@ function switchTab(t) {
 }
 
 let calendarLoaded = false;
-function initCalendar() {
-  // Calendario económico — se construye acá (próxima tarea).
-  if(calendarLoaded) return;
-  calendarLoaded = true;
+let calY, calM;
+
+const CAL_CATS = {
+  ipc_nac:  { label:'IPC Nacional (INDEC)', color:'#F2A91E' },
+  ipc_caba: { label:'IPC CABA (IDECBA)',    color:'#F6CE7A' },
+  pgb_caba: { label:'Actividad / PGB CABA', color:'#FB923C' },
+  pob_caba: { label:'Pobreza CABA',         color:'#E879F9' },
+  lab_caba: { label:'Mercado laboral CABA', color:'#94A3B8' },
+  emae:     { label:'EMAE (INDEC)',         color:'#2DD4BF' },
+  rem:      { label:'REM (BCRA)',           color:'#A78BFA' },
+  pobreza:  { label:'Pobreza (INDEC)',      color:'#F472B6' },
+  fed:      { label:'Reunión Fed (FOMC)',   color:'#F04E6A' },
+  selic:    { label:'Selic / COPOM (BR)',   color:'#4ADE80' },
+  us:       { label:'Dato macro EE.UU.',    color:'#38BDF8' },
+};
+
+const CAL_Y0 = 2026;
+function calBatch(dates, c, t){ return dates.map(function(d){ return { d: CAL_Y0+'-'+d, c:c, t:t }; }); }
+
+const CAL_EVENTS = [].concat(
+  calBatch(['01-28','03-18','04-29','06-17','07-29','09-16','10-28','12-09'], 'fed',     'Decisión Fed (FOMC)'),
+  calBatch(['01-28','03-18','04-29','06-17','08-05','09-16','11-04','12-09'], 'selic',   'Decisión Selic (COPOM)'),
+  calBatch(['01-13','02-10','03-12','04-14','05-14','06-11','07-14','08-13','09-10','10-13','11-12','12-15'], 'ipc_nac', 'IPC Nacional'),
+  calBatch(['01-21','02-24','03-26','04-22','05-21','06-29','07-22','08-20','09-24','10-21','11-24','12-21'], 'emae',    'EMAE'),
+  calBatch(['01-09','02-06','03-06','04-03','05-08','06-05','07-02','08-07','09-04','10-02','11-06','12-04'], 'us',      'Empleo EE.UU. (NFP)'),
+  calBatch(['01-13','02-11','03-11','04-10','05-12','06-10','07-14','08-12','09-11','10-14','11-10','12-10'], 'us',      'IPC EE.UU. (CPI)'),
+  calBatch(['01-29','02-26','03-27','04-30','05-28','06-25','07-30','08-26','09-30','10-29','11-25','12-23'], 'us',      'PCE EE.UU. (inflación Fed)'),
+  calBatch(['01-29','02-26','03-27','04-30','05-28','06-25','07-30','08-26','09-30','10-29','11-25','12-23'], 'us',      'PBI EE.UU.'),
+  calBatch(['01-15','02-17','03-16','04-16','05-14','06-17','07-16','08-14','09-16','10-15','11-17','12-16'], 'us',      'Ventas minoristas EE.UU.'),
+  calBatch(['01-09','02-09','03-09','04-10','05-11','06-08','07-08','08-07','09-08','10-08','11-09','12-10'], 'ipc_caba','IPC CABA'),
+  calBatch(['01-07','03-27','06-29','09-28','12-28'], 'pgb_caba','Actividad / PGB CABA'),
+  calBatch(['01-05','04-08','06-26','09-25','12-28'], 'pob_caba','Pobreza CABA'),
+  calBatch(['03-25','06-22','09-23','12-21'], 'lab_caba','Mercado laboral CABA'),
+  calBatch(['01-07','02-05','03-05','04-08','05-07','06-04','07-06','08-06','09-04','10-06','11-05'], 'rem',     'REM (BCRA)'),
+  [
+    { d:'2026-03-31', c:'pobreza', t:'Pobreza (2º sem 2025)' },
+    { d:'2026-09-24', c:'pobreza', t:'Pobreza (1º sem 2026)' },
+  ]
+);
+
+function calPad(n){ return (n<10?'0':'')+n; }
+
+function initCalendar(){
+  if(!calendarLoaded){
+    calendarLoaded = true;
+    const now = new Date();
+    calY = now.getFullYear();
+    calM = now.getMonth();
+    document.getElementById('calLegend').innerHTML = Object.keys(CAL_CATS).map(function(k){
+      const c = CAL_CATS[k];
+      return '<span class="cal-leg-item"><span class="cal-dot" style="background:'+c.color+'"></span>'+c.label+'</span>';
+    }).join('');
+  }
+  renderCalendar();
+}
+
+function calShift(n){ calM += n; while(calM<0){ calM+=12; calY--; } while(calM>11){ calM-=12; calY++; } renderCalendar(); }
+function calToday(){ const n=new Date(); calY=n.getFullYear(); calM=n.getMonth(); renderCalendar(); }
+
+function renderCalendar(){
+  const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calMonthLabel').textContent = MES[calM]+' '+calY;
+  const prefix = calY+'-'+calPad(calM+1)+'-';
+  const byDay = {};
+  CAL_EVENTS.forEach(function(e){
+    if(e.d.indexOf(prefix)===0){ const day=parseInt(e.d.slice(8),10); (byDay[day]=byDay[day]||[]).push(e); }
+  });
+  const firstDow = (new Date(calY,calM,1).getDay()+6)%7;
+  const dim = new Date(calY,calM+1,0).getDate();
+  const now = new Date();
+  const todayStr = now.getFullYear()+'-'+calPad(now.getMonth()+1)+'-'+calPad(now.getDate());
+  const DOW=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let html = '<div class="cal-dow">'+DOW.map(function(d){return '<div>'+d+'</div>';}).join('')+'</div><div class="cal-cells">';
+  for(let i=0;i<firstDow;i++) html += '<div class="cal-cell cal-cell-empty"></div>';
+  for(let day=1;day<=dim;day++){
+    const ds = prefix+calPad(day);
+    const evs = byDay[day]||[];
+    html += '<div class="cal-cell'+(ds===todayStr?' cal-cell-today':'')+'">';
+    html += '<div class="cal-daynum">'+day+'</div>';
+    evs.forEach(function(e){
+      const cat = CAL_CATS[e.c];
+      html += '<div class="cal-chip" style="border-left-color:'+cat.color+'" title="'+e.t+'"><span class="cal-chip-dot" style="background:'+cat.color+'"></span>'+e.t+'</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('calGrid').innerHTML = html;
 }
 
 function initChart(sym) {
