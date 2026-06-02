@@ -104,8 +104,16 @@ app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? 
 
 app.get("/debug", (req, res) => res.json({
   finnhub: process.env.FINNHUB_KEY ? "set (len=" + process.env.FINNHUB_KEY.length + ")" : "missing",
-  crumb: yfCrumb.length > 3 ? "ready" : "missing"
+  crumb: yfCrumb.length > 3 ? "ready" : "missing",
+  crumbFetching
 }));
+
+// Manual crumb refresh endpoint
+app.get("/refresh-crumb", async (req, res) => {
+  if(crumbFetching) return res.json({ status: "already fetching" });
+  crumbLoop();
+  res.json({ status: "crumb refresh started" });
+});
 
 app.get("/debug-edgar", async (req, res) => {
   try {
@@ -394,6 +402,9 @@ app.get("/api/pebg", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
-  crumbLoop(); // runs independently, doesn't block server startup
-  setInterval(refreshCrumb, 30 * 60 * 1000);
+  crumbLoop();
+  // Refresh crumb every 25 min (before Yahoo expires it at ~30min)
+  setInterval(() => {
+    if(!crumbFetching) refreshCrumb();
+  }, 25 * 60 * 1000);
 });
