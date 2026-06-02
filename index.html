@@ -235,7 +235,6 @@ td:nth-child(-n+4){text-align:left}
 .ov-body::-webkit-scrollbar{width:5px}.ov-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 .ov-col{display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}
 .ov-card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:14px 16px;flex-shrink:0}
-.ov-news-card{flex:1;overflow:hidden;display:flex;flex-direction:column}
 .ov-card-title{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--amber);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:7px}
 .ov-loading{font-family:var(--mono);font-size:10px;color:var(--muted);padding:8px 0}
 .ov-mkt-open{color:var(--green);font-weight:700}
@@ -266,26 +265,15 @@ td:nth-child(-n+4){text-align:left}
 .ov-prob-bar{height:100%;border-radius:2px;transition:width .4s ease}
 .ov-prob-pct{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);width:36px;text-align:right;flex-shrink:0}
 .ov-no-fed{font-family:var(--mono);font-size:10px;color:var(--muted);padding:8px 0}
-/* News */
-.ov-news-list{overflow-y:auto;flex:1}
-.ov-news-list::-webkit-scrollbar{width:4px}.ov-news-list::-webkit-scrollbar-thumb{background:var(--border2)}
-.ov-news-item{padding:8px 0;border-bottom:1px solid rgba(26,45,71,.4);cursor:pointer}
-.ov-news-item:last-child{border-bottom:none}
-.ov-news-item:hover .ov-news-title{color:var(--amber)}
-.ov-news-title{font-family:var(--sans);font-size:11px;color:var(--text2);line-height:1.4;margin-bottom:3px;transition:color .15s}
-.ov-news-meta{font-family:var(--mono);font-size:9px;color:var(--muted)}
-.ov-news-card{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:200px}
-.ov-news-card #ovNews{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-height:0}
-.ov-news-card #ovNews::-webkit-scrollbar{width:4px}
-.ov-news-card #ovNews::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.ov-news-toggle{display:flex;gap:6px;margin-bottom:8px;flex-shrink:0}
-.ov-news-toggle span{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:10px;background:var(--surf);border:1px solid var(--border);color:var(--label);cursor:pointer}
-.ov-news-toggle span:hover,.ov-news-toggle span.on{background:var(--amberglow);border-color:var(--amber2);color:var(--amber)}
+/* ── CALENDAR ── */
+.cal-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:9px 48px;display:flex;align-items:center;gap:12px}
+.cal-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase}
+.cal-hint{font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:auto}
+.cal-body{flex:1;overflow-y:auto;padding:24px 48px;min-height:0}
+.cal-body::-webkit-scrollbar{width:5px}.cal-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.cal-empty{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:48px;text-align:center}
+@media (max-width: 768px){ .cal-bar{padding:8px 12px} .cal-body{padding:16px 12px} .cal-empty{padding:28px} }
 .ov-th-1d{background:rgba(26,45,71,.6);border-radius:3px}
-.ov-news-filters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-.ov-news-pill{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:10px;background:var(--surf);border:1px solid var(--border);color:var(--label);cursor:pointer;transition:all .12s}
-.ov-news-pill:hover{border-color:var(--amber2);color:var(--amber)}
-.ov-news-pill.active{background:var(--amberglow);border-color:var(--amber2);color:var(--amber)}
 .ov-sym{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);width:82px;flex-shrink:0}
 .cartera-controls{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 48px;display:flex;align-items:center;gap:10px}
 .cartera-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0}
@@ -407,6 +395,7 @@ function checkPwd(){
   <div class="tab" id="tab-heatmap" onclick="switchTab('heatmap')">&#9641; Heatmap</div>
   <div class="tab" id="tab-cartera" onclick="switchTab('cartera')">&#9733; Cartera</div>
   <div class="tab" id="tab-pebg" onclick="switchTab('pebg')">&#9196; P/E Hist.</div>
+  <div class="tab" id="tab-calendar" onclick="switchTab('calendar')">&#9638; Calendario</div>
   <div class="tab-spacer"></div>
   <span class="hdr-time" id="lastUpd">&mdash;</span>
   <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
@@ -463,17 +452,23 @@ function checkPwd(){
         <div id="ovTreas"><div class="ov-loading">Cargando...</div></div>
       </div>
     </div>
-    <!-- Col 3: Fed probs + News (tall) -->
+    <!-- Col 3: Fed probs -->
     <div class="ov-col ov-col-news" style="display:flex;flex-direction:column;min-height:0">
-      <div class="ov-card" style="flex-shrink:0">
+      <div class="ov-card" style="flex:1;min-height:0">
         <div class="ov-card-title">Prob. Fed <span style="font-size:8px;color:var(--muted);font-weight:400">&middot; CME FedWatch</span></div>
         <div id="ovFed"><div class="ov-loading">Cargando...</div></div>
       </div>
-      <div class="ov-card ov-news-card" style="flex:1;min-height:0">
-        <div class="ov-card-title">Titulares</div>
-        <div id="ovNews"><div class="ov-loading">Cargando...</div></div>
-      </div>
     </div>
+  </div>
+</div>
+
+<div class="view view-scroll" id="view-calendar">
+  <div class="cal-bar">
+    <span class="cal-title">&#9638; Calendario económico</span>
+    <span class="cal-hint">En construcción</span>
+  </div>
+  <div class="cal-body" id="calBody">
+    <div class="cal-empty">El calendario se va a armar acá.</div>
   </div>
 </div>
 
@@ -844,6 +839,14 @@ function switchTab(t) {
   if(t==='pebg') { if(!pebgLoaded) loadPebg(); }
   if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
+  if(t==='calendar') initCalendar();
+}
+
+let calendarLoaded = false;
+function initCalendar() {
+  // Calendario económico — se construye acá (próxima tarea).
+  if(calendarLoaded) return;
+  calendarLoaded = true;
 }
 
 function initChart(sym) {
@@ -1025,7 +1028,7 @@ const OV_LABEL = {
   'GC=F':'Oro','SI=F':'Plata','CL=F':'WTI','BZ=F':'Brent','HG=F':'Cobre','NG=F':'Gas Nat.',
 };
 
-let ovAllNews = [], ovLoaded = false, clockTimer = null;
+let ovLoaded = false, clockTimer = null;
 let ovSparkMap = {};
 
 function getMarketStatus() {
@@ -1055,7 +1058,7 @@ function startClock() {
 
 async function loadOverview() {
   ovLoaded = true;
-  ['ovFutures','ovWorld','ovComm','ovTreas','ovFed','ovNews','ovDolar'].forEach(id=>{
+  ['ovFutures','ovWorld','ovComm','ovTreas','ovFed','ovDolar'].forEach(id=>{
     const e=document.getElementById(id); if(e) e.innerHTML='<div class="ov-loading">Cargando...</div>';
   });
   initOvCharts();
@@ -1074,7 +1077,7 @@ async function loadOverview() {
       fetch(BASE_URL+'/api/spark?symbols='+OV_SPARK_SYMS.join(',')).then(r=>r.json()),
     ]);
 
-    const d = ovRes.status==='fulfilled' ? ovRes.value : {quotes:[],news:[],zqTickers:[]};
+    const d = ovRes.status==='fulfilled' ? ovRes.value : {quotes:[],zqTickers:[]};
     const qmap = {};
     (d.quotes||[]).forEach(q=>{ qmap[q.symbol]=q; });
 
@@ -1094,8 +1097,6 @@ async function loadOverview() {
     renderOvComm(qmap);
     renderOvTreas(qmap);
     renderOvFed(qmap, d.zqTickers||[], d.effr||null);
-    ovAllNews = d.news||[];
-    renderOvNews(ovAllNews);
 
     if(dolarRes.status==='fulfilled') renderOvDolar(dolarRes.value);
     else document.getElementById('ovDolar').innerHTML='<div class="ov-loading">Sin datos</div>';
@@ -1468,63 +1469,6 @@ function renderOvDolar(data) {
         +'</div>';
     }).join('');
   el.innerHTML = rows || '<div class="ov-loading">Sin datos de dolarapi.com</div>';
-}
-
-let ovShowAll = false;
-
-function renderOvNews(news) {
-  const el = document.getElementById('ovNews');
-  if(!news || !news.length){el.innerHTML='<div class="ov-loading">Sin noticias</div>';return;}
-
-  const IMPORTANT_KW = ['fed','rate','interest','inflation','cpi','pce','gdp','recession','crash',
-    'rally','earnings','profit','revenue','tariff','trade','china','ukraine','sanctions','opec',
-    'deficit','debt','payroll','jobs','unemployment','trump','powell','yellen','fomc','ipo',
-    'bankruptcy','merger','acquisition'];
-
-  const scored = news.map(n=>{
-    const t=(n.title||'').toLowerCase();
-    let score = 0;
-    IMPORTANT_KW.forEach(kw=>{if(t.includes(kw))score+=2;});
-    if(t.length < 30) score -= 3;
-    const ageMin = n.providerPublishTime ? (Date.now()/1000 - n.providerPublishTime)/60 : 999;
-    if(ageMin < 30) score += 3; // boost very recent
-    return {...n, score};
-  }).sort((a,b)=>b.score-a.score);
-
-  const toShow = ovShowAll ? scored : scored.slice(0, 6);
-
-  const fmtTime = ts => {
-    if(!ts) return '';
-    const d = new Date(ts*1000);
-    const ageMin = Math.round((Date.now()/1000 - ts)/60);
-    if(ageMin < 60) return ageMin + ' min';
-    if(ageMin < 1440) return Math.round(ageMin/60) + 'h';
-    return d.toLocaleDateString('es-AR',{day:'2-digit',month:'short'});
-  };
-
-  // Toggle bar
-  const toggleHtml = '<div class="ov-news-toggle">'
-    + '<span class="'+(ovShowAll?'':'on')+'" onclick="ovNewsToggle(false)">Importantes</span>'
-    + '<span class="'+(ovShowAll?'on':'')+'" onclick="ovNewsToggle(true)">Todas ('+news.length+')</span>'
-    + '</div>';
-
-  el.innerHTML = toggleHtml;
-
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'overflow-y:auto;flex:1';
-  wrap.setAttribute('class','ov-news-list');
-
-  toShow.forEach(n=>{
-    const item = document.createElement('div'); item.className = 'ov-news-item';
-    item.onclick = () => window.open(n.link, '_blank');
-    const pub = document.createElement('div');
-    pub.style.cssText='font-family:var(--mono);font-size:8px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:2px';
-    pub.innerHTML = '<span>'+(n.publisher||'')+'</span><span>'+fmtTime(n.providerPublishTime)+'</span>';
-    const title = document.createElement('div'); title.className='ov-news-title'; title.textContent=n.title;
-    item.appendChild(pub); item.appendChild(title);
-    wrap.appendChild(item);
-  });
-  el.appendChild(wrap);
 }
 
 // ── HEATMAP ──────────────────────────────────────────────
