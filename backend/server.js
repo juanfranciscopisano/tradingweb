@@ -10,32 +10,55 @@ let yfCookie = "";
 let yfCrumb  = "";
 let crumbFetching = false;
 
+// Rotate User-Agents to avoid detection
+const USER_AGENTS = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+];
+let uaIndex = 0;
+function nextUA() { return USER_AGENTS[uaIndex++ % USER_AGENTS.length]; }
+
 async function refreshCrumb() {
-  if(crumbFetching) return yfCrumb.length > 3; // already in progress
+  if(crumbFetching) return yfCrumb.length > 3;
   crumbFetching = true;
   try {
+    const ua = nextUA();
     const ctrl1 = new AbortController();
-    setTimeout(() => ctrl1.abort(), 8000);
+    setTimeout(() => ctrl1.abort(), 10000);
     const r1 = await fetch("https://fc.yahoo.com", {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36" },
+      headers: {
+        "User-Agent": ua,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+      },
       redirect: "follow",
       signal: ctrl1.signal,
     });
     const cookies = r1.headers.get("set-cookie") || "";
     yfCookie = cookies.split(",").map(c => c.split(";")[0]).join("; ");
 
+    // Wait 2-3 seconds between requests — looks more like a real browser
+    await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+
     const ctrl2 = new AbortController();
-    setTimeout(() => ctrl2.abort(), 8000);
+    setTimeout(() => ctrl2.abort(), 10000);
     const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36",
+        "User-Agent": ua,
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://finance.yahoo.com/",
         "Cookie": yfCookie,
       },
       signal: ctrl2.signal,
     });
     yfCrumb = await r2.text();
-    if(yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
-      console.error("Bad crumb rejected:", yfCrumb.slice(0,30));
+    if(!yfCrumb || yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
+      console.error("Bad crumb rejected:", yfCrumb?.slice(0,30));
       yfCrumb = "";
       crumbFetching = false;
       return false;
