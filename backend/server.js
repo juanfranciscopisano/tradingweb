@@ -9,7 +9,27 @@ const PORT = process.env.PORT || 3000;
 let yfCookie = "";
 let yfCrumb  = "";
 let crumbFetching = false;
-let crumbBusy = false; // true for the WHOLE retry loop, so /api requests never poke Yahoo during a quiet window
+let crumbBusy = false;            // true for the WHOLE retry loop, so /api requests never poke Yahoo during a quiet window
+let crumbCooldownUntil = 0;       // on a 429, stop hitting Yahoo until this time so the IP's rate limit can reset
+const COOLDOWN_MS = 30 * 60 * 1000;
+let crumb429Count = 0;            // consecutive rate-limited attempts; caps the retry chain so it can't run forever
+const MAX_429_ATTEMPTS = 6;       // after 6 tries (1 every 30 min ~ 2.5 h) give up until redeploy or /refresh-crumb
+
+// ---- In-memory response cache: many visitors collapse into ONE upstream Yahoo call per key/TTL ----
+const cache = new Map();      // key -> { expires, data }
+const inflight = new Map();   // key -> Promise (dedupe concurrent cache misses)
+async function cached(key, ttlMs, producer) {
+  const hit = cache.get(key);
+  if(hit && hit.expires > Date.now()) return hit.data;     // fresh hit
+  if(inflight.has(key)) return inflight.get(key);          // a fetch for this exact key is already running — join it
+  const p = (async () => {
+    const data = await producer();
+    cache.set(key, { expires: Date.now() + ttlMs, data });
+    return data;
+  })().finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}
 
 async function refreshCrumb() {
   if(crumbFetching) return yfCrumb.length > 3; // already in progress
@@ -34,6 +54,19 @@ async function refreshCrumb() {
       },
       signal: ctrl2.signal,
     });
+    if(r1.status === 429 || r2.status === 429) {
+      crumb429Count++;
+      crumbCooldownUntil = Date.now() + COOLDOWN_MS;
+      if(crumb429Count < MAX_429_ATTEMPTS) {
+        console.error(`Yahoo 429 (attempt ${crumb429Count}/${MAX_429_ATTEMPTS}) — pausing ${COOLDOWN_MS/60000} min before next try`);
+        setTimeout(() => { if(!crumbBusy && !crumbFetching && crumb429Count < MAX_429_ATTEMPTS) crumbLoop(); }, COOLDOWN_MS + 5000);
+      } else {
+        console.error(`Yahoo 429 (attempt ${crumb429Count}/${MAX_429_ATTEMPTS}) — giving up. Redeploy or hit /refresh-crumb to retry.`);
+      }
+      yfCrumb = "";
+      crumbFetching = false;
+      return false;
+    }
     yfCrumb = (await r2.text()).trim();
     if(yfCrumb.length < 5 || yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
       console.error("Bad crumb rejected:", JSON.stringify(yfCrumb.slice(0,30)), "(status", r2.status + ")");
@@ -42,6 +75,7 @@ async function refreshCrumb() {
       return false;
     }
     console.log("Crumb OK:", yfCrumb.slice(0,10), "| Cookie len:", yfCookie.length);
+    crumb429Count = 0;            // success — clear the rate-limit counter
     crumbFetching = false;
     return true;
   } catch (e) {
@@ -54,11 +88,16 @@ async function refreshCrumb() {
 // Run crumb retry loop independently at top level
 async function crumbLoop() {
   if(crumbBusy) return;          // a retry loop is already running
+  if(crumb429Count >= MAX_429_ATTEMPTS) { console.log("Crumb: gave up after max 429 attempts — not retrying (redeploy or /refresh-crumb)"); return; }
   crumbBusy = true;
   try {
     // Delays: 15s, 30s, 60s, 120s, 180s, 240s, 300s (up to 15 min total)
     const delays = [0, 15000, 30000, 60000, 120000, 180000, 240000, 300000];
     for(let i = 0; i < delays.length; i++) {
+      if(Date.now() < crumbCooldownUntil) {
+        console.log(`Crumb cooldown active (~${Math.ceil((crumbCooldownUntil - Date.now())/60000)} min left) — stopping retries`);
+        return;
+      }
       if(delays[i] > 0) {
         console.log(`Crumb retry ${i+1}/${delays.length} in ${delays[i]/1000}s...`);
         await new Promise(r => setTimeout(r, delays[i]));
@@ -94,7 +133,7 @@ async function yfFetch(url) {
   const sep = url.includes("?") ? "&" : "?";
   let res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
   if (res.status === 401 || res.status === 403) {
-    if(!crumbBusy && !crumbFetching) {
+    if(!crumbBusy && !crumbFetching && Date.now() >= crumbCooldownUntil && crumb429Count < MAX_429_ATTEMPTS) {
       // crumb genuinely expired and nothing is recovering it — refresh once
       console.log("Auth error, refreshing crumb...");
       await refreshCrumb();
@@ -113,12 +152,17 @@ app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? 
 app.get("/debug", (req, res) => res.json({
   finnhub: process.env.FINNHUB_KEY ? "set (len=" + process.env.FINNHUB_KEY.length + ")" : "missing",
   crumb: yfCrumb.length > 3 ? "ready" : "missing",
-  crumbFetching
+  crumbFetching,
+  attempts429: crumb429Count,
+  gaveUp: crumb429Count >= MAX_429_ATTEMPTS,
+  cooldownMinLeft: Math.max(0, Math.ceil((crumbCooldownUntil - Date.now()) / 60000))
 }));
 
 // Manual crumb refresh endpoint
 app.get("/refresh-crumb", async (req, res) => {
   if(crumbBusy || crumbFetching) return res.json({ status: "already fetching" });
+  crumb429Count = 0;            // manual retry — clear the give-up state and cooldown
+  crumbCooldownUntil = 0;
   crumbLoop();
   res.json({ status: "crumb refresh started" });
 });
@@ -148,7 +192,8 @@ app.get("/debug-edgar", async (req, res) => {
 app.get("/api/quote", async (req, res) => {
   try {
     const { symbols } = req.query;
-    const data = await yfFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`);
+    const data = await cached(`quote:${symbols}`, 45 * 1000, () =>
+      yfFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`));
     res.json(data);
   } catch (err) {
     console.error("Quote error:", err.message);
@@ -159,7 +204,8 @@ app.get("/api/quote", async (req, res) => {
 app.get("/api/spark", async (req, res) => {
   try {
     const { symbols } = req.query;
-    const data = await yfFetch(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols}&range=1y&interval=1d`);
+    const data = await cached(`spark:${symbols}`, 10 * 60 * 1000, () =>
+      yfFetch(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols}&range=1y&interval=1d`));
     res.json(data);
   } catch (err) {
     console.error("Spark error:", err.message);
@@ -217,6 +263,7 @@ async function fetchRSS(url, publisher) {
 
 app.get("/api/overview", async (req, res) => {
   try {
+    const payload = await cached("overview", 60 * 1000, async () => {
     const MONTH_CODES = ["F","G","H","J","K","M","N","Q","U","V","X","Z"];
     const now = new Date();
     const zqTickers = [];
@@ -280,7 +327,9 @@ app.get("/api/overview", async (req, res) => {
       .slice(0, 25);
     console.log('Final news count:', allNews.length);
 
-    res.json({ quotes: quotesData.quoteResponse?.result || [], news: allNews, zqTickers, effr });
+    return { quotes: quotesData.quoteResponse?.result || [], news: allNews, zqTickers, effr };
+    });
+    res.json(payload);
   } catch(e) {
     console.error("overview:", e.message);
     res.status(500).json({ error: e.message });
@@ -292,6 +341,7 @@ app.get("/api/pebg", async (req, res) => {
     const sym = (req.query.symbol || "").toUpperCase().trim();
     if(!sym) return res.status(400).json({ error: "symbol required" });
 
+    const payload = await cached(`pebg:${sym}`, 30 * 60 * 1000, async () => {
     // SEC EDGAR: public API, no key needed, full quarterly EPS history
     const getEdgarEPS = async (symbol) => {
       try {
@@ -440,7 +490,7 @@ app.get("/api/pebg", async (req, res) => {
 
     console.log(`pebg ${sym}: ${prices.length} prices, ${eps.length} EPS quarters`);
 
-    res.json({
+    return {
       symbol: sym,
       shortName: priceInfo.shortName || meta.longName || sym,
       prices, eps, epsCount: eps.length,
@@ -448,7 +498,9 @@ app.get("/api/pebg", async (req, res) => {
       currentPE: keyStats.trailingPE?.raw,
       forwardPE: keyStats.forwardPE?.raw || null,
       epsTrailingTwelveMonths: finData.epsTrailingTwelveMonths?.raw,
+    };
     });
+    res.json(payload);
   } catch(e) {
     console.error("pebg:", e.message);
     res.status(500).json({ error: e.message });
@@ -461,6 +513,6 @@ app.listen(PORT, () => {
   crumbLoop();
   // Refresh crumb every 25 min (before Yahoo expires it at ~30min)
   setInterval(() => {
-    if(!crumbBusy && !crumbFetching) refreshCrumb();
+    if(!crumbBusy && !crumbFetching && Date.now() >= crumbCooldownUntil && crumb429Count < MAX_429_ATTEMPTS) refreshCrumb();
   }, 25 * 60 * 1000);
 });
