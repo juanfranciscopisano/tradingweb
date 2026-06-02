@@ -52,16 +52,17 @@ async function refreshCrumb() {
 
 // Run crumb retry loop independently at top level
 async function crumbLoop() {
-  for(let i = 0; i < 8; i++) {
-    if(i > 0) {
-      const wait = i * 10000; // 10s, 20s, 30s...
-      console.log(`Crumb retry ${i+1}/8 in ${wait/1000}s...`);
-      await new Promise(r => setTimeout(r, wait));
+  // Delays: 15s, 30s, 60s, 120s, 180s, 240s, 300s (up to 15 min total)
+  const delays = [0, 15000, 30000, 60000, 120000, 180000, 240000, 300000];
+  for(let i = 0; i < delays.length; i++) {
+    if(delays[i] > 0) {
+      console.log(`Crumb retry ${i+1}/${delays.length} in ${delays[i]/1000}s...`);
+      await new Promise(r => setTimeout(r, delays[i]));
     }
     const ok = await refreshCrumb();
     if(ok) { console.log("Crumb ready after attempt", i+1); return; }
   }
-  console.error("Could not get crumb after 8 attempts");
+  console.error("Could not get crumb after all attempts — will retry on next request");
 }
 
 function yfHeaders() {
@@ -75,6 +76,13 @@ function yfHeaders() {
 }
 
 async function yfFetch(url) {
+  // If crumb is missing and loop is running, wait up to 30s for it
+  if(yfCrumb.length <= 3 && crumbFetching) {
+    for(let i = 0; i < 6; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      if(yfCrumb.length > 3) break;
+    }
+  }
   const sep = url.includes("?") ? "&" : "?";
   const fullUrl = `${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`;
   let res = await fetch(fullUrl, { headers: yfHeaders() });
@@ -84,8 +92,7 @@ async function yfFetch(url) {
       await refreshCrumb();
       res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
     } else {
-      // crumbLoop is already refreshing, wait a bit and retry
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 5000));
       res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
     }
   }
@@ -185,9 +192,19 @@ app.get("/api/overview", async (req, res) => {
       fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_bulletins', 'MarketWatch'),
     ]);
 
-    const normalizedNews = rssResults.flat();
+    let normalizedNews = rssResults.flat();
+    console.log('RSS news total before dedup:', normalizedNews.length);
 
-    // Merge, deduplicate by title, sort by date, take top 25
+    // If RSS failed entirely, fall back to Yahoo
+    if(normalizedNews.length < 3) {
+      console.log('RSS empty, falling back to Yahoo news');
+      try {
+        const yNews = await yfFetch('https://query1.finance.yahoo.com/v1/finance/search?q=stock+market+economy+fed&newsCount=20&lang=en-US&region=US&enableFuzzyQuery=false').catch(()=>({news:[]}));
+        normalizedNews = (yNews.news||[]);
+      } catch(e) { console.log('Yahoo news fallback failed:', e.message); }
+    }
+
+    // Deduplicate by title, sort newest first, take top 25
     const seenTitles = new Set();
     const allNews = normalizedNews
       .filter(n => {
@@ -197,6 +214,7 @@ app.get("/api/overview", async (req, res) => {
       })
       .sort((a, b) => (b.providerPublishTime || 0) - (a.providerPublishTime || 0))
       .slice(0, 25);
+    console.log('Final news count:', allNews.length);
 
     res.json({ quotes: quotesData.quoteResponse?.result || [], news: allNews, zqTickers, effr });
   } catch(e) {
