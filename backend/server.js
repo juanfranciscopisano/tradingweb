@@ -213,54 +213,6 @@ app.get("/api/spark", async (req, res) => {
   }
 });
 
-// ---- RSS helper (Reuters / MarketWatch) — independent of Yahoo, no crumb ----
-function decodeEntities(s) {
-  return (s || "")
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'")
-    .replace(/&#x27;/gi, "'").replace(/&nbsp;/g, " ")
-    .replace(/<[^>]+>/g, "")
-    .trim();
-}
-
-async function fetchRSS(url, publisher) {
-  try {
-    const ctrl = new AbortController();
-    const to = setTimeout(() => ctrl.abort(), 6000);
-    const r = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "application/rss+xml, application/xml, text/xml, */*",
-      },
-      signal: ctrl.signal,
-    });
-    clearTimeout(to);
-    if(!r.ok) { console.log(`RSS fetch failed: ${publisher} (${r.status})`); return []; }
-    const xml = await r.text();
-    const blocks = xml.split(/<item[\s>]/i).slice(1);
-    const out = [];
-    for(const b of blocks) {
-      const tM = b.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-      const title = decodeEntities(tM ? tM[1] : "");
-      if(!title) continue;
-      let link = "";
-      const lM = b.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-      if(lM) link = decodeEntities(lM[1]);
-      if(!link) { const hM = b.match(/<link[^>]*href="([^"]+)"/i); if(hM) link = hM[1]; }
-      const dM = b.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || b.match(/<dc:date[^>]*>([\s\S]*?)<\/dc:date>/i);
-      let ts = 0;
-      if(dM) { const p = Date.parse(decodeEntities(dM[1])); if(!isNaN(p)) ts = Math.floor(p / 1000); }
-      out.push({ title, link, publisher, providerPublishTime: ts });
-    }
-    console.log(`RSS ${publisher}: ${out.length} items`);
-    return out;
-  } catch(e) {
-    console.log(`RSS error ${publisher}:`, e.message);
-    return [];
-  }
-}
-
 app.get("/api/overview", async (req, res) => {
   try {
     const payload = await cached("overview", 60 * 1000, async () => {
@@ -292,42 +244,12 @@ app.get("/api/overview", async (req, res) => {
       } catch(e) { return null; }
     };
 
-    const [quotesData, effr, ...rssResults] = await Promise.all([
+    const [quotesData, effr] = await Promise.all([
       yfFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`),
       fetchEffr(),
-      // Independent RSS sources — no Yahoo crumb needed
-      fetchRSS('https://feeds.reuters.com/reuters/businessNews', 'Reuters'),
-      fetchRSS('https://feeds.reuters.com/reuters/topNews', 'Reuters'),
-      fetchRSS('https://feeds.reuters.com/reuters/marketsNews', 'Reuters'),
-      fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines', 'MarketWatch'),
-      fetchRSS('https://feeds.content.dowjones.io/public/rss/mw_bulletins', 'MarketWatch'),
     ]);
 
-    let normalizedNews = rssResults.flat();
-    console.log('RSS news total before dedup:', normalizedNews.length);
-
-    // If RSS failed entirely, fall back to Yahoo
-    if(normalizedNews.length < 3) {
-      console.log('RSS empty, falling back to Yahoo news');
-      try {
-        const yNews = await yfFetch('https://query1.finance.yahoo.com/v1/finance/search?q=stock+market+economy+fed&newsCount=20&lang=en-US&region=US&enableFuzzyQuery=false').catch(()=>({news:[]}));
-        normalizedNews = (yNews.news||[]);
-      } catch(e) { console.log('Yahoo news fallback failed:', e.message); }
-    }
-
-    // Deduplicate by title, sort newest first, take top 25
-    const seenTitles = new Set();
-    const allNews = normalizedNews
-      .filter(n => {
-        if(!n.title || seenTitles.has(n.title)) return false;
-        seenTitles.add(n.title);
-        return true;
-      })
-      .sort((a, b) => (b.providerPublishTime || 0) - (a.providerPublishTime || 0))
-      .slice(0, 25);
-    console.log('Final news count:', allNews.length);
-
-    return { quotes: quotesData.quoteResponse?.result || [], news: allNews, zqTickers, effr };
+    return { quotes: quotesData.quoteResponse?.result || [], zqTickers, effr };
     });
     res.json(payload);
   } catch(e) {
