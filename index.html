@@ -874,6 +874,7 @@ const CAL_CATS = {
   ipc_caba: { label:'IPC CABA (IDECBA)',    color:'#F6CE7A' },
   emae:     { label:'EMAE (INDEC)',         color:'#2DD4BF' },
   rem:      { label:'REM (BCRA)',           color:'#A78BFA' },
+  tesoro:   { label:'Licitaciones Tesoro',  color:'#FACC15' },
   pobreza:  { label:'Pobreza (INDEC)',      color:'#F472B6' },
   feriado_byma: { label:'Feriado BYMA',    color:'#FB923C' },
   fed:      { label:'Fed: reunión / minutas', color:'#F04E6A' },
@@ -907,6 +908,9 @@ const CAL_EVENTS = [].concat(
   calBatch(['01-06','02-04','03-04','04-03','05-05','06-03','07-06','08-05','09-03','10-05','11-04','12-03'], 'us',      'ISM Servicios EE.UU.', 'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'),
   calBatch(['01-09','02-09','03-09','04-10','05-11','06-08','07-08','08-07','09-08','10-08','11-09','12-10'], 'ipc_caba','IPC CABA'),
   calBatch(['01-07','02-05','03-05','04-08','05-07','06-04','07-06','08-06','09-04','10-06','11-05'], 'rem',     'REM (BCRA)'),
+  calBatch(['01-12','01-26','02-09','02-23','03-10','03-25','04-13','04-24','05-11','05-22','06-08','06-24','07-13','07-27','08-10','08-25','09-09','09-24','10-09','10-26','11-09','11-24','12-09'], 'tesoro', 'Llamado licitación Tesoro'),
+  calBatch(['01-14','01-28','02-11','02-25','03-12','03-27','04-15','04-28','05-13','05-27','06-10','06-26','07-15','07-29','08-12','08-27','09-11','09-28','10-14','10-28','11-11','11-26','12-11'], 'tesoro', 'Licitación Tesoro'),
+  calBatch(['01-16','01-30','02-13','02-27','03-16','03-31','04-17','04-30','05-15','05-29','06-12','06-30','07-17','07-31','08-14','08-31','09-15','09-30','10-16','10-30','11-13','11-30','12-15'], 'tesoro', 'Liquidación Tesoro'),
   [
     {d:'2026-01-01',c:'feriado_us',t:'Año Nuevo'},
     {d:'2026-01-19',c:'feriado_us',t:'M. L. King'},
