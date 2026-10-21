@@ -333,7 +333,9 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .ctrl-input{width:100%}
   .view.active{display:flex;flex-direction:column;overflow:visible}
   .table-wrap,.cartera-wrap{flex:1;min-height:0;overflow:auto!important;-webkit-overflow-scrolling:touch}
-  table{min-width:900px}
+  .table-wrap table{min-width:900px}
+  .ov-clock-bar{flex-wrap:wrap;gap:4px 10px}
+  .ov-clock-bar .pebg-note,.ov-pipe{display:none}
   .ov-body{flex-direction:column;padding:12px var(--side)}
   .ov-col-wide,.ov-col-mid,.ov-col-news{flex:none;width:100%}
   #pebgOuter{flex-direction:column}
@@ -347,7 +349,7 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 }
 @media (max-width:480px){
   .tab{font-size:12px;padding:0 7px}
-  table{min-width:800px}
+  .table-wrap table{min-width:800px}
   .cartera-table{min-width:900px}
 }
 </style>
@@ -1794,7 +1796,7 @@ function drawGgal(hoverI) {
   // eje x: horas en 1D, fechas en 1M/1A
   ctx.textAlign = 'center'; ctx.fillStyle = text;
   const fmtT = t => { const dt = new Date(t * 1000); return ggalRange === '1D'
-    ? dt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })
+    ? dt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/New_York' })
     : ggalRange === '1M' ? dt.getDate() + ' ' + MES_CORTO[dt.getMonth()].toLowerCase() : MES_CORTO[dt.getMonth()] + ' ' + String(dt.getFullYear()).slice(2); };
   [0, Math.floor((n - 1) / 2), n - 1].forEach((i, k) => { ctx.textAlign = k === 0 ? 'left' : k === 2 ? 'right' : 'center'; ctx.fillText(fmtT(pts[i].t), k === 2 ? W - P.r : xs(i), H - 5); });
   // base: cierre anterior en 1D, primer dato en 1M/1A
