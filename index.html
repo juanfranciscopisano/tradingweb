@@ -1063,8 +1063,8 @@ function loadFund() {
   if(!fundPromise) {
     fundPromise = fetch('fundamentals.json?d=' + new Date().toISOString().slice(0,10), {cache:'no-cache'})
       .then(r => r.ok ? r.json() : null)
-      .then(j => { FUND = (j && j.data) || {}; FUND_AS_OF = (j && j.asOf) || null; return FUND; })
-      .catch(() => { FUND = {}; return FUND; });
+      .then(j => { FUND = (j && j.data) || {}; FUND_AS_OF = (j && j.asOf) || null; if(!FUND_AS_OF) fundPromise = null; return FUND; })
+      .catch(() => { FUND = {}; fundPromise = null; return FUND; });   // si falló, el próximo Actualizar reintenta
   }
   return fundPromise;
 }
