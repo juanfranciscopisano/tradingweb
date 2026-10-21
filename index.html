@@ -1525,7 +1525,8 @@ function renderOvFed(qmap, zqTickers, effr, fedTarget) {
   const effrOk = effr != null && effr > 0 && effr < 15;
   const cur = effrOk ? +effr : (lo + hi) / 2;
   let html = '<div class="ov-fed-rate">Rango: <b>' + lo.toFixed(2) + '–' + hi.toFixed(2) + '%</b> &middot; EFFR: <b>' + cur.toFixed(2) + '%</b>'
-    + ' <span style="font-size:8px;color:var(--muted);">(' + (effrOk ? 'FRED' : 'estimada') + (fedTarget ? '' : ' · rango sin actualizar') + ')</span></div>';
+    + ' <span style="font-size:8px;color:var(--muted);">(' + (effrOk ? (fedTarget && fedTarget.date ? 'al ' + fedTarget.date.slice(8, 10) + '/' + fedTarget.date.slice(5, 7) : 'Fed NY') : 'estimada')
+    + (fedTarget ? '' : ' · rango sin actualizar') + ')</span></div>';
 
   const now = new Date();
   const todayKey = now.getFullYear() + '-' + calPad(now.getMonth() + 1) + '-' + calPad(now.getDate());
