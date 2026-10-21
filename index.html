@@ -780,6 +780,10 @@ function checkPwd(){
       <span class="pebg-period" data-b="fija" onclick="setPebgBand('fija')" title="La media y el desvío de los últimos N años, aplicados a todo el gráfico de esos N años.">Fija</span>
       <span class="pebg-period active" data-b="movil" onclick="setPebgBand('movil')" title="En cada fecha, la media y el desvío de los N años previos. El gráfico muestra una ventana más larga.">Móvil</span>
     </div>
+    <div class="pebg-period-btns" id="pebgRecalcBtns" role="group" aria-label="Recálculo de la media móvil">
+      <span class="pebg-period active" data-r="dia" onclick="setPebgRecalc('dia')" title="La media y el desvío se recalculan todos los días: las bandas se curvan entre trimestres.">Diaria</span>
+      <span class="pebg-period" data-r="trim" onclick="setPebgRecalc('trim')" title="La media y el desvío se recalculan cuando entra un trimestre nuevo de EPS: las bandas quedan planas entre trimestres.">Por trimestre</span>
+    </div>
     <span class="pebg-note">de</span>
     <div class="pebg-period-btns" id="pebgPeriodBtns">
       <span class="pebg-period active" data-y="1" onclick="setPebgPeriod(this)">1A</span>
@@ -2624,6 +2628,32 @@ function setPebgAxis(a) {
 }
 function syncPebgBandBtns() {
   document.querySelectorAll('#pebgBandBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.b === pebgBand));
+  document.querySelectorAll('#pebgRecalcBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.r === pebgRecalc));
+  const rb = document.getElementById('pebgRecalcBtns');
+  if (rb) rb.style.display = pebgBand === 'movil' ? '' : 'none';
+}
+// la media móvil se puede recalcular todos los días o solo cuando entra un trimestre nuevo de EPS
+let pebgRecalc = 'dia';
+try { if (localStorage.getItem('pebgRecalc') === 'trim') pebgRecalc = 'trim'; } catch (e) {}
+function setPebgRecalc(r) {
+  pebgRecalc = r === 'trim' ? 'trim' : 'dia';
+  try { localStorage.setItem('pebgRecalc', pebgRecalc); } catch (e) {}
+  syncPebgBandBtns();
+  if (pebgData) renderPebg(pebgData);
+}
+// congela la banda móvil en cada tramo con el mismo EPS de 12 meses: se toma la del primer día del tramo
+// (solo datos hasta esa fecha) y se mantiene hasta el trimestre siguiente
+function holdQuarterly(full, bands) {
+  const out = new Array(full.length).fill(null);
+  let held = null;
+  for (let i = 0; i < full.length; i++) {
+    const p = full[i], q = full[i - 1];
+    const newSeg = !q || p.eps4q !== q.eps4q || p.eps4q3y !== q.eps4q3y || p.date - q.date > 7 * 86400;
+    if (newSeg) held = bands[i] ? { ...bands[i], asOf: p.date } : null;
+    else if (!held && bands[i]) held = { ...bands[i], asOf: p.date };
+    out[i] = held;
+  }
+  return out;
 }
 function setPebgBand(b) {
   pebgBand = b === 'fija' ? 'fija' : 'movil';
@@ -2724,7 +2754,9 @@ function renderPebg(data) {
   const peg = pebgMetric === 'peg';
   if (peg) addPeg(full);
   const fija = pebgBand === 'fija';
-  const bands = fija ? fixedBands(full, pebgYears, pebgMetric) : rollingBands(full, pebgYears, pebgMetric);
+  const trim = !fija && pebgRecalc === 'trim';
+  let bands = fija ? fixedBands(full, pebgYears, pebgMetric) : rollingBands(full, pebgYears, pebgMetric);
+  if (trim) bands = holdQuarterly(full, bands);
   full.forEach((p, i) => {
     const b = bands[i];
     p.band = b;
@@ -2742,7 +2774,7 @@ function renderPebg(data) {
   const yrsTxt = y => y + (y === 1 ? ' año' : ' años');
   const histHint = 'hay ' + histY.toFixed(1).replace('.', ',') + ' años de datos';
   // con bandas fijas y menos historia que la ventana, se aclara cuántos años entran de verdad
-  const bandSub = !lb ? histHint : fija ? (histY < pebgYears - 0.25 ? 'fija, ' + histY.toFixed(1).replace('.', ',') + ' años de datos' : 'fija, últimos ' + yrsTxt(pebgYears)) : 'móvil, ' + yrsTxt(pebgYears);
+  const bandSub = !lb ? histHint : fija ? (histY < pebgYears - 0.25 ? 'fija, ' + histY.toFixed(1).replace('.', ',') + ' años de datos' : 'fija, últimos ' + yrsTxt(pebgYears)) : trim ? 'móvil, al ' + new Date(lb.asOf * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : 'móvil, ' + yrsTxt(pebgYears);
   const z = document.getElementById('psStat3');
   if (!peg) {
     set('psLbl0', 'P/E actual'); set('psStat0', fmtX(last.pe)); set('psSub0', norm ? 'TTM normalizado' : 'TTM contable');
@@ -2786,7 +2818,7 @@ function renderPebg(data) {
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
   const zKey = data.symbol + '|' + pebgYears + '|' + pebgBand;
   if (zKey !== pebgZoomKey) { pebgZoom = null; pebgZoomKey = zKey; }
-  pebgView = { full, metric: pebgMetric, labels, years: pebgYears, fija, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
+  pebgView = { full, metric: pebgMetric, labels, years: pebgYears, fija, trim, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
     prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
 }
@@ -2894,7 +2926,7 @@ function bindPebgCanvas(canvas) {
 
 function drawPebgChart(hoverT) {
   if (!pebgView) return;
-  const { full, metric, labels, years, fija, prices } = pebgView;
+  const { full, metric, labels, years, fija, trim, prices } = pebgView;
   const peg = metric === 'peg';
   const mv = pebgAxis === 'mult';
   const yOf = p => mv ? (peg ? p.peg : p.pe) : p.close;
@@ -3084,7 +3116,7 @@ function drawPebgChart(hoverT) {
     leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>${mv ? (peg ? 'PEG' : 'P/E de 12 meses') : 'Precio'}</div>`
       + (lb ? [0, 1, 2, 3, 4].filter(b => lb.mult[b] != null).map(b => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[b]}"></div>${labels[b]} hoy, ${(peg ? 'PEG ' : '') + fm(lb.mult[b])}</div>`).join('') : '')
       + `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>${peg ? 'Rango p25–p75' : 'Zona μ ± 1σ'}</div>`
-      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}</div>`
+      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}${trim ? ', recalculados por trimestre' : ''}</div>`
       + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: sin crecimiento de 3 años o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = 'flex';
