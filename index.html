@@ -73,7 +73,7 @@ thead tr{background:var(--surf);border-bottom:1px solid var(--amber)}
 th{color:var(--label);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;text-align:right;cursor:pointer;user-select:none;white-space:nowrap;border-right:1px solid var(--border);transition:color .15s}
 th:first-child{padding-left:48px}
 th:last-child{border-right:none;padding-right:48px}
-th:hover{color:var(--text2)}.th.active{color:var(--amber)}
+th:hover{color:var(--text2)}
 th.active{color:var(--amber)}
 th:nth-child(-n+4){text-align:left}
 .sa{font-size:7px;margin-left:3px;opacity:.4}
@@ -473,7 +473,7 @@ function checkPwd(){
     <!-- Col 3: Fed probs -->
     <div class="ov-col ov-col-news" style="display:flex;flex-direction:column;min-height:0">
       <div class="ov-card" style="flex:1;min-height:0">
-        <div class="ov-card-title">Prob. Fed <span style="font-size:8px;color:var(--muted);font-weight:400">&middot; CME FedWatch</span></div>
+        <div class="ov-card-title">Prob. Fed <span style="font-size:8px;color:var(--muted);font-weight:400">&middot; futuros ZQ, m&eacute;todo CME</span></div>
         <div id="ovFed"><div class="ov-loading">Cargando...</div></div>
       </div>
     </div>
@@ -671,7 +671,7 @@ function checkPwd(){
     <span id="pebgStatus" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
     <div class="cs"></div>
     <button class="btn btn-amber" onclick="togglePebgPanel()" id="pebgPersonalizar">&#9998; Personalizar</button>
-    <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Precio vs bandas de P/E hist&#243;rico &middot; Yahoo Finance</span>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Precio vs bandas de P/E hist&#243;rico &middot; EPS SEC EDGAR</span>
   </div>
   <div class="pebg-stats-bar" id="pebgStatsBar" style="display:none">
     <div class="pebg-stat-block">
@@ -760,7 +760,6 @@ function checkPwd(){
     </div>
   </div>
 </div>
-</div>
 
 <div class="view" id="view-compare">
   <div class="cmp-controls">
@@ -800,7 +799,7 @@ function checkPwd(){
 </div>
 
 <div class="footer">
-  <span>FUENTE: YAHOO FINANCE VIA RENDER &middot; JUAN FRANCISCO PISANO &middot; EQUITY RESEARCH</span>
+  <span>PRECIOS: YAHOO V&Iacute;A RENDER &middot; FUNDAMENTALS: DIARIOS &middot; EPS: SEC EDGAR &middot; JUAN FRANCISCO PISANO</span>
   <span id="fCnt">&mdash;</span>
 </div>
 
@@ -810,20 +809,20 @@ function checkPwd(){
 const BASE_URL = "https://tradingweb1.onrender.com";
 
 const SECTOR_MAP = {
-  AAPL:'Technology',MSFT:'Technology',NVDA:'Technology',AVGO:'Technology',ORCL:'Technology',CRM:'Technology',AMD:'Technology',QCOM:'Technology',TXN:'Technology',INTC:'Technology',IBM:'Technology',ADBE:'Technology',NOW:'Technology',CSCO:'Technology',AMAT:'Technology',MU:'Technology',LRCX:'Technology',KLAC:'Technology',ADI:'Technology',MRVL:'Technology',CDNS:'Technology',SNPS:'Technology',INTU:'Technology',HPQ:'Technology',HPE:'Technology',FTNT:'Technology',PANW:'Technology',CRWD:'Technology',JNPR:'Technology',KEYS:'Technology',ANSS:'Technology',TER:'Technology',SWKS:'Technology',QRVO:'Technology',MPWR:'Technology',ON:'Technology',NTAP:'Technology',STX:'Technology',WDC:'Technology',AKAM:'Technology',ZBRA:'Technology',GEN:'Technology',TRMB:'Technology',EPAM:'Technology',CTSH:'Technology',ACN:'Technology',IT:'Technology',GDDY:'Technology',DXC:'Technology',VRSN:'Technology',BR:'Technology',PYPL:'Technology',FSLR:'Technology',ENPH:'Technology',PLTR:'Technology',NET:'Technology',DDOG:'Technology',ZS:'Technology',WDAY:'Technology',ANET:'Technology',GLW:'Technology',TEL:'Technology',APH:'Technology',CDW:'Technology',FFIV:'Technology',
-  JPM:'Financial Services',BAC:'Financial Services',WFC:'Financial Services',GS:'Financial Services',MS:'Financial Services',BLK:'Financial Services',C:'Financial Services',AXP:'Financial Services',COF:'Financial Services',USB:'Financial Services',TFC:'Financial Services',PNC:'Financial Services',SCHW:'Financial Services',BK:'Financial Services',STT:'Financial Services',MTB:'Financial Services',RF:'Financial Services',CFG:'Financial Services',HBAN:'Financial Services',KEY:'Financial Services',FITB:'Financial Services',CMA:'Financial Services',ZION:'Financial Services',WRB:'Financial Services',ALL:'Financial Services',PGR:'Financial Services',MET:'Financial Services',PRU:'Financial Services',AFL:'Financial Services',AIG:'Financial Services',HIG:'Financial Services',LNC:'Financial Services',UNM:'Financial Services',GL:'Financial Services',CB:'Financial Services',TRV:'Financial Services',MMC:'Financial Services',AON:'Financial Services',AJG:'Financial Services',CINF:'Financial Services',WTW:'Financial Services',RJF:'Financial Services',NTRS:'Financial Services',SEIC:'Financial Services',FDS:'Financial Services',ICE:'Financial Services',CME:'Financial Services',CBOE:'Financial Services',NDAQ:'Financial Services',SPGI:'Financial Services',MCO:'Financial Services',V:'Financial Services',MA:'Financial Services',DFS:'Financial Services',SYF:'Financial Services',ALLY:'Financial Services',WEX:'Financial Services',SLM:'Financial Services',FNF:'Financial Services',FHN:'Financial Services',ERIE:'Financial Services',AIZ:'Financial Services',EG:'Financial Services',
-  JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',MRK:'Healthcare',ABBV:'Healthcare',TMO:'Healthcare',DHR:'Healthcare',ABT:'Healthcare',PFE:'Healthcare',BMY:'Healthcare',AMGN:'Healthcare',GILD:'Healthcare',MDT:'Healthcare',BSX:'Healthcare',SYK:'Healthcare',EW:'Healthcare',ISRG:'Healthcare',ZBH:'Healthcare',BAX:'Healthcare',BDX:'Healthcare',HOLX:'Healthcare',IDXX:'Healthcare',IQV:'Healthcare',LH:'Healthcare',DGX:'Healthcare',MTD:'Healthcare',ALGN:'Healthcare',HSIC:'Healthcare',VTRS:'Healthcare',MRNA:'Healthcare',BIO:'Healthcare',GEHC:'Healthcare',HCA:'Healthcare',UHS:'Healthcare',CNC:'Healthcare',CI:'Healthcare',HUM:'Healthcare',ELV:'Healthcare',CVS:'Healthcare',MOH:'Healthcare',RMD:'Healthcare',DXCM:'Healthcare',PODD:'Healthcare',INCY:'Healthcare',REGN:'Healthcare',VRTX:'Healthcare',BIIB:'Healthcare',ILMN:'Healthcare',A:'Healthcare',CTLT:'Healthcare',WBA:'Healthcare',MCK:'Healthcare',CAH:'Healthcare',ABC:'Healthcare',RVTY:'Healthcare',ZTS:'Healthcare',TECH:'Healthcare',PKI:'Healthcare',STE:'Healthcare',
+  AAPL:'Technology',MSFT:'Technology',NVDA:'Technology',AVGO:'Technology',ORCL:'Technology',CRM:'Technology',AMD:'Technology',QCOM:'Technology',TXN:'Technology',INTC:'Technology',IBM:'Technology',ADBE:'Technology',NOW:'Technology',CSCO:'Technology',AMAT:'Technology',MU:'Technology',LRCX:'Technology',KLAC:'Technology',ADI:'Technology',MRVL:'Technology',CDNS:'Technology',SNPS:'Technology',INTU:'Technology',HPQ:'Technology',HPE:'Technology',FTNT:'Technology',PANW:'Technology',CRWD:'Technology',KEYS:'Technology',TER:'Technology',SWKS:'Technology',QRVO:'Technology',MPWR:'Technology',ON:'Technology',NTAP:'Technology',STX:'Technology',WDC:'Technology',AKAM:'Technology',ZBRA:'Technology',GEN:'Technology',TRMB:'Technology',EPAM:'Technology',CTSH:'Technology',ACN:'Technology',IT:'Technology',GDDY:'Technology',DXC:'Technology',VRSN:'Technology',BR:'Technology',PYPL:'Technology',FSLR:'Technology',ENPH:'Technology',PLTR:'Technology',NET:'Technology',DDOG:'Technology',ZS:'Technology',WDAY:'Technology',ANET:'Technology',GLW:'Technology',TEL:'Technology',APH:'Technology',CDW:'Technology',FFIV:'Technology',
+  JPM:'Financial Services',BAC:'Financial Services',WFC:'Financial Services',GS:'Financial Services',MS:'Financial Services',BLK:'Financial Services',C:'Financial Services',AXP:'Financial Services',COF:'Financial Services',USB:'Financial Services',TFC:'Financial Services',PNC:'Financial Services',SCHW:'Financial Services',BNY:'Financial Services',STT:'Financial Services',MTB:'Financial Services',RF:'Financial Services',CFG:'Financial Services',HBAN:'Financial Services',KEY:'Financial Services',FITB:'Financial Services',ZION:'Financial Services',WRB:'Financial Services',ALL:'Financial Services',PGR:'Financial Services',MET:'Financial Services',PRU:'Financial Services',AFL:'Financial Services',AIG:'Financial Services',HIG:'Financial Services',LNC:'Financial Services',UNM:'Financial Services',GL:'Financial Services',CB:'Financial Services',TRV:'Financial Services',MRSH:'Financial Services',AON:'Financial Services',AJG:'Financial Services',CINF:'Financial Services',WTW:'Financial Services',RJF:'Financial Services',NTRS:'Financial Services',SEIC:'Financial Services',FDS:'Financial Services',ICE:'Financial Services',CME:'Financial Services',CBOE:'Financial Services',NDAQ:'Financial Services',SPGI:'Financial Services',MCO:'Financial Services',V:'Financial Services',MA:'Financial Services',SYF:'Financial Services',ALLY:'Financial Services',WEX:'Financial Services',SLM:'Financial Services',FNF:'Financial Services',FHN:'Financial Services',ERIE:'Financial Services',AIZ:'Financial Services',EG:'Financial Services',
+  JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',MRK:'Healthcare',ABBV:'Healthcare',TMO:'Healthcare',DHR:'Healthcare',ABT:'Healthcare',PFE:'Healthcare',BMY:'Healthcare',AMGN:'Healthcare',GILD:'Healthcare',MDT:'Healthcare',BSX:'Healthcare',SYK:'Healthcare',EW:'Healthcare',ISRG:'Healthcare',ZBH:'Healthcare',BAX:'Healthcare',BDX:'Healthcare',IDXX:'Healthcare',IQV:'Healthcare',LH:'Healthcare',DGX:'Healthcare',MTD:'Healthcare',ALGN:'Healthcare',HSIC:'Healthcare',VTRS:'Healthcare',MRNA:'Healthcare',BIO:'Healthcare',GEHC:'Healthcare',HCA:'Healthcare',UHS:'Healthcare',CNC:'Healthcare',CI:'Healthcare',HUM:'Healthcare',ELV:'Healthcare',CVS:'Healthcare',MOH:'Healthcare',RMD:'Healthcare',DXCM:'Healthcare',PODD:'Healthcare',INCY:'Healthcare',REGN:'Healthcare',VRTX:'Healthcare',BIIB:'Healthcare',ILMN:'Healthcare',A:'Healthcare',MCK:'Healthcare',CAH:'Healthcare',COR:'Healthcare',RVTY:'Healthcare',ZTS:'Healthcare',TECH:'Healthcare',STE:'Healthcare',
   AMZN:'Consumer Cyclical',TSLA:'Consumer Cyclical',HD:'Consumer Cyclical',MCD:'Consumer Cyclical',NKE:'Consumer Cyclical',LOW:'Consumer Cyclical',SBUX:'Consumer Cyclical',BKNG:'Consumer Cyclical',TJX:'Consumer Cyclical',ROST:'Consumer Cyclical',CMG:'Consumer Cyclical',DHI:'Consumer Cyclical',LEN:'Consumer Cyclical',PHM:'Consumer Cyclical',PVH:'Consumer Cyclical',RL:'Consumer Cyclical',BBWI:'Consumer Cyclical',AZO:'Consumer Cyclical',ORLY:'Consumer Cyclical',GPC:'Consumer Cyclical',AN:'Consumer Cyclical',KMX:'Consumer Cyclical',APTV:'Consumer Cyclical',BWA:'Consumer Cyclical',F:'Consumer Cyclical',GM:'Consumer Cyclical',LVS:'Consumer Cyclical',MGM:'Consumer Cyclical',WYNN:'Consumer Cyclical',CZR:'Consumer Cyclical',HLT:'Consumer Cyclical',MAR:'Consumer Cyclical',H:'Consumer Cyclical',CCL:'Consumer Cyclical',RCL:'Consumer Cyclical',NCLH:'Consumer Cyclical',YUM:'Consumer Cyclical',DRI:'Consumer Cyclical',LYV:'Consumer Cyclical',ETSY:'Consumer Cyclical',EBAY:'Consumer Cyclical',W:'Consumer Cyclical',TPR:'Consumer Cyclical',CHDN:'Consumer Cyclical',QSR:'Consumer Cyclical',WING:'Consumer Cyclical',LULU:'Consumer Cyclical',POOL:'Consumer Cyclical',NVR:'Consumer Cyclical',MTH:'Consumer Cyclical',TOL:'Consumer Cyclical',HAS:'Consumer Cyclical',MAT:'Consumer Cyclical',
-  GOOGL:'Communication Services',GOOG:'Communication Services',META:'Communication Services',NFLX:'Communication Services',CMCSA:'Communication Services',T:'Communication Services',VZ:'Communication Services',TMUS:'Communication Services',WBD:'Communication Services',CHTR:'Communication Services',OMC:'Communication Services',IPG:'Communication Services',TTWO:'Communication Services',EA:'Communication Services',MTCH:'Communication Services',IAC:'Communication Services',PINS:'Communication Services',SNAP:'Communication Services',FOXA:'Communication Services',FOX:'Communication Services',NWS:'Communication Services',NWSA:'Communication Services',DIS:'Communication Services',PARA:'Communication Services',
-  PG:'Consumer Defensive',KO:'Consumer Defensive',PEP:'Consumer Defensive',COST:'Consumer Defensive',WMT:'Consumer Defensive',PM:'Consumer Defensive',MO:'Consumer Defensive',MDLZ:'Consumer Defensive',CL:'Consumer Defensive',EL:'Consumer Defensive',KMB:'Consumer Defensive',CHD:'Consumer Defensive',CLX:'Consumer Defensive',SJM:'Consumer Defensive',CAG:'Consumer Defensive',CPB:'Consumer Defensive',GIS:'Consumer Defensive',K:'Consumer Defensive',KHC:'Consumer Defensive',HSY:'Consumer Defensive',MKC:'Consumer Defensive',HRL:'Consumer Defensive',TSN:'Consumer Defensive',LW:'Consumer Defensive',INGR:'Consumer Defensive',STZ:'Consumer Defensive',TAP:'Consumer Defensive',SYY:'Consumer Defensive',KR:'Consumer Defensive',CASY:'Consumer Defensive',USFD:'Consumer Defensive',
-  XOM:'Energy',CVX:'Energy',COP:'Energy',EOG:'Energy',SLB:'Energy',MPC:'Energy',VLO:'Energy',PSX:'Energy',OXY:'Energy',DVN:'Energy',BKR:'Energy',HAL:'Energy',HES:'Energy',FANG:'Energy',APA:'Energy',MRO:'Energy',EQT:'Energy',RRC:'Energy',AR:'Energy',NOV:'Energy',TRGP:'Energy',OKE:'Energy',KMI:'Energy',WMB:'Energy',LNG:'Energy',CQP:'Energy',CTRA:'Energy',
-  RTX:'Industrials',HON:'Industrials',UPS:'Industrials',CAT:'Industrials',DE:'Industrials',BA:'Industrials',LMT:'Industrials',NOC:'Industrials',GD:'Industrials',TXT:'Industrials',HWM:'Industrials',GE:'Industrials',EMR:'Industrials',ETN:'Industrials',ROK:'Industrials',PH:'Industrials',ITW:'Industrials',IR:'Industrials',FTV:'Industrials',AME:'Industrials',ROP:'Industrials',LDOS:'Industrials',SAIC:'Industrials',TDG:'Industrials',SWK:'Industrials',SNA:'Industrials',PNR:'Industrials',FAST:'Industrials',GWW:'Industrials',XYL:'Industrials',NDSN:'Industrials',GNRC:'Industrials',EFX:'Industrials',ADP:'Industrials',PAYX:'Industrials',CTAS:'Industrials',UNP:'Industrials',NSC:'Industrials',CSX:'Industrials',FDX:'Industrials',CHRW:'Industrials',EXPD:'Industrials',JBHT:'Industrials',R:'Industrials',AL:'Industrials',AAL:'Industrials',DAL:'Industrials',UAL:'Industrials',LUV:'Industrials',ALK:'Industrials',GEV:'Industrials',AXON:'Industrials',PWR:'Industrials',VRT:'Industrials',MTZ:'Industrials',J:'Industrials',WAB:'Industrials',OTIS:'Industrials',CARR:'Industrials',TT:'Industrials',CPRT:'Industrials',VRSK:'Industrials',RSG:'Industrials',WM:'Industrials',FLR:'Industrials',JCI:'Industrials',HUBB:'Industrials',MAS:'Industrials',LHX:'Industrials',
-  LIN:'Basic Materials',APD:'Basic Materials',SHW:'Basic Materials',DD:'Basic Materials',DOW:'Basic Materials',CTVA:'Basic Materials',NUE:'Basic Materials',STLD:'Basic Materials',RS:'Basic Materials',CF:'Basic Materials',MOS:'Basic Materials',FMC:'Basic Materials',PPG:'Basic Materials',ECL:'Basic Materials',IFF:'Basic Materials',BLL:'Basic Materials',PKG:'Basic Materials',IP:'Basic Materials',WRK:'Basic Materials',SEE:'Basic Materials',AVY:'Basic Materials',ALB:'Basic Materials',FCX:'Basic Materials',NEM:'Basic Materials',AA:'Basic Materials',CE:'Basic Materials',EMN:'Basic Materials',RPM:'Basic Materials',
+  GOOGL:'Communication Services',GOOG:'Communication Services',META:'Communication Services',NFLX:'Communication Services',CMCSA:'Communication Services',T:'Communication Services',VZ:'Communication Services',TMUS:'Communication Services',WBD:'Communication Services',CHTR:'Communication Services',OMC:'Communication Services',TTWO:'Communication Services',MTCH:'Communication Services',PPLI:'Communication Services',PINS:'Communication Services',SNAP:'Communication Services',FOXA:'Communication Services',FOX:'Communication Services',NWS:'Communication Services',NWSA:'Communication Services',DIS:'Communication Services',PARA:'Communication Services',
+  PG:'Consumer Defensive',KO:'Consumer Defensive',PEP:'Consumer Defensive',COST:'Consumer Defensive',WMT:'Consumer Defensive',PM:'Consumer Defensive',MO:'Consumer Defensive',MDLZ:'Consumer Defensive',CL:'Consumer Defensive',EL:'Consumer Defensive',KMB:'Consumer Defensive',CHD:'Consumer Defensive',CLX:'Consumer Defensive',SJM:'Consumer Defensive',CAG:'Consumer Defensive',CPB:'Consumer Defensive',GIS:'Consumer Defensive',KHC:'Consumer Defensive',HSY:'Consumer Defensive',MKC:'Consumer Defensive',HRL:'Consumer Defensive',TSN:'Consumer Defensive',LW:'Consumer Defensive',INGR:'Consumer Defensive',STZ:'Consumer Defensive',TAP:'Consumer Defensive',SYY:'Consumer Defensive',KR:'Consumer Defensive',CASY:'Consumer Defensive',USFD:'Consumer Defensive',
+  XOM:'Energy',CVX:'Energy',COP:'Energy',EOG:'Energy',SLB:'Energy',MPC:'Energy',VLO:'Energy',PSX:'Energy',OXY:'Energy',DVN:'Energy',BKR:'Energy',HAL:'Energy',FANG:'Energy',APA:'Energy',EQT:'Energy',RRC:'Energy',AR:'Energy',NOV:'Energy',TRGP:'Energy',OKE:'Energy',KMI:'Energy',WMB:'Energy',LNG:'Energy',CQP:'Energy',
+  RTX:'Industrials',HON:'Industrials',UPS:'Industrials',CAT:'Industrials',DE:'Industrials',BA:'Industrials',LMT:'Industrials',NOC:'Industrials',GD:'Industrials',TXT:'Industrials',HWM:'Industrials',GE:'Industrials',EMR:'Industrials',ETN:'Industrials',ROK:'Industrials',PH:'Industrials',ITW:'Industrials',IR:'Industrials',FTV:'Industrials',AME:'Industrials',ROP:'Industrials',LDOS:'Industrials',SAIC:'Industrials',TDG:'Industrials',SWK:'Industrials',SNA:'Industrials',PNR:'Industrials',FAST:'Industrials',GWW:'Industrials',XYL:'Industrials',NDSN:'Industrials',GNRC:'Industrials',EFX:'Industrials',ADP:'Industrials',PAYX:'Industrials',CTAS:'Industrials',UNP:'Industrials',NSC:'Industrials',CSX:'Industrials',FDX:'Industrials',CHRW:'Industrials',EXPD:'Industrials',JBHT:'Industrials',R:'Industrials',AAL:'Industrials',DAL:'Industrials',UAL:'Industrials',LUV:'Industrials',ALK:'Industrials',GEV:'Industrials',AXON:'Industrials',PWR:'Industrials',VRT:'Industrials',MTZ:'Industrials',J:'Industrials',WAB:'Industrials',OTIS:'Industrials',CARR:'Industrials',TT:'Industrials',CPRT:'Industrials',VRSK:'Industrials',RSG:'Industrials',WM:'Industrials',FLR:'Industrials',JCI:'Industrials',HUBB:'Industrials',MAS:'Industrials',LHX:'Industrials',
+  LIN:'Basic Materials',APD:'Basic Materials',SHW:'Basic Materials',DD:'Basic Materials',DOW:'Basic Materials',CTVA:'Basic Materials',NUE:'Basic Materials',STLD:'Basic Materials',RS:'Basic Materials',CF:'Basic Materials',MOS:'Basic Materials',FMC:'Basic Materials',PPG:'Basic Materials',ECL:'Basic Materials',IFF:'Basic Materials',BALL:'Basic Materials',PKG:'Basic Materials',IP:'Basic Materials',SW:'Basic Materials',AVY:'Basic Materials',ALB:'Basic Materials',FCX:'Basic Materials',NEM:'Basic Materials',AA:'Basic Materials',CE:'Basic Materials',EMN:'Basic Materials',RPM:'Basic Materials',
   NEE:'Utilities',D:'Utilities',DUK:'Utilities',SO:'Utilities',AEP:'Utilities',EXC:'Utilities',XEL:'Utilities',SRE:'Utilities',ES:'Utilities',WEC:'Utilities',ETR:'Utilities',FE:'Utilities',PPL:'Utilities',CMS:'Utilities',LNT:'Utilities',EVRG:'Utilities',AEE:'Utilities',PNW:'Utilities',NI:'Utilities',ATO:'Utilities',AWK:'Utilities',CNP:'Utilities',
-  AMT:'Real Estate',PLD:'Real Estate',CCI:'Real Estate',EQIX:'Real Estate',PSA:'Real Estate',SPG:'Real Estate',O:'Real Estate',DLR:'Real Estate',WY:'Real Estate',EQR:'Real Estate',AVB:'Real Estate',ESS:'Real Estate',MAA:'Real Estate',UDR:'Real Estate',CPT:'Real Estate',INVH:'Real Estate',AMH:'Real Estate',WELL:'Real Estate',VTR:'Real Estate',PEAK:'Real Estate',DOC:'Real Estate',HR:'Real Estate',OHI:'Real Estate',VICI:'Real Estate',GLPI:'Real Estate',EXR:'Real Estate',IRM:'Real Estate',ARE:'Real Estate',BXP:'Real Estate',SLG:'Real Estate',KIM:'Real Estate',REG:'Real Estate',FRT:'Real Estate',NNN:'Real Estate',CBRE:'Real Estate',SBAC:'Real Estate',HST:'Real Estate'
+  AMT:'Real Estate',PLD:'Real Estate',CCI:'Real Estate',EQIX:'Real Estate',PSA:'Real Estate',SPG:'Real Estate',O:'Real Estate',DLR:'Real Estate',WY:'Real Estate',VMRK:'Real Estate',ESS:'Real Estate',MAA:'Real Estate',UDR:'Real Estate',CPT:'Real Estate',INVH:'Real Estate',AMH:'Real Estate',WELL:'Real Estate',VTR:'Real Estate',DOC:'Real Estate',HR:'Real Estate',OHI:'Real Estate',VICI:'Real Estate',GLPI:'Real Estate',EXR:'Real Estate',IRM:'Real Estate',ARE:'Real Estate',BXP:'Real Estate',SLG:'Real Estate',KIM:'Real Estate',REG:'Real Estate',FRT:'Real Estate',NNN:'Real Estate',CBRE:'Real Estate',SBAC:'Real Estate',HST:'Real Estate'
 };
 
-const TKS = ['AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','QCOM','TXN','INTC','IBM','ADBE','NOW','CSCO','AMAT','MU','LRCX','KLAC','ADI','MRVL','CDNS','SNPS','INTU','HPQ','HPE','FTNT','PANW','CRWD','JNPR','KEYS','ANSS','TER','SWKS','QRVO','MPWR','ON','NTAP','STX','WDC','AKAM','ZBRA','GEN','TRMB','EPAM','CTSH','ACN','IT','GDDY','DXC','VRSN','BR','PYPL','FSLR','ENPH','PLTR','NET','DDOG','ZS','WDAY','ANET','GLW','TEL','APH','CDW','FFIV','JPM','BAC','WFC','GS','MS','BLK','C','AXP','COF','USB','TFC','PNC','SCHW','BK','STT','MTB','RF','CFG','HBAN','KEY','FITB','CMA','ZION','WRB','ALL','PGR','MET','PRU','AFL','AIG','HIG','LNC','UNM','GL','CB','TRV','MMC','AON','AJG','CINF','WTW','RJF','NTRS','SEIC','FDS','ICE','CME','CBOE','NDAQ','SPGI','MCO','V','MA','DFS','SYF','ALLY','WEX','SLM','FNF','FHN','ERIE','AIZ','EG','JNJ','UNH','LLY','MRK','ABBV','TMO','DHR','ABT','PFE','BMY','AMGN','GILD','MDT','BSX','SYK','EW','ISRG','ZBH','BAX','BDX','HOLX','IDXX','IQV','LH','DGX','MTD','ALGN','HSIC','VTRS','MRNA','BIO','GEHC','HCA','UHS','CNC','CI','HUM','ELV','CVS','MOH','RMD','DXCM','PODD','INCY','REGN','VRTX','BIIB','ILMN','A','CTLT','WBA','MCK','CAH','ABC','RVTY','ZTS','TECH','PKI','STE','AMZN','TSLA','HD','MCD','NKE','LOW','SBUX','BKNG','TJX','ROST','CMG','DHI','LEN','PHM','PVH','RL','BBWI','AZO','ORLY','GPC','AN','KMX','APTV','BWA','F','GM','LVS','MGM','WYNN','CZR','HLT','MAR','H','CCL','RCL','NCLH','YUM','DRI','LYV','ETSY','EBAY','W','TPR','CHDN','QSR','WING','LULU','POOL','NVR','MTH','TOL','HAS','MAT','GOOGL','META','NFLX','CMCSA','T','VZ','TMUS','WBD','CHTR','OMC','IPG','TTWO','EA','MTCH','IAC','PINS','SNAP','FOXA','FOX','NWS','NWSA','DIS','PARA','PG','KO','PEP','COST','WMT','PM','MO','MDLZ','CL','EL','KMB','CHD','CLX','SJM','CAG','CPB','GIS','K','KHC','HSY','MKC','HRL','TSN','LW','INGR','STZ','TAP','SYY','KR','CASY','USFD','XOM','CVX','COP','EOG','SLB','MPC','VLO','PSX','OXY','DVN','BKR','HAL','HES','FANG','APA','MRO','EQT','RRC','AR','NOV','TRGP','OKE','KMI','WMB','LNG','CQP','CTRA','RTX','HON','UPS','CAT','DE','BA','LMT','NOC','GD','TXT','HWM','GE','EMR','ETN','ROK','PH','ITW','IR','FTV','AME','ROP','LDOS','SAIC','TDG','SWK','SNA','PNR','FAST','GWW','XYL','NDSN','GNRC','EFX','ADP','PAYX','CTAS','UNP','NSC','CSX','FDX','CHRW','EXPD','JBHT','R','AL','AAL','DAL','UAL','LUV','ALK','GEV','AXON','PWR','VRT','MTZ','J','WAB','OTIS','CARR','TT','CPRT','VRSK','RSG','WM','FLR','JCI','HUBB','MAS','LHX','LIN','APD','SHW','DD','DOW','CTVA','NUE','STLD','RS','CF','MOS','FMC','PPG','ECL','IFF','BLL','PKG','IP','WRK','SEE','AVY','ALB','FCX','NEM','AA','CE','EMN','RPM','NEE','D','DUK','SO','AEP','EXC','XEL','SRE','ES','WEC','ETR','FE','PPL','CMS','LNT','EVRG','AEE','PNW','NI','ATO','AWK','CNP','AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WY','EQR','AVB','ESS','MAA','UDR','CPT','INVH','AMH','WELL','VTR','PEAK','DOC','HR','OHI','VICI','GLPI','EXR','IRM','ARE','BXP','SLG','KIM','REG','FRT','NNN','CBRE','SBAC','HST'];
+const TKS = ['AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','QCOM','TXN','INTC','IBM','ADBE','NOW','CSCO','AMAT','MU','LRCX','KLAC','ADI','MRVL','CDNS','SNPS','INTU','HPQ','HPE','FTNT','PANW','CRWD','KEYS','TER','SWKS','QRVO','MPWR','ON','NTAP','STX','WDC','AKAM','ZBRA','GEN','TRMB','EPAM','CTSH','ACN','IT','GDDY','DXC','VRSN','BR','PYPL','FSLR','ENPH','PLTR','NET','DDOG','ZS','WDAY','ANET','GLW','TEL','APH','CDW','FFIV','JPM','BAC','WFC','GS','MS','BLK','C','AXP','COF','USB','TFC','PNC','SCHW','BNY','STT','MTB','RF','CFG','HBAN','KEY','FITB','ZION','WRB','ALL','PGR','MET','PRU','AFL','AIG','HIG','LNC','UNM','GL','CB','TRV','MRSH','AON','AJG','CINF','WTW','RJF','NTRS','SEIC','FDS','ICE','CME','CBOE','NDAQ','SPGI','MCO','V','MA','SYF','ALLY','WEX','SLM','FNF','FHN','ERIE','AIZ','EG','JNJ','UNH','LLY','MRK','ABBV','TMO','DHR','ABT','PFE','BMY','AMGN','GILD','MDT','BSX','SYK','EW','ISRG','ZBH','BAX','BDX','IDXX','IQV','LH','DGX','MTD','ALGN','HSIC','VTRS','MRNA','BIO','GEHC','HCA','UHS','CNC','CI','HUM','ELV','CVS','MOH','RMD','DXCM','PODD','INCY','REGN','VRTX','BIIB','ILMN','A','MCK','CAH','COR','RVTY','ZTS','TECH','STE','AMZN','TSLA','HD','MCD','NKE','LOW','SBUX','BKNG','TJX','ROST','CMG','DHI','LEN','PHM','PVH','RL','BBWI','AZO','ORLY','GPC','AN','KMX','APTV','BWA','F','GM','LVS','MGM','WYNN','CZR','HLT','MAR','H','CCL','RCL','NCLH','YUM','DRI','LYV','ETSY','EBAY','W','TPR','CHDN','QSR','WING','LULU','POOL','NVR','MTH','TOL','HAS','MAT','GOOGL','META','NFLX','CMCSA','T','VZ','TMUS','WBD','CHTR','OMC','TTWO','MTCH','PPLI','PINS','SNAP','FOXA','FOX','NWS','NWSA','DIS','PARA','PG','KO','PEP','COST','WMT','PM','MO','MDLZ','CL','EL','KMB','CHD','CLX','SJM','CAG','CPB','GIS','KHC','HSY','MKC','HRL','TSN','LW','INGR','STZ','TAP','SYY','KR','CASY','USFD','XOM','CVX','COP','EOG','SLB','MPC','VLO','PSX','OXY','DVN','BKR','HAL','FANG','APA','EQT','RRC','AR','NOV','TRGP','OKE','KMI','WMB','LNG','CQP','RTX','HON','UPS','CAT','DE','BA','LMT','NOC','GD','TXT','HWM','GE','EMR','ETN','ROK','PH','ITW','IR','FTV','AME','ROP','LDOS','SAIC','TDG','SWK','SNA','PNR','FAST','GWW','XYL','NDSN','GNRC','EFX','ADP','PAYX','CTAS','UNP','NSC','CSX','FDX','CHRW','EXPD','JBHT','R','AAL','DAL','UAL','LUV','ALK','GEV','AXON','PWR','VRT','MTZ','J','WAB','OTIS','CARR','TT','CPRT','VRSK','RSG','WM','FLR','JCI','HUBB','MAS','LHX','LIN','APD','SHW','DD','DOW','CTVA','NUE','STLD','RS','CF','MOS','FMC','PPG','ECL','IFF','BALL','PKG','IP','SW','AVY','ALB','FCX','NEM','AA','CE','EMN','RPM','NEE','D','DUK','SO','AEP','EXC','XEL','SRE','ES','WEC','ETR','FE','PPL','CMS','LNT','EVRG','AEE','PNW','NI','ATO','AWK','CNP','AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WY','VMRK','ESS','MAA','UDR','CPT','INVH','AMH','WELL','VTR','DOC','HR','OHI','VICI','GLPI','EXR','IRM','ARE','BXP','SLG','KIM','REG','FRT','NNN','CBRE','SBAC','HST'];
 
 const SI = {'Technology':['IT','s-IT'],'Healthcare':['HC','s-HC'],'Financial Services':['FIN','s-FI'],'Consumer Cyclical':['C.DIS','s-CD'],'Consumer Defensive':['C.STP','s-CS'],'Energy':['ENRG','s-EN'],'Industrials':['IND','s-IN'],'Basic Materials':['MAT','s-MA'],'Utilities':['UTIL','s-UT'],'Real Estate':['RE','s-RE'],'Communication Services':['COMM','s-CO']};
 
@@ -1034,7 +1033,6 @@ function initChart(sym) {
 function loadChart() { const sym=document.getElementById('chartTicker').value.trim().toUpperCase(); if(sym) initChart(sym); }
 function openChart(sym, name) { currentSym=sym; document.getElementById('chartLabel').textContent=sym+' · '+name; switchTab('chart'); }
 
-async function fQ(syms) { try{ const r=await fetch(BASE_URL+'/api/quote?symbols='+syms.join(',')); return (await r.json()).quoteResponse?.result||[]; }catch(e){ return []; } }
 async function fS(syms) { try{ const r=await fetch(BASE_URL+'/api/spark?symbols='+syms.join(',')); return (await r.json()).spark?.result||[]; }catch(e){ return []; } }
 
 const vC = c => (c||[]).filter(x=>x!=null&&isFinite(x));
@@ -1059,6 +1057,31 @@ function sv(id,v) { const e=document.getElementById(id); if(e)e.textContent=v; }
 function sl(ms) { return new Promise(r=>setTimeout(r,ms)); }
 function showErr(ttl,det) { document.getElementById('pWrap').style.display='none'; document.getElementById('tWrap').innerHTML='<div class="sc" style="gap:12px"><div style="font-size:26px">&#9888;</div><div class="sm" style="color:var(--amber)">'+ttl+'</div><div style="font-size:11px;color:var(--muted);max-width:480px;text-align:center;line-height:1.7">'+det+'</div><button class="btn" style="margin-top:8px" onclick="loadData()">&#8635; Reintentar</button></div>'; }
 
+// ── Fundamentals diarios: fundamentals.json lo genera la GitHub Action del repo (scripts/fundamentals.mjs) ──
+let FUND = null, FUND_AS_OF = null, fundPromise = null;
+function loadFund() {
+  if(!fundPromise) {
+    fundPromise = fetch('fundamentals.json?d=' + new Date().toISOString().slice(0,10), {cache:'no-cache'})
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { FUND = (j && j.data) || {}; FUND_AS_OF = (j && j.asOf) || null; return FUND; })
+      .catch(() => { FUND = {}; return FUND; });
+  }
+  return fundPromise;
+}
+// Ratios del día reescalados con el precio en vivo: ratio x precio actual / precio de referencia.
+function fundFor(sym, livePrice) {
+  const f = FUND && FUND[sym];
+  if(!f) return {};
+  let k = (f.p && livePrice) ? livePrice / f.p : 1;
+  if(!(k > 0.5 && k < 2)) k = 1;
+  const sc = v => (v != null && isFinite(v) && v > 0) ? v * k : null;
+  return { pe: sc(f.pe), fpe: sc(f.fpe), pb: sc(f.pb), mc: sc(f.mc), name: f.n || null, asOf: f.d || null, stale: !!f.stale };
+}
+function fundAsOfLabel() {
+  if(!FUND_AS_OF) return 'FUNDAMENTALS: SIN DATOS';
+  return 'FUNDAMENTALS AL ' + new Date(FUND_AS_OF).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'});
+}
+
 async function loadData() {
   const btn=document.getElementById('rfBtn'); btn.disabled=true;
   document.getElementById('liveBadge').style.opacity='0';
@@ -1066,34 +1089,44 @@ async function loadData() {
   document.getElementById('pFill').style.width='0%';
   document.getElementById('tWrap').innerHTML='<div class="sc"><div class="spin"></div><div class="sm" id="loadMsg">Conectando...</div></div>';
   pp(2,'Conectando con backend...');
-  let connOk=false;
+  const fundP = loadFund();
+  let connOk=false, connMsg='';
   for(let a=0;a<3;a++) {
-    try{ const r=await fetch(BASE_URL+'/api/quote?symbols=AAPL'); const d=await r.json(); if(d.quoteResponse?.result?.length>0){connOk=true;break;} }catch(e){}
+    try{
+      const r=await fetch(BASE_URL+'/api/quote?symbols=AAPL');
+      const d=await r.json().catch(()=>({}));
+      if(r.ok && d.quoteResponse?.result?.length>0){connOk=true;break;}
+      connMsg='El backend responde pero no consigue precios de Yahoo'+(d.error?' ('+d.error+')':'')+'. Probá en unos minutos.';
+    }catch(e){ connMsg='El backend en Render no responde. Puede estar despertando (free tier): esperá 30-50 s y reintentá.'; }
     if(a<2){ pp(4+a*4,'Reintentando...'); await sl(4000); }
   }
-  if(!connOk){ showErr('Error de conectividad','El backend en Render no responde. Puede estar despertando (free tier). Esperá 30s y reintentá.'); btn.disabled=false; return; }
+  if(!connOk){ showErr('Sin datos de precios', connMsg); btn.disabled=false; return; }
   rows=[];
   const tks=[...new Set(TKS)];
-  const bats=[]; for(let i=0;i<tks.length;i+=50) bats.push(tks.slice(i,i+50));
-  const spBats=[]; for(let i=0;i<tks.length;i+=20) spBats.push(tks.slice(i,i+20));
-  const total = bats.length + spBats.length + spBats.length + 1; let done=0;
-  const tick=msg=>{ done++; pp(Math.round(done/total*100),msg); };
-  const qM={};
-  for(let i=0;i<bats.length;i++) { tick('Cotizaciones ['+(i+1)+'/'+bats.length+'] — '+Object.keys(qM).length+' cargadas'); (await fQ(bats[i])).forEach(q=>{qM[q.symbol]=q;}); if(i<bats.length-1)await sl(80); }
-  if(!Object.keys(qM).length){ showErr('Sin datos','Backend respondio vacio. Intenta en unos minutos.'); btn.disabled=false; return; }
-  const spM={};
-  for(let i=0;i<spBats.length;i++) {
-    tick('Retornos historicos ['+(i+1)+'/'+spBats.length+']');
-    try{ const res=await fS(spBats[i]); res.forEach(s=>{ const r0=s.response?.[0]; if(!r0)return; const closes=r0.indicators?.quote?.[0]?.close||[]; const timestamps=r0.timestamp||[]; if(closes.filter(x=>x!=null).length>10) spM[s.symbol]={closes,timestamps}; }); }catch(e){}
-    if(i<spBats.length-1)await sl(120);
+  const bats=[]; for(let i=0;i<tks.length;i+=20) bats.push(tks.slice(i,i+20));
+  const qM={}, spM={};
+  for(let i=0;i<bats.length;i++) {
+    pp(10+Math.round(i/bats.length*85),'Precios y retornos ['+(i+1)+'/'+bats.length+'] — '+Object.keys(qM).length+' cargadas');
+    try {
+      (await fS(bats[i])).forEach(s=>{
+        if(s.quote) qM[s.symbol]=s.quote;
+        const r0=s.response?.[0]; if(!r0) return;
+        const closes=r0.indicators?.quote?.[0]?.close||[];
+        if(closes.filter(x=>x!=null).length>10) spM[s.symbol]={closes, timestamps:r0.timestamp||[]};
+      });
+    } catch(e) {}
+    if(i<bats.length-1) await sl(100);
   }
-  tick('Procesando...');
+  if(!Object.keys(qM).length){ showErr('Sin datos','El backend respondió vacío. Intentá en unos minutos.'); btn.disabled=false; return; }
+  pp(97,'Fundamentals...');
+  await fundP;
   for(const sym of tks) {
-    const q=qM[sym]; if(!q)continue;
+    const q=qM[sym]; if(!q) continue;
     const sp=spM[sym], c=sp?.closes||[], ts=sp?.timestamps||[];
-    const sector=q.sector||SECTOR_MAP[sym]||'';
-    const ret1yS=rN(c,252), ret1yQ=q.fiftyTwoWeekChangePercent!=null?q.fiftyTwoWeekChangePercent*100:null;
-    rows.push({symbol:q.symbol, name:q.shortName||q.longName||sym, sector, price:q.regularMarketPrice, marketCap:q.marketCap, pe:q.trailingPE, fwdPE:q.forwardPE, pb:q.priceToBook, ret1d:q.regularMarketChangePercent, ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:ret1yS??ret1yQ});
+    const f=fundFor(sym, q.regularMarketPrice);
+    rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:q.regularMarketPrice,
+      marketCap:f.mc??null, pe:f.pe??null, fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
+      ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252)});
   }
   document.getElementById('pWrap').style.display='none';
   document.getElementById('liveBadge').style.opacity='1';
@@ -1124,7 +1157,7 @@ function updateStats() {
   const eY=document.getElementById('sYTD');
   if(aYTD!=null){ eY.textContent=(aYTD>=0?'+':'')+aYTD.toFixed(2)+'%'; eY.className='stat-val '+(aYTD>=0?'up':'dn'); }
 
-  sv('fCnt', n+' EMPRESAS · YAHOO FINANCE VIA RENDER');
+  sv('fCnt', n+' EMPRESAS · '+fundAsOfLabel());
 }
 
 const NA='<span class="na">—</span>';
@@ -1166,14 +1199,12 @@ function ss(k){ if(sKey===k){sDir=-sDir;}else{sKey=k;sDir=(k==='symbol'||k==='na
 
 
 // ── OVERVIEW ──────────────────────────────────────────────
-const FOMC_2026 = [
-  {label:'May 6-7',   month:4, year:2026},
-  {label:'Jun 17-18', month:5, year:2026},
-  {label:'Jul 29-30', month:6, year:2026},
-  {label:'Sep 16-17', month:8, year:2026},
-  {label:'Oct 28-29', month:9, year:2026},
-  {label:'Dec 9-10',  month:11,year:2026},
+// Fechas de decisión FOMC (segundo día de reunión). Fuente: federalreserve.gov. Agregar el año siguiente cuando se publique.
+const FOMC_DECISIONS = [
+  '2026-01-28','2026-03-18','2026-04-29','2026-06-17','2026-07-29','2026-09-16','2026-10-28','2026-12-09',
+  '2027-01-27','2027-03-17','2027-04-28','2027-06-09','2027-07-28','2027-09-15','2027-10-27','2027-12-08',
 ];
+const MES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 const OV_LABEL = {
   'ES=F':'S&P Fut', 'NQ=F':'NDQ Fut', 'YM=F':'Dow Fut', 'RTY=F':'Russ. Fut',
@@ -1222,7 +1253,7 @@ async function loadOverview() {
   try {
     // Parallel: overview data + dolar + spark for overview symbols
     const OV_SPARK_SYMS = [
-      '^GSPC','^IXIC','^DJI','^RUT','ES=F','NQ=F','YM=F','RTY=F',
+      '^GSPC','^IXIC','^DJI','^RUT','ES=F','NQ=F','YM=F','RTY=F','^VIX',
       '^STOXX50E','^GDAXI','^FTSE','^N225','^HSI','^MERV',
       'GC=F','SI=F','CL=F','BZ=F','HG=F','NG=F'
     ];
@@ -1252,7 +1283,7 @@ async function loadOverview() {
     renderOvWorld(qmap);
     renderOvComm(qmap);
     renderOvTreas(qmap);
-    renderOvFed(qmap, d.zqTickers||[], d.effr||null);
+    renderOvFed(qmap, d.zqTickers||[], d.effr||null, d.fedTarget||null);
 
     if(dolarRes.status==='fulfilled') renderOvDolar(dolarRes.value);
     else document.getElementById('ovDolar').innerHTML='<div class="ov-loading">Sin datos</div>';
@@ -1478,129 +1509,77 @@ function renderOvTreas(q) {
   document.getElementById('ovTreas').innerHTML=html;
 }
 
-function renderOvFed(qmap, zqTickers, effr) {
-  // CME FedWatch methodology:
-  // ZQ monthly futures settle at 100 - avg(daily EFFR for that month)
-  // For month with FOMC on day D out of N days:
-  //   ZQ = 100 - [(D-1)/N * rate_before + (N-D+1)/N * rate_after]
-  //   => rate_after = [(100-ZQ)*N - (D-1)*rate_before] / (N-D+1)
-  //
-  // FOMC dates with day D and month length N:
-  const FOMC_DETAIL = [
-    {label:'May 6-7',   month:4, year:2026, day:7,  days:31},
-    {label:'Jun 17-18', month:5, year:2026, day:18, days:30},
-    {label:'Jul 29-30', month:6, year:2026, day:30, days:31},
-    {label:'Sep 16-17', month:8, year:2026, day:17, days:30},
-    {label:'Oct 28-29', month:9, year:2026, day:29, days:31},
-    {label:'Dec 9-10',  month:11,year:2026, day:10, days:31},
-  ];
-
-  const MC = ['F','G','H','J','K','M','N','Q','U','V','X','Z'];
+function renderOvFed(qmap, zqTickers, effr, fedTarget) {
+  // Método CME FedWatch con futuros ZQ (liquidan contra el promedio mensual de la EFFR).
+  // Si la reunión cae tarde en el mes y el mes siguiente no tiene reunión, se usa ese contrato:
+  // con pocos días a la tasa nueva, despejarla del contrato del mes multiplica el ruido.
   const el = document.getElementById('ovFed');
+  const MC = 'FGHJKMNQUVXZ';
+  const zq = (y, m) => {
+    const t = 'ZQ' + MC[m] + String(y).slice(-2) + '.CBT';
+    const p = qmap[t] ? qmap[t].regularMarketPrice : null;
+    return (p != null && p > 90 && p < 99.9) ? p : null;
+  };
+  const lo = (fedTarget && isFinite(fedTarget.lo)) ? fedTarget.lo : 3.75;
+  const hi = (fedTarget && isFinite(fedTarget.hi)) ? fedTarget.hi : 4.00;
+  const effrOk = effr != null && effr > 0 && effr < 15;
+  const cur = effrOk ? +effr : (lo + hi) / 2;
+  let html = '<div class="ov-fed-rate">Rango: <b>' + lo.toFixed(2) + '–' + hi.toFixed(2) + '%</b> &middot; EFFR: <b>' + cur.toFixed(2) + '%</b>'
+    + ' <span style="font-size:8px;color:var(--muted);">(' + (effrOk ? 'FRED' : 'estimada') + (fedTarget ? '' : ' · rango sin actualizar') + ')</span></div>';
+
   const now = new Date();
-  const upcoming = FOMC_DETAIL.filter(m => new Date(m.year, m.month, m.day + 2) >= now);
-
-  // EFFR = current rate. Use FRED value if available, otherwise 3.625% (midpoint 3.50-3.75%)
-  const FED_CURRENT = (effr && effr > 2.0 && effr < 6.0) ? +effr.toFixed(2) : 3.625;
-
-  let html = '<div class="ov-fed-rate">EFFR: <b>' + FED_CURRENT.toFixed(2) + '%</b>'
-    + ' <span style="font-size:8px;color:var(--muted);">(3.50–3.75%' + (effr ? ' · FRED' : ' · fallback') + ')</span></div>';
-
-  // Get ZQ price for each meeting month
-  const meetingData = upcoming.map(m => {
-    const zqSym = zqTickers.find(t => MC.indexOf(t[2]) === m.month);
-    const zqQ = zqSym ? qmap[zqSym] : null;
-    const zqPrice = zqQ?.regularMarketPrice ?? null;
-    return { ...m, zqSym, zqPrice };
-  });
-
-  // Sanity-check: ZQ price should be between 94 and 99 (implies rate 1-6%)
-  // AND implied avg rate for the meeting month should be within 2% of EFFR
-  // AND first meeting should not imply more than 2 cuts vs current (no more than -50bp)
-  const validData = meetingData.filter(m => m.zqPrice !== null && m.zqPrice > 94 && m.zqPrice < 99);
-  
-  // For the first upcoming meeting, the implied average rate should be close to current
-  // (since most of the month is at old rate, only end is at new rate)
-  // First meeting sanity: avg implied rate (100-ZQ) should not differ from EFFR by more than 1.0%
-  const firstValid = validData[0];
-  const firstImpliedAvg = firstValid ? +(100 - firstValid.zqPrice).toFixed(3) : null;
-  const dataOk = firstValid && firstImpliedAvg !== null && Math.abs(firstImpliedAvg - FED_CURRENT) < 1.5;
-
-  if (!dataOk || validData.length === 0) {
-    html += '<div style="font-size:10px;line-height:1.7;padding:6px 0;color:var(--muted)">'
-      + 'Yahoo Finance ZQ data no confiable para este cálculo.<br>'
-      + '<a href="https://www.cmegroup.com/markets/interest-rates/stirs/30-day-federal-fund.html" '
-      + 'target="_blank" style="color:var(--amber);text-decoration:none;font-weight:600">→ CME FedWatch Tool ↗</a>'
-      + '</div>';
-    el.innerHTML = html;
+  const todayKey = now.getFullYear() + '-' + calPad(now.getMonth() + 1) + '-' + calPad(now.getDate());
+  const meetingMonths = new Set(FOMC_DECISIONS.map(d => d.slice(0, 7)));
+  const upcoming = FOMC_DECISIONS.filter(d => d >= todayKey).slice(0, 6);
+  if (!upcoming.length) {
+    el.innerHTML = html + '<div class="ov-no-fed">Falta cargar el calendario FOMC del año próximo (FOMC_DECISIONS).</div>';
     return;
   }
 
-  // Calculate rate_after for each meeting using CME methodology
-  let rateBefore = FED_CURRENT;
-  meetingData.forEach((m, idx) => {
-    html += '<div class="ov-meeting">';
-    html += '<div class="ov-meeting-date">'
+  let before = cur, shown = 0;
+  for (let idx = 0; idx < upcoming.length; idx++) {
+    const [y, m1, dd] = upcoming[idx].split('-').map(Number);
+    const mo = m1 - 1, N = new Date(y, mo + 1, 0).getDate(), D = dd + 1; // D: primer día con la tasa nueva
+    const ny = mo === 11 ? y + 1 : y, nm = (mo + 1) % 12;
+    const zThis = zq(y, mo);
+    const zNext = meetingMonths.has(ny + '-' + calPad(nm + 1)) ? null : zq(ny, nm);
+    const daysNew = N - D + 1;
+    let after = null;
+    if (zNext != null && daysNew / N < 0.5) after = 100 - zNext;
+    else if (zThis != null && daysNew > 0) after = ((100 - zThis) * N - (D - 1) * before) / daysNew;
+    else if (zNext != null) after = 100 - zNext;
+
+    html += '<div class="ov-meeting"><div class="ov-meeting-date">'
       + (idx === 0 ? '<span style="color:var(--amber);font-weight:700">PRÓX </span>' : '')
-      + m.label + '</div>';
-
-    if (m.zqPrice === null || m.zqPrice < 94 || m.zqPrice > 99) {
-      html += '<div style="font-size:9px;color:var(--muted)">Sin datos ZQ</div>';
-      html += '</div>';
-      return;
+      + MES_CORTO[mo] + ' ' + (dd - 1) + '-' + dd + '</div>';
+    if (after == null || Math.abs(after - before) > 1) {
+      html += '<div style="font-size:9px;color:var(--muted)">' + (after == null ? 'Sin datos ZQ' : 'Dato ZQ no confiable') + '</div></div>';
+      break; // sin esta reunión no se puede encadenar la siguiente
     }
-
-    const D = m.day, N = m.days;
-    const impliedAvg = 100 - m.zqPrice;
-    // rate_after = [(impliedAvg * N) - (D-1)*rateBefore] / (N-D+1)
-    const rateAfter = +((impliedAvg * N - (D - 1) * rateBefore) / (N - D + 1)).toFixed(3);
-
-    // Express expected change
-    const expectedChange = +(rateAfter - rateBefore).toFixed(3);
-
-    // Snap to nearest 25bp increment for probability display
-    // Model assumes only 0 or ±25bp outcomes (can extend to ±50bp)
-    const roundedChange = Math.round(expectedChange / 0.25) * 0.25;
-    
-    // Probability between two adjacent 25bp outcomes
-    // e.g. if expectedChange = -0.10, interpolate between 0 (no change) and -0.25
-    let probs = [];
-    const ec = expectedChange;
-    if (ec <= -0.625) {
-      probs = [{l:'-75 bp', p:100, c:'#00C853'}];
-    } else if (ec <= -0.375) {
-      const p = Math.round((-ec - 0.375) / 0.25 * 100);
-      probs = [{l:'-50 bp', p:100-p, c:'#1a9e4a'}, {l:'-75 bp', p, c:'#00C853'}];
-    } else if (ec <= -0.125) {
-      const p = Math.round((-ec - 0.125) / 0.25 * 100);
-      probs = [{l:'-25 bp', p:100-p, c:'#2d6e3e'}, {l:'-50 bp', p, c:'#1a9e4a'}];
-    } else if (ec < 0.125) {
-      const pCut = ec < 0 ? Math.round(-ec / 0.125 * 50) : 0;
-      const pHold = 100 - pCut;
-      probs = pCut > 0
-        ? [{l:'Sin cambio', p:pHold, c:'#3a3a5a'}, {l:'-25 bp', p:pCut, c:'#2d6e3e'}]
-        : [{l:'Sin cambio', p:100, c:'#3a3a5a'}];
-    } else {
-      probs = [{l:'+25 bp', p:100, c:'#F04E6A'}];
-    }
-
-    probs.filter(p => p.p > 0).forEach(p => {
-      html += '<div class="ov-prob-row">'
-        + '<span class="ov-prob-label">' + p.l + '</span>'
-        + '<div class="ov-prob-bar-wrap"><div class="ov-prob-bar" style="width:'+p.p+'%;background:'+p.c+'"></div></div>'
-        + '<span class="ov-prob-pct">' + p.p + '%</span></div>';
+    const delta = after - before;
+    const k = Math.floor(delta / 0.25 + 1e-9);
+    const pHi = Math.min(1, Math.max(0, (delta - k * 0.25) / 0.25));
+    [{ bp: k * 25, p: 1 - pHi }, { bp: (k + 1) * 25, p: pHi }].forEach(o => {
+      const pct = Math.round(o.p * 100);
+      if (pct <= 0) return;
+      const bp = o.bp || 0;
+      const lbl = bp === 0 ? 'Sin cambio' : (bp > 0 ? '+' : '') + bp + ' bp';
+      const col = bp === 0 ? '#3a3a5a' : bp < 0 ? (bp <= -50 ? '#00C853' : '#2d8e4e') : (bp >= 50 ? '#F04E6A' : '#b5485c');
+      html += '<div class="ov-prob-row"><span class="ov-prob-label">' + lbl + '</span>'
+        + '<div class="ov-prob-bar-wrap"><div class="ov-prob-bar" style="width:' + pct + '%;background:' + col + '"></div></div>'
+        + '<span class="ov-prob-pct">' + pct + '%</span></div>';
     });
-
-    const sign = expectedChange >= 0 ? '+' : '';
-    html += '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">'
-      + 'Impl.: ' + rateAfter.toFixed(2) + '% '
-      + '(<span style="color:' + (expectedChange < -0.05 ? 'var(--green)' : expectedChange > 0.05 ? 'var(--red)' : 'var(--muted)') + '">'
-      + sign + (expectedChange * 100).toFixed(0) + ' bp</span>)</div>';
-
-    rateBefore = rateAfter;
-    html += '</div>';
-  });
-
+    const vsHoy = (after - cur) * 100;
+    const colH = vsHoy < -5 ? 'var(--green)' : vsHoy > 5 ? 'var(--red)' : 'var(--muted)';
+    html += '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">Impl.: ' + after.toFixed(2) + '% '
+      + '(<span style="color:' + colH + '">' + (vsHoy >= 0 ? '+' : '') + vsHoy.toFixed(0) + ' bp vs hoy</span>)</div></div>';
+    before = after; shown++;
+  }
+  if (!shown) {
+    html += '<div style="font-size:10px;line-height:1.7;padding:6px 0;color:var(--muted)">'
+      + '<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" '
+      + 'style="color:var(--amber);text-decoration:none;font-weight:600">→ CME FedWatch ↗</a></div>';
+  }
   el.innerHTML = html;
 }
 
@@ -1715,6 +1694,7 @@ function squarify(nodes, x0, y0, x1, y1) {
 function renderHeatmap() {
   const container = document.getElementById('hmContainer');
   if(!rows.length) { container.innerHTML='<div class="sc"><div class="sm">Cargá el screener primero</div></div>'; return; }
+  if(!rows.some(r=>r.marketCap)) { container.innerHTML='<div class="sc"><div class="sm">Sin market cap: falta fundamentals.json (correr la Action del repo)</div></div>'; return; }
   container.innerHTML = '';
 
   const W = container.clientWidth;
@@ -1923,29 +1903,6 @@ async function loadCompare() {
     document.getElementById('cmpPriceChgB').textContent = cb.txt;
     document.getElementById('cmpPriceChgB').className = 'cmp-price-chg ' + cb.cls;
 
-    // 1Y spread from spark data
-    try {
-      const rs = await fetch(BASE_URL + '/api/spark?symbols=' + symA + ',' + symB);
-      const ds = await rs.json();
-      const smap = {};
-      (ds.spark?.result || []).forEach(s => {
-        const closes = s.response?.[0]?.indicators?.quote?.[0]?.close || [];
-        const valid = closes.filter(x => x != null);
-        if(valid.length > 10) smap[s.symbol] = valid;
-      });
-      const sa = smap[symA], sb = smap[symB];
-      if(sa && sb) {
-        const retA = (sa[sa.length-1] - sa[0]) / sa[0] * 100;
-        const retB = (sb[sb.length-1] - sb[0]) / sb[0] * 100;
-        const spread = retA - retB;
-        const winner = retA > retB ? symA : symB;
-        const sign = spread >= 0 ? '+' : '';
-        document.getElementById('cmpSpread1y').textContent = sign + spread.toFixed(2) + '%';
-        document.getElementById('cmpSpread1y').className = 'cmp-price-val ' + (spread >= 0 ? 'up' : 'dn');
-        document.getElementById('cmpSpreadLbl').textContent = winner + ' outperformó';
-      }
-    } catch(e) {}
-
     document.getElementById('cmpPriceBar').style.display = 'flex';
   } catch(e) {
     console.log('cmp quote error:', e.message);
@@ -2022,6 +1979,7 @@ async function loadCartera() {
   carteraData = [];
   tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted);font-family:var(--mono);font-size:11px">Cargando 0/${tickers.length}...</td></tr>`;
 
+  await loadFund();
   let done = 0;
   const results = await Promise.allSettled(
     tickers.map(sym =>
@@ -2060,7 +2018,7 @@ async function loadCartera() {
     const impliedAnual = (lastQEps && lastQEps > 0) ? lastQEps * 4 * mu : null;
     const varAnual = impliedAnual != null ? (impliedAnual - last.close) / last.close * 100 : null;
     // Forward PE from Yahoo + implied price at mu
-    const fwdPE = data.forwardPE || null;
+    const fwdPE = data.forwardPE || fundFor(sym, last.close).fpe || null;
     const impliedFwd = (fwdPE && fwdPE > 0) ? last.eps4q * mu : null; // same EPS, same mu target
     // Var fw: how much price needs to move for fw PE to reach historical mu
     // price_target = EPS_fwd_implied * mu, but we don't have fwd EPS directly
@@ -2271,6 +2229,8 @@ async function loadPebg() {
     const r = await fetch(BASE_URL + '/api/pebg?symbol=' + sym);
     const d = await r.json();
     if(d.error) throw new Error(d.error);
+    await loadFund();
+    if(d.forwardPE == null) d.forwardPE = fundFor(sym, d.currentPrice).fpe || null;
     pebgData = d;
     status.textContent = (d.shortName || sym) + (d.epsCount ? ' · ' + d.epsCount + ' trim. EPS' : '');
     renderPebg(d);

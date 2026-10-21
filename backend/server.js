@@ -1,440 +1,456 @@
+// tradingweb1 — backend sin crumb de Yahoo.
+// Precios y series: Yahoo v7/spark y v8/chart (no piden cookie ni crumb).
+// EPS trimestral: SEC EDGAR (US GAAP) y Finnhub para los que presentan 20-F (NU, PAM...).
+// P/E, fw P/E, P/B y market cap NO salen de acá: los baja una vez por día la GitHub Action
+// del repo de Pages (scripts/fundamentals.mjs -> fundamentals.json).
 import express from "express";
-import fetch from "node-fetch";
+import nodeFetch from "node-fetch";
 import cors from "cors";
 
+const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 3000;
+const FINNHUB_KEY = process.env.FINNHUB_KEY || "";
+const SEC_UA = process.env.SEC_UA || "tradingweb research@example.com"; // la SEC pide un contacto real: definir SEC_UA en Render
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const YH_HOSTS = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+const BOOT = Date.now();
 
-let yfCookie = "";
-let yfCrumb  = "";
-let crumbFetching = false;
-let crumbBusy = false;            // true for the WHOLE retry loop, so /api requests never poke Yahoo during a quiet window
-let crumbCooldownUntil = 0;       // on a 429, stop hitting Yahoo until this time so the IP's rate limit can reset
-const COOLDOWN_MS = 30 * 60 * 1000;
-let crumb429Count = 0;            // consecutive rate-limited attempts; caps the retry chain so it can't run forever
-const MAX_429_ATTEMPTS = 6;       // after 6 tries (1 every 30 min ~ 2.5 h) give up until redeploy or /refresh-crumb
-
-// ---- In-memory response cache: many visitors collapse into ONE upstream Yahoo call per key/TTL ----
-const cache = new Map();      // key -> { expires, data }
-const inflight = new Map();   // key -> Promise (dedupe concurrent cache misses)
-async function cached(key, ttlMs, producer) {
+// ---------------------------------------------------------------- cache en memoria
+// Muchos visitantes -> una sola llamada por clave y TTL. Un resultado "flojo"
+// (keepIf da false, p.ej. EDGAR caído) se guarda solo 2 minutos para reintentar pronto.
+const cache = new Map();
+const inflight = new Map();
+async function cached(key, ttlMs, producer, keepIf = () => true) {
   const hit = cache.get(key);
-  if(hit && hit.expires > Date.now()) return hit.data;     // fresh hit
-  if(inflight.has(key)) return inflight.get(key);          // a fetch for this exact key is already running — join it
+  if (hit && hit.expires > Date.now()) return hit.data;
+  if (inflight.has(key)) return inflight.get(key);
   const p = (async () => {
     const data = await producer();
-    cache.set(key, { expires: Date.now() + ttlMs, data });
+    const ttl = keepIf(data) ? ttlMs : Math.min(ttlMs, 2 * 60 * 1000);
+    cache.set(key, { expires: Date.now() + ttl, data });
+    if (cache.size > 3000) for (const [k, v] of cache) if (v.expires < Date.now()) cache.delete(k);
     return data;
   })().finally(() => inflight.delete(key));
   inflight.set(key, p);
   return p;
 }
 
-async function refreshCrumb() {
-  if(crumbFetching) return yfCrumb.length > 3; // already in progress
-  crumbFetching = true;
-  try {
-    const ctrl1 = new AbortController();
-    setTimeout(() => ctrl1.abort(), 8000);
-    const r1 = await fetch("https://fc.yahoo.com", {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36" },
-      redirect: "follow",
-      signal: ctrl1.signal,
-    });
-    const cookies = r1.headers.get("set-cookie") || "";
-    yfCookie = cookies.split(",").map(c => c.split(";")[0]).join("; ");
-
-    const ctrl2 = new AbortController();
-    setTimeout(() => ctrl2.abort(), 8000);
-    const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36",
-        "Cookie": yfCookie,
-      },
-      signal: ctrl2.signal,
-    });
-    if(r1.status === 429 || r2.status === 429) {
-      crumb429Count++;
-      crumbCooldownUntil = Date.now() + COOLDOWN_MS;
-      if(crumb429Count < MAX_429_ATTEMPTS) {
-        console.error(`Yahoo 429 (attempt ${crumb429Count}/${MAX_429_ATTEMPTS}) — pausing ${COOLDOWN_MS/60000} min before next try`);
-        setTimeout(() => { if(!crumbBusy && !crumbFetching && crumb429Count < MAX_429_ATTEMPTS) crumbLoop(); }, COOLDOWN_MS + 5000);
-      } else {
-        console.error(`Yahoo 429 (attempt ${crumb429Count}/${MAX_429_ATTEMPTS}) — giving up. Redeploy or hit /refresh-crumb to retry.`);
-      }
-      yfCrumb = "";
-      crumbFetching = false;
-      return false;
-    }
-    yfCrumb = (await r2.text()).trim();
-    if(yfCrumb.length < 5 || yfCrumb.length > 20 || yfCrumb.includes(" ") || yfCrumb.includes("<") || yfCrumb.includes("{")) {
-      console.error("Bad crumb rejected:", JSON.stringify(yfCrumb.slice(0,30)), "(status", r2.status + ")");
-      yfCrumb = "";
-      crumbFetching = false;
-      return false;
-    }
-    console.log("Crumb OK:", yfCrumb.slice(0,10), "| Cookie len:", yfCookie.length);
-    crumb429Count = 0;            // success — clear the rate-limit counter
-    crumbFetching = false;
-    return true;
-  } catch (e) {
-    console.error("refreshCrumb error:", e.message);
-    crumbFetching = false;
-    return false;
-  }
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let idx = 0;
+  async function worker() { while (idx < items.length) { const i = idx++; out[i] = await fn(items[i], i); } }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
 }
 
-// Run crumb retry loop independently at top level
-async function crumbLoop() {
-  if(crumbBusy) return;          // a retry loop is already running
-  if(crumb429Count >= MAX_429_ATTEMPTS) { console.log("Crumb: gave up after max 429 attempts — not retrying (redeploy or /refresh-crumb)"); return; }
-  crumbBusy = true;
+async function getJSON(url, { headers = {}, timeout = 9000 } = {}) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeout);
   try {
-    // Delays: 15s, 30s, 60s, 120s, 180s, 240s, 300s (up to 15 min total)
-    const delays = [0, 15000, 30000, 60000, 120000, 180000, 240000, 300000];
-    for(let i = 0; i < delays.length; i++) {
-      if(Date.now() < crumbCooldownUntil) {
-        console.log(`Crumb cooldown active (~${Math.ceil((crumbCooldownUntil - Date.now())/60000)} min left) — stopping retries`);
-        return;
-      }
-      if(delays[i] > 0) {
-        console.log(`Crumb retry ${i+1}/${delays.length} in ${delays[i]/1000}s...`);
-        await new Promise(r => setTimeout(r, delays[i]));
-      }
-      const ok = await refreshCrumb();
-      if(ok) { console.log("Crumb ready after attempt", i+1); return; }
-    }
-    console.error("Could not get crumb after all attempts — will retry on next request");
-  } finally {
-    crumbBusy = false;
-  }
+    const r = await fetch(url, { headers, signal: ctrl.signal });
+    if (!r.ok) { const e = new Error(`HTTP ${r.status}`); e.status = r.status; throw e; }
+    return await r.json();
+  } finally { clearTimeout(t); }
 }
 
-function yfHeaders() {
+function parseSyms(raw, max = 200) {
+  return [...new Set(String(raw || "").split(",").map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, max);
+}
+
+// ---------------------------------------------------------------- Yahoo (sin crumb)
+async function yahoo(path) {
+  let last;
+  for (const h of YH_HOSTS) {
+    try {
+      return await getJSON(`https://${h}${path}`, { headers: { "User-Agent": UA, "Accept": "application/json" } });
+    } catch (e) { last = e; if (e.status === 404) break; }
+  }
+  throw last;
+}
+
+// v7/spark acepta hasta 20 símbolos por llamada y trae la misma estructura que v8/chart.
+async function sparkChunk(syms, range, interval) {
+  const j = await yahoo(`/v7/finance/spark?symbols=${syms.map(encodeURIComponent).join(",")}&range=${range}&interval=${interval}`);
+  if (j?.spark?.error) throw new Error(j.spark.error.description || "spark error");
+  const out = {};
+  for (const r of j?.spark?.result || []) {
+    const resp = r.response?.[0];
+    if (resp?.meta) out[r.symbol] = resp;
+  }
+  return out;
+}
+
+async function chartOne(sym, range, interval) {
+  const j = await yahoo(`/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=${interval}`);
+  return j?.chart?.result?.[0] || null;
+}
+
+// Series para muchos símbolos: tandas de 20 por spark; si una tanda falla, chart símbolo por símbolo.
+async function series(symbols, range, interval) {
+  const uniq = [...new Set(symbols.filter(Boolean))];
+  const chunks = [];
+  for (let i = 0; i < uniq.length; i += 20) chunks.push(uniq.slice(i, i + 20));
+  let failures = 0, lastErr = null;
+  const maps = await mapLimit(chunks, 3, async (ch) => {
+    try { return await sparkChunk(ch, range, interval); }
+    catch (e) {
+      failures++; lastErr = e;
+      console.error(`spark falló (${e.message}); paso a chart por símbolo`);
+      const o = {};
+      await mapLimit(ch, 4, async (s) => {
+        try { const r = await chartOne(s, range, interval); if (r?.meta) o[s] = r; } catch (_) { /* símbolo sin datos */ }
+      });
+      return o;
+    }
+  });
+  const out = Object.assign({}, ...maps);
+  if (!Object.keys(out).length && failures === chunks.length && lastErr) throw lastErr;
+  return out;
+}
+
+// Cierre anterior a partir de la serie diaria (por si meta no trae la variación del día).
+function prevClose(resp) {
+  const m = resp.meta || {};
+  const ts = resp.timestamp || [];
+  const cl = resp.indicators?.quote?.[0]?.close || [];
+  const pts = ts.map((t, i) => [t, cl[i]]).filter(p => p[1] != null && isFinite(p[1]));
+  if (!pts.length) return null;
+  const off = m.gmtoffset || 0;
+  const day = t => Math.floor((t + off) / 86400);
+  const last = pts[pts.length - 1];
+  if (m.regularMarketTime && day(last[0]) >= day(m.regularMarketTime)) return pts.length > 1 ? pts[pts.length - 2][1] : null;
+  return last[1];
+}
+
+// Arma el mismo objeto que daba v7/quote en los campos que usa el frontend.
+// OJO: meta.chartPreviousClose es el cierre ANTERIOR A LA VENTANA (no el de ayer), por eso no se usa.
+function quoteFrom(sym, resp) {
+  const m = resp?.meta || {};
+  const price = m.regularMarketPrice;
+  if (price == null || !isFinite(price)) return null;
+  let chg = m.fulldayChange;
+  let pct = m.fulldayChangePercent ?? m.regularMarketChangePercent;
+  if (chg == null || pct == null) {
+    const prev = prevClose(resp);
+    if (prev) { chg = price - prev; pct = (price - prev) / prev * 100; }
+    else if (pct != null) { chg = price - price / (1 + pct / 100); }
+  }
   return {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Accept": "application/json",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://finance.yahoo.com/",
-    "Cookie": yfCookie,
+    symbol: sym,
+    shortName: m.shortName || m.longName || sym,
+    longName: m.longName || m.shortName || sym,
+    currency: m.currency,
+    instrumentType: m.instrumentType,
+    regularMarketPrice: price,
+    regularMarketChange: chg ?? null,
+    regularMarketChangePercent: pct ?? null,
+    regularMarketPreviousClose: chg != null ? price - chg : null,
+    regularMarketTime: m.regularMarketTime ?? null,
+    fiftyTwoWeekHigh: m.fiftyTwoWeekHigh ?? null,
+    fiftyTwoWeekLow: m.fiftyTwoWeekLow ?? null,
   };
 }
 
-async function yfFetch(url) {
-  // If a crumb acquisition (single fetch OR the retry loop) is in flight, wait
-  // for it instead of firing our own — never poke Yahoo during a quiet window.
-  if(yfCrumb.length <= 3 && (crumbBusy || crumbFetching)) {
-    for(let i = 0; i < 6; i++) {
-      await new Promise(r => setTimeout(r, 5000));
-      if(yfCrumb.length > 3) break;
-    }
-  }
-  const sep = url.includes("?") ? "&" : "?";
-  let res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
-  if (res.status === 401 || res.status === 403) {
-    if(!crumbBusy && !crumbFetching && Date.now() >= crumbCooldownUntil && crumb429Count < MAX_429_ATTEMPTS) {
-      // crumb genuinely expired and nothing is recovering it — refresh once
-      console.log("Auth error, refreshing crumb...");
-      await refreshCrumb();
-    } else {
-      // a loop/refresh is already running — wait briefly, don't add load
-      await new Promise(r => setTimeout(r, 5000));
-    }
-    res = await fetch(`${url}${sep}crumb=${encodeURIComponent(yfCrumb)}`, { headers: yfHeaders() });
-  }
-  if (!res.ok) throw new Error(`Yahoo returned ${res.status}`);
-  return res.json();
+// ---------------------------------------------------------------- FRED (EFFR y rango de la Fed)
+async function fredLast(id) {
+  return cached(`fred:${id}`, 6 * 3600 * 1000, async () => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`, { headers: { "User-Agent": UA }, signal: ctrl.signal });
+      if (!r.ok) return null;
+      const lines = (await r.text()).trim().split(/\r?\n/);
+      for (let i = lines.length - 1; i > 0; i--) {
+        const [date, v] = lines[i].split(",");
+        const x = parseFloat(v);
+        if (isFinite(x)) return { date, value: x };
+      }
+      return null;
+    } finally { clearTimeout(t); }
+  }, d => d != null).catch(() => null);
 }
 
-app.get("/", (req, res) => res.json({ status: "ok", crumb: yfCrumb.length > 3 ? "ready" : "missing" }));
+// ---------------------------------------------------------------- SEC EDGAR (con freno: la SEC admite 10 req/s)
+let secActive = 0, secLastStart = 0;
+const secWaiters = [];
+async function secSlot() {
+  for (;;) {
+    const gap = Date.now() - secLastStart;
+    if (secActive < 4 && gap >= 130) { secActive++; secLastStart = Date.now(); return; }
+    await new Promise(r => { secWaiters.push(r); setTimeout(r, Math.max(30, 130 - gap)); });
+  }
+}
+function secRelease() { secActive--; const w = secWaiters.shift(); if (w) w(); }
+async function secJSON(url) {
+  await secSlot();
+  try { return await getJSON(url, { headers: { "User-Agent": SEC_UA, "Accept": "application/json" }, timeout: 20000 }); }
+  finally { secRelease(); }
+}
+
+async function cikFor(sym) {
+  const map = await cached("sec:tickers", 24 * 3600 * 1000, async () => {
+    const j = await secJSON("https://www.sec.gov/files/company_tickers.json");
+    const m = {};
+    for (const c of Object.values(j || {})) m[String(c.ticker).toUpperCase()] = String(c.cik_str).padStart(10, "0");
+    return m;
+  }, m => Object.keys(m).length > 1000);
+  return map[sym] || map[sym.replace(/\./g, "-")] || null;
+}
+
+// EPS diluido trimestral desde companyfacts. Q1-Q3 salen de los frames CY####Q#; el trimestre
+// faltante se deriva como anual menos YTD (soporta cierres de ejercicio no calendario).
+function quarterlyFromFacts(facts, symbol) {
+  const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
+  const quarterly = {}, annualByYear = {}, ytdQ1ByYear = {}, ytdQ2ByYear = {}, ytdQ3ByYear = {};
+  const ts = d => Math.floor(new Date(d).getTime() / 1000);
+
+  epsData.forEach(e => {
+    const endYear = String(new Date(e.end).getFullYear());
+    if (!e.frame) {
+      if (e.fp === "Q1" && e.form === "10-Q") {
+        if (!ytdQ1ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ1ByYear[endYear].val)) ytdQ1ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
+      } else if (e.fp === "Q2" && e.form === "10-Q") {
+        if (!ytdQ2ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ2ByYear[endYear].val)) ytdQ2ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
+      } else if (e.fp === "Q3" && e.form === "10-Q") {
+        if (!ytdQ3ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ3ByYear[endYear].val)) ytdQ3ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
+      } else if (e.fp === "FY" && e.form === "10-K") {
+        if (!annualByYear[endYear] || e.end > annualByYear[endYear].end) annualByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
+      }
+    } else if (/^CY\d{4}Q\d$/.test(e.frame)) {
+      if (!quarterly[e.frame] || e.end > quarterly[e.frame].end) quarterly[e.frame] = { date: ts(e.end), eps: e.val, end: e.end };
+    } else if (/^CY\d{4}$/.test(e.frame)) {
+      const frameYr = e.frame.slice(2); // año del frame, no el del cierre (NVDA cierra en enero)
+      if (!annualByYear[frameYr] || e.end > annualByYear[frameYr].end) annualByYear[frameYr] = { date: ts(e.end), val: e.val, end: e.end };
+    }
+  });
+
+  const derived = Object.entries(quarterly).map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
+  Object.keys(annualByYear).forEach(yr => {
+    const ann = annualByYear[yr], q3ytd = ytdQ3ByYear[yr];
+    if (!q3ytd || ann.date <= q3ytd.date) return;
+    const ytdMonth = new Date(q3ytd.end).getMonth();
+    let missingFrame, ytd;
+    if (ytdMonth <= 3) { missingFrame = `CY${yr}Q2`; ytd = ytdQ2ByYear[yr] || q3ytd; }
+    else if (ytdMonth <= 6) { missingFrame = `CY${yr}Q3`; ytd = q3ytd; }
+    else { missingFrame = `CY${yr}Q4`; ytd = q3ytd; }
+    if (!quarterly[missingFrame]) derived.push({ date: ann.date, eps: ann.val - ytd.val, frame: missingFrame });
+  });
+
+  const out = derived
+    .filter(e => !isNaN(e.eps))
+    .sort((a, b) => a.date - b.date)
+    .filter((e, i, arr) => i === arr.findIndex(x => x.frame === e.frame));
+  console.log(`pebg ${symbol}: EDGAR ${out.length} trimestres`);
+  return out;
+}
+
+async function edgarEPS(sym) {
+  return cached(`edgar:${sym}`, 12 * 3600 * 1000, async () => {
+    try {
+      const cik = await cikFor(sym);
+      if (!cik) return [];
+      const facts = await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
+      return quarterlyFromFacts(facts, sym);
+    } catch (e) {
+      console.log(`pebg ${sym}: EDGAR error ${e.message}`);
+      return [];
+    }
+  }, a => a.length >= 4);
+}
+
+// ---------------------------------------------------------------- Finnhub
+async function finnhub(path) {
+  if (!FINNHUB_KEY) throw new Error("FINNHUB_KEY no configurada");
+  return getJSON(`https://finnhub.io/api/v1${path}`, { headers: { "X-Finnhub-Token": FINNHUB_KEY }, timeout: 9000 });
+}
+
+// EPS de los últimos trimestres (ajustado, como el earningsHistory que daba Yahoo).
+async function finnhubEPS(sym) {
+  return cached(`fh:eps:${sym}`, 12 * 3600 * 1000, async () => {
+    try {
+      const arr = await finnhub(`/stock/earnings?symbol=${encodeURIComponent(sym)}`);
+      return (Array.isArray(arr) ? arr : [])
+        .filter(e => e.actual != null && e.period)
+        .map(e => ({ date: Math.floor(Date.parse(e.period + "T00:00:00Z") / 1000), eps: +e.actual }))
+        .filter(e => isFinite(e.date) && isFinite(e.eps))
+        .sort((a, b) => a.date - b.date);
+    } catch (e) {
+      console.log(`pebg ${sym}: Finnhub error ${e.message}`);
+      return [];
+    }
+  }, a => a.length > 0);
+}
+
+// ---------------------------------------------------------------- rutas
+app.get("/", (req, res) => res.json({ status: "ok", uptimeMin: Math.round((Date.now() - BOOT) / 60000) }));
 
 app.get("/debug", (req, res) => res.json({
-  finnhub: process.env.FINNHUB_KEY ? "set (len=" + process.env.FINNHUB_KEY.length + ")" : "missing",
-  crumb: yfCrumb.length > 3 ? "ready" : "missing",
-  crumbFetching,
-  attempts429: crumb429Count,
-  gaveUp: crumb429Count >= MAX_429_ATTEMPTS,
-  cooldownMinLeft: Math.max(0, Math.ceil((crumbCooldownUntil - Date.now()) / 60000))
+  status: "ok",
+  uptimeMin: Math.round((Date.now() - BOOT) / 60000),
+  finnhub: FINNHUB_KEY ? `set (len=${FINNHUB_KEY.length})` : "missing",
+  secUA: process.env.SEC_UA ? "custom" : "default (definir SEC_UA)",
+  cacheEntries: cache.size,
 }));
 
-// Manual crumb refresh endpoint
-app.get("/refresh-crumb", async (req, res) => {
-  if(crumbBusy || crumbFetching) return res.json({ status: "already fetching" });
-  crumb429Count = 0;            // manual retry — clear the give-up state and cooldown
-  crumbCooldownUntil = 0;
-  crumbLoop();
-  res.json({ status: "crumb refresh started" });
+app.get("/api/quote", async (req, res) => {
+  const syms = parseSyms(req.query.symbols);
+  if (!syms.length) return res.status(400).json({ error: "symbols required" });
+  try {
+    const data = await cached(`quote:${syms.join(",")}`, 45 * 1000, async () => {
+      const m = await series(syms, "5d", "1d");
+      return { quoteResponse: { result: syms.map(s => m[s] && quoteFrom(s, m[s])).filter(Boolean), error: null } };
+    }, d => d.quoteResponse.result.length > 0);
+    res.json(data);
+  } catch (e) {
+    console.error("quote:", e.message);
+    res.status(502).json({ error: "Yahoo " + e.message });
+  }
+});
+
+const SPARK_RANGES = ["5d", "1mo", "3mo", "6mo", "ytd", "1y", "2y"];
+app.get("/api/spark", async (req, res) => {
+  const syms = parseSyms(req.query.symbols);
+  if (!syms.length) return res.status(400).json({ error: "symbols required" });
+  const range = SPARK_RANGES.includes(req.query.range) ? req.query.range : "1y";
+  try {
+    const data = await cached(`spark:${range}:${syms.join(",")}`, 10 * 60 * 1000, async () => {
+      const m = await series(syms, range, "1d");
+      const result = syms.filter(s => m[s]).map(s => ({
+        symbol: s,
+        quote: quoteFrom(s, m[s]),
+        response: [{ timestamp: m[s].timestamp || [], indicators: { quote: [{ close: m[s].indicators?.quote?.[0]?.close || [] }] } }],
+      }));
+      return { spark: { result, error: null } };
+    }, d => d.spark.result.length > 0);
+    res.json(data);
+  } catch (e) {
+    console.error("spark:", e.message);
+    res.status(502).json({ error: "Yahoo " + e.message });
+  }
+});
+
+const MONTH_CODES = "FGHJKMNQUVXZ";
+function zqTickers(n = 9) {
+  const now = new Date();
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + i, 1));
+    out.push(`ZQ${MONTH_CODES[d.getUTCMonth()]}${String(d.getUTCFullYear()).slice(-2)}.CBT`);
+  }
+  return out;
+}
+
+const OV_SYMBOLS = [
+  "^GSPC", "^IXIC", "^DJI", "^RUT", "ES=F", "NQ=F", "YM=F", "RTY=F", "^VIX",
+  "^STOXX50E", "^GDAXI", "^FTSE", "^N225", "^HSI", "^MERV",
+  "GC=F", "CL=F", "BZ=F", "SI=F", "HG=F", "NG=F",
+  "^IRX", "^FVX", "^TNX", "^TYX",
+];
+
+app.get("/api/overview", async (req, res) => {
+  try {
+    const payload = await cached("overview", 60 * 1000, async () => {
+      const zq = zqTickers();
+      const syms = [...OV_SYMBOLS, ...zq];
+      const [m, effr, lo, hi] = await Promise.all([
+        series(syms, "5d", "1d"),
+        fredLast("EFFR"),
+        fredLast("DFEDTARL"),
+        fredLast("DFEDTARU"),
+      ]);
+      return {
+        quotes: syms.map(s => m[s] && quoteFrom(s, m[s])).filter(Boolean),
+        zqTickers: zq,
+        effr: effr?.value ?? null,
+        effrDate: effr?.date ?? null,
+        fedTarget: (lo && hi) ? { lo: lo.value, hi: hi.value, date: hi.date } : null,
+      };
+    }, d => d.quotes.length > 0);
+    res.json(payload);
+  } catch (e) {
+    console.error("overview:", e.message);
+    res.status(502).json({ error: "Yahoo " + e.message });
+  }
+});
+
+app.get("/api/pebg", async (req, res) => {
+  const sym = (req.query.symbol || "").toUpperCase().trim();
+  if (!sym) return res.status(400).json({ error: "symbol required" });
+  try {
+    const payload = await cached(`pebg:${sym}`, 30 * 60 * 1000, async () => {
+      const [chart, edgar] = await Promise.all([chartOne(sym, "3y", "1d"), edgarEPS(sym)]);
+      if (!chart) throw new Error("Sin precios para " + sym);
+      const ts = chart.timestamp || [];
+      const closes = chart.indicators?.quote?.[0]?.close || [];
+      const prices = ts.map((t, i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
+
+      // EDGAR (GAAP) manda; Finnhub completa trimestres que EDGAR todavía no tiene o reemplaza si no hay 10-Q (20-F).
+      const toQKey = t => { const d = new Date(t * 1000); return d.getUTCFullYear() + "Q" + (Math.floor(d.getUTCMonth() / 3) + 1); };
+      let eps, source;
+      // Finnhub solo si hace falta: sin 10-Q (20-F) o con el último trimestre de EDGAR viejo (>110 días)
+      const edgarStale = !edgar.length || (Date.now() / 1000 - edgar[edgar.length - 1].date) > 110 * 86400;
+      const fh = (edgar.length < 4 || edgarStale) ? await finnhubEPS(sym) : [];
+      if (edgar.length >= 4) {
+        const have = new Set(edgar.map(e => toQKey(e.date)));
+        const gaps = fh.filter(e => !have.has(toQKey(e.date)) && e.date > edgar[edgar.length - 1].date);
+        eps = [...edgar, ...gaps].sort((a, b) => a.date - b.date);
+        source = gaps.length ? "edgar+finnhub" : "edgar";
+      } else {
+        eps = fh.length ? fh : edgar;
+        source = fh.length ? "finnhub" : (edgar.length ? "edgar" : "none");
+      }
+      const meta = chart.meta || {};
+      const last4 = eps.slice(-4);
+      return {
+        symbol: sym,
+        shortName: meta.shortName || meta.longName || sym,
+        prices,
+        eps: eps.map(e => ({ date: e.date, eps: e.eps })),
+        epsCount: eps.length,
+        epsSource: source,
+        currentPrice: meta.regularMarketPrice ?? (prices.length ? prices[prices.length - 1].close : null),
+        currentPE: null,
+        forwardPE: null, // el frontend lo completa con fundamentals.json
+        epsTrailingTwelveMonths: last4.length === 4 ? last4.reduce((s, e) => s + e.eps, 0) : null,
+      };
+    }, d => d.epsCount >= 4);
+    res.json(payload);
+  } catch (e) {
+    console.error("pebg:", sym, e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get("/debug-edgar", async (req, res) => {
   try {
     const sym = (req.query.symbol || "META").toUpperCase();
-    const tickerMap = await fetch("https://www.sec.gov/files/company_tickers.json", {
-      headers: { "User-Agent": "tradingweb research@example.com" }
-    }).then(r => r.json());
-    const entry = Object.values(tickerMap).find(c => c.ticker.toUpperCase() === sym);
-    if(!entry) return res.json({ error: "ticker not found" });
-    const cik = String(entry.cik_str).padStart(10, '0');
-    const facts = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, {
-      headers: { "User-Agent": "tradingweb research@example.com" }
-    }).then(r => r.json());
+    const cik = await cikFor(sym);
+    if (!cik) return res.json({ error: "ticker not found" });
+    const facts = await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
     const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
     const recent = epsData
       .filter(e => e.form === "10-Q" || e.form === "10-K")
-      .sort((a,b) => a.end.localeCompare(b.end))
+      .sort((a, b) => a.end.localeCompare(b.end))
       .slice(-24)
-      .map(e => ({ end: e.end, fp: e.fp, fy: e.fy, val: e.val, frame: e.frame||'', form: e.form }));
+      .map(e => ({ end: e.end, fp: e.fp, fy: e.fy, val: e.val, frame: e.frame || "", form: e.form }));
     res.json({ cik, sym, count: epsData.length, recent });
-  } catch(e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get("/api/quote", async (req, res) => {
+// Para confirmar qué campos devuelve Finnhub con tu key (después del deploy: /debug-finnhub?symbol=AAPL)
+app.get("/debug-finnhub", async (req, res) => {
   try {
-    const { symbols } = req.query;
-    const data = await cached(`quote:${symbols}`, 45 * 1000, () =>
-      yfFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`));
-    res.json(data);
-  } catch (err) {
-    console.error("Quote error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get("/api/spark", async (req, res) => {
-  try {
-    const { symbols } = req.query;
-    const data = await cached(`spark:${symbols}`, 10 * 60 * 1000, () =>
-      yfFetch(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols}&range=1y&interval=1d`));
-    res.json(data);
-  } catch (err) {
-    console.error("Spark error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get("/api/overview", async (req, res) => {
-  try {
-    const payload = await cached("overview", 60 * 1000, async () => {
-    const MONTH_CODES = ["F","G","H","J","K","M","N","Q","U","V","X","Z"];
-    const now = new Date();
-    const zqTickers = [];
-    for(let i = 0; i < 6; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      zqTickers.push(`ZQ${MONTH_CODES[d.getMonth()]}${String(d.getFullYear()).slice(-2)}.CBT`);
-    }
-    const symbols = [
-      "^GSPC","^IXIC","^DJI","^RUT","ES=F","NQ=F","YM=F","RTY=F","^VIX",
-      "^STOXX50E","^GDAXI","^FTSE","^N225","^HSI","^MERV",
-      "GC=F","CL=F","BZ=F","SI=F","HG=F","NG=F",
-      "^IRX","^FVX","^TNX","^TYX",
-      ...zqTickers
-    ].join(",");
-
-    const fetchEffr = async () => {
-      try {
-        const ctrl = new AbortController();
-        setTimeout(() => ctrl.abort(), 4000);
-        const r = await fetch("https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR",
-          { headers: { "User-Agent": "Mozilla/5.0" }, signal: ctrl.signal });
-        const csv = await r.text();
-        const lines = csv.trim().split("\n").filter(l => !l.startsWith("DATE"));
-        const last = lines[lines.length-1]?.split(",");
-        return (last && last[1] && last[1] !== ".") ? parseFloat(last[1]) : null;
-      } catch(e) { return null; }
-    };
-
-    const [quotesData, effr] = await Promise.all([
-      yfFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&lang=en-US&region=US`),
-      fetchEffr(),
+    const sym = (req.query.symbol || "AAPL").toUpperCase();
+    const [metric, earnings] = await Promise.all([
+      finnhub(`/stock/metric?symbol=${encodeURIComponent(sym)}&metric=all`).catch(e => ({ error: e.message })),
+      finnhub(`/stock/earnings?symbol=${encodeURIComponent(sym)}`).catch(e => ({ error: e.message })),
     ]);
-
-    return { quotes: quotesData.quoteResponse?.result || [], zqTickers, effr };
-    });
-    res.json(payload);
-  } catch(e) {
-    console.error("overview:", e.message);
-    res.status(500).json({ error: e.message });
-  }
+    const m = metric?.metric || {};
+    const keys = Object.fromEntries(Object.entries(m).filter(([k]) => /pe|pb|eps|book|cap|forward/i.test(k)));
+    res.json({ sym, metricError: metric?.error || null, metricKeys: keys, earnings: Array.isArray(earnings) ? earnings.slice(0, 4) : earnings });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get("/api/pebg", async (req, res) => {
-  try {
-    const sym = (req.query.symbol || "").toUpperCase().trim();
-    if(!sym) return res.status(400).json({ error: "symbol required" });
-
-    const payload = await cached(`pebg:${sym}`, 30 * 60 * 1000, async () => {
-    // SEC EDGAR: public API, no key needed, full quarterly EPS history
-    const getEdgarEPS = async (symbol) => {
-      try {
-        // Step 1: find CIK from ticker via SEC's public ticker map
-        const tickerMap = await fetch("https://www.sec.gov/files/company_tickers.json", {
-          headers: { "User-Agent": "tradingweb research@example.com" }
-        }).then(r => r.json());
-
-        const entry = Object.values(tickerMap).find(c => c.ticker.toUpperCase() === symbol);
-        if(!entry) return [];
-
-        const cik = String(entry.cik_str).padStart(10, '0');
-        const factsRes = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, {
-          headers: { "User-Agent": "tradingweb research@example.com" }
-        });
-        const facts = await factsRes.json();
-
-        // EPS diluted — use frame field to get true quarterly (not YTD cumulative)
-        const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
-
-        // Use frame="CY####Q#" entries for Q1/Q2/Q3 (true single-quarter values)
-        // Derive Q4 = FY_annual - Q3_YTD, with support for all fiscal year end months
-        const quarterly = {};
-        const annualByYear = {};
-        const ytdQ1ByYear = {};
-        const ytdQ2ByYear = {};
-        const ytdQ3ByYear = {};
-
-        epsData.forEach(e => {
-          const endYear = String(new Date(e.end).getFullYear());
-          if(!e.frame) {
-            if(e.fp === 'Q1' && e.form === '10-Q') {
-              if(!e.frame && (!ytdQ1ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ1ByYear[endYear].val)))
-                ytdQ1ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
-            } else if(e.fp === 'Q2' && e.form === '10-Q') {
-              if(!e.frame && (!ytdQ2ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ2ByYear[endYear].val)))
-                ytdQ2ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
-            } else if(e.fp === 'Q3' && e.form === '10-Q') {
-              if(!e.frame && (!ytdQ3ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ3ByYear[endYear].val)))
-                ytdQ3ByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
-            } else if(e.fp === 'FY' && e.form === '10-K') {
-              if(!annualByYear[endYear] || e.end > annualByYear[endYear].end)
-                annualByYear[endYear] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
-            }
-          } else if(/^CY\d{4}Q\d$/.test(e.frame)) {
-            if(!quarterly[e.frame] || e.end > quarterly[e.frame].end)
-              quarterly[e.frame] = { date: Math.floor(new Date(e.end).getTime()/1000), eps: e.val, end: e.end };
-          } else if(/^CY\d{4}$/.test(e.frame)) {
-            // Use FRAME year (not endYear) so Jan-FY companies like NVDA map correctly
-            const frameYr = e.frame.slice(2);
-            if(!annualByYear[frameYr] || e.end > annualByYear[frameYr].end)
-              annualByYear[frameYr] = { date: Math.floor(new Date(e.end).getTime()/1000), val: e.val, end: e.end };
-          }
-        });
-
-        // Build result: quarters from CY frames
-        const derived = Object.entries(quarterly)
-          .map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
-
-        // Derive missing last quarter = Annual - YTD
-        // Use Q3 YTD end month to determine which quarter is missing:
-        //   Month <= 3 (Mar or earlier) → missing = CY Q2 e.g. Jun-FY (MSFT,NIKE)
-        //   Month 4-6 (Jun or earlier)  → missing = CY Q3 e.g. Sep-FY (QCOM)
-        //   Month 7-10 (Sep/Oct)        → missing = CY Q4 e.g. Dec-FY, Jan-FY (NVDA)
-        Object.keys(annualByYear).forEach(yr => {
-          const ann = annualByYear[yr];
-          const q3ytd = ytdQ3ByYear[yr];
-          if(!q3ytd || ann.date <= q3ytd.date) return;
-
-          const ytdMonth = new Date(q3ytd.end).getMonth(); // 0-indexed
-          let missingFrame, ytd;
-          if(ytdMonth <= 3) {
-            missingFrame = `CY${yr}Q2`;
-            ytd = ytdQ2ByYear[yr] || q3ytd;
-          } else if(ytdMonth <= 6) {
-            missingFrame = `CY${yr}Q3`;
-            ytd = q3ytd;
-          } else {
-            missingFrame = `CY${yr}Q4`;
-            ytd = q3ytd;
-          }
-
-          if(!quarterly[missingFrame]) {
-            const derivedEps = ann.val - ytd.val;
-            console.log(`pebg ${symbol}: deriving ${missingFrame} = ${ann.val} - ${ytd.val} = ${derivedEps}`);
-            derived.push({ date: ann.date, eps: derivedEps, frame: missingFrame });
-          }
-        });
-
-        const quarterly_result = derived
-          .filter(e => !isNaN(e.eps))
-          .sort((a,b) => a.date - b.date)
-          .filter((e,i,arr) => i === arr.findIndex(x => x.frame === e.frame));
-        console.log(`pebg ${symbol}: SEC EDGAR returned ${quarterly_result.length} EPS quarters`);
-        return quarterly_result;
-      } catch(e) {
-        console.log(`pebg ${symbol}: SEC EDGAR error:`, e.message);
-        return [];
-      }
-    };
-
-    const [priceData, edgarEps, summaryData] = await Promise.all([
-      yfFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3y`),
-      getEdgarEPS(sym),
-      yfFetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics,financialData,price,earningsHistory,earnings`).catch(() => null)
-    ]);
-
-    const chart = priceData.chart?.result?.[0];
-    if(!chart) throw new Error("No price data for " + sym);
-    const timestamps = chart.timestamp || [];
-    const closes = chart.indicators?.quote?.[0]?.close || [];
-    const prices = timestamps.map((t,i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
-
-    // Yahoo earningsHistory: authoritative for last 4 quarters
-    const summResult = summaryData?.quoteSummary?.result?.[0];
-    const hist = summResult?.earningsHistory?.history || [];
-    const yahooEps = hist
-      .filter(e => e.epsActual?.raw != null)
-      .map(e => ({ date: e.reportDate?.raw || e.quarter?.raw || 0, eps: e.epsActual.raw }))
-      .filter(e => e.date > 0)
-      .sort((a,b) => a.date - b.date);
-
-    // Match quarters by calendar period (YYYY-Q#), not by date proximity
-    const toQKey = ts => {
-      const d = new Date(ts * 1000);
-      return d.getFullYear() + 'Q' + (Math.floor(d.getMonth() / 3) + 1);
-    };
-
-    // Merge: EDGAR (GAAP) preferred, Yahoo fills gaps EDGAR doesn't have
-    let eps;
-    if(edgarEps.length >= 4) {
-      const edgarKeys = new Set(edgarEps.map(e => toQKey(e.date)));
-      const yahooOnly = yahooEps.filter(yq => !edgarKeys.has(toQKey(yq.date)));
-      eps = [...edgarEps, ...yahooOnly].sort((a,b) => a.date - b.date);
-      console.log(`pebg ${sym}: EDGAR(${edgarEps.length}) + Yahoo_gap(${yahooOnly.length}) = ${eps.length} quarters`);
-    } else {
-      // EDGAR insufficient — use Yahoo as primary source
-      eps = yahooEps.length > 0 ? yahooEps : edgarEps;
-      console.log(`pebg ${sym}: Yahoo primary (${eps.length} quarters)`);
-    }
-    const result = summResult;
-    const priceInfo = result?.price || {};
-    const keyStats = result?.defaultKeyStatistics || {};
-    const finData = result?.financialData || {};
-    const meta = chart.meta || {};
-
-    console.log(`pebg ${sym}: ${prices.length} prices, ${eps.length} EPS quarters`);
-
-    return {
-      symbol: sym,
-      shortName: priceInfo.shortName || meta.longName || sym,
-      prices, eps, epsCount: eps.length,
-      currentPrice: priceInfo.regularMarketPrice?.raw || meta.regularMarketPrice,
-      currentPE: keyStats.trailingPE?.raw,
-      forwardPE: keyStats.forwardPE?.raw || null,
-      epsTrailingTwelveMonths: finData.epsTrailingTwelveMonths?.raw,
-    };
-    });
-    res.json(payload);
-  } catch(e) {
-    console.error("pebg:", e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-  crumbLoop();
-  // Refresh crumb every 25 min (before Yahoo expires it at ~30min)
-  setInterval(() => {
-    if(!crumbBusy && !crumbFetching && Date.now() >= crumbCooldownUntil && crumb429Count < MAX_429_ATTEMPTS) refreshCrumb();
-  }, 25 * 60 * 1000);
-});
+app.listen(PORT, () => console.log("Server on port", PORT));
