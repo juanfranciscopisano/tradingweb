@@ -273,6 +273,7 @@ td:nth-child(-n+4){text-align:left}
 .cal-dot{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0}
 .cal-body{flex:1;overflow-y:auto;padding:22px 44px;min-height:0}
 .cal-body::-webkit-scrollbar{width:5px}.cal-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.cal-pending{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;margin:-8px 0 14px}
 .cal-month-label{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--text2);text-align:center;letter-spacing:1px;margin-bottom:16px}
 .cal-dow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px}
 .cal-dow>div{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--label);text-transform:uppercase;letter-spacing:.5px;text-align:center;padding-bottom:2px}
@@ -487,6 +488,7 @@ function checkPwd(){
   </div>
   <div class="cal-body" id="calBody">
     <div class="cal-month-label" id="calMonthLabel">—</div>
+    <div class="cal-pending" id="calPending" style="display:none"></div>
     <div class="cal-grid" id="calGrid"></div>
   </div>
   <div class="cal-nav">
@@ -878,7 +880,7 @@ const CAL_CATS = {
   feriado_byma: { label:'Feriado BYMA',    color:'#FB923C' },
   fed:      { label:'Fed: reunión / minutas', color:'#F04E6A' },
   selic:    { label:'Selic / COPOM (BR)',   color:'#4ADE80' },
-  ipca:     { label:'IPCA (Brasil)',        color:'#A3E635' },
+  ipca:     { label:'IPCA / IPCA-15 (Brasil)', color:'#A3E635' },
   bce:      { label:'Tasa BCE (Eurozona)',  color:'#818CF8' },
   boj:      { label:'Tasa BoJ (Japón)',     color:'#E879F9' },
   us:       { label:'Dato macro EE.UU.',    color:'#38BDF8' },
@@ -886,13 +888,15 @@ const CAL_CATS = {
 };
 
 const CAL_Y0 = 2026;
-function calBatch(dates, c, t, u){ return dates.map(function(d){ return { d: CAL_Y0+'-'+d, c:c, t:t, u:u }; }); }
+function calBatch(dates, c, t, u){ return dates.map(function(d){ return { d: d.length===5 ? CAL_Y0+'-'+d : d, c:c, t:t, u:u }; }); }
+function calYr(y, md){ return md.map(function(x){ return y+'-'+x; }); }
 
 const CAL_EVENTS = [].concat(
   calBatch(['01-28','03-18','04-29','06-17','07-29','09-16','10-28','12-09'], 'fed',     'Decisión Fed (FOMC)'),
   calBatch(['02-18','04-08','05-20','07-08','08-19','10-07','11-18','12-30'], 'fed',     'Minutas Fed (FOMC)'),
   calBatch(['01-28','03-18','04-29','06-17','08-05','09-16','11-04','12-09'], 'selic',   'Decisión Selic (COPOM)'),
-  calBatch(['01-09','02-10','03-12','04-10','05-12','06-12','07-10','08-11','09-11','10-09','11-12'], 'ipca',    'IPCA (Brasil)'),
+  calBatch(['01-09','02-10','03-12','04-10','05-12','06-12','07-10','08-11','09-11','10-09','11-12','12-11'], 'ipca',    'IPCA (Brasil)'),
+  calBatch(['01-27','02-27','03-26','04-28','05-27','06-25','07-28','08-26','09-25','10-23','11-26','12-23'], 'ipca',    'IPCA-15 (Brasil)'),
   calBatch(['03-19','04-30','06-11','07-23','09-10','10-29','12-17'], 'bce',     'Decisión tasa BCE'),
   calBatch(['01-23','03-19','04-28','06-16','07-31','09-18','10-30','12-18'], 'boj',     'Decisión tasa BoJ'),
   calBatch(['01-13','02-10','03-12','04-14','05-14','06-11','07-14','08-13','09-10','10-13','11-12','12-15'], 'ipc_nac', 'IPC Nacional'),
@@ -903,8 +907,8 @@ const CAL_EVENTS = [].concat(
   calBatch(['01-29','02-26','03-27','04-30','05-28','06-25','07-30','08-26','09-30','10-29','11-25','12-23'], 'us',      'PBI EE.UU.', 'https://www.investing.com/economic-calendar/gdp-375'),
   calBatch(['01-15','02-17','03-16','04-16','05-14','06-17','07-16','08-14','09-16','10-15','11-17','12-16'], 'us',      'Ventas minoristas EE.UU.', 'https://www.investing.com/economic-calendar/retail-sales-256'),
   calBatch(['01-14','02-12','03-12','04-14','05-13','06-11','07-15','08-13','09-10','10-15','11-13','12-15'], 'us',      'PPI EE.UU. (mayorista)', 'https://www.investing.com/economic-calendar/ppi-238'),
-  calBatch(['01-02','02-02','03-02','04-01','05-01','06-01','07-01','08-03','09-01','10-01','11-02','12-01'], 'us',      'ISM Manufacturero EE.UU.', 'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'),
-  calBatch(['01-06','02-04','03-04','04-03','05-05','06-03','07-06','08-05','09-03','10-05','11-04','12-03'], 'us',      'ISM Servicios EE.UU.', 'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'),
+  calBatch(['01-05','02-02','03-02','04-01','05-01','06-01','07-01','08-03','09-01','10-01','11-02','12-01'], 'us',      'ISM Manufacturero EE.UU.', 'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'),
+  calBatch(['01-07','02-04','03-04','04-06','05-05','06-03','07-06','08-05','09-03','10-05','11-04','12-03'], 'us',      'ISM Servicios EE.UU.', 'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'),
   calBatch(['01-09','02-09','03-09','04-10','05-11','06-08','07-08','08-07','09-08','10-08','11-09','12-10'], 'ipc_caba','IPC CABA'),
   calBatch(['01-07','02-05','03-05','04-08','05-07','06-04','07-06','08-06','09-04','10-06','11-05'], 'rem',     'REM (BCRA)'),
   calBatch(['01-12','01-26','02-09','02-23','03-10','03-25','04-13','04-24','05-11','05-22','06-08','06-24','07-13','07-27','08-10','08-25','09-09','09-24','10-09','10-26','11-09','11-24','12-09'], 'tesoro', 'Llamado licitación Tesoro'),
@@ -942,12 +946,58 @@ const CAL_EVENTS = [].concat(
     {d:'2026-12-08',c:'feriado_byma',t:'Inmaculada Concepción'},
     {d:'2026-12-25',c:'feriado_byma',t:'Navidad'},
   ],
+  // ── 2027 (fuentes oficiales; lo no publicado queda en CAL_PENDIENTE) ──
+  calBatch(calYr(2027,['01-27','03-17','04-28','06-09','07-28','09-15','10-27','12-08']), 'fed', 'Decisión Fed (FOMC)'),
+  calBatch(calYr(2027,['02-17','04-07','05-19','06-30','08-18','10-06','11-17','12-29']), 'fed', 'Minutas Fed (FOMC)'),
+  calBatch(calYr(2027,['01-27','03-17','04-28','06-16','08-04','09-22','10-27','12-08']), 'selic', 'Decisión Selic (COPOM)'),
+  calBatch(calYr(2027,['02-04','03-18','04-29','06-10','07-22','09-09','10-28','12-16']), 'bce', 'Decisión tasa BCE'),
+  calBatch(calYr(2027,['01-22','03-18','04-28','06-11','07-22','09-22','10-29','12-17']), 'boj', 'Decisión tasa BoJ'),
+  calBatch(calYr(2027,['01-12']), 'ipca', 'IPCA (Brasil)'),
+  calBatch(calYr(2027,['01-08','02-05','03-05','04-02','05-07','06-04','07-02','08-06','09-03','10-08','11-05','12-03']), 'us', 'Empleo EE.UU. (NFP)', 'https://www.investing.com/economic-calendar/nonfarm-payrolls-227'),
+  calBatch(calYr(2027,['01-13','02-11','03-10','04-13','05-12','06-10','07-14','08-11','09-14','10-14','11-10','12-10']), 'us', 'IPC EE.UU. (CPI)', 'https://www.investing.com/economic-calendar/cpi-733'),
+  calBatch(calYr(2027,['01-14','02-12','03-12','04-14','05-13','06-11','07-15','08-10','09-10','10-15','11-12','12-15']), 'us', 'PPI EE.UU. (mayorista)', 'https://www.investing.com/economic-calendar/ppi-238'),
+  calBatch(calYr(2027,['01-28','02-25','03-31','04-29','05-27','06-25','07-29','08-25','09-30','10-28','11-24','12-22']), 'us', 'PCE EE.UU. (inflación Fed)', 'https://www.investing.com/economic-calendar/core-pce-price-index-905'),
+  calBatch(calYr(2027,['01-28','02-25','03-31','04-29','05-27','06-25','07-29','08-25','09-30','10-28','11-24','12-22']), 'us', 'PBI EE.UU.', 'https://www.investing.com/economic-calendar/gdp-375'),
+  calBatch(calYr(2027,['01-15','02-17','03-16','04-16','05-14','06-16','07-16','08-16','09-16','10-15','11-16','12-15']), 'us', 'Ventas minoristas EE.UU.', 'https://www.investing.com/economic-calendar/retail-sales-256'),
+  calBatch(calYr(2027,['01-04','02-01','03-01','04-01','05-03','06-01','07-01','08-02','09-01','10-01','11-01','12-01']), 'us', 'ISM Manufacturero EE.UU.', 'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'),
+  calBatch(calYr(2027,['01-06','02-03','03-03','04-05','05-05','06-03','07-06','08-04','09-03','10-05','11-03','12-03']), 'us', 'ISM Servicios EE.UU.', 'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'),
+  [
+    {d:'2027-01-01',c:'feriado_us',t:'Año Nuevo'},
+    {d:'2027-01-18',c:'feriado_us',t:'M. L. King'},
+    {d:'2027-02-15',c:'feriado_us',t:'Día de los Presidentes'},
+    {d:'2027-03-26',c:'feriado_us',t:'Viernes Santo'},
+    {d:'2027-05-31',c:'feriado_us',t:'Memorial Day'},
+    {d:'2027-06-18',c:'feriado_us',t:'Juneteenth (obs.)'},
+    {d:'2027-07-05',c:'feriado_us',t:'Día de la Independencia (obs.)'},
+    {d:'2027-09-06',c:'feriado_us',t:'Labor Day'},
+    {d:'2027-11-25',c:'feriado_us',t:'Thanksgiving'},
+    {d:'2027-12-24',c:'feriado_us',t:'Navidad (obs.)'},
+  ],
+  [
+    {d:'2027-01-01',c:'feriado_byma',t:'Año Nuevo'},
+    {d:'2027-02-08',c:'feriado_byma',t:'Carnaval'},
+    {d:'2027-02-09',c:'feriado_byma',t:'Carnaval'},
+    {d:'2027-03-24',c:'feriado_byma',t:'Día de la Memoria'},
+    {d:'2027-03-25',c:'feriado_byma',t:'Jueves Santo (sin operatoria)'},
+    {d:'2027-03-26',c:'feriado_byma',t:'Viernes Santo'},
+    {d:'2027-04-02',c:'feriado_byma',t:'Malvinas'},
+    {d:'2027-05-25',c:'feriado_byma',t:'Revolución de Mayo'},
+    {d:'2027-06-21',c:'feriado_byma',t:'Paso a la Inmortalidad Güemes'},
+    {d:'2027-07-09',c:'feriado_byma',t:'Día de la Independencia'},
+    {d:'2027-08-16',c:'feriado_byma',t:'Gral. San Martín'},
+    {d:'2027-10-11',c:'feriado_byma',t:'Diversidad Cultural'},
+    {d:'2027-12-08',c:'feriado_byma',t:'Inmaculada Concepción'},
+  ],
   [
     { d:'2026-03-31', c:'pobreza', t:'Pobreza (2º sem 2025)' },
     { d:'2026-09-24', c:'pobreza', t:'Pobreza (1º sem 2026)' },
   ]
 );
 
+// Calendarios que todavía no se publicaron (actualizar cuando salgan)
+const CAL_PENDIENTE = {
+  2027: 'Sin fecha oficial todavía: INDEC (IPC, EMAE, pobreza), BCRA (REM), Finanzas (licitaciones), IDECBA (IPC CABA), IBGE (IPCA desde feb e IPCA-15) y feriados turísticos.'
+};
 function calPad(n){ return (n<10?'0':'')+n; }
 
 function initCalendar(){
@@ -970,6 +1020,8 @@ function calToday(){ const n=new Date(); calY=n.getFullYear(); calM=n.getMonth()
 function renderCalendar(){
   const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('calMonthLabel').textContent = MES[calM]+' '+calY;
+  const pend = document.getElementById('calPending');
+  if(pend){ pend.textContent = CAL_PENDIENTE[calY] || ''; pend.style.display = CAL_PENDIENTE[calY] ? 'block' : 'none'; }
   const prefix = calY+'-'+calPad(calM+1)+'-';
   const byDay = {};
   CAL_EVENTS.forEach(function(e){
