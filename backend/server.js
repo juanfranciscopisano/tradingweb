@@ -172,6 +172,18 @@ async function fredLast(id) {
   }, d => d != null).catch(() => null);
 }
 
+// EFFR y rango objetivo: API oficial de la Fed de Nueva York (FRED queda de respaldo).
+async function nyfedEffr() {
+  return cached("nyfed:effr", 3 * 3600 * 1000, async () => {
+    const j = await getJSON("https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json",
+      { headers: { "User-Agent": UA, "Accept": "application/json" }, timeout: 8000 });
+    const r = j?.refRates?.[0];
+    if (!r || !isFinite(r.percentRate)) return null;
+    return { effr: r.percentRate, date: r.effectiveDate,
+      lo: isFinite(r.targetRateFrom) ? r.targetRateFrom : null, hi: isFinite(r.targetRateTo) ? r.targetRateTo : null };
+  }, d => d != null).catch(() => null);
+}
+
 // ---------------------------------------------------------------- SEC EDGAR (con freno: la SEC admite 10 req/s)
 let secActive = 0, secLastStart = 0;
 const secWaiters = [];
@@ -354,18 +366,18 @@ app.get("/api/overview", async (req, res) => {
     const payload = await cached("overview", 60 * 1000, async () => {
       const zq = zqTickers();
       const syms = [...OV_SYMBOLS, ...zq];
-      const [m, effr, lo, hi] = await Promise.all([
-        series(syms, "5d", "1d"),
-        fredLast("EFFR"),
-        fredLast("DFEDTARL"),
-        fredLast("DFEDTARU"),
-      ]);
+      const [m, ny] = await Promise.all([series(syms, "5d", "1d"), nyfedEffr()]);
+      let effr = ny?.effr ?? null, effrDate = ny?.date ?? null;
+      let fedTarget = (ny && ny.lo != null && ny.hi != null) ? { lo: ny.lo, hi: ny.hi, date: ny.date } : null;
+      if (effr == null || !fedTarget) {
+        const [fe, lo, hi] = await Promise.all([fredLast("EFFR"), fredLast("DFEDTARL"), fredLast("DFEDTARU")]);
+        if (effr == null && fe) { effr = fe.value; effrDate = fe.date; }
+        if (!fedTarget && lo && hi) fedTarget = { lo: lo.value, hi: hi.value, date: hi.date };
+      }
       return {
         quotes: syms.map(s => m[s] && quoteFrom(s, m[s])).filter(Boolean),
         zqTickers: zq,
-        effr: effr?.value ?? null,
-        effrDate: effr?.date ?? null,
-        fedTarget: (lo && hi) ? { lo: lo.value, hi: hi.value, date: hi.date } : null,
+        effr, effrDate, fedTarget,
       };
     }, d => d.quotes.length > 0);
     res.json(payload);
