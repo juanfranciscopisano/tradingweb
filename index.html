@@ -184,6 +184,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-eps-row-val{font-size:13px;font-weight:650;color:var(--ink);text-align:right;min-width:56px}
 .pebg-eps-input,.pebg-date-input{background:var(--surf);border:1px solid var(--line2);border-radius:5px;padding:4px 8px;font-size:12.5px;outline:none;width:84px;text-align:right}
 .pebg-eps-input:focus,.pebg-date-input:focus{border-color:var(--accent)}
+#pebgRecalcBtns.is-off{opacity:.4;pointer-events:none}
 #pebgCanvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:crosshair}
 .pebg-tools{position:absolute;top:8px;left:62px;right:12px;display:flex;align-items:center;gap:6px;z-index:5;pointer-events:none}
 .pebg-tools > *{pointer-events:auto}
@@ -2652,7 +2653,8 @@ function syncPebgBandBtns() {
   document.querySelectorAll('#pebgBandBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.b === pebgBand));
   document.querySelectorAll('#pebgRecalcBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.r === pebgRecalc));
   const rb = document.getElementById('pebgRecalcBtns');
-  if (rb) rb.style.display = pebgBand === 'movil' ? '' : 'none';
+  // siempre visible; en Fija queda apagado porque no aplica
+  if (rb) { const off = pebgBand !== 'movil'; rb.classList.toggle('is-off', off); rb.setAttribute('aria-disabled', off); rb.title = off ? 'Solo para bandas móviles' : ''; }
 }
 // la media móvil se puede recalcular todos los días o solo cuando entra un trimestre nuevo de EPS
 let pebgRecalc = 'dia';
