@@ -316,6 +316,41 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .gate-input:focus{border-color:var(--accent)}
 .gate-err{color:var(--down);font-size:13px;display:none}
 
+/* argentina */
+.arg-title{font-weight:700;color:var(--ink);font-stretch:106%}
+.arg-status{font-size:12.5px;color:var(--muted)}
+.arg-body{display:flex;flex-direction:column;gap:18px;padding:20px var(--side)}
+.arg-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1.2fr);gap:18px;align-items:start}
+.arg-col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.arg-charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.arg-tbl tbody td:first-child{white-space:normal;line-height:1.3}
+.arg-tbl .arg-num{font-weight:650;color:var(--ink)}
+.arg-tbl .arg-date{color:var(--faint);font-size:11.5px}
+.arg-tbl tr.arg-total td{font-weight:700;color:var(--ink)}
+.arg-fact tbody td{padding:4px 4px}
+.arg-sub{font-size:12.5px;font-weight:650;color:var(--ink2);margin:14px 0 6px}
+.arg-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.arg-cau-box{position:relative;height:150px}
+.arg-cau-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--muted);margin-top:4px}
+.arg-cau-leg span{white-space:nowrap}
+.arg-cau-leg i{display:inline-block;width:16px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin-right:5px}
+.arg-cau-leg i.prev{border-top:2px dashed var(--chart-text)}
+.arg-chart-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.arg-chart-top .ov-card-title{margin-bottom:0}
+.arg-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.arg-chip{font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 9px;border:1px solid var(--line2);border-radius:999px;color:var(--muted);cursor:pointer;user-select:none;background:var(--surf)}
+.arg-chip.on{color:var(--ink);border-color:var(--ink2);font-weight:600}
+.arg-chip:not(.on) .arg-chip-dot{opacity:.35}
+.arg-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.arg-chip-dot{width:8px;height:8px;border-radius:50%}
+.arg-chart-box{position:relative;height:300px}
+
+@media (max-width:1180px){
+  .arg-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .arg-col-3{grid-column:1 / -1;flex-direction:row;align-items:flex-start}
+  .arg-col-3 > .ov-card{flex:1;min-width:0}
+  .arg-charts{grid-template-columns:minmax(0,1fr)}
+}
 @media (max-width:1180px) and (min-width:769px){
   .ov-body{flex-wrap:wrap;align-content:flex-start}
   .ov-col-wide,.ov-col-mid{flex:1 1 calc(50% - 9px)}
@@ -343,6 +378,10 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .ov-clock-bar .pebg-note,.ov-pipe{display:none}
   .ov-body{flex-direction:column;padding:12px var(--side)}
   .ov-col-wide,.ov-col-mid,.ov-col-news{flex:none;width:100%}
+  .arg-body{padding:12px var(--side);gap:12px}
+  .arg-grid{grid-template-columns:minmax(0,1fr)}
+  .arg-col-3{flex-direction:column;align-items:stretch}
+  .arg-chart-box{height:240px}
   #pebgOuter{flex-direction:column}
   .pebg-panel{width:100%;border-left:none;border-top:1px solid var(--line);max-height:240px}
   .pebg-legend{display:none!important}
@@ -393,6 +432,7 @@ function checkPwd(){
     </div>
   </div>
   <div class="tab" id="tab-overview" onclick="switchTab('overview')">Resumen</div>
+  <div class="tab" id="tab-arg" onclick="switchTab('arg')">Argentina</div>
   <div class="tab active" id="tab-screener" onclick="switchTab('screener')">Screener</div>
   <div class="tab" id="tab-chart" onclick="switchTab('chart')">Gráfico</div>
   <div class="tab" id="tab-compare" onclick="switchTab('compare')">Comparar</div>
@@ -405,6 +445,65 @@ function checkPwd(){
   <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">Modo oscuro</button>
 </div>
 
+<div class="view view-scroll" id="view-arg">
+  <div class="ov-clock-bar">
+    <span class="arg-title">Tasas, liquidez y dinero</span>
+    <div class="cs"></div>
+    <span class="arg-status" id="argStatus">—</span>
+    <div class="pebg-period-btns" id="argRangeBtns" role="group" aria-label="Período de los gráficos">
+      <span class="pebg-period" data-d="182" onclick="setArgRange(182)">6M</span>
+      <span class="pebg-period active" data-d="365" onclick="setArgRange(365)">1A</span>
+      <span class="pebg-period" data-d="1096" onclick="setArgRange(1096)">3A</span>
+    </div>
+    <button class="btn btn-ghost" onclick="loadArg(true)">Actualizar</button>
+  </div>
+  <div class="arg-body">
+    <div class="arg-grid">
+      <div class="arg-col">
+        <div class="ov-card">
+          <div class="ov-card-title">Tasas <span>nominal anual</span></div>
+          <div id="argRates"><div class="ov-loading">Cargando...</div></div>
+        </div>
+      </div>
+      <div class="arg-col">
+        <div class="ov-card">
+          <div class="ov-card-title">Liquidez y BCRA</div>
+          <div id="argLiq"><div class="ov-loading">Cargando...</div></div>
+        </div>
+      </div>
+      <div class="arg-col arg-col-3">
+        <div class="ov-card">
+          <div class="ov-card-title">Dinero y crédito <span>nominal y real</span></div>
+          <div id="argAgg"><div class="ov-loading">Cargando...</div></div>
+        </div>
+        <div class="ov-card" id="argCauWrap" style="display:none">
+          <div class="ov-card-title">Curva de cauciones en pesos <span>TNA por plazo</span></div>
+          <div class="arg-cau-box"><canvas id="argCauCanvas"></canvas></div>
+          <div class="arg-cau-leg"><span><i></i>Hoy</span><span><i class="prev"></i>Cierre anterior</span><span>Plazos con más de $20 millones operados</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="arg-charts">
+      <div class="ov-card">
+        <div class="arg-chart-top"><div class="ov-card-title">Tasas <span>% nominal anual</span></div></div>
+        <div class="arg-chips" id="argRateChips"></div>
+        <div class="arg-chart-box"><canvas id="argRateCanvas"></canvas><div class="pebg-tooltip" id="argRateCanvasTip"></div></div>
+      </div>
+      <div class="ov-card">
+        <div class="arg-chart-top">
+          <div class="ov-card-title">Saldos <span id="argAggNote">billones de pesos</span></div>
+          <div class="cs"></div>
+          <div class="pebg-period-btns" id="argRealBtns" role="group" aria-label="Nominal o real">
+            <span class="pebg-period active" data-r="nom" onclick="setArgReal(false)">Nominal</span>
+            <span class="pebg-period" data-r="real" onclick="setArgReal(true)">Real</span>
+          </div>
+        </div>
+        <div class="arg-chips" id="argAggChips"></div>
+        <div class="arg-chart-box"><canvas id="argAggCanvas"></canvas><div class="pebg-tooltip" id="argAggCanvasTip"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="view view-scroll" id="view-overview">
   <div class="ov-clock-bar">
     <span id="ovDate">—</span>
@@ -661,8 +760,13 @@ function checkPwd(){
       <span class="pebg-period active" data-k="pe" onclick="setPebgMetric('pe')">P/E</span>
       <span class="pebg-period" data-k="peg" onclick="setPebgMetric('peg')">PEG</span>
     </div>
-    <span class="pebg-note">Promedio móvil de</span>
-    <div class="pebg-period-btns" id="pebgPeriodBtns" title="En cada fecha, la media y el desvío de los años previos. El gráfico muestra una ventana más larga.">
+    <span class="pebg-note">Bandas</span>
+    <div class="pebg-period-btns" id="pebgBandBtns" role="group" aria-label="Tipo de bandas">
+      <span class="pebg-period" data-b="fija" onclick="setPebgBand('fija')" title="La media y el desvío de los últimos N años, aplicados a todo el gráfico de esos N años.">Fija</span>
+      <span class="pebg-period active" data-b="movil" onclick="setPebgBand('movil')" title="En cada fecha, la media y el desvío de los N años previos. El gráfico muestra una ventana más larga.">Móvil</span>
+    </div>
+    <span class="pebg-note">de</span>
+    <div class="pebg-period-btns" id="pebgPeriodBtns">
       <span class="pebg-period active" data-y="1" onclick="setPebgPeriod(this)">1A</span>
       <span class="pebg-period" data-y="2" onclick="setPebgPeriod(this)">2A</span>
       <span class="pebg-period" data-y="3" onclick="setPebgPeriod(this)">3A</span>
@@ -849,6 +953,7 @@ function toggleTheme() {
     renderCmpChart(document.getElementById('cmpA').value.trim().toUpperCase() || 'SPY',
                    document.getElementById('cmpB').value.trim().toUpperCase() || 'META', cmpCurrentRange);
   if (document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap();
+  if (argData) { drawArgCharts(); drawCauCurve(); }
   if (pebgData) renderPebg(pebgData);
   if (ggalCache[ggalRange]) drawGgal();
 }
@@ -907,6 +1012,7 @@ function switchTab(t) {
   if(t==='pebg') { if(!pebgLoaded) loadPebg(); }
   if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
+  if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
   if(t==='calendar') initCalendar();
 }
 
@@ -2475,6 +2581,19 @@ try { if (localStorage.getItem('pebgMetric') === 'peg') pebgMetric = 'peg'; } ca
 const PE_BAND_LABELS = ['μ+2σ', 'μ+1σ', 'μ', 'μ-1σ', 'μ-2σ'];
 const PEG_BAND_LABELS = ['p90', 'p75', 'Mediana', 'p25', 'p10'];
 
+// Fija: estadísticos de los últimos N años sobre un gráfico de N años. Móvil: en cada fecha, los N años previos.
+let pebgBand = 'movil';
+try { if (localStorage.getItem('pebgBand') === 'fija') pebgBand = 'fija'; } catch (e) {}
+function syncPebgBandBtns() {
+  document.querySelectorAll('#pebgBandBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.b === pebgBand));
+}
+function setPebgBand(b) {
+  pebgBand = b === 'fija' ? 'fija' : 'movil';
+  try { localStorage.setItem('pebgBand', pebgBand); } catch (e) {}
+  syncPebgBandBtns();
+  if (pebgData) renderPebg(pebgData);
+}
+
 function syncPebgMetricBtns() {
   document.querySelectorAll('#pebgMetricBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.k === pebgMetric));
 }
@@ -2531,18 +2650,43 @@ function rollingBands(full, years, metric) {
   return out;
 }
 
+// bandas fijas: un solo juego de múltiplos con los datos de los últimos N años, aplicado a esos N años
+function fixedBands(full, years, metric) {
+  const n = full.length, out = new Array(n).fill(null);
+  const cutoff = full[n - 1].date - years * YR_S;
+  const idx = [];
+  for (let i = 0; i < n; i++) if (full[i].date >= cutoff) idx.push(i);
+  let band = null;
+  if (metric === 'pe') {
+    const win = idx.map(i => full[i]).filter(p => p.pe > 0 && p.pe < 500);
+    if (win.length >= 5) {
+      const { mu, sigma } = peStats(win);
+      band = { center: mu, sd: sigma, mult: [mu + 2 * sigma, mu + sigma, mu, mu - sigma, mu - 2 * sigma].map(v => v > 0 ? v : null) };
+    }
+  } else {
+    const vals = idx.map(i => full[i].peg).filter(v => v != null && v < 50).sort((a, b) => a - b);
+    if (vals.length >= 20) {
+      const pct = f => { const x = f * (vals.length - 1), a = Math.floor(x), b = Math.min(vals.length - 1, a + 1); return vals[a] + (vals[b] - vals[a]) * (x - a); };
+      band = { center: pct(0.5), mult: [0.9, 0.75, 0.5, 0.25, 0.1].map(pct), sorted: vals };
+    }
+  }
+  if (band) idx.forEach(i => { out[i] = band; });
+  return out;
+}
+
 function renderPebg(data) {
   const eps = pebgEps(data);
   const full = buildPESeries(data, eps);
   const status = document.getElementById('pebgStatus');
   updEpsNote(data);
-  syncPebgMetricBtns();
+  syncPebgMetricBtns(); syncPebgBandBtns();
   status.textContent = (data.shortName || data.symbol) + ', ' + eps.length + ' trim. EPS'
     + (pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '');
   if (full.length < 10) { status.textContent += '. Pocos datos para el gráfico'; return; }
   const peg = pebgMetric === 'peg';
   if (peg) addPeg(full);
-  const bands = rollingBands(full, pebgYears, pebgMetric);
+  const fija = pebgBand === 'fija';
+  const bands = fija ? fixedBands(full, pebgYears, pebgMetric) : rollingBands(full, pebgYears, pebgMetric);
   full.forEach((p, i) => {
     const b = bands[i];
     p.band = b;
@@ -2557,11 +2701,14 @@ function renderPebg(data) {
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const winLbl = pebgYears + 'A';
   const histY = (last.date - full[0].date) / YR_S;
+  const yrsTxt = y => y + (y === 1 ? ' año' : ' años');
   const histHint = 'hay ' + histY.toFixed(1).replace('.', ',') + ' años de datos';
+  // con bandas fijas y menos historia que la ventana, se aclara cuántos años entran de verdad
+  const bandSub = !lb ? histHint : fija ? (histY < pebgYears - 0.25 ? 'fija, ' + histY.toFixed(1).replace('.', ',') + ' años de datos' : 'fija, últimos ' + yrsTxt(pebgYears)) : 'móvil, ' + yrsTxt(pebgYears);
   const z = document.getElementById('psStat3');
   if (!peg) {
     set('psLbl0', 'P/E actual'); set('psStat0', fmtX(last.pe)); set('psSub0', norm ? 'TTM normalizado' : 'TTM contable');
-    set('psLbl1', 'P/E media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', lb ? 'móvil, ' + pebgYears + (pebgYears === 1 ? ' año' : ' años') : histHint);
+    set('psLbl1', 'P/E media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
     set('psLbl2', 'Desv. std'); set('psStat2', lb ? lb.sd.toFixed(1) + 'x' : '—'); set('psSub2', 'σ');
     const zs = lb && lb.sd > 0 ? (last.pe - lb.center) / lb.sd : null;
     set('psLbl3', 'Z-score');
@@ -2571,7 +2718,7 @@ function renderPebg(data) {
     set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.');
   } else {
     set('psLbl0', 'PEG actual'); set('psStat0', last.peg != null ? fmtX(last.peg) : '—'); set('psSub0', 'P/E ÷ crec. EPS 3A');
-    set('psLbl1', 'PEG mediana ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', lb ? 'móvil, ' + pebgYears + (pebgYears === 1 ? ' año' : ' años') : histHint);
+    set('psLbl1', 'PEG mediana ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
     set('psLbl2', 'Rango p25–p75'); set('psStat2', lb ? lb.mult[3].toFixed(2) + '–' + lb.mult[1].toFixed(2) : '—'); set('psSub2', 'mitad central');
     const rank = (lb && last.peg != null) ? lb.sorted.filter(v => v <= last.peg).length / lb.sorted.length : null;
     set('psLbl3', 'Percentil hoy');
@@ -2599,7 +2746,7 @@ function renderPebg(data) {
 
   // el gráfico muestra más años que la ventana del promedio
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
-  pebgView = { full, metric: pebgMetric, labels, years: pebgYears, chartYears: CHART_YEARS[pebgYears] || pebgYears,
+  pebgView = { full, metric: pebgMetric, labels, years: pebgYears, fija, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
     prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
 }
@@ -2609,7 +2756,7 @@ let pebgRaf = 0;
 
 function drawPebgChart(hoverT) {
   if (!pebgView) return;
-  const { full, metric, labels, years, chartYears, prices } = pebgView;
+  const { full, metric, labels, years, fija, chartYears, prices } = pebgView;
   const peg = metric === 'peg';
   const container = document.getElementById('pebgContainer');
   const canvas = document.getElementById('pebgCanvas');
@@ -2767,7 +2914,7 @@ function drawPebgChart(hoverT) {
     leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>Precio</div>`
       + (lb ? [0, 1, 2, 3, 4].filter(b => lb.mult[b] != null).map(b => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[b]}"></div>${labels[b]} hoy, ${(peg ? 'PEG ' : '') + fm(lb.mult[b])}</div>`).join('') : '')
       + `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>${peg ? 'Rango p25–p75' : 'Zona μ ± 1σ'}</div>`
-      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} móviles de ${years} ${years === 1 ? 'año' : 'años'}</div>`
+      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}</div>`
       + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: sin crecimiento de 3 años o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = 'flex';
@@ -2806,6 +2953,263 @@ function drawPebgChart(hoverT) {
   canvas.onpointerleave = () => { tooltip.style.display = 'none'; cancelAnimationFrame(pebgRaf); pebgRaf = requestAnimationFrame(() => drawPebgChart()); };
 }
 
+// ── ARGENTINA: tasas, liquidez y agregados (API de estadísticas del BCRA v4 + cauciones de BYMA) ──
+const BCRA_API = 'https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/';
+const ARG_SERIES = {
+  tamar: 44, tamarTea: 45, badlar: 7, pases1d: 150, pasesMonto: 151, baibar: 146, pf30: 1207, vistaPsf: 1196,
+  base: 15, otros: 198, tesoro: 1265, ctasBancos: 19, liqBancos: 1221, reservas: 1,
+  fTotal: 46, fDivisas: 47, fTesoro: 51, fOtras: 59,
+  m2: 197, m2ia: 25, pfPriv: 96, prestamos: 117, ipcMensual: 27,
+};
+let argData = null, argLoading = null;
+let argRateKeys = ['tamar', 'badlar', 'pases1d'];
+let argAggKeys = ['otros', 'tesoro', 'ctasBancos'];   // sin la base: con ella la escala aplasta la cuenta Otros
+let argRange = 365, argReal = false;
+
+const argT = d => Date.parse(d + 'T12:00:00Z') / 1000;
+async function bcraSerie(id, desde) {
+  const j = await fetch(BCRA_API + id + '?desde=' + desde + '&limit=3000').then(r => { if (!r.ok) throw new Error('BCRA ' + r.status); return r.json(); });
+  return (j.results?.[0]?.detalle || []).map(x => ({ d: x.fecha, t: argT(x.fecha), v: +x.valor })).filter(x => isFinite(x.v)).sort((a, b) => a.t - b.t);
+}
+async function cauciones() {
+  const r = await fetch('https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/cauciones', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ excludeZeroPxAndQty: true, T2: true, T1: true, T0: true }),
+  });
+  const j = await r.json();
+  return (Array.isArray(j) ? j : j.data || []).filter(x => x.denominationCcy === 'ARS' && x.daysToMaturity > 0)
+    .map(x => ({ dias: x.daysToMaturity, tasa: x.trade > 0 ? x.trade * 100 : null, prev: x.previousClosingPrice > 0 ? x.previousClosingPrice * 100 : null,
+      vwap: x.vwap > 0 ? x.vwap * 100 : null, monto: x.volumeAmount || 0, hora: (x.tradeHour || '').slice(0, 5), vence: x.maturityDate }))
+    .sort((a, b) => a.dias - b.dias);
+}
+
+function loadArg(force) {
+  if (argLoading && !force) return argLoading;
+  const desde = new Date(Date.now() - 4 * 365.25 * 86400000).toISOString().slice(0, 10);
+  document.getElementById('argStatus').textContent = 'Cargando datos del BCRA y BYMA...';
+  argLoading = (async () => {
+    const keys = Object.keys(ARG_SERIES);
+    const res = await Promise.allSettled(keys.map(k => bcraSerie(ARG_SERIES[k], k === 'ipcMensual' ? '2015-01-01' : desde)));
+    const cau = await cauciones().catch(() => []);
+    const d = { cau };
+    keys.forEach((k, i) => { d[k] = res[i].status === 'fulfilled' ? res[i].value : []; });
+    d.cpi = cpiIndex(d.ipcMensual);
+    argData = d;
+    const fails = keys.filter((k, i) => res[i].status !== 'fulfilled').length;
+    document.getElementById('argStatus').textContent = 'BCRA (estadísticas monetarias) y BYMA (cauciones, 20 min de demora)'
+      + (fails ? '. ' + fails + ' series no respondieron' : '');
+    renderArg();
+  })();
+  return argLoading;
+}
+
+// índice de precios diario: IPC mensual del BCRA, interpolado geométrico dentro de cada mes;
+// después del último dato se extiende con la última variación mensual
+function cpiIndex(m) {
+  if (!m.length) return null;
+  const pts = [{ t: argT(m[0].d) - 30 * 86400, v: 100 }];
+  m.forEach(x => pts.push({ t: argT(x.d), v: pts[pts.length - 1].v * (1 + x.v / 100) }));
+  const lastRate = m[m.length - 1].v / 100;
+  return {
+    lastDate: m[m.length - 1].d,
+    at(t) {
+      if (t <= pts[0].t) return pts[0].v;
+      const L = pts[pts.length - 1];
+      if (t >= L.t) return L.v * Math.pow(1 + lastRate, (t - L.t) / (30.44 * 86400));
+      let lo = 0, hi = pts.length - 1;
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (pts[mid].t <= t) lo = mid; else hi = mid; }
+      const a = pts[lo], b = pts[hi];
+      return a.v * Math.pow(b.v / a.v, (t - a.t) / (b.t - a.t));
+    },
+  };
+}
+
+// valor de la serie a la fecha más cercana anterior o igual a t
+function valAt(s, t) { let r = null; for (const x of s) { if (x.t <= t + 3600) r = x; else break; } return r; }
+const lastOf = s => s.length ? s[s.length - 1] : null;
+const billones = v => (v / 1e6).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sgn = v => v > 0 ? '+' : v < 0 ? '−' : '';
+const pctTxt = (v, dec = 1) => v == null || !isFinite(v) ? '<span class="na">—</span>'
+  : sgn(+v.toFixed(dec)) + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + '%';
+const bpTxt = v => v == null || !isFinite(v) ? '<span class="na">—</span>' : sgn(Math.round(v)) + Math.abs(Math.round(v)) + ' bp';
+const tasaTxt = v => v == null || !isFinite(v) ? '—' : v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+const fechaCorta = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '';
+
+function renderArg() {
+  const d = argData;
+  if (!d) return;
+  // ---- tasas
+  // la caución más corta (1 día, o 3 un viernes) y la de una semana con más monto
+  const cau1 = d.cau[0];
+  const cau7 = d.cau.filter(x => x.dias >= 6 && x.dias <= 10 && x.tasa != null).sort((a, b) => b.monto - a.monto)[0];
+  const prevRow = s => { const L = lastOf(s); if (!L) return [null, null, null]; const p = s.length > 1 ? s[s.length - 2] : null; return [L.v, p ? (L.v - p.v) * 100 : null, L.d]; };
+  const rows = [];
+  if (cau1) rows.push(['Caución ' + cau1.dias + (cau1.dias === 1 ? ' día' : ' días'), 'BYMA', cau1.tasa ?? cau1.prev, cau1.tasa != null && cau1.prev != null ? (cau1.tasa - cau1.prev) * 100 : null, cau1.tasa != null ? 'hoy ' + cau1.hora : 'cierre anterior']);
+  if (cau7) rows.push(['Caución ' + cau7.dias + ' días', 'BYMA', cau7.tasa, cau7.prev != null ? (cau7.tasa - cau7.prev) * 100 : null, 'hoy ' + cau7.hora]);
+  [['pases1d', 'Pases entre terceros 1 día', 'BCRA'], ['baibar', 'BAIBAR (call bancos privados)', 'BCRA'], ['tamar', 'TAMAR bancos privados', 'BCRA'],
+   ['badlar', 'BADLAR bancos privados', 'BCRA'], ['pf30', 'Plazo fijo 30 días', 'BCRA'], ['vistaPsf', 'Vista remunerada (FCI y PSF)', 'BCRA']].forEach(([k, n, src]) => {
+    const [v, ch, f] = prevRow(d[k]); if (v != null) rows.push([n, src, v, ch, fechaCorta(f)]);
+  });
+  const tamarTea = lastOf(d.tamarTea);
+  document.getElementById('argRates').innerHTML = '<table class="ov-tbl arg-tbl"><thead><tr><th>Tasa</th><th>TNA</th><th>Var. día</th><th>Dato</th></tr></thead><tbody>'
+    + rows.map(r => '<tr><td>' + r[0] + '</td><td class="arg-num">' + tasaTxt(r[2]) + '</td><td>' + bpTxt(r[3]) + '</td><td class="arg-date">' + r[4] + '</td></tr>').join('')
+    + '</tbody></table>'
+    + (tamarTea ? '<div class="arg-note">TAMAR en TEA: ' + tasaTxt(tamarTea.v) + '. Monto de pases entre terceros: $' + billones(lastOf(d.pasesMonto)?.v || 0) + ' billones.</div>' : '')
+    + (cau1 && cau1.tasa != null ? '<div class="arg-note">Caución a ' + cau1.dias + (cau1.dias === 1 ? ' día' : ' días') + ': promedio ponderado ' + tasaTxt(cau1.vwap) + ', $' + (cau1.monto / 1e12).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' billones operados hoy.</div>'
+      : '<div class="arg-note">Cauciones: todavía no hay operaciones hoy.</div>');
+  drawCauCurve();
+
+  // ---- liquidez y BCRA
+  const now = lastOf(d.base)?.t || Date.now() / 1000;
+  const liqRow = (k, name, unit) => {
+    const s = d[k]; const L = lastOf(s); if (!L) return '';
+    const p1 = s.length > 1 ? s[s.length - 2] : null, p30 = valAt(s, L.t - 30 * 86400);
+    const fmt = unit === 'pct' ? tasaTxt(L.v) : unit === 'usd' ? 'US$ ' + Math.round(L.v).toLocaleString('es-AR') + ' M' : '$' + billones(L.v);
+    const chg = (a, b) => unit === 'pct' ? (a != null && b ? sgn(+(a.v - b.v).toFixed(1)) + Math.abs(a.v - b.v).toFixed(1).replace('.', ',') + ' pp' : '<span class="na">—</span>')
+      : (b && b.v ? pctTxt((a.v / b.v - 1) * 100) : '<span class="na">—</span>');
+    return '<tr><td>' + name + '</td><td class="arg-num">' + fmt + '</td><td>' + chg(L, p1) + '</td><td>' + chg(L, p30) + '</td><td class="arg-date">' + fechaCorta(L.d) + '</td></tr>';
+  };
+  // factores de explicación de la base en lo que va del mes
+  const fL = lastOf(d.fTotal), mStart = fL ? fL.d.slice(0, 8) + '01' : null;
+  const sumMes = s => s.filter(x => mStart && x.d >= mStart).reduce((a, x) => a + x.v, 0);
+  const fact = fL ? [['Compras de divisas', sumMes(d.fDivisas)], ['Operaciones con el Tesoro', sumMes(d.fTesoro)], ['Otras', sumMes(d.fOtras)], ['Total', sumMes(d.fTotal)]] : [];
+  document.getElementById('argLiq').innerHTML = '<table class="ov-tbl arg-tbl"><thead><tr><th>Saldo</th><th>Hoy</th><th>Día</th><th>30 días</th><th>Dato</th></tr></thead><tbody>'
+    + liqRow('base', 'Base monetaria', 'ars') + liqRow('ctasBancos', 'Cuentas corrientes de bancos en el BCRA', 'ars')
+    + liqRow('otros', 'Cuenta Otros del BCRA', 'ars') + liqRow('tesoro', 'Depósitos del Tesoro en el BCRA (pesos)', 'ars')
+    + liqRow('liqBancos', 'Liquidez de los bancos (% de depósitos)', 'pct') + liqRow('reservas', 'Reservas internacionales', 'usd')
+    + '</tbody></table>'
+    + (fact.length ? '<div class="arg-sub">Factores de variación de la base en ' + MES_CORTO[+mStart.slice(5, 7) - 1].toLowerCase() + ' (al ' + fechaCorta(fL.d) + ')</div><table class="ov-tbl arg-tbl arg-fact"><tbody>'
+      + fact.map(f => '<tr' + (f[0] === 'Total' ? ' class="arg-total"' : '') + '><td>' + f[0] + '</td><td class="arg-num">' + (f[1] >= 0 ? '+' : '−') + '$' + billones(Math.abs(f[1])) + '</td></tr>').join('') + '</tbody></table>' : '')
+    + '<div class="arg-note">Montos en billones de pesos. "Otros" es la serie 198 del BCRA (planilla Series.xlsm).</div>';
+
+  // ---- agregados: nominal y real
+  const cpi = d.cpi;
+  const aggRow = (k, name) => {
+    const s = d[k]; const L = lastOf(s); if (!L) return '';
+    const p30 = valAt(s, L.t - 30 * 86400), p365 = valAt(s, L.t - 365 * 86400);
+    const nom = p => p ? (L.v / p.v - 1) * 100 : null;
+    const real = p => (p && cpi) ? ((L.v / cpi.at(L.t)) / (p.v / cpi.at(p.t)) - 1) * 100 : null;
+    return '<tr><td>' + name + '</td><td class="arg-num">$' + billones(L.v) + '</td><td>' + pctTxt(nom(p30)) + '</td><td>' + pctTxt(real(p30)) + '</td><td>' + pctTxt(nom(p365), 0) + '</td><td>' + pctTxt(real(p365), 0) + '</td><td class="arg-date">' + fechaCorta(L.d) + '</td></tr>';
+  };
+  const ipcL = lastOf(d.ipcMensual), m2ia = lastOf(d.m2ia);
+  document.getElementById('argAgg').innerHTML = '<table class="ov-tbl arg-tbl"><thead><tr><th>Saldo</th><th>Hoy</th><th>30d nom.</th><th>30d real</th><th>1A nom.</th><th>1A real</th><th>Dato</th></tr></thead><tbody>'
+    + aggRow('m2', 'M2 transaccional privado') + aggRow('base', 'Base monetaria') + aggRow('pfPriv', 'Plazo fijo privado (sin UVA)') + aggRow('prestamos', 'Préstamos al sector privado en pesos')
+    + '</tbody></table>'
+    + '<div class="arg-note">Real: deflactado por IPC' + (ipcL ? ' (último dato ' + MES_CORTO[+ipcL.d.slice(5, 7) - 1].toLowerCase() + ' ' + ipcL.d.slice(0, 4) + ', ' + ipcL.v.toFixed(1).replace('.', ',') + '% mensual; después se extiende con esa tasa)' : '') + '.'
+    + (m2ia ? ' Variación interanual del M2 privado, promedio móvil de 30 días (BCRA): ' + pctTxt(m2ia.v, 0) + '.' : '') + '</div>';
+
+  drawArgCharts();
+}
+
+// curva de cauciones en pesos: hoy contra el cierre anterior
+function drawCauCurve(hoverI) {
+  const cv = document.getElementById('argCauCanvas');
+  const pts = (argData?.cau || []).filter(x => x.dias <= 45 && x.tasa != null && x.monto >= 2e7);
+  const wrap = document.getElementById('argCauWrap');
+  if (wrap) wrap.style.display = pts.length >= 2 ? '' : 'none';
+  if (!cv || pts.length < 2) return;
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1, W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const P = { l: 40, r: 10, t: 10, b: 22 };
+  const vals = pts.flatMap(p => [p.tasa, p.prev]).filter(v => v != null);
+  let mn = Math.min(...vals), mx = Math.max(...vals); const pad = (mx - mn) * 0.15 || 0.5; mn -= pad; mx += pad;
+  const dmax = Math.max(...pts.map(p => p.dias));
+  const xs = dd => P.l + (dd - 1) / Math.max(1, dmax - 1) * (W - P.l - P.r);
+  const ys = v => P.t + (1 - (v - mn) / (mx - mn)) * (H - P.t - P.b);
+  const grid = cssVar('--chart-grid'), text = cssVar('--chart-text'), acc = cssVar('--accent');
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  niceTicks(mn, mx, 3).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'right'; ctx.fillText(numAR(v, 0, 1) + '%', P.l - 5, y + 4); });
+  ctx.textAlign = 'center';
+  [1, 7, 14, 30].filter(dd => dd <= dmax).forEach(dd => ctx.fillText(dd + 'd', xs(dd), H - 6));
+  const line = (key, col, dash) => { ctx.strokeStyle = col; ctx.setLineDash(dash); ctx.lineWidth = 1.75; ctx.beginPath(); let st = false; pts.forEach(p => { if (p[key] == null) return; const x = xs(p.dias), y = ys(p[key]); st ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st = true; }); ctx.stroke(); ctx.setLineDash([]); };
+  line('prev', text, [4, 3]); line('tasa', acc, []);
+  pts.forEach(p => { if (p.tasa == null) return; ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(xs(p.dias), ys(p.tasa), 2.2, 0, Math.PI * 2); ctx.fill(); });
+}
+
+// gráficos de series del BCRA
+const ARG_RATE_OPTS = [['tamar', 'TAMAR'], ['badlar', 'BADLAR'], ['pases1d', 'Pases 1 día'], ['baibar', 'BAIBAR'], ['pf30', 'Plazo fijo 30d'], ['vistaPsf', 'Vista FCI/PSF']];
+const ARG_AGG_OPTS = [['base', 'Base monetaria'], ['otros', 'Cuenta Otros'], ['tesoro', 'Depósitos del Tesoro'], ['ctasBancos', 'Encajes en BCRA'], ['m2', 'M2 transaccional'], ['prestamos', 'Préstamos en pesos'], ['pfPriv', 'Plazo fijo privado']];
+const ARG_COLORS = ['--accent', '--b1p', '--b1m', '--b2p', '--b2m', '--ink2', '--warn'];
+
+function argChips() {
+  const chips = (opts, sel, fn) => opts.map(([k, n], i) => '<button type="button" class="arg-chip' + (sel.includes(k) ? ' on' : '') + '" aria-pressed="' + sel.includes(k) + '" onclick="' + fn + '(\'' + k + '\')">'
+    + '<span class="arg-chip-dot" style="background:var(' + ARG_COLORS[i % ARG_COLORS.length] + ')"></span>' + n + '</button>').join('');
+  document.getElementById('argRateChips').innerHTML = chips(ARG_RATE_OPTS, argRateKeys, 'toggleArgRate');
+  document.getElementById('argAggChips').innerHTML = chips(ARG_AGG_OPTS, argAggKeys, 'toggleArgAgg');
+  document.querySelectorAll('#argRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.d === argRange));
+  document.querySelectorAll('#argRealBtns .pebg-period').forEach(e => e.classList.toggle('active', (e.dataset.r === 'real') === argReal));
+}
+function toggleArgRate(k) { argRateKeys = argRateKeys.includes(k) ? argRateKeys.filter(x => x !== k) : [...argRateKeys, k]; drawArgCharts(); }
+function toggleArgAgg(k) { argAggKeys = argAggKeys.includes(k) ? argAggKeys.filter(x => x !== k) : [...argAggKeys, k]; drawArgCharts(); }
+function setArgRange(dias) { argRange = dias; drawArgCharts(); }
+function setArgReal(r) { argReal = r; drawArgCharts(); }
+
+function drawArgCharts() {
+  if (!argData) return;
+  argChips();
+  const since = Date.now() / 1000 - argRange * 86400;
+  const mk = (opts, keys, real) => keys.map(k => {
+    const i = opts.findIndex(o => o[0] === k);
+    let pts = (argData[k] || []).filter(x => x.t >= since).map(x => ({ t: x.t, v: x.v }));
+    if (real && argData.cpi) { const ref = argData.cpi.at(Date.now() / 1000); pts = pts.map(p => ({ t: p.t, v: p.v * ref / argData.cpi.at(p.t) })); }
+    if (!(opts === ARG_RATE_OPTS)) pts = pts.map(p => ({ t: p.t, v: p.v / 1e6 }));
+    return { name: opts[i][1], color: cssVar(ARG_COLORS[i % ARG_COLORS.length]), pts };
+  }).filter(s => s.pts.length > 1);
+  drawLines('argRateCanvas', mk(ARG_RATE_OPTS, argRateKeys, false), (v, tip) => numAR(v, tip ? 2 : 0, tip ? 2 : 1) + '%');
+  drawLines('argAggCanvas', mk(ARG_AGG_OPTS, argAggKeys, argReal), (v, tip) => '$' + numAR(v, tip ? 2 : 0, tip ? 2 : 1) + ' b');
+  document.getElementById('argAggNote').textContent = argReal ? 'billones de pesos de hoy, deflactado por IPC' : 'billones de pesos corrientes';
+}
+
+// marcas del eje en pasos de 1, 2, 2,5 o 5 por potencia de 10
+function niceTicks(lo, hi, n) {
+  const raw = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(x => x * mag).find(x => x >= raw);
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+const numAR = (v, d0, d1) => v.toLocaleString('es-AR', { minimumFractionDigits: d0, maximumFractionDigits: d1 });
+
+// gráfico de líneas genérico con cursor; fmt(v, enTooltip)
+function drawLines(id, series, fmt, hoverT) {
+  const cv = document.getElementById(id);
+  if (!cv) return;
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1, W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const grid = cssVar('--chart-grid'), text = cssVar('--chart-text');
+  if (!series.length) { ctx.fillStyle = text; ctx.font = `13px ${CANVAS_FONT}`; ctx.fillText('Elegí al menos una serie', 12, 24); return; }
+  const P = { l: 10, r: 64, t: 12, b: 24 };
+  const all = series.flatMap(s => s.pts);
+  const t0 = Math.min(...all.map(p => p.t)), t1 = Math.max(...all.map(p => p.t));
+  let mn = Math.min(...all.map(p => p.v)), mx = Math.max(...all.map(p => p.v)); const pad = (mx - mn) * 0.08 || 1; mn -= pad; mx += pad;
+  const xs = t => P.l + (t - t0) / (t1 - t0 || 1) * (W - P.l - P.r);
+  const ys = v => P.t + (1 - (v - mn) / (mx - mn)) * (H - P.t - P.b);
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  niceTicks(mn, mx, 5).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText(fmt(v, false), W - P.r + 6, y + 4); });
+  const span = (t1 - t0) / 86400, stepM = span <= 200 ? 1 : span <= 800 ? 3 : 6;
+  const d0 = new Date(t0 * 1000); ctx.textAlign = 'center'; let lastX = -1e9;
+  for (let k = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; k++) {
+    const t = Date.UTC(Math.floor(k / 12), k % 12, 1) / 1000; if (t > t1) break; if (k % stepM) continue;
+    const x = xs(t); if (x - lastX < 50) continue; lastX = x;
+    ctx.fillStyle = text; ctx.fillText(MES_CORTO[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2), x, H - 6);
+  }
+  series.forEach(s => { ctx.strokeStyle = s.color; ctx.lineWidth = 1.75; ctx.beginPath(); s.pts.forEach((p, i) => i ? ctx.lineTo(xs(p.t), ys(p.v)) : ctx.moveTo(xs(p.t), ys(p.v))); ctx.stroke(); });
+  const tip = document.getElementById(id + 'Tip');
+  if (hoverT != null) {
+    const x = Math.round(xs(hoverT)) + 0.5;
+    ctx.strokeStyle = text; ctx.globalAlpha = 0.4; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, H - P.b); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const rows = series.map(s => { const p = valAt(s.pts, hoverT); if (p) { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(xs(p.t), ys(p.v), 3, 0, Math.PI * 2); ctx.fill(); } return p ? '<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:' + s.color + '"></span>' + s.name + '</span><span class="pebg-tooltip-val">' + fmt(p.v, true) + '</span></div>' : ''; }).join('');
+    if (tip) { tip.innerHTML = '<div class="pebg-tooltip-date">' + new Date(hoverT * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) + '</div>' + rows; tip.style.display = 'block'; const tw = tip.offsetWidth || 200; tip.style.left = (x + 14 + tw > W ? x - tw - 14 : x + 14) + 'px'; tip.style.top = P.t + 'px'; }
+  } else if (tip) tip.style.display = 'none';
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); const t = t0 + (e.clientX - r.left - P.l) / (W - P.l - P.r) * (t1 - t0); drawLines(id, series, fmt, Math.max(t0, Math.min(t1, t))); };
+  cv.onpointerleave = () => drawLines(id, series, fmt);
+}
+
+window.addEventListener('resize', () => { if (document.getElementById('tab-arg').classList.contains('active') && argData) { drawArgCharts(); drawCauCurve(); } });
+
 window.addEventListener('resize', () => {
   if(document.getElementById('tab-pebg')?.classList.contains('active') && pebgData) renderPebg(pebgData);
 });
@@ -2813,7 +3217,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active') && ggalCache[ggalRange]) drawGgal(); });
 
-updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); syncPebgMetricBtns(); paintHmLegend();
+updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); syncPebgMetricBtns(); syncPebgBandBtns(); paintHmLegend();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (pebgData) renderPebg(pebgData); });
 document.getElementById('srch').addEventListener('input',render);
 document.getElementById('secF').addEventListener('change',render);
