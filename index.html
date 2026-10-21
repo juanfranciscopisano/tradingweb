@@ -657,8 +657,12 @@ function checkPwd(){
   <div class="pebg-controls">
     <input class="pebg-input" aria-label="Ticker" id="pebgSym" type="text" value="META" placeholder="Ej: META" maxlength="12" onkeydown="if(event.key==='Enter')loadPebg()">
     <button class="btn" onclick="loadPebg()">Analizar</button>
-    <span class="pebg-note">Promedio de</span>
-    <div class="pebg-period-btns" id="pebgPeriodBtns" title="Años para la media y el desvío. El gráfico muestra una ventana más larga.">
+    <div class="pebg-period-btns" id="pebgMetricBtns" role="group" aria-label="Múltiplo">
+      <span class="pebg-period active" data-k="pe" onclick="setPebgMetric('pe')">P/E</span>
+      <span class="pebg-period" data-k="peg" onclick="setPebgMetric('peg')">PEG</span>
+    </div>
+    <span class="pebg-note">Promedio móvil de</span>
+    <div class="pebg-period-btns" id="pebgPeriodBtns" title="En cada fecha, la media y el desvío de los años previos. El gráfico muestra una ventana más larga.">
       <span class="pebg-period active" data-y="1" onclick="setPebgPeriod(this)">1A</span>
       <span class="pebg-period" data-y="2" onclick="setPebgPeriod(this)">2A</span>
       <span class="pebg-period" data-y="3" onclick="setPebgPeriod(this)">3A</span>
@@ -677,7 +681,7 @@ function checkPwd(){
   </div>
   <div class="pebg-stats-bar" id="pebgStatsBar" style="display:none">
     <div class="pebg-stat-block">
-      <div class="pebg-stat-lbl">P/E actual</div>
+      <div class="pebg-stat-lbl" id="psLbl0">P/E actual</div>
       <div class="pebg-stat-val" id="psStat0">—</div>
       <div class="pebg-stat-sub" id="psSub0">TTM</div>
     </div>
@@ -687,12 +691,12 @@ function checkPwd(){
       <div class="pebg-stat-sub" id="psSub1">&mu;</div>
     </div>
     <div class="pebg-stat-block">
-      <div class="pebg-stat-lbl">Desv. std</div>
+      <div class="pebg-stat-lbl" id="psLbl2">Desv. std</div>
       <div class="pebg-stat-val" id="psStat2">—</div>
       <div class="pebg-stat-sub" id="psSub2">&sigma;</div>
     </div>
     <div class="pebg-stat-block">
-      <div class="pebg-stat-lbl">Z-score</div>
+      <div class="pebg-stat-lbl" id="psLbl3">Z-score</div>
       <div class="pebg-stat-val" id="psStat3">—</div>
       <div class="pebg-stat-sub" id="psSub3">posici&#243;n</div>
     </div>
@@ -702,7 +706,7 @@ function checkPwd(){
       <div class="pebg-stat-sub" id="psSub4">actual</div>
     </div>
     <div class="pebg-stat-block">
-      <div class="pebg-stat-lbl">EPS TTM</div>
+      <div class="pebg-stat-lbl" id="psLbl5">EPS TTM</div>
       <div class="pebg-stat-val" id="psStat5">—</div>
       <div class="pebg-stat-sub" id="psSub5">4 trim.</div>
     </div>
@@ -1305,11 +1309,12 @@ const OV_LABEL = {
 };
 // símbolo de TradingView para abrir cada fila en la pestaña Gráfico
 const OV_TV = {
-  '^GSPC':'SP:SPX','^IXIC':'NASDAQ:IXIC','^DJI':'DJ:DJI','^RUT':'TVC:RUT','^VIX':'TVC:VIX','DX-Y.NYB':'TVC:DXY',
-  'ES=F':'CME_MINI:ES1!','NQ=F':'CME_MINI:NQ1!','YM=F':'CBOT_MINI:YM1!','RTY=F':'CME_MINI:RTY1!',
-  '^STOXX50E':'TVC:SX5E','^GDAXI':'XETR:DAX','^N225':'TVC:NI225','^HSI':'TVC:HSI','^MERV':'BCBA:IMV',
-  'GC=F':'TVC:GOLD','SI=F':'TVC:SILVER','CL=F':'TVC:USOIL','BZ=F':'TVC:UKOIL','HG=F':'COMEX:HG1!','NG=F':'NYMEX:NG1!',
-  '^IRX':'TVC:US03MY','^FVX':'TVC:US05Y','^TNX':'TVC:US10Y','^TYX':'TVC:US30Y',
+  // índices y futuros: el widget embebido no muestra los de S&P, Dow Jones, CBOE, CME ni ICE; Capital.com sí (CFD)
+  '^GSPC':'CAPITALCOM:US500','^IXIC':'CAPITALCOM:US100','^DJI':'CAPITALCOM:US30','^RUT':'CAPITALCOM:RTY','^VIX':'CAPITALCOM:VIX','DX-Y.NYB':'CAPITALCOM:DXY',
+  'ES=F':'CAPITALCOM:US500','NQ=F':'CAPITALCOM:US100','YM=F':'CAPITALCOM:US30','RTY=F':'CAPITALCOM:RTY',
+  '^STOXX50E':'CAPITALCOM:EU50','^GDAXI':'CAPITALCOM:DE40','^N225':'CAPITALCOM:J225','^HSI':'CAPITALCOM:HK50',
+  'GC=F':'CAPITALCOM:GOLD','SI=F':'CAPITALCOM:SILVER','CL=F':'CAPITALCOM:OIL_CRUDE','BZ=F':'CAPITALCOM:OIL_BRENT','HG=F':'CAPITALCOM:COPPER','NG=F':'CAPITALCOM:NATURALGAS',
+  '^IRX':'FRED:DGS3MO','^FVX':'FRED:DGS5','^TNX':'FRED:DGS10','^TYX':'FRED:DGS30',
 };
 const ovOpen = (sym, name) => OV_TV[sym] ? ' onclick="openChart(\'' + OV_TV[sym] + '\',\'' + String(name).replace(/'/g, '') + '\')" title="Ver gráfico"' : '';
 const ovClick = (sym, name) => OV_TV[sym] ? ' class="ov-click"' + ovOpen(sym, name) : '';
@@ -2187,7 +2192,9 @@ function buildPESeries(data, eps) {
     let s = 0;
     for (let k = j - 4; k < j; k++) s += eps[k].eps;
     if (s <= 0.01) continue;
-    out.push({ date: p.date, close: p.close, pe: p.close / s, eps4q: s });
+    let s3 = null;
+    if (j >= 16) { s3 = 0; for (let k = j - 16; k < j - 12; k++) s3 += eps[k].eps; }
+    out.push({ date: p.date, close: p.close, pe: p.close / s, eps4q: s, eps4q3y: s3 });
   }
   return out;
 }
@@ -2461,62 +2468,138 @@ function updEpsNote(d) {
   el.title = d.normNote || n[1];
 }
 
+// ── Bandas móviles: en cada fecha, la media y el desvío (P/E) o los percentiles (PEG) de los N años previos ──
+const YR_S = 365.25 * 86400;
+let pebgMetric = 'pe';
+try { if (localStorage.getItem('pebgMetric') === 'peg') pebgMetric = 'peg'; } catch (e) {}
+const PE_BAND_LABELS = ['μ+2σ', 'μ+1σ', 'μ', 'μ-1σ', 'μ-2σ'];
+const PEG_BAND_LABELS = ['p90', 'p75', 'Mediana', 'p25', 'p10'];
+
+function syncPebgMetricBtns() {
+  document.querySelectorAll('#pebgMetricBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.k === pebgMetric));
+}
+function setPebgMetric(k) {
+  pebgMetric = k === 'peg' ? 'peg' : 'pe';
+  try { localStorage.setItem('pebgMetric', pebgMetric); } catch (e) {}
+  syncPebgMetricBtns();
+  // el PEG funciona mejor con EPS normalizado: al pasar a PEG se elige normalizado (se puede volver a contable)
+  if (pebgMetric === 'peg' && epsMode !== 'norm') { setEpsMode('norm'); return; }
+  if (pebgData) renderPebg(pebgData);
+}
+
+// crecimiento anual compuesto del EPS de 12 meses contra el de 3 años antes, y PEG = P/E / (crecimiento en %)
+function addPeg(full) {
+  full.forEach(p => {
+    p.g3 = (p.eps4q3y != null && p.eps4q3y > 0) ? Math.pow(p.eps4q / p.eps4q3y, 1 / 3) - 1 : null;
+    p.peg = (p.g3 != null && p.g3 >= 0.01) ? p.pe / (p.g3 * 100) : null;
+  });
+}
+
+// bandas móviles alineadas con full: { center, sd?, mult: [5 múltiplos] } o null si falta historia
+function rollingBands(full, years, metric) {
+  const W = years * YR_S, n = full.length, out = new Array(n).fill(null);
+  if (metric === 'pe') {
+    const minPts = Math.round(years * 245 * 0.6);
+    const ok = p => p.pe > 0 && p.pe < 500;
+    let lo = 0, sx = 0, sxx = 0, cnt = 0;
+    for (let i = 0; i < n; i++) {
+      const p = full[i];
+      if (ok(p)) { sx += p.pe; sxx += p.pe * p.pe; cnt++; }
+      while (full[lo].date <= p.date - W) { const q = full[lo]; if (ok(q)) { sx -= q.pe; sxx -= q.pe * q.pe; cnt--; } lo++; }
+      if (cnt < minPts) continue;
+      const mu = sx / cnt, sd = Math.sqrt(Math.max(0, sxx / cnt - mu * mu));
+      out[i] = { center: mu, sd, mult: [mu + 2 * sd, mu + sd, mu, mu - sd, mu - 2 * sd].map(v => v > 0 ? v : null) };
+    }
+  } else {
+    const minPts = Math.round(years * 245 * 0.5);
+    const pct = (s, f) => { const x = f * (s.length - 1), a = Math.floor(x), b = Math.min(s.length - 1, a + 1); return s[a] + (s[b] - s[a]) * (x - a); };
+    let lo = 0, cur = null;
+    for (let i = 0; i < n; i++) {
+      const p = full[i];
+      while (full[lo].date <= p.date - W) lo++;
+      if (i % 5 === 0 || i === n - 1 || cur == null) {   // los percentiles se recalculan cada 5 ruedas
+        const vals = [];
+        for (let k = lo; k <= i; k++) { const v = full[k].peg; if (v != null && v < 50) vals.push(v); }
+        if (vals.length >= minPts) {
+          vals.sort((a, b) => a - b);
+          cur = { center: pct(vals, 0.5), mult: [0.9, 0.75, 0.5, 0.25, 0.1].map(f => pct(vals, f)), sorted: vals };
+        } else cur = null;
+      }
+      out[i] = cur;
+    }
+  }
+  return out;
+}
+
 function renderPebg(data) {
   const eps = pebgEps(data);
   const full = buildPESeries(data, eps);
   const status = document.getElementById('pebgStatus');
   updEpsNote(data);
+  syncPebgMetricBtns();
   status.textContent = (data.shortName || data.symbol) + ', ' + eps.length + ' trim. EPS'
     + (pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '');
-  if (full.length < 10) {
-    status.textContent += '. Pocos datos para el gráfico';
-    return;
-  }
-  const YR = 365.25 * 86400;
-  const cutoff = full[full.length - 1].date - pebgYears * YR;
-  const win = full.filter(p => p.date >= cutoff);
-  if (win.length < 5) return;
-  const spanY = (win[win.length - 1].date - win[0].date) / YR;
-  const { mu, sigma } = peStats(win);
-  const multiples = [mu + 2 * sigma, mu + sigma, mu, mu - sigma, mu - 2 * sigma].map(v => v > 0 ? v : null);
+  if (full.length < 10) { status.textContent += '. Pocos datos para el gráfico'; return; }
+  const peg = pebgMetric === 'peg';
+  if (peg) addPeg(full);
+  const bands = rollingBands(full, pebgYears, pebgMetric);
+  full.forEach((p, i) => {
+    const b = bands[i];
+    p.band = b;
+    p.bandPx = b ? b.mult.map(m => m == null ? null : peg ? (p.g3 != null && p.g3 > 0 ? m * p.g3 * 100 * p.eps4q : null) : m * p.eps4q) : null;
+  });
 
   const last = full[full.length - 1];
-  const zScore = (last.pe - mu) / sigma;
-  const fmtPE = v => v.toFixed(1) + 'x';
+  const lb = last.band;
+  const norm = epsMode === 'norm' && hasNorm(data);
+  const fmtX = v => v.toFixed(peg ? 2 : 1) + (peg ? '' : 'x');
   const fmtP = v => '$' + Number(v).toFixed(2);
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-  const norm = epsMode === 'norm' && hasNorm(data);
-  set('psStat0', fmtPE(last.pe));
-  set('psSub0', norm ? 'TTM normalizado' : 'TTM contable');
-  set('psStat1', fmtPE(mu));
-  set('psLbl1', 'P/E media ' + (spanY < pebgYears - 0.25 ? spanY.toFixed(1).replace('.', ',') + ' años' : pebgYears + 'A'));
-  set('psStat2', sigma.toFixed(1) + 'x');
+  const winLbl = pebgYears + 'A';
+  const histY = (last.date - full[0].date) / YR_S;
+  const histHint = 'hay ' + histY.toFixed(1).replace('.', ',') + ' años de datos';
   const z = document.getElementById('psStat3');
-  z.textContent = (zScore >= 0 ? '+' : '') + zScore.toFixed(2) + 'σ';
-  z.className = 'pebg-stat-val ' + (zScore < -1 ? 'pp' : zScore > 1 ? 'pn' : '');
-  set('psSub3', zScore < -1 ? 'barato' : zScore > 1 ? 'caro' : 'justo');
+  if (!peg) {
+    set('psLbl0', 'P/E actual'); set('psStat0', fmtX(last.pe)); set('psSub0', norm ? 'TTM normalizado' : 'TTM contable');
+    set('psLbl1', 'P/E media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', lb ? 'móvil, ' + pebgYears + (pebgYears === 1 ? ' año' : ' años') : histHint);
+    set('psLbl2', 'Desv. std'); set('psStat2', lb ? lb.sd.toFixed(1) + 'x' : '—'); set('psSub2', 'σ');
+    const zs = lb && lb.sd > 0 ? (last.pe - lb.center) / lb.sd : null;
+    set('psLbl3', 'Z-score');
+    z.textContent = zs != null ? (zs >= 0 ? '+' : '') + zs.toFixed(2) + 'σ' : '—';
+    z.className = 'pebg-stat-val ' + (zs == null ? '' : zs < -1 ? 'pp' : zs > 1 ? 'pn' : '');
+    set('psSub3', zs == null ? '' : zs < -1 ? 'barato' : zs > 1 ? 'caro' : 'justo');
+    set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.');
+  } else {
+    set('psLbl0', 'PEG actual'); set('psStat0', last.peg != null ? fmtX(last.peg) : '—'); set('psSub0', 'P/E ÷ crec. EPS 3A');
+    set('psLbl1', 'PEG mediana ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', lb ? 'móvil, ' + pebgYears + (pebgYears === 1 ? ' año' : ' años') : histHint);
+    set('psLbl2', 'Rango p25–p75'); set('psStat2', lb ? lb.mult[3].toFixed(2) + '–' + lb.mult[1].toFixed(2) : '—'); set('psSub2', 'mitad central');
+    const rank = (lb && last.peg != null) ? lb.sorted.filter(v => v <= last.peg).length / lb.sorted.length : null;
+    set('psLbl3', 'Percentil hoy');
+    z.textContent = rank != null ? Math.round(rank * 100) + '%' : '—';
+    z.className = 'pebg-stat-val ' + (rank == null ? '' : rank < 0.25 ? 'pp' : rank > 0.75 ? 'pn' : '');
+    set('psSub3', rank == null ? (last.g3 != null && last.g3 < 0.01 ? 'sin crecimiento en 3 años' : '') : rank < 0.25 ? 'barato' : rank > 0.75 ? 'caro' : 'justo');
+    set('psLbl5', 'Crec. EPS 3A'); set('psStat5', last.g3 != null ? (last.g3 * 100).toFixed(1) + '%' : '—'); set('psSub5', (norm ? 'normalizado' : 'contable') + ', anual compuesto');
+  }
   set('psStat4', fmtP(data.currentPrice || last.close));
-  set('psStat5', fmtP(last.eps4q));
-  set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.');
-
   const lastQ = eps[eps.length - 1]?.eps;
   const peAnual = (lastQ && lastQ > 0) ? last.close / (lastQ * 4) : null;
-  set('psStatAnual', peAnual != null ? fmtPE(peAnual) : '—');
-  set('psStatFwd', data.forwardPE ? fmtPE(data.forwardPE) : '—');
+  set('psStatAnual', peAnual != null ? peAnual.toFixed(1) + 'x' : '—');
+  set('psStatFwd', data.forwardPE ? data.forwardPE.toFixed(1) + 'x' : '—');
+  ['psStatAnual', 'psStatFwd'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg ? 'none' : ''; });
 
-  const cols = bandColors();
+  const cols = bandColors(), labels = peg ? PEG_BAND_LABELS : PE_BAND_LABELS;
   ['6', '7', '8', '9', 'A'].forEach((id, i) => {
-    const m = multiples[i];
+    const m = lb ? lb.mult[i] : null, px = last.bandPx ? last.bandPx[i] : null;
     const v = document.getElementById('psStat' + id);
-    set('psLbl' + id, 'Precio a ' + BAND_LABELS[i]);
-    if (m == null) { v.textContent = 'N/A'; v.style.color = 'var(--faint)'; set('psSub' + id, ''); }
-    else { v.textContent = fmtP(last.eps4q * m); v.style.color = cols[i]; set('psSub' + id, 'P/E ' + fmtPE(m)); }
+    set('psLbl' + id, 'Precio a ' + labels[i]);
+    if (m == null || px == null) { v.textContent = 'N/A'; v.style.color = 'var(--faint)'; set('psSub' + id, ''); }
+    else { v.textContent = fmtP(px); v.style.color = cols[i]; set('psSub' + id, (peg ? 'PEG ' : 'P/E ') + fmtX(m)); }
   });
   document.getElementById('pebgStatsBar').style.display = 'flex';
 
-  // el promedio se calcula sobre pebgYears, pero el gráfico muestra una ventana más larga para ver de dónde viene
+  // el gráfico muestra más años que la ventana del promedio
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
-  pebgView = { full, multiples, mu, sigma, years: pebgYears, chartYears: CHART_YEARS[pebgYears] || pebgYears, statStart: win[0].date,
+  pebgView = { full, metric: pebgMetric, labels, years: pebgYears, chartYears: CHART_YEARS[pebgYears] || pebgYears,
     prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
 }
@@ -2526,7 +2609,8 @@ let pebgRaf = 0;
 
 function drawPebgChart(hoverT) {
   if (!pebgView) return;
-  const { full, multiples, years, chartYears, statStart, prices } = pebgView;
+  const { full, metric, labels, years, chartYears, prices } = pebgView;
+  const peg = metric === 'peg';
   const container = document.getElementById('pebgContainer');
   const canvas = document.getElementById('pebgCanvas');
   const dpr = window.devicePixelRatio || 1;
@@ -2540,37 +2624,35 @@ function drawPebgChart(hoverT) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
 
-  const cutoff = full[full.length - 1].date - chartYears * 365.25 * 86400;
+  const tEnd = full[full.length - 1].date;
+  const cutoff = tEnd - chartYears * YR_S;
   const series = full.filter(p => p.date >= cutoff);
   if (series.length < 2) return;
   const n = series.length;
-  const t0 = series[0].date, t1 = series[n - 1].date;
-  // el precio se dibuja entero, también donde no hay P/E (EPS de 12 meses negativo)
-  const px = (prices || []).filter(p => p.date >= t0 && p.date <= t1);
+  const px = (prices || []).filter(p => p.date >= Math.max(cutoff, series[0].date) && p.date <= tEnd);
   const priceLine = px.length > 1 ? px : series;
-  // tramos continuos de P/E: se cortan donde falta el dato más de una semana
-  const runs = [];
-  series.forEach((p, i) => { if (!i || p.date - series[i - 1].date > 7 * 86400) runs.push([]); runs[runs.length - 1].push(p); });
+  const t0 = priceLine[0].date, t1 = tEnd;
 
   const cols = bandColors();
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
   const PAD = { top: 18, right: 78, bottom: 30, left: 62 };
   const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom;
-  const live = multiples.map((m, i) => m != null ? i : -1).filter(i => i >= 0);
   const vals = priceLine.map(p => p.close);
-  series.forEach(p => live.forEach(i => vals.push(p.eps4q * multiples[i])));
+  series.forEach(p => { if (p.bandPx) p.bandPx.forEach(v => { if (v != null && v > 0) vals.push(v); }); });
   let yMin = Math.min(...vals), yMax = Math.max(...vals);
+  // el PEG puede proyectar bandas lejanas: el eje se limita a 4 veces el rango del precio
+  const pMin = Math.min(...priceLine.map(p => p.close)), pMax = Math.max(...priceLine.map(p => p.close));
+  yMin = Math.max(yMin, pMin / 4); yMax = Math.min(yMax, pMax * 4);
   const useLog = yMin > 0 && yMax / yMin > 6;
   if (useLog) { yMin *= 0.9; yMax *= 1.08; } else { const r = yMax - yMin; yMin = Math.max(0, yMin - r * 0.06); yMax += r * 0.06; }
   const ty = v => useLog ? Math.log(v) : v;
   const l0 = ty(yMin), l1 = ty(yMax);
   const xS = t => PAD.left + ((t - t0) / (t1 - t0)) * cW;
-  const yS = v => PAD.top + cH - ((ty(Math.max(v, 1e-9)) - l0) / (l1 - l0)) * cH;
+  const yS = v => PAD.top + cH - ((ty(Math.min(Math.max(v, yMin * 0.5), yMax * 2)) - l0) / (l1 - l0)) * cH;
 
   // grilla horizontal
   let ticks = [];
   if (useLog) {
-    // marcas redondas: 1-2-5 si alcanzan, si no 1-1,5-2-3-5-7
     for (const bases of [[1, 2, 5], [1, 1.5, 2, 3, 5, 7]]) {
       ticks = [];
       for (let k = Math.floor(Math.log10(yMin)) - 1; k <= Math.ceil(Math.log10(yMax)); k++)
@@ -2583,19 +2665,20 @@ function drawPebgChart(hoverT) {
     for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) ticks.push(v);
   }
   const money = v => '$' + (Math.abs(v - Math.round(v)) < 1e-9 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2));
-  ctx.font = `12px ${CANVAS_FONT}`;
-  ctx.lineWidth = 1;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, PAD.top - 1, W, cH + 2); ctx.clip();
+  ctx.font = `12px ${CANVAS_FONT}`; ctx.lineWidth = 1;
   ticks.forEach(v => {
     const y = Math.round(yS(v)) + 0.5;
     ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
-    ctx.fillStyle = C.text; ctx.textAlign = 'right';
-    ctx.fillText(money(v), PAD.left - 8, y + 4);
+    ctx.fillStyle = C.text; ctx.textAlign = 'right'; ctx.fillText(money(v), PAD.left - 8, y + 4);
   });
+  ctx.restore();
 
-  // eje x por fecha: meses en ventanas cortas, años en las largas
-  const spanY = (t1 - t0) / (365.25 * 86400);
+  // eje x por fecha
+  const spanY = (t1 - t0) / YR_S;
   const stepM = spanY <= 1.2 ? 1 : spanY <= 3.5 ? 3 : spanY <= 8 ? 12 : 24;
-  ctx.textAlign = 'center';
+  ctx.font = `12px ${CANVAS_FONT}`; ctx.textAlign = 'center';
   const d0 = new Date(t0 * 1000);
   let lastX = -1e9;
   for (let k = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; k++) {
@@ -2610,38 +2693,42 @@ function drawPebgChart(hoverT) {
     ctx.fillText(stepM >= 12 ? String(Math.floor(k / 12)) : MES_CORTO[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2), x, H - PAD.bottom + 18);
   }
 
-  // inicio de la ventana del promedio
-  const showStat = statStart - t0 > 20 * 86400;
-  if (showStat) {
-    const xs0 = Math.round(xS(statStart)) + 0.5;
-    ctx.fillStyle = cssVar('--sunk'); ctx.globalAlpha = 0.45;
-    ctx.fillRect(xs0, PAD.top, W - PAD.right - xs0, cH);
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = C.text; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-    ctx.beginPath(); ctx.moveTo(xs0, PAD.top); ctx.lineTo(xs0, PAD.top + cH); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = C.text; ctx.font = `600 11.5px ${CANVAS_FONT}`; ctx.textAlign = 'left';
-    ctx.fillText('Promedio ' + years + (years === 1 ? ' año' : ' años'), xs0 + 6, PAD.top + 12);
-  }
-
-  // zona μ ± 1σ y bandas (escalones que saltan cuando entra un EPS nuevo), por tramo
-  const STYLE = [[1.25, [5, 4]], [1.5, []], [2, []], [1.5, []], [1.25, [5, 4]]];
-  ctx.lineJoin = 'round';
-  runs.forEach(run => {
-    if (multiples[1] != null && multiples[3] != null) {
-      ctx.fillStyle = C.fill;
+  // bandas: tramos donde hay dato, cortados en huecos de más de una semana
+  ctx.save();
+  ctx.beginPath(); ctx.rect(PAD.left, PAD.top, cW, cH); ctx.clip();
+  const has = (p, i) => p.bandPx && p.bandPx[i] != null && p.bandPx[i] > 0;
+  const gap = (a, b) => b.date - a.date > 7 * 86400;
+  // zona central (μ±1σ o p25–p75)
+  ctx.fillStyle = C.fill;
+  let run = [];
+  const flush = () => {
+    if (run.length > 1) {
       ctx.beginPath();
-      run.forEach((p, i) => { const x = xS(p.date), y = yS(p.eps4q * multiples[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-      for (let i = run.length - 1; i >= 0; i--) ctx.lineTo(xS(run[i].date), yS(run[i].eps4q * multiples[3]));
+      run.forEach((p, i) => { const x = xS(p.date), y = yS(p.bandPx[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      for (let i = run.length - 1; i >= 0; i--) ctx.lineTo(xS(run[i].date), yS(run[i].bandPx[3]));
       ctx.closePath(); ctx.fill();
     }
-    live.forEach(i => {
-      ctx.strokeStyle = cols[i]; ctx.lineWidth = STYLE[i][0]; ctx.setLineDash(STYLE[i][1]);
-      ctx.beginPath();
-      run.forEach((p, k) => { const x = xS(p.date), y = yS(p.eps4q * multiples[i]); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-      ctx.stroke();
+    run = [];
+  };
+  series.forEach((p, i) => { if (has(p, 1) && has(p, 3) && !(run.length && gap(run[run.length - 1], p))) run.push(p); else { flush(); if (has(p, 1) && has(p, 3)) run.push(p); } });
+  flush();
+  const STYLE = [[1.25, [5, 4]], [1.5, []], [2, []], [1.5, []], [1.25, [5, 4]]];
+  ctx.lineJoin = 'round';
+  let gaps = false;
+  for (let b = 0; b < 5; b++) {
+    ctx.strokeStyle = cols[b]; ctx.lineWidth = STYLE[b][0]; ctx.setLineDash(STYLE[b][1]);
+    ctx.beginPath();
+    let prev = null;
+    series.forEach(p => {
+      if (!has(p, b)) { if (prev) gaps = true; prev = null; return; }
+      const x = xS(p.date), y = yS(p.bandPx[b]);
+      if (prev && !gap(prev, p)) ctx.lineTo(x, y); else { if (prev) gaps = true; ctx.moveTo(x, y); }
+      prev = p;
     });
-    ctx.setLineDash([]);
-  });
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
 
   // precio
   ctx.strokeStyle = C.price; ctx.lineWidth = 2;
@@ -2649,21 +2736,19 @@ function drawPebgChart(hoverT) {
   priceLine.forEach((p, i) => { const x = xS(p.date), y = yS(p.close); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
   ctx.stroke();
 
-  // etiquetas al final, separadas para que no se pisen
+  // etiquetas al final
   const lastS = series[n - 1], lastClose = priceLine[priceLine.length - 1].close;
-  const labels = [{ y: yS(lastClose), txt: '$' + lastClose.toFixed(2), col: C.price, bold: true }]
-    .concat(live.map(i => ({ y: yS(lastS.eps4q * multiples[i]), txt: '$' + (lastS.eps4q * multiples[i]).toFixed(1), col: cols[i] })))
+  const labelsEnd = [{ y: yS(lastClose), txt: '$' + lastClose.toFixed(2), col: C.price, bold: true }]
+    .concat([0, 1, 2, 3, 4].filter(b => has(lastS, b) && lastS.bandPx[b] <= yMax * 1.5).map(b => ({ y: yS(lastS.bandPx[b]), txt: '$' + lastS.bandPx[b].toFixed(1), col: cols[b] })))
     .sort((a, b) => a.y - b.y);
-  for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 15) labels[i].y = labels[i - 1].y + 15;
-  const over = labels.length ? labels[labels.length - 1].y - (PAD.top + cH) : 0;
-  if (over > 0) labels.forEach(l => l.y -= over);
+  for (let i = 1; i < labelsEnd.length; i++) if (labelsEnd[i].y - labelsEnd[i - 1].y < 15) labelsEnd[i].y = labelsEnd[i - 1].y + 15;
+  const over = labelsEnd.length ? labelsEnd[labelsEnd.length - 1].y - (PAD.top + cH) : 0;
+  if (over > 0) labelsEnd.forEach(l => l.y -= over);
   ctx.textAlign = 'left';
-  labels.forEach(l => { ctx.fillStyle = l.col; ctx.font = `${l.bold ? '700 ' : '600 '}12px ${CANVAS_FONT}`; ctx.fillText(l.txt, W - PAD.right + 8, l.y + 4); });
+  labelsEnd.forEach(l => { ctx.fillStyle = l.col; ctx.font = `${l.bold ? '700 ' : '600 '}12px ${CANVAS_FONT}`; ctx.fillText(l.txt, W - PAD.right + 8, l.y + 4); });
 
-  // punto más cercano a una fecha (búsqueda binaria)
   const nearest = (arr, t) => { let lo = 0, hi = arr.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (arr[m].date < t) lo = m; else hi = m; } return Math.abs(arr[lo].date - t) <= Math.abs(arr[hi].date - t) ? arr[lo] : arr[hi]; };
 
-  // cursor
   if (hoverT != null) {
     const pp = nearest(priceLine, hoverT);
     const x = Math.round(xS(pp.date)) + 0.5;
@@ -2674,19 +2759,20 @@ function drawPebgChart(hoverT) {
     ctx.beginPath(); ctx.arc(x, yS(pp.close), 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }
 
-  // leyenda
+  // leyenda con los múltiplos de hoy
   const leg = document.getElementById('pebgLegend');
   if (hoverT == null) {
+    const lb = lastS.band;
+    const fm = v => peg ? v.toFixed(2) : v.toFixed(1) + 'x';
     leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>Precio</div>`
-      + live.map(i => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[i]}"></div>${BAND_LABELS[i]}, ${multiples[i].toFixed(1)}x</div>`).join('')
-      + (multiples[1] != null && multiples[3] != null ? `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>Zona μ ± 1σ</div>` : '')
-      + (showStat ? '<div class="pebg-leg-row" style="color:var(--muted)">Media y σ: desde la línea punteada</div>' : '')
-      + (runs.length > 1 ? '<div class="pebg-leg-row" style="color:var(--muted)">Sin bandas: EPS de 12 meses negativo</div>' : '')
+      + (lb ? [0, 1, 2, 3, 4].filter(b => lb.mult[b] != null).map(b => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[b]}"></div>${labels[b]} hoy, ${(peg ? 'PEG ' : '') + fm(lb.mult[b])}</div>`).join('') : '')
+      + `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>${peg ? 'Rango p25–p75' : 'Zona μ ± 1σ'}</div>`
+      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} móviles de ${years} ${years === 1 ? 'año' : 'años'}</div>`
+      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: sin crecimiento de 3 años o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = 'flex';
   }
 
-  // hover
   const tooltip = document.getElementById('pebgTooltip');
   canvas.onpointermove = e => {
     const rect = canvas.getBoundingClientRect();
@@ -2698,12 +2784,17 @@ function drawPebgChart(hoverT) {
     const hasPE = Math.abs(sp.date - pp.date) <= 4 * 86400;
     document.getElementById('pebgTipDate').textContent =
       new Date(pp.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
-    const tipRows = [{ color: C.price, label: 'Precio', val: '$' + pp.close.toFixed(2) }].concat(hasPE ? [
-      { color: '', label: 'P/E TTM', val: sp.pe.toFixed(1) + 'x' },
-      { color: '', label: 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) },
-      ...live.map(i => ({ color: cols[i], label: BAND_LABELS[i] + ' (' + multiples[i].toFixed(1) + 'x)', val: '$' + (sp.eps4q * multiples[i]).toFixed(2) })),
-    ] : [{ color: '', label: 'P/E TTM', val: 'sin dato (EPS ≤ 0)' }]);
-    document.getElementById('pebgTipRows').innerHTML = tipRows.map(r =>
+    const rows = [{ color: C.price, label: 'Precio', val: '$' + pp.close.toFixed(2) }];
+    if (hasPE) {
+      rows.push({ color: '', label: 'P/E TTM', val: sp.pe.toFixed(1) + 'x' });
+      if (peg) {
+        rows.push({ color: '', label: 'PEG', val: sp.peg != null ? sp.peg.toFixed(2) : 'n/d' });
+        rows.push({ color: '', label: 'Crec. EPS 3A', val: sp.g3 != null ? (sp.g3 * 100).toFixed(1) + '%' : 'n/d' });
+      } else rows.push({ color: '', label: 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) });
+      if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(1) + 'x') + ')', val: '$' + sp.bandPx[b].toFixed(2) }); });
+      else rows.push({ color: '', label: 'Bandas', val: 'sin historia suficiente' });
+    } else rows.push({ color: '', label: 'P/E TTM', val: 'sin dato (EPS ≤ 0)' });
+    document.getElementById('pebgTipRows').innerHTML = rows.map(r =>
       `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:${r.color || 'transparent'};${r.color ? '' : 'border:1px solid var(--line2)'}"></span>${r.label}</span><span class="pebg-tooltip-val">${r.val}</span></div>`).join('');
     tooltip.style.display = 'block';
     const tw = tooltip.offsetWidth || 220;
@@ -2722,7 +2813,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active') && ggalCache[ggalRange]) drawGgal(); });
 
-updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); paintHmLegend();
+updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); syncPebgMetricBtns(); paintHmLegend();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (pebgData) renderPebg(pebgData); });
 document.getElementById('srch').addEventListener('input',render);
 document.getElementById('secF').addEventListener('change',render);
