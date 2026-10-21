@@ -566,8 +566,9 @@ app.get("/api/pebg", async (req, res) => {
   const sym = (req.query.symbol || "").toUpperCase().trim();
   if (!sym) return res.status(400).json({ error: "symbol required" });
   try {
-    // años de precios: P/E Hist pide 16 (ventanas de hasta 15 años); Cartera pide 2 para ir más liviana
-    const years = Math.min(16, Math.max(1, parseInt(req.query.years, 10) || 16));
+    // años de precios: P/E Hist usa 20, que cubren todo el EPS que tiene la SEC en XBRL (arranca en 2007-2008),
+    // así el P/E empieza cuando hay 4 trimestres de EPS y no cuando empiezan los precios; Cartera pide 2
+    const years = Math.min(20, Math.max(1, parseInt(req.query.years, 10) || 20));
     const payload = await cached(`pebg:${sym}:${years}`, 30 * 60 * 1000, async () => {
       const now = Math.floor(Date.now() / 1000);
       const p1 = now - Math.round(years * 365.25 * 86400);

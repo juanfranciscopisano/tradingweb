@@ -2320,6 +2320,29 @@ function buildPESeries(data, eps) {
   eps = (eps || baseEps(data)).slice().sort((a, b) => a.date - b.date);
   if (eps.length < 4) return [];
   const prices = (data.prices || []).slice().sort((a, b) => a.date - b.date);
+  // crecimiento del EPS de 12 meses (para el PEG): pendiente de una regresión log-lineal sobre 5 años de datos
+  // trimestrales (21 puntos). Comparando solo los extremos, un piso o un pico en la base hace saltar el crecimiento
+  // (META pasó de 3% a 51% en tres años); la regresión usa toda la trayectoria.
+  const ttmQ = [];
+  for (let k = 3; k < eps.length; k++) ttmQ[k] = eps[k].eps + eps[k - 1].eps + eps[k - 2].eps + eps[k - 3].eps;
+  const gMemo = new Map();
+  const growthAt = j => {
+    if (gMemo.has(j)) return gMemo.get(j);
+    let g = null;
+    const k1 = j - 1, k0 = k1 - 20;
+    if (k0 >= 3) {
+      const xs = [], ys = [];
+      for (let k = k0; k <= k1 && ttmQ[k] > 0; k++) { xs.push(eps[k].date / (365.25 * 86400)); ys.push(Math.log(ttmQ[k])); }
+      if (xs.length === 21) {
+        const mx = xs.reduce((a, b) => a + b) / 21, my = ys.reduce((a, b) => a + b) / 21;
+        let sxy = 0, sxx = 0;
+        xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) ** 2; });
+        g = Math.exp(sxy / sxx) - 1;
+      }
+    }
+    gMemo.set(j, g);
+    return g;
+  };
   const out = [];
   let j = 0;
   for (const p of prices) {
@@ -2328,9 +2351,7 @@ function buildPESeries(data, eps) {
     let s = 0;
     for (let k = j - 4; k < j; k++) s += eps[k].eps;
     if (s <= 0.01) continue;
-    let s3 = null;
-    if (j >= 16) { s3 = 0; for (let k = j - 16; k < j - 12; k++) s3 += eps[k].eps; }
-    out.push({ date: p.date, close: p.close, pe: p.close / s, eps4q: s, eps4q3y: s3 });
+    out.push({ date: p.date, close: p.close, pe: p.close / s, eps4q: s, g: growthAt(j) });
   }
   return out;
 }
@@ -2622,6 +2643,7 @@ function syncPebgAxisBtns() {
 }
 function setPebgAxis(a) {
   pebgAxis = a === 'mult' ? 'mult' : 'precio';
+  pebgAxisBeforePeg = null;
   try { localStorage.setItem('pebgAxis', pebgAxis); } catch (e) {}
   syncPebgAxisBtns();
   drawPebgChart();
@@ -2648,7 +2670,7 @@ function holdQuarterly(full, bands) {
   let held = null;
   for (let i = 0; i < full.length; i++) {
     const p = full[i], q = full[i - 1];
-    const newSeg = !q || p.eps4q !== q.eps4q || p.eps4q3y !== q.eps4q3y || p.date - q.date > 7 * 86400;
+    const newSeg = !q || p.eps4q !== q.eps4q || p.g !== q.g || p.date - q.date > 7 * 86400;
     if (newSeg) held = bands[i] ? { ...bands[i], asOf: p.date } : null;
     else if (!held && bands[i]) held = { ...bands[i], asOf: p.date };
     out[i] = held;
@@ -2665,21 +2687,29 @@ function setPebgBand(b) {
 function syncPebgMetricBtns() {
   document.querySelectorAll('#pebgMetricBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.k === pebgMetric));
 }
+// el PEG se abre en la vista de múltiplo: pasado a precio supone que el P/E sube en proporción al crecimiento,
+// y cada cambio del crecimiento mueve las bandas tanto como el EPS. Al volver a P/E se recupera la vista anterior.
+let pebgAxisBeforePeg = null;
+function pegAxisSwitch(prev) {
+  if (pebgMetric === 'peg' && prev !== 'peg' && pebgAxis !== 'mult') { pebgAxisBeforePeg = pebgAxis; pebgAxis = 'mult'; }
+  else if (pebgMetric === 'pe' && prev === 'peg' && pebgAxisBeforePeg) { pebgAxis = pebgAxisBeforePeg; pebgAxisBeforePeg = null; }
+  syncPebgAxisBtns();
+}
 function setPebgMetric(k) {
+  const prev = pebgMetric;
   pebgMetric = k === 'peg' ? 'peg' : 'pe';
   try { localStorage.setItem('pebgMetric', pebgMetric); } catch (e) {}
   syncPebgMetricBtns();
+  pegAxisSwitch(prev);
   // el PEG funciona mejor con EPS normalizado: al pasar a PEG se elige normalizado (se puede volver a contable)
   if (pebgMetric === 'peg' && epsMode !== 'norm') { setEpsMode('norm'); return; }
   if (pebgData) renderPebg(pebgData);
 }
 
-// crecimiento anual compuesto del EPS de 12 meses contra el de 3 años antes, y PEG = P/E / (crecimiento en %)
+// PEG = P/E / (crecimiento tendencial del EPS en %); con crecimiento menor a 3% el cociente no dice nada
+const PEG_MIN_G = 0.03;
 function addPeg(full) {
-  full.forEach(p => {
-    p.g3 = (p.eps4q3y != null && p.eps4q3y > 0) ? Math.pow(p.eps4q / p.eps4q3y, 1 / 3) - 1 : null;
-    p.peg = (p.g3 != null && p.g3 >= 0.01) ? p.pe / (p.g3 * 100) : null;
-  });
+  full.forEach(p => { p.peg = (p.g != null && p.g >= PEG_MIN_G) ? p.pe / (p.g * 100) : null; });
 }
 
 // bandas móviles alineadas con full: { center, sd?, mult: [5 múltiplos] } o null si falta historia
@@ -2760,7 +2790,7 @@ function renderPebg(data) {
   full.forEach((p, i) => {
     const b = bands[i];
     p.band = b;
-    p.bandPx = b ? b.mult.map(m => m == null ? null : peg ? (p.g3 != null && p.g3 > 0 ? m * p.g3 * 100 * p.eps4q : null) : m * p.eps4q) : null;
+    p.bandPx = b ? b.mult.map(m => m == null ? null : peg ? (p.g != null && p.g >= PEG_MIN_G ? m * p.g * 100 * p.eps4q : null) : m * p.eps4q) : null;
   });
 
   const last = full[full.length - 1];
@@ -2787,15 +2817,15 @@ function renderPebg(data) {
     set('psSub3', zs == null ? '' : zs < -1 ? 'barato' : zs > 1 ? 'caro' : 'justo');
     set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.');
   } else {
-    set('psLbl0', 'PEG actual'); set('psStat0', last.peg != null ? fmtX(last.peg) : '—'); set('psSub0', 'P/E ÷ crec. EPS 3A');
+    set('psLbl0', 'PEG actual'); set('psStat0', last.peg != null ? fmtX(last.peg) : '—'); set('psSub0', 'P/E ÷ crec. EPS 5A');
     set('psLbl1', 'PEG mediana ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
     set('psLbl2', 'Rango p25–p75'); set('psStat2', lb ? lb.mult[3].toFixed(2) + '–' + lb.mult[1].toFixed(2) : '—'); set('psSub2', 'mitad central');
     const rank = (lb && last.peg != null) ? lb.sorted.filter(v => v <= last.peg).length / lb.sorted.length : null;
     set('psLbl3', 'Percentil hoy');
     z.textContent = rank != null ? Math.round(rank * 100) + '%' : '—';
     z.className = 'pebg-stat-val ' + (rank == null ? '' : rank < 0.25 ? 'pp' : rank > 0.75 ? 'pn' : '');
-    set('psSub3', rank == null ? (last.g3 != null && last.g3 < 0.01 ? 'sin crecimiento en 3 años' : '') : rank < 0.25 ? 'barato' : rank > 0.75 ? 'caro' : 'justo');
-    set('psLbl5', 'Crec. EPS 3A'); set('psStat5', last.g3 != null ? (last.g3 * 100).toFixed(1) + '%' : '—'); set('psSub5', (norm ? 'normalizado' : 'contable') + ', anual compuesto');
+    set('psSub3', rank == null ? (last.g == null ? 'faltan 6 años de EPS' : last.g < PEG_MIN_G ? 'crecimiento menor a 3%' : '') : rank < 0.25 ? 'barato' : rank > 0.75 ? 'caro' : 'justo');
+    set('psLbl5', 'Crec. EPS 5A'); set('psStat5', last.g != null ? (last.g * 100).toFixed(1) + '%' : '—'); set('psSub5', 'tendencia anual, ' + (norm ? 'normalizado' : 'contable'));
   }
   set('psStat4', fmtP(data.currentPrice || last.close));
   const lastQ = eps[eps.length - 1]?.eps;
@@ -2956,12 +2986,23 @@ function drawPebgChart(hoverT) {
     return arr.slice(Math.max(0, i0 - 1), Math.min(arr.length, i1 + 2));
   };
   const visible = p => p.date >= t0 && p.date <= t1;
+  const tooltip = document.getElementById('pebgTooltip');
+  const rectOf = () => canvas.getBoundingClientRect();
+  const cW0 = W - 62 - 78;
+  // sin dato que dibujar: aviso en el gráfico; arrastrar y el zoom siguen andando para salir del tramo
+  const empty = msg => {
+    ctx.fillStyle = cssVar('--chart-text'); ctx.font = `13px ${CANVAS_FONT}`; ctx.textAlign = 'center';
+    ctx.fillText(msg, W / 2, H / 2);
+    document.getElementById('pebgLegend').style.display = 'none';
+    tooltip.style.display = 'none';
+    pebgGeom = { cW: cW0, tAt: clientX => t0 + (clientX - rectOf().left - 62) / cW0 * (t1 - t0), hideTip: () => {}, leave: () => {}, hover: () => {} };
+  };
   const series = inWin(full);
-  if (series.filter(visible).length < 2) return;
+  if (series.filter(visible).length < 2) return empty('Sin datos en este tramo');
   const px = inWin((prices || []).filter(p => p.date >= full[0].date));
   const priceLine = mv ? series.filter(p => { const v = yOf(p); return v != null && v > 0 && isFinite(v); }) : (px.filter(visible).length > 1 ? px : series);
   const lineVis = priceLine.filter(visible);
-  if (lineVis.length < 2) return;
+  if (lineVis.length < 2) return empty(peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : 'Sin P/E positivo en este tramo');
 
   const cols = bandColors();
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
@@ -3117,13 +3158,11 @@ function drawPebgChart(hoverT) {
       + (lb ? [0, 1, 2, 3, 4].filter(b => lb.mult[b] != null).map(b => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[b]}"></div>${labels[b]} hoy, ${(peg ? 'PEG ' : '') + fm(lb.mult[b])}</div>`).join('') : '')
       + `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>${peg ? 'Rango p25–p75' : 'Zona μ ± 1σ'}</div>`
       + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}${trim ? ', recalculados por trimestre' : ''}</div>`
-      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: sin crecimiento de 3 años o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
+      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: crecimiento menor a 3% o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = 'flex';
   }
 
-  const tooltip = document.getElementById('pebgTooltip');
-  const rectOf = () => canvas.getBoundingClientRect();
   pebgGeom = {
     cW,
     tAt: clientX => t0 + (clientX - rectOf().left - PAD.left) / cW * (t1 - t0),
@@ -3144,7 +3183,7 @@ function drawPebgChart(hoverT) {
         rows.push({ color: '', label: 'P/E TTM', val: sp.pe.toFixed(1) + 'x' });
         if (peg) {
           rows.push({ color: '', label: 'PEG', val: sp.peg != null ? sp.peg.toFixed(2) : 'n/d' });
-          rows.push({ color: '', label: 'Crec. EPS 3A', val: sp.g3 != null ? (sp.g3 * 100).toFixed(1) + '%' : 'n/d' });
+          rows.push({ color: '', label: 'Crec. EPS 5A', val: sp.g != null ? (sp.g * 100).toFixed(1) + '%' : 'n/d' });
         } else rows.push({ color: '', label: 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) });
         if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(1) + 'x') + ')', val: '$' + sp.bandPx[b].toFixed(2) }); });
         else rows.push({ color: '', label: 'Bandas', val: 'sin historia suficiente' });
@@ -3425,6 +3464,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active') && ggalCache[ggalRange]) drawGgal(); });
 
+pegAxisSwitch(null);
 updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns(); syncPebgScaleBtns(); paintHmLegend();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (pebgData) renderPebg(pebgData); });
 document.getElementById('srch').addEventListener('input',render);
