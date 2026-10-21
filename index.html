@@ -2333,16 +2333,16 @@ function renderPebg(data) {
   });
   document.getElementById('pebgStatsBar').style.display = 'flex';
 
-  pebgView = { full, multiples, mu, sigma, years: pebgYears };
+  pebgView = { full, multiples, mu, sigma, years: pebgYears, prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
 }
 
 let pebgView = null;
 let pebgRaf = 0;
 
-function drawPebgChart(hoverIdx) {
+function drawPebgChart(hoverT) {
   if (!pebgView) return;
-  const { full, multiples, years } = pebgView;
+  const { full, multiples, years, prices } = pebgView;
   const container = document.getElementById('pebgContainer');
   const canvas = document.getElementById('pebgCanvas');
   const dpr = window.devicePixelRatio || 1;
@@ -2360,21 +2360,28 @@ function drawPebgChart(hoverIdx) {
   const series = full.filter(p => p.date >= cutoff);
   if (series.length < 2) return;
   const n = series.length;
+  const t0 = series[0].date, t1 = series[n - 1].date;
+  // el precio se dibuja entero, también donde no hay P/E (EPS de 12 meses negativo)
+  const px = (prices || []).filter(p => p.date >= t0 && p.date <= t1);
+  const priceLine = px.length > 1 ? px : series;
+  // tramos continuos de P/E: se cortan donde falta el dato más de una semana
+  const runs = [];
+  series.forEach((p, i) => { if (!i || p.date - series[i - 1].date > 7 * 86400) runs.push([]); runs[runs.length - 1].push(p); });
+
   const cols = bandColors();
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
-
   const PAD = { top: 18, right: 78, bottom: 30, left: 62 };
   const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom;
   const live = multiples.map((m, i) => m != null ? i : -1).filter(i => i >= 0);
-  const vals = [];
-  series.forEach(p => { vals.push(p.close); live.forEach(i => vals.push(p.eps4q * multiples[i])); });
+  const vals = priceLine.map(p => p.close);
+  series.forEach(p => live.forEach(i => vals.push(p.eps4q * multiples[i])));
   let yMin = Math.min(...vals), yMax = Math.max(...vals);
   const useLog = yMin > 0 && yMax / yMin > 6;
   if (useLog) { yMin *= 0.9; yMax *= 1.08; } else { const r = yMax - yMin; yMin = Math.max(0, yMin - r * 0.06); yMax += r * 0.06; }
   const ty = v => useLog ? Math.log(v) : v;
-  const t0 = ty(yMin), t1 = ty(yMax);
-  const xS = i => PAD.left + (i / (n - 1)) * cW;
-  const yS = v => PAD.top + cH - ((ty(Math.max(v, 1e-9)) - t0) / (t1 - t0)) * cH;
+  const l0 = ty(yMin), l1 = ty(yMax);
+  const xS = t => PAD.left + ((t - t0) / (t1 - t0)) * cW;
+  const yS = v => PAD.top + cH - ((ty(Math.max(v, 1e-9)) - l0) / (l1 - l0)) * cH;
 
   // grilla horizontal
   let ticks = [];
@@ -2391,64 +2398,64 @@ function drawPebgChart(hoverIdx) {
     const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= raw);
     for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) ticks.push(v);
   }
+  const money = v => '$' + (Math.abs(v - Math.round(v)) < 1e-9 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2));
   ctx.font = `12px ${CANVAS_FONT}`;
   ctx.lineWidth = 1;
   ticks.forEach(v => {
     const y = Math.round(yS(v)) + 0.5;
     ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
     ctx.fillStyle = C.text; ctx.textAlign = 'right';
-    ctx.fillText('$' + (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(v % 1 ? 1 : 0) : v.toFixed(2)), PAD.left - 8, y + 4);
+    ctx.fillText(money(v), PAD.left - 8, y + 4);
   });
 
-  // eje x: meses en ventanas cortas, años en las largas
-  const spanY = (series[n - 1].date - series[0].date) / (365.25 * 86400);
+  // eje x por fecha: meses en ventanas cortas, años en las largas
+  const spanY = (t1 - t0) / (365.25 * 86400);
   const stepM = spanY <= 1.2 ? 1 : spanY <= 3.5 ? 3 : spanY <= 8 ? 12 : 24;
   ctx.textAlign = 'center';
-  let prevKey = null, lastX = -1e9;
-  series.forEach((p, i) => {
-    const d = new Date(p.date * 1000);
-    const key = d.getFullYear() * 12 + d.getMonth();
-    if (key === prevKey) return;
-    prevKey = key;
-    if (i === 0 || key % stepM !== 0) return;
-    const x = xS(i);
-    if (x - lastX < 46) return;
+  const d0 = new Date(t0 * 1000);
+  let lastX = -1e9;
+  for (let k = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; k++) {
+    const t = Date.UTC(Math.floor(k / 12), k % 12, 1) / 1000;
+    if (t > t1) break;
+    if (k % stepM !== 0) continue;
+    const x = xS(t);
+    if (x - lastX < 46) continue;
     lastX = x;
     ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(Math.round(x) + 0.5, PAD.top); ctx.lineTo(Math.round(x) + 0.5, PAD.top + cH); ctx.stroke();
     ctx.fillStyle = C.text;
-    ctx.fillText(stepM >= 12 ? String(d.getFullYear()) : MES_CORTO[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2), x, H - PAD.bottom + 18);
-  });
-
-  // zona μ ± 1σ
-  if (multiples[1] != null && multiples[3] != null) {
-    ctx.fillStyle = C.fill;
-    ctx.beginPath();
-    series.forEach((p, i) => { const y = yS(p.eps4q * multiples[1]); i ? ctx.lineTo(xS(i), y) : ctx.moveTo(xS(i), y); });
-    for (let i = n - 1; i >= 0; i--) ctx.lineTo(xS(i), yS(series[i].eps4q * multiples[3]));
-    ctx.closePath(); ctx.fill();
+    ctx.fillText(stepM >= 12 ? String(Math.floor(k / 12)) : MES_CORTO[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2), x, H - PAD.bottom + 18);
   }
 
-  // bandas: escalones que saltan cuando entra un EPS nuevo
+  // zona μ ± 1σ y bandas (escalones que saltan cuando entra un EPS nuevo), por tramo
   const STYLE = [[1.25, [5, 4]], [1.5, []], [2, []], [1.5, []], [1.25, [5, 4]]];
   ctx.lineJoin = 'round';
-  live.forEach(i => {
-    ctx.strokeStyle = cols[i]; ctx.lineWidth = STYLE[i][0]; ctx.setLineDash(STYLE[i][1]);
-    ctx.beginPath();
-    series.forEach((p, k) => { const y = yS(p.eps4q * multiples[i]); k ? ctx.lineTo(xS(k), y) : ctx.moveTo(xS(k), y); });
-    ctx.stroke();
+  runs.forEach(run => {
+    if (multiples[1] != null && multiples[3] != null) {
+      ctx.fillStyle = C.fill;
+      ctx.beginPath();
+      run.forEach((p, i) => { const x = xS(p.date), y = yS(p.eps4q * multiples[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      for (let i = run.length - 1; i >= 0; i--) ctx.lineTo(xS(run[i].date), yS(run[i].eps4q * multiples[3]));
+      ctx.closePath(); ctx.fill();
+    }
+    live.forEach(i => {
+      ctx.strokeStyle = cols[i]; ctx.lineWidth = STYLE[i][0]; ctx.setLineDash(STYLE[i][1]);
+      ctx.beginPath();
+      run.forEach((p, k) => { const x = xS(p.date), y = yS(p.eps4q * multiples[i]); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
   });
-  ctx.setLineDash([]);
 
   // precio
   ctx.strokeStyle = C.price; ctx.lineWidth = 2;
   ctx.beginPath();
-  series.forEach((p, i) => { const y = yS(p.close); i ? ctx.lineTo(xS(i), y) : ctx.moveTo(xS(i), y); });
+  priceLine.forEach((p, i) => { const x = xS(p.date), y = yS(p.close); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
   ctx.stroke();
 
   // etiquetas al final, separadas para que no se pisen
-  const lastP = series[n - 1];
-  const labels = [{ y: yS(lastP.close), txt: '$' + lastP.close.toFixed(2), col: C.price, bold: true }]
-    .concat(live.map(i => ({ y: yS(lastP.eps4q * multiples[i]), txt: '$' + (lastP.eps4q * multiples[i]).toFixed(1), col: cols[i] })))
+  const lastS = series[n - 1], lastClose = priceLine[priceLine.length - 1].close;
+  const labels = [{ y: yS(lastClose), txt: '$' + lastClose.toFixed(2), col: C.price, bold: true }]
+    .concat(live.map(i => ({ y: yS(lastS.eps4q * multiples[i]), txt: '$' + (lastS.eps4q * multiples[i]).toFixed(1), col: cols[i] })))
     .sort((a, b) => a.y - b.y);
   for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 15) labels[i].y = labels[i - 1].y + 15;
   const over = labels.length ? labels[labels.length - 1].y - (PAD.top + cH) : 0;
@@ -2456,22 +2463,27 @@ function drawPebgChart(hoverIdx) {
   ctx.textAlign = 'left';
   labels.forEach(l => { ctx.fillStyle = l.col; ctx.font = `${l.bold ? '700 ' : '600 '}12px ${CANVAS_FONT}`; ctx.fillText(l.txt, W - PAD.right + 8, l.y + 4); });
 
+  // punto más cercano a una fecha (búsqueda binaria)
+  const nearest = (arr, t) => { let lo = 0, hi = arr.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (arr[m].date < t) lo = m; else hi = m; } return Math.abs(arr[lo].date - t) <= Math.abs(arr[hi].date - t) ? arr[lo] : arr[hi]; };
+
   // cursor
-  if (hoverIdx != null && series[hoverIdx]) {
-    const x = Math.round(xS(hoverIdx)) + 0.5;
+  if (hoverT != null) {
+    const pp = nearest(priceLine, hoverT);
+    const x = Math.round(xS(pp.date)) + 0.5;
     ctx.strokeStyle = C.text; ctx.globalAlpha = 0.5; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + cH); ctx.stroke();
     ctx.setLineDash([]); ctx.globalAlpha = 1;
     ctx.fillStyle = C.price; ctx.strokeStyle = C.bg; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, yS(series[hoverIdx].close), 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, yS(pp.close), 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }
 
   // leyenda
   const leg = document.getElementById('pebgLegend');
-  if (hoverIdx == null) {
+  if (hoverT == null) {
     leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>Precio</div>`
       + live.map(i => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[i]}"></div>${BAND_LABELS[i]}, ${multiples[i].toFixed(1)}x</div>`).join('')
       + (multiples[1] != null && multiples[3] != null ? `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>Zona μ ± 1σ</div>` : '')
+      + (runs.length > 1 ? '<div class="pebg-leg-row" style="color:var(--muted)">Sin bandas: EPS de 12 meses negativo</div>' : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = 'flex';
   }
@@ -2482,16 +2494,17 @@ function drawPebgChart(hoverIdx) {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     if (mx < PAD.left || mx > W - PAD.right) { tooltip.style.display = 'none'; return; }
-    const idx = Math.max(0, Math.min(n - 1, Math.round((mx - PAD.left) / cW * (n - 1))));
-    const p = series[idx];
+    const t = t0 + (mx - PAD.left) / cW * (t1 - t0);
+    const pp = nearest(priceLine, t);
+    const sp = nearest(series, pp.date);
+    const hasPE = Math.abs(sp.date - pp.date) <= 4 * 86400;
     document.getElementById('pebgTipDate').textContent =
-      new Date(p.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
-    const tipRows = [
-      { color: C.price, label: 'Precio', val: '$' + p.close.toFixed(2) },
-      { color: '', label: 'P/E TTM', val: p.pe.toFixed(1) + 'x' },
-      { color: '', label: 'EPS TTM', val: '$' + p.eps4q.toFixed(2) },
-      ...live.map(i => ({ color: cols[i], label: BAND_LABELS[i] + ' (' + multiples[i].toFixed(1) + 'x)', val: '$' + (p.eps4q * multiples[i]).toFixed(2) })),
-    ];
+      new Date(pp.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+    const tipRows = [{ color: C.price, label: 'Precio', val: '$' + pp.close.toFixed(2) }].concat(hasPE ? [
+      { color: '', label: 'P/E TTM', val: sp.pe.toFixed(1) + 'x' },
+      { color: '', label: 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) },
+      ...live.map(i => ({ color: cols[i], label: BAND_LABELS[i] + ' (' + multiples[i].toFixed(1) + 'x)', val: '$' + (sp.eps4q * multiples[i]).toFixed(2) })),
+    ] : [{ color: '', label: 'P/E TTM', val: 'sin dato (EPS ≤ 0)' }]);
     document.getElementById('pebgTipRows').innerHTML = tipRows.map(r =>
       `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:${r.color || 'transparent'};${r.color ? '' : 'border:1px solid var(--line2)'}"></span>${r.label}</span><span class="pebg-tooltip-val">${r.val}</span></div>`).join('');
     tooltip.style.display = 'block';
@@ -2499,7 +2512,7 @@ function drawPebgChart(hoverIdx) {
     tooltip.style.left = (mx + 16 + tw > W ? mx - tw - 16 : mx + 16) + 'px';
     tooltip.style.top = Math.max(PAD.top, Math.min(my - 20, H - (tooltip.offsetHeight || 200) - 8)) + 'px';
     cancelAnimationFrame(pebgRaf);
-    pebgRaf = requestAnimationFrame(() => drawPebgChart(idx));
+    pebgRaf = requestAnimationFrame(() => drawPebgChart(pp.date));
   };
   canvas.onpointerleave = () => { tooltip.style.display = 'none'; cancelAnimationFrame(pebgRaf); pebgRaf = requestAnimationFrame(() => drawPebgChart()); };
 }
