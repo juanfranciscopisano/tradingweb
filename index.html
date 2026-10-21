@@ -12,6 +12,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --font:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --side:max(clamp(16px,3.5vw,64px),calc((100vw - 1480px) / 2));
   --paper:#F2F3F0;--surf:#FFFFFF;--surf2:#F7F8F6;--sunk:#E8EBE6;
   --ink:#1C2430;--ink2:#3A4452;--muted:#687180;--faint:#9AA2AD;
   --line:#DDE1DB;--line2:#C8CDC5;
@@ -43,7 +44,7 @@ button,input,select{font:inherit;color:inherit}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* barra superior */
-.tab-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:0 28px;gap:2px;min-height:54px}
+.tab-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:0 var(--side);gap:2px;min-height:54px}
 .tab-logo{display:flex;align-items:center;gap:10px;margin-right:22px;flex-shrink:0}
 .escudo{width:30px;height:30px;object-fit:contain}
 .logo-mark,.tab-divider,.live-badge{display:none}
@@ -64,13 +65,13 @@ button,input,select{font:inherit;color:inherit}
 .view.active.view-scroll{overflow-y:auto}
 
 /* screener */
-.stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;overflow-x:auto}
+.stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:14px var(--side);display:flex;overflow-x:auto}
 .stat{padding:0 22px;border-left:1px solid var(--line);white-space:nowrap;flex-shrink:0}
 .stat:first-child{padding-left:0;border-left:none}
 .stat-val{font-size:21px;font-weight:650;color:var(--ink);line-height:1.1;font-stretch:92%}
 .stat-lbl{font-size:12px;color:var(--muted);margin-top:3px}
 .up{color:var(--up)!important}.dn{color:var(--down)!important}
-.controls,.chart-controls,.hm-controls,.pebg-controls,.cmp-controls,.cartera-controls{flex-shrink:0;background:var(--paper);border-bottom:1px solid var(--line);padding:10px 28px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.controls,.chart-controls,.hm-controls,.pebg-controls,.cmp-controls,.cartera-controls{flex-shrink:0;background:var(--paper);border-bottom:1px solid var(--line);padding:10px var(--side);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .ctrl-input{background:var(--surf);border:1px solid var(--line2);border-radius:6px;padding:7px 10px 7px 30px;font-size:13.5px;outline:none;width:230px;transition:border-color .15s}
 .ctrl-input::placeholder{color:var(--faint)}
 .ctrl-input:focus{border-color:var(--accent)}
@@ -84,7 +85,7 @@ select.ctrl-input{padding-left:10px;width:auto;cursor:pointer;appearance:none;ba
 .btn-ghost:hover,.btn-amber:hover{border-color:var(--ink2);filter:none}
 .cs{flex:1}
 .rtag{font-size:12.5px;color:var(--muted);white-space:nowrap}
-.flt-panel{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px 28px;display:none;gap:24px;align-items:flex-start;overflow-x:auto}
+.flt-panel{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:none;gap:24px;align-items:flex-start;overflow-x:auto}
 .flt-panel.open{display:flex}
 .flt-group{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
 .flt-label{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
@@ -97,7 +98,7 @@ select.ctrl-input{padding-left:10px;width:auto;cursor:pointer;appearance:none;ba
 .preset-row{display:flex;gap:4px;flex-wrap:wrap}
 .preset{background:var(--surf2);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:12px;color:var(--ink2);cursor:pointer}
 .preset:hover{border-color:var(--accent);color:var(--accent)}
-.prog-wrap{flex-shrink:0;background:var(--paper);padding:0 28px 10px;display:none}
+.prog-wrap{flex-shrink:0;background:var(--paper);padding:0 var(--side) 10px;display:none}
 .prog-track{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent);width:0%;transition:width .4s ease}
 .prog-msg{font-size:12.5px;color:var(--muted);margin-top:6px}
@@ -106,8 +107,8 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-stretch:90%}
 thead{position:sticky;top:0;z-index:20}
 thead tr{background:var(--surf2);box-shadow:inset 0 -1px 0 var(--line2)}
 th{color:var(--muted);font-size:12.5px;font-weight:600;padding:10px 12px;text-align:right;cursor:pointer;user-select:none;white-space:nowrap}
-th:first-child{padding-left:28px}
-th:last-child{padding-right:28px}
+th:first-child{padding-left:var(--side)}
+th:last-child{padding-right:var(--side)}
 th:hover{color:var(--ink)}
 th.active{color:var(--accent)}
 th:nth-child(-n+4){text-align:left}
@@ -116,8 +117,8 @@ th.active .sa{opacity:1}
 tbody tr{border-bottom:1px solid var(--line);cursor:pointer}
 tbody tr:hover{background:var(--accent-soft)}
 td{padding:8px 12px;text-align:right;color:var(--ink2);white-space:nowrap}
-td:first-child{padding-left:28px}
-td:last-child{padding-right:28px}
+td:first-child{padding-left:var(--side)}
+td:last-child{padding-right:var(--side)}
 td:nth-child(-n+4){text-align:left}
 .rk{color:var(--faint);font-size:12px;min-width:30px}
 .tk{font-weight:700;color:var(--ink);min-width:62px}
@@ -138,7 +139,7 @@ td:nth-child(-n+4){text-align:left}
 .hm-legend{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
 .hm-swatch{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle}
 .hm-hint{font-size:12.5px;color:var(--muted);margin-left:auto}
-#hmContainer{flex:1;overflow:hidden;position:relative;background:var(--paper)}
+#hmContainer{flex:1;overflow:hidden;position:relative;background:var(--paper);margin:10px var(--side) 14px}
 .hm-sector{position:absolute;box-sizing:border-box;border:2px solid var(--paper);overflow:hidden}
 .hm-sector-label{font-size:11.5px;font-weight:700;color:var(--ink2);padding:4px 6px;position:absolute;top:0;left:0;z-index:2;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .hm-cell{position:absolute;box-sizing:border-box;border:1px solid rgba(0,0,0,.16);cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .15s}
@@ -149,9 +150,9 @@ td:nth-child(-n+4){text-align:left}
 .chart-search:focus,.pebg-input:focus,.cmp-input:focus{border-color:var(--accent)}
 .chart-search::placeholder,.pebg-input::placeholder,.cmp-input::placeholder{text-transform:none;color:var(--faint);font-weight:400}
 .chart-hint{font-size:12.5px;color:var(--muted)}
-#tvContainer,#cmpTvContainer{flex:1;background:var(--surf)}
-.footer{flex-shrink:0;background:var(--surf);border-top:1px solid var(--line);padding:6px 28px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
-.cmp-price-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px 28px;display:flex;align-items:center}
+#tvContainer,#cmpTvContainer{flex:1;background:var(--surf);margin:14px var(--side);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.footer{flex-shrink:0;background:var(--surf);border-top:1px solid var(--line);padding:6px var(--side);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.cmp-price-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:center}
 .cmp-price-block{display:flex;flex-direction:column;gap:2px;padding:0 24px}
 .cmp-price-block:first-child{padding-left:0}
 .cmp-price-sep{width:1px;height:40px;background:var(--line)}
@@ -167,13 +168,13 @@ td:nth-child(-n+4){text-align:left}
 .pebg-period.active,.cmp-period.active{background:var(--surf);color:var(--ink);box-shadow:0 1px 0 var(--line2)}
 
 /* P/E histórico */
-.pebg-stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px 28px;display:flex;align-items:stretch;flex-wrap:wrap;row-gap:10px}
+.pebg-stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:stretch;flex-wrap:wrap;row-gap:10px}
 .pebg-stat-block{display:flex;flex-direction:column;gap:2px;padding:0 18px;border-left:1px solid var(--line)}
 .pebg-stat-block:first-child{padding-left:0;border-left:none}
 .pebg-stat-lbl{font-size:12px;color:var(--muted)}
 .pebg-stat-val{font-size:17px;font-weight:650;color:var(--ink);white-space:nowrap;font-stretch:92%}
 .pebg-stat-sub{font-size:11.5px;color:var(--faint)}
-#pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden}
+#pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden;margin:14px var(--side);border:1px solid var(--line);border-radius:10px;background:var(--chart-bg)}
 #pebgContainer{flex:1;position:relative;overflow:hidden;background:var(--chart-bg);min-width:0}
 .pebg-panel{width:270px;flex-shrink:0;background:var(--surf2);border-left:1px solid var(--line);padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column}
 .pebg-panel-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
@@ -196,9 +197,9 @@ td:nth-child(-n+4){text-align:left}
 .pebg-note{font-size:12.5px;color:var(--muted)}
 
 /* resumen */
-.ov-clock-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:10px 28px;display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink2)}
+.ov-clock-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:10px var(--side);display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink2)}
 .ov-pipe{color:var(--line2)}
-.ov-body{flex:1;overflow-y:auto;display:flex;gap:16px;padding:18px 28px;min-height:0}
+.ov-body{flex:1;overflow-y:auto;display:flex;gap:18px;padding:20px var(--side);min-height:0}
 .ov-col{display:flex;flex-direction:column;gap:16px;flex:1;min-width:0}
 .ov-col-wide{flex:1.05}.ov-col-mid{flex:1.2}.ov-col-news{flex:.95}
 .ov-card{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:14px 16px;flex-shrink:0;overflow-x:auto}
@@ -236,20 +237,43 @@ td:nth-child(-n+4){text-align:left}
 .ov-meeting{margin-bottom:14px}
 .ov-meeting-date{font-size:13px;font-weight:650;color:var(--ink);margin-bottom:6px}
 .ov-prob-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.ov-prob-label{font-size:12.5px;color:var(--ink2);width:80px;flex-shrink:0}
+.ov-prob-label{font-size:12.5px;color:var(--ink2);width:150px;flex-shrink:0;white-space:nowrap}
+.ov-prob-rng{color:var(--faint);font-size:11.5px;margin-left:4px}
+.ov-prob-zero{color:var(--faint)!important;font-weight:500!important}
 .ov-prob-bar-wrap{flex:1;background:var(--sunk);border-radius:3px;height:8px;overflow:hidden}
 .ov-prob-bar{height:100%;border-radius:3px;transition:width .4s ease}
 .ov-prob-pct{font-size:12.5px;font-weight:650;color:var(--ink);width:40px;text-align:right;flex-shrink:0}
 .ov-no-fed{font-size:13px;color:var(--muted);padding:8px 0}
-.ov-impl{font-size:12px;color:var(--muted);margin-top:3px}
+.ov-impl{font-size:12px;color:var(--muted);margin-top:4px}
+.ov-tbl tbody tr.ov-click{cursor:pointer}
+.ov-tbl tbody tr.ov-click:hover td{background:var(--accent-soft)}
+.ov-tbl tbody tr.ov-click td:first-child,.ov-link{color:var(--accent)}
+.ov-link{cursor:pointer;font-weight:650;text-decoration:none}
+.ov-link:hover,.ov-tbl tbody tr.ov-click:hover td:first-child{text-decoration:underline}
+.ov-trow.ov-click{cursor:pointer}
+.ov-trow.ov-click:hover{background:var(--accent-soft)}
+.ov-trow.ov-click .ov-tmat{color:var(--accent)}
+.ov-dolar-tbl{font-size:14px;font-stretch:95%}
+.ov-dolar-tbl tbody td{padding:7px 4px}
+.ov-dolar-tbl tbody td:nth-child(3){font-weight:650;color:var(--ink)}
+.ov-dolar-tbl th:nth-child(2),.ov-dolar-tbl td.ov-plazo{text-align:left!important;color:var(--muted)}
+.ov-src{color:var(--faint);font-weight:400;font-size:12px}
+.ov-dolar-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.ov-ggal{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.ov-ggal-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.ov-ggal-name{font-size:14px}
+.ov-ggal-px{font-weight:650;color:var(--ink);font-size:15px}
+.ov-ggal-when{color:var(--muted);font-size:12px}
+.ov-ggal-box{height:170px;position:relative}
+#ggalCanvas{display:block;touch-action:none}
 
 /* calendario */
-.cal-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cal-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .cal-title{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap}
 .cal-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-left:auto;align-items:center}
 .cal-leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);white-space:nowrap}
 .cal-dot{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0}
-.cal-body{flex:1;overflow-y:auto;padding:20px 28px;min-height:0}
+.cal-body{flex:1;overflow-y:auto;padding:20px var(--side);min-height:0}
 .cal-month-label{font-size:24px;font-weight:700;color:var(--ink);margin-bottom:14px;font-stretch:112%;letter-spacing:-.01em}
 .cal-pending{font-size:12.5px;color:var(--muted);margin:-8px 0 14px}
 .cal-dow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px}
@@ -276,9 +300,9 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .cartera-table th:hover{color:var(--ink)}
 .cartera-table td{padding:9px 12px;font-size:13.5px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--ink2)}
 .cartera-table tr:hover td{background:var(--accent-soft)}
-.cartera-table td:first-child,.cartera-table th:first-child{padding-left:28px}
+.cartera-table td:first-child,.cartera-table th:first-child{padding-left:var(--side)}
 .cartera-table td:nth-child(3),.cartera-table th:nth-child(3){text-align:left}
-.cartera-table td:last-child,.cartera-table th:last-child{padding-right:28px}
+.cartera-table td:last-child,.cartera-table th:last-child{padding-right:var(--side)}
 .ct-ticker{font-weight:700;color:var(--ink)}
 .ct-signal{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:650}
 .ct-barato{background:var(--up-soft);color:var(--up)}
@@ -296,32 +320,30 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .logo-text,.logo-sub,.hdr-time,.tab-spacer{display:none}
   .tab-logo{margin-right:6px}
   .escudo{width:24px;height:24px}
-  .tab-bar{padding:0 10px;min-height:44px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tab-bar{padding:0 var(--side);min-height:44px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .tab-bar::-webkit-scrollbar{display:none}
   .tab{padding:0 9px;font-size:13px}
   .theme-btn{padding:4px 8px;font-size:12px;margin-left:6px}
-  .stats-bar,.pebg-stats-bar{padding:10px 14px!important;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .stats-bar,.pebg-stats-bar{padding:10px var(--side)!important;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   .stat-val{font-size:17px}
   .pebg-stat-block{flex-shrink:0}
   .pebg-stat-val{font-size:15px}
-  .controls,.chart-controls,.hm-controls,.pebg-controls,.cmp-controls,.cartera-controls{padding:8px 14px!important;gap:6px}
+  .controls,.chart-controls,.hm-controls,.pebg-controls,.cmp-controls,.cartera-controls{padding:8px var(--side)!important;gap:6px}
   .cs{display:none}
   .ctrl-input{width:100%}
-  th:first-child,td:first-child,.cartera-table td:first-child,.cartera-table th:first-child{padding-left:14px}
-  th:last-child,td:last-child,.cartera-table td:last-child,.cartera-table th:last-child{padding-right:14px}
   .view.active{display:flex;flex-direction:column;overflow:visible}
   .table-wrap,.cartera-wrap{flex:1;min-height:0;overflow:auto!important;-webkit-overflow-scrolling:touch}
   table{min-width:900px}
-  .ov-body{flex-direction:column;padding:12px 14px}
+  .ov-body{flex-direction:column;padding:12px var(--side)}
   .ov-col-wide,.ov-col-mid,.ov-col-news{flex:none;width:100%}
   #pebgOuter{flex-direction:column}
   .pebg-panel{width:100%;border-left:none;border-top:1px solid var(--line);max-height:240px}
   .pebg-legend{display:none!important}
-  .cmp-price-bar{flex-wrap:wrap;padding:8px 14px;gap:8px}
+  .cmp-price-bar{flex-wrap:wrap;padding:8px var(--side);gap:8px}
   .cmp-price-sep{display:none}
   .cmp-price-block{padding:0 8px}
-  .cal-bar{padding:8px 14px}.cal-body{padding:12px 14px}.cal-cell{min-height:72px;padding:6px}.cal-daynum{font-size:13px}.cal-chip{font-size:10.5px;padding:3px 5px}
-  .footer{padding:4px 14px;font-size:11px}
+  .cal-bar{padding:8px var(--side)}.cal-body{padding:12px var(--side)}.cal-cell{min-height:72px;padding:6px}.cal-daynum{font-size:13px}.cal-chip{font-size:10.5px;padding:3px 5px}
+  .footer{padding:4px var(--side);font-size:11px}
 }
 @media (max-width:480px){
   .tab{font-size:12px;padding:0 7px}
@@ -390,21 +412,25 @@ function checkPwd(){
   <div class="ov-body">
     <!-- Col 1: SPY chart + Local market -->
     <div class="ov-col ov-col-wide">
-      <div class="ov-card" style="flex:1.2;display:flex;flex-direction:column;min-height:200px">
+      <div class="ov-card" style="flex:1;display:flex;flex-direction:column;min-height:260px">
         <div class="ov-card-title">SPY <span>TradingView, tiempo real</span></div>
-        <div id="ovSpChart" style="flex:1;min-height:160px"></div>
+        <div id="ovSpChart" style="flex:1;min-height:200px"></div>
       </div>
-      <div class="ov-card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="ov-card">
         <div class="ov-card-title">Mercado local</div>
-        <div class="ov-local-grid" style="flex:1;min-height:0;align-items:stretch">
-          <div class="ov-local-dolar">
-            <div class="ov-local-title">Dólar</div>
-            <div id="ovDolar"><div class="ov-loading">Cargando...</div></div>
+        <div id="ovDolar"><div class="ov-loading">Cargando...</div></div>
+        <div class="ov-ggal">
+          <div class="ov-ggal-top">
+            <a class="ov-link ov-ggal-name" onclick="openChart('NASDAQ:GGAL','Grupo Galicia ADR')">GGAL ADR</a>
+            <span id="ggalHead"></span>
+            <div class="cs"></div>
+            <div class="pebg-period-btns" id="ggalRangeBtns">
+              <span class="pebg-period active" data-r="1D" onclick="loadGgal('1D')">1D</span>
+              <span class="pebg-period" data-r="1M" onclick="loadGgal('1M')">1M</span>
+              <span class="pebg-period" data-r="1A" onclick="loadGgal('1A')">1A</span>
+            </div>
           </div>
-          <div class="ov-local-chart" style="display:flex;flex-direction:column;min-height:0">
-            <div class="ov-local-title">GGAL ADR <span style="color:var(--faint)">en USD</span></div>
-            <div id="ovGgalChart" style="flex:1;min-height:130px"></div>
-          </div>
+          <div class="ov-ggal-box"><canvas id="ggalCanvas"></canvas></div>
         </div>
       </div>
     </div>
@@ -812,6 +838,7 @@ function toggleTheme() {
                    document.getElementById('cmpB').value.trim().toUpperCase() || 'META', cmpCurrentRange);
   if (document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap();
   if (pebgData) renderPebg(pebgData);
+  if (ggalCache[ggalRange]) drawGgal();
 }
 
 const SECTOR_MAP = {
@@ -1065,7 +1092,8 @@ function initChart(sym) {
   currentSym = sym;
   document.getElementById('chartTicker').value = sym;
   const row = rows.find(r=>r.symbol===sym);
-  document.getElementById('chartLabel').textContent = row ? row.name+' ('+sym+')' : sym;
+  const nm = row ? row.name : chartNames[sym];
+  document.getElementById('chartLabel').textContent = nm ? nm+' ('+sym+')' : sym;
   const c = document.getElementById('tvContainer');
   c.innerHTML = '';
   const d = document.createElement('div');
@@ -1087,7 +1115,8 @@ function initChart(sym) {
 }
 
 function loadChart() { const sym=document.getElementById('chartTicker').value.trim().toUpperCase(); if(sym) initChart(sym); }
-function openChart(sym, name) { currentSym=sym; document.getElementById('chartLabel').textContent=name+' ('+sym+')'; switchTab('chart'); }
+const chartNames = {};
+function openChart(sym, name) { currentSym=sym; if(name) chartNames[sym]=name; switchTab('chart'); }
 
 async function fS(syms) { try{ const r=await fetch(BASE_URL+'/api/spark?symbols='+syms.join(',')); return (await r.json()).spark?.result||[]; }catch(e){ return []; } }
 
@@ -1262,10 +1291,20 @@ const OV_LABEL = {
   'ES=F':'S&P Fut', 'NQ=F':'NDQ Fut', 'YM=F':'Dow Fut', 'RTY=F':'Russ. Fut',
   '^GSPC':'S&P 500','^IXIC':'Nasdaq', '^DJI':'Dow Jones','^RUT':'Russell 2K',
   '^VIX':'VIX',
-  '^STOXX50E':'Euro Stoxx','^GDAXI':'DAX','^FTSE':'FTSE 100',
+  '^STOXX50E':'Euro Stoxx','^GDAXI':'DAX','DX-Y.NYB':'DXY (dólar)',
   '^N225':'Nikkei','^HSI':'Hang Seng','^MERV':'Merval',
   'GC=F':'Oro','SI=F':'Plata','CL=F':'WTI','BZ=F':'Brent','HG=F':'Cobre','NG=F':'Gas Nat.',
 };
+// símbolo de TradingView para abrir cada fila en la pestaña Gráfico
+const OV_TV = {
+  '^GSPC':'SP:SPX','^IXIC':'NASDAQ:IXIC','^DJI':'DJ:DJI','^RUT':'TVC:RUT','^VIX':'TVC:VIX','DX-Y.NYB':'TVC:DXY',
+  'ES=F':'CME_MINI:ES1!','NQ=F':'CME_MINI:NQ1!','YM=F':'CBOT_MINI:YM1!','RTY=F':'CME_MINI:RTY1!',
+  '^STOXX50E':'TVC:SX5E','^GDAXI':'XETR:DAX','^N225':'TVC:NI225','^HSI':'TVC:HSI','^MERV':'BCBA:IMV',
+  'GC=F':'TVC:GOLD','SI=F':'TVC:SILVER','CL=F':'TVC:USOIL','BZ=F':'TVC:UKOIL','HG=F':'COMEX:HG1!','NG=F':'NYMEX:NG1!',
+  '^IRX':'TVC:US03MY','^FVX':'TVC:US05Y','^TNX':'TVC:US10Y','^TYX':'TVC:US30Y',
+};
+const ovOpen = (sym, name) => OV_TV[sym] ? ' onclick="openChart(\'' + OV_TV[sym] + '\',\'' + String(name).replace(/'/g, '') + '\')" title="Ver gráfico"' : '';
+const ovClick = (sym, name) => OV_TV[sym] ? ' class="ov-click"' + ovOpen(sym, name) : '';
 
 let ovLoaded = false, clockTimer = null;
 let ovSparkMap = {};
@@ -1306,13 +1345,14 @@ async function loadOverview() {
     // Parallel: overview data + dolar + spark for overview symbols
     const OV_SPARK_SYMS = [
       '^GSPC','^IXIC','^DJI','^RUT','ES=F','NQ=F','YM=F','RTY=F','^VIX',
-      '^STOXX50E','^GDAXI','^FTSE','^N225','^HSI','^MERV',
+      '^STOXX50E','^GDAXI','^N225','^HSI','^MERV','DX-Y.NYB',
       'GC=F','SI=F','CL=F','BZ=F','HG=F','NG=F'
     ];
+    loadOvDolar();
+    loadGgal();
 
-    const [ovRes, dolarRes, sparkRes] = await Promise.allSettled([
+    const [ovRes, sparkRes] = await Promise.allSettled([
       fetch(BASE_URL+'/api/overview').then(r=>r.json()),
-      fetch('https://dolarapi.com/v1/dolares').then(r=>r.json()),
       fetch(BASE_URL+'/api/spark?symbols='+OV_SPARK_SYMS.join(',')).then(r=>r.json()),
     ]);
 
@@ -1337,8 +1377,6 @@ async function loadOverview() {
     renderOvTreas(qmap);
     renderOvFed(qmap, d.zqTickers||[], d.effr||null, d.fedTarget||null);
 
-    if(dolarRes.status==='fulfilled') renderOvDolar(dolarRes.value);
-    else document.getElementById('ovDolar').innerHTML='<div class="ov-loading">Sin datos</div>';
 
   } catch(e) {
     console.error('overview error:', e);
@@ -1367,27 +1405,6 @@ function initOvCharts() {
     range: '1D',
     overrides: tvOverrides()
   });
-  // GGAL — use setTimeout so ID timestamps differ
-  setTimeout(() => {
-    const ggC = document.getElementById('ovGgalChart');
-    if(!ggC) return;
-    ggC.innerHTML = '';
-    const ggD = document.createElement('div');
-    ggD.id = 'ov_ggal_chart';
-    ggD.style.height = '100%';
-    ggC.appendChild(ggD);
-    new TradingView.widget({
-      container_id: 'ov_ggal_chart', width:'100%', height:'100%',
-      symbol: 'NASDAQ:GGAL', interval: '5',
-      timezone: 'America/New_York',
-      theme: tvTheme(), style: '1', locale: 'es',
-      hide_top_toolbar: true, hide_side_toolbar: true,
-      allow_symbol_change: false,
-      save_image: false, enable_publishing: false,
-      range: '1D',
-      overrides: tvOverrides()
-    });
-  }, 300);
 }
 
 // Return calculations using ovSparkMap
@@ -1429,6 +1446,7 @@ function ovTableBuild(id, syms, qmap) {
   let rowData = syms.map(s => {
     const q = qmap[s];
     return {
+      s,
       sym: OV_LABEL[s] || s.replace('^','').replace('=F',''),
       price: q ? q.regularMarketPrice : null,
       d1: q ? q.regularMarketChangePercent : null,
@@ -1455,7 +1473,7 @@ function ovTableBuild(id, syms, qmap) {
     const cls=r.d1>0?'pp':r.d1<0?'pn':'';
     const d1h=r.d1!=null?'<span class="'+cls+'">'+(r.d1>=0?'+':'')+r.d1.toFixed(2)+'%</span>':'<span style="color:var(--muted)">—</span>';
     const px=r.price!=null?(r.price>=10000?r.price.toLocaleString('en-US',{maximumFractionDigits:0}):r.price>=100?r.price.toFixed(2):r.price.toFixed(3)):'—';
-    return '<tr><td>'+r.sym+'</td><td>'+px+'</td><td class="ov-td-1d">'+d1h+'</td><td>'+fmtRet(r.d5)+'</td><td>'+fmtRet(r.d1m)+'</td><td>'+fmtRet(r.ytd)+'</td><td>'+fmtRet(r.d1y)+'</td></tr>';
+    return '<tr'+ovClick(r.s, r.sym)+'><td>'+r.sym+'</td><td>'+px+'</td><td class="ov-td-1d">'+d1h+'</td><td>'+fmtRet(r.d5)+'</td><td>'+fmtRet(r.d1m)+'</td><td>'+fmtRet(r.ytd)+'</td><td>'+fmtRet(r.d1y)+'</td></tr>';
   }).join('');
   return '<table class="ov-tbl" id="'+id+'">'+hdr+'<tbody>'+rows+'</tbody></table>';
 }
@@ -1501,7 +1519,7 @@ function renderOvFutures(q) {
     const fc  = fq&&fq.regularMarketChangePercent!=null;
     const fcc = fq&&fq.regularMarketChangePercent>0?'pp':fq&&fq.regularMarketChangePercent<0?'pn':'';
     const fpct = fc?'<span class="'+fcc+'">'+(fq.regularMarketChangePercent>=0?'+':'')+fq.regularMarketChangePercent.toFixed(2)+'%</span>':'—';
-    return '<tr>'
+    return '<tr'+ovClick(p.idx, p.name)+'>'
       +'<td>'+p.name+'</td>'
       +'<td>'+fmtPrice(iq)+'</td>'
       +'<td class="ov-td-1d">'+d1+'</td>'
@@ -1514,19 +1532,25 @@ function renderOvFutures(q) {
       +'</tr>';
   }).join('');
 
-  const vixRow = '<tr><td>VIX</td><td>'+(vixQ?vixQ.regularMarketPrice.toFixed(2):'—')+'</td>'
+  const extraRow = (sym, name, dec) => { const xq = q[sym]; const pc = xq && xq.regularMarketChangePercent;
+    return '<tr'+ovClick(sym, name)+'><td>'+name+'</td><td>'+(xq?xq.regularMarketPrice.toFixed(dec):'—')+'</td>'
+      +'<td class="ov-td-1d">'+(pc!=null?'<span class="'+(pc>0?'pp':pc<0?'pn':'')+'">'+(pc>=0?'+':'')+pc.toFixed(2)+'%</span>':'—')+'</td>'
+      +'<td>'+fmtRet(ovRet(sym,5))+'</td><td>'+fmtRet(ovRet(sym,21))+'</td><td>'+fmtRet(ovRetYTD(sym))+'</td><td>'+fmtRet(ovRet(sym,252))+'</td>'
+      +'<td style="border-left:1px solid var(--border2)">—</td><td>—</td></tr>'; };
+  const dxyRow = extraRow('DX-Y.NYB', 'DXY (dólar)', 2);
+  const vixRow = '<tr'+ovClick('^VIX','VIX')+'><td>VIX</td><td>'+(vixQ?vixQ.regularMarketPrice.toFixed(2):'—')+'</td>'
     +'<td class="ov-td-1d">'+(vixQ&&vixQ.regularMarketChangePercent!=null?'<span class="'+(vixQ.regularMarketChangePercent>0?'pp':'pn')+'">'+(vixQ.regularMarketChangePercent>=0?'+':'')+vixQ.regularMarketChangePercent.toFixed(2)+'%</span>':'—')+'</td>'
     +'<td>'+fmtRet(ovRet('^VIX',5))+'</td><td>'+fmtRet(ovRet('^VIX',21))+'</td><td>'+fmtRet(ovRetYTD('^VIX'))+'</td><td>'+fmtRet(ovRet('^VIX',252))+'</td>'
     +'<td style="border-left:1px solid var(--border2)">—</td><td>—</td></tr>';
 
   document.getElementById('ovFutures').innerHTML =
-    '<table class="ov-tbl">'+hdr+'<tbody>'+rows+vixRow+'</tbody></table>';
+    '<table class="ov-tbl">'+hdr+'<tbody>'+rows+vixRow+dxyRow+'</tbody></table>';
   window._ovQmap = q;
 }
 
 
 function renderOvWorld(q) {
-  document.getElementById('ovWorld').innerHTML = ovTable('tbl-world',['^STOXX50E','^GDAXI','^FTSE','^N225','^HSI','^MERV'], q);
+  document.getElementById('ovWorld').innerHTML = ovTable('tbl-world',['^STOXX50E','^GDAXI','^N225','^HSI','^MERV'], q);
 }
 
 function renderOvComm(q) {
@@ -1543,7 +1567,7 @@ function renderOvTreas(q) {
     yields[b.sym]=y;
     const cls=chg>0?'pp':chg<0?'pn':'';
     const bp=chg!=null?(chg>=0?'+':'')+Math.round(chg*100)+' bp':'—';
-    html+='<div class="ov-trow"><span class="ov-tmat">'+b.label+'</span><span class="ov-tyield">'+y.toFixed(2)+'%</span><span class="ov-tchg '+cls+'">'+bp+'</span></div>';
+    html+='<div class="ov-trow ov-click"'+ovOpen(b.sym,'Treasury '+b.label)+'><span class="ov-tmat">'+b.label+'</span><span class="ov-tyield">'+y.toFixed(2)+'%</span><span class="ov-tchg '+cls+'">'+bp+'</span></div>';
   });
   if(yields['^TNX']&&yields['^IRX']){
     const spread=Math.round((yields['^TNX']-yields['^IRX'])*100);
@@ -1555,8 +1579,11 @@ function renderOvTreas(q) {
 
 function renderOvFed(qmap, zqTickers, effr, fedTarget) {
   // Método CME FedWatch con futuros ZQ (liquidan contra el promedio mensual de la EFFR).
-  // Si la reunión cae tarde en el mes y el mes siguiente no tiene reunión, se usa ese contrato:
-  // con pocos días a la tasa nueva, despejarla del contrato del mes multiplica el ruido.
+  // Tasa implícita de cada reunión: si cae tarde en el mes y el mes siguiente no tiene reunión, se usa
+  // ese contrato (despejar pocos días del contrato del mes multiplica el ruido).
+  // Probabilidades: árbol de FedWatch. En cada reunión el movimiento esperado se reparte entre los dos
+  // escalones de 25 bp vecinos y se acumula sobre las reuniones anteriores; lo que se muestra es la
+  // distribución del rango al cierre de cada reunión contra el rango actual.
   const el = document.getElementById('ovFed');
   const MC = 'FGHJKMNQUVXZ';
   const zq = (y, m) => {
@@ -1568,8 +1595,8 @@ function renderOvFed(qmap, zqTickers, effr, fedTarget) {
   const hi = (fedTarget && isFinite(fedTarget.hi)) ? fedTarget.hi : 4.00;
   const effrOk = effr != null && effr > 0 && effr < 15;
   const cur = effrOk ? +effr : (lo + hi) / 2;
-  let html = '<div class="ov-fed-rate">Rango: <b>' + lo.toFixed(2) + '–' + hi.toFixed(2) + '%</b>, EFFR: <b>' + cur.toFixed(2) + '%</b>'
-    + ' <span style="font-size:12px;color:var(--muted);">(' + (effrOk ? (fedTarget && fedTarget.date ? 'al ' + fedTarget.date.slice(8, 10) + '/' + fedTarget.date.slice(5, 7) : 'Fed NY') : 'estimada')
+  let html = '<div class="ov-fed-rate">Rango actual: <b>' + lo.toFixed(2) + '–' + hi.toFixed(2) + '%</b>, EFFR: <b>' + cur.toFixed(2) + '%</b>'
+    + ' <span style="color:var(--muted)">(' + (effrOk ? (fedTarget && fedTarget.date ? 'al ' + fedTarget.date.slice(8, 10) + '/' + fedTarget.date.slice(5, 7) : 'Fed NY') : 'estimada')
     + (fedTarget ? '' : ', rango sin actualizar') + ')</span></div>';
 
   const now = new Date();
@@ -1581,7 +1608,11 @@ function renderOvFed(qmap, zqTickers, effr, fedTarget) {
     return;
   }
 
+  const fmtBp = c => c === 0 ? 'Sin cambio' : (c > 0 ? '+' : '−') + Math.abs(c) + ' bp';
+  const rng = c => (lo + c / 100).toFixed(2) + '–' + (hi + c / 100).toFixed(2);
+  const barCol = c => c === 0 ? 'var(--faint)' : c < 0 ? (c <= -50 ? 'var(--up)' : 'color-mix(in srgb, var(--up) 62%, var(--surf))') : (c >= 50 ? 'var(--down)' : 'color-mix(in srgb, var(--down) 62%, var(--surf))');
   let before = cur, shown = 0;
+  let dist = new Map([[0, 1]]); // cambio acumulado (bp) contra el rango actual -> probabilidad
   for (let idx = 0; idx < upcoming.length; idx++) {
     const [y, m1, dd] = upcoming[idx].split('-').map(Number);
     const mo = m1 - 1, N = new Date(y, mo + 1, 0).getDate(), D = dd + 1; // D: primer día con la tasa nueva
@@ -1594,61 +1625,203 @@ function renderOvFed(qmap, zqTickers, effr, fedTarget) {
     else if (zThis != null && daysNew > 0) after = ((100 - zThis) * N - (D - 1) * before) / daysNew;
     else if (zNext != null) after = 100 - zNext;
 
+    // fecha de la decisión (segundo día de la reunión)
+    const fecha = dd + ' ' + MES_CORTO[mo].toLowerCase() + (y !== now.getFullYear() ? ' ' + y : '');
     html += '<div class="ov-meeting"><div class="ov-meeting-date">'
-      + (idx === 0 ? '<span style="color:var(--accent);font-weight:700">Próxima: </span>' : '')
-      + MES_CORTO[mo] + ' ' + (dd - 1) + '-' + dd + '</div>';
+      + (idx === 0 ? '<span style="color:var(--accent);font-weight:700">Próxima reunión: </span>' : '')
+      + fecha + '</div>';
     if (after == null || Math.abs(after - before) > 1) {
-      html += '<div style="font-size:12px;color:var(--muted)">' + (after == null ? 'Sin datos ZQ' : 'Dato ZQ no confiable') + '</div></div>';
+      html += '<div style="color:var(--muted)">' + (after == null ? 'Sin datos de futuros ZQ' : 'Dato de futuros ZQ no confiable') + '</div></div>';
       break; // sin esta reunión no se puede encadenar la siguiente
     }
-    const delta = after - before;
-    const k = Math.floor(delta / 0.25 + 1e-9);
-    const pHi = Math.min(1, Math.max(0, (delta - k * 0.25) / 0.25));
-    [{ bp: k * 25, p: 1 - pHi }, { bp: (k + 1) * 25, p: pHi }].forEach(o => {
-      const pct = Math.round(o.p * 100);
-      if (pct <= 0) return;
-      const bp = o.bp || 0;
-      const lbl = bp === 0 ? 'Sin cambio' : (bp > 0 ? '+' : '') + bp + ' bp';
-      const col = bp === 0 ? 'var(--faint)' : bp < 0 ? (bp <= -50 ? 'var(--up)' : 'color-mix(in srgb, var(--up) 62%, var(--surf))') : (bp >= 50 ? 'var(--down)' : 'color-mix(in srgb, var(--down) 62%, var(--surf))');
-      html += '<div class="ov-prob-row"><span class="ov-prob-label">' + lbl + '</span>'
-        + '<div class="ov-prob-bar-wrap"><div class="ov-prob-bar" style="width:' + pct + '%;background:' + col + '"></div></div>'
-        + '<span class="ov-prob-pct">' + pct + '%</span></div>';
+    const delta = (after - before) * 100;
+    const k = Math.floor(delta / 25 + 1e-9);
+    const pHi = Math.min(1, Math.max(0, (delta - k * 25) / 25));
+    const next = new Map();
+    const add = (c, p) => { if (p > 0) next.set(c, (next.get(c) || 0) + p); };
+    dist.forEach((p, c) => { add(c + k * 25, p * (1 - pHi)); add(c + (k + 1) * 25, p * pHi); });
+    dist = next;
+    // siempre baja de 25, sin cambio y suba de 25; además cualquier otro escenario con 1% o más
+    const keys = new Set([-25, 0, 25]);
+    dist.forEach((p, c) => { if (p >= 0.01) keys.add(c); });
+    [...keys].sort((a, b) => a - b).forEach(c => {
+      const pct = Math.round((dist.get(c) || 0) * 100);
+      html += '<div class="ov-prob-row"><span class="ov-prob-label">' + fmtBp(c) + ' <span class="ov-prob-rng">' + rng(c) + '</span></span>'
+        + '<div class="ov-prob-bar-wrap"><div class="ov-prob-bar" style="width:' + pct + '%;background:' + barCol(c) + '"></div></div>'
+        + '<span class="ov-prob-pct' + (pct ? '' : ' ov-prob-zero') + '">' + pct + '%</span></div>';
     });
     const vsHoy = (after - cur) * 100;
-    const colH = vsHoy < -5 ? 'var(--green)' : vsHoy > 5 ? 'var(--red)' : 'var(--muted)';
-    html += '<div style="font-size:12px;color:var(--muted);margin-top:3px">Impl.: ' + after.toFixed(2) + '% '
-      + '(<span style="color:' + colH + '">' + (vsHoy >= 0 ? '+' : '') + vsHoy.toFixed(0) + ' bp vs hoy</span>)</div></div>';
+    const colH = vsHoy < -5 ? 'var(--up)' : vsHoy > 5 ? 'var(--down)' : 'var(--muted)';
+    html += '<div class="ov-impl">EFFR implícita después de la reunión: ' + after.toFixed(2) + '% '
+      + '(<span style="color:' + colH + '">' + (vsHoy >= 0 ? '+' : '−') + Math.abs(vsHoy).toFixed(0) + ' bp vs hoy</span>)</div></div>';
     before = after; shown++;
   }
   if (!shown) {
-    html += '<div style="font-size:12.5px;line-height:1.7;padding:6px 0;color:var(--muted)">'
-      + '<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" '
+    html += '<div style="line-height:1.7;padding:6px 0;color:var(--muted)">'
+      + '<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener" '
       + 'style="color:var(--accent);font-weight:600">Ver CME FedWatch</a></div>';
   }
   el.innerHTML = html;
 }
 
-function renderOvDolar(data) {
-  // dolarapi.com: casa values include 'oficial','blue','bolsa'(MEP),'contadoconliqui'(CCL),'mayorista'
-  const TYPES = {
-    mayorista:'Mayorista', oficial:'Oficial', blue:'Blue',
-    bolsa:'MEP', contadoconliqui:'CCL'
-  };
-  const ORDER = ['mayorista','oficial','blue','bolsa','contadoconliqui'];
+// ── MERCADO LOCAL: dólar y GGAL ──────────────────────────
+const fmtArs = (v, dec) => '$' + v.toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const fmtVar = v => v == null || !isFinite(v) ? '<span class="na">—</span>'
+  : '<span class="' + (v > 0 ? 'pp' : v < 0 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%</span>';
+
+// cierre del día hábil anterior (ArgentinaDatos), buscando hacia atrás desde la fecha del dato vigente
+async function dolarPrevios(desde) {
+  const d = new Date(desde.getTime());
+  for (let i = 0; i < 7; i++) {
+    d.setDate(d.getDate() - 1);
+    const path = d.getFullYear() + '/' + calPad(d.getMonth() + 1) + '/' + calPad(d.getDate());
+    try {
+      const arr = await fetch('https://api.argentinadatos.com/v1/cotizaciones/dolares/' + path).then(r => r.ok ? r.json() : []);
+      if (Array.isArray(arr) && arr.length) { const m = {}; arr.forEach(x => { m[x.casa] = x; }); return m; }
+    } catch (e) {}
+  }
+  return {};
+}
+
+// MEP y CCL con AL30 en BYMA (datos abiertos, 20 min de demora): settlementType 1 = contado inmediato (T0), 2 = 24 h (T1)
+async function dolarBolsaByma() {
+  const r = await fetch('https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/public-bonds', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ excludeZeroPxAndQty: true, T2: true, T1: true, T0: true, page_number: 1 }),
+  });
+  const j = await r.json();
+  const px = {};
+  (j.data || []).forEach(x => { if (/^AL30[CD]?$/.test(x.symbol)) px[x.symbol + '|' + x.settlementType] = x; });
+  const last = x => x && (x.trade > 0 ? x.trade : x.closingPrice > 0 ? x.closingPrice : x.previousClosingPrice > 0 ? x.previousClosingPrice : null);
+  const prev = x => x && x.previousClosingPrice > 0 ? x.previousClosingPrice : null;
+  const out = {};
+  for (const [st, plazo] of [['1', 'T0'], ['2', 'T1']]) {
+    const ars = px['AL30|' + st], mep = px['AL30D|' + st], ccl = px['AL30C|' + st];
+    for (const [k, usd] of [['MEP', mep], ['CCL', ccl]]) {
+      const a = last(ars), u = last(usd), pa = prev(ars), pu = prev(usd);
+      if (a && u) out[k + plazo] = { v: a / u, prev: (pa && pu) ? pa / pu : null, hora: (ars.tradeHour || '').slice(0, 5) };
+    }
+  }
+  return out;
+}
+
+async function loadOvDolar() {
   const el = document.getElementById('ovDolar');
-  if(!Array.isArray(data)){el.innerHTML='<div class="ov-loading">Sin datos</div>';return;}
-  const rows = data
-    .filter(d=>TYPES[d.casa])
-    .sort((a,b)=>ORDER.indexOf(a.casa)-ORDER.indexOf(b.casa))
-    .map(d=>{
-      const note = d.casa==='mayorista'
-        ? '<span style="font-size:12px;color:var(--muted)"> (A3500)</span>' : '';
-      return '<div class="ov-dolar-row">'
-        +'<span class="ov-dolar-label">'+TYPES[d.casa]+note+'</span>'
-        +'<span class="ov-dolar-val">$'+Math.round(d.venta||d.compra||0)+'</span>'
-        +'</div>';
-    }).join('');
-  el.innerHTML = rows || '<div class="ov-loading">Sin datos de dolarapi.com</div>';
+  const [api, byma] = await Promise.allSettled([
+    fetch('https://dolarapi.com/v1/dolares').then(r => r.json()),
+    dolarBolsaByma(),
+  ]);
+  const cur = api.status === 'fulfilled' && Array.isArray(api.value) ? api.value : [];
+  const bm = byma.status === 'fulfilled' ? byma.value : {};
+  const ref = cur.length ? new Date(Math.max(...cur.map(x => Date.parse(x.fechaActualizacion) || 0))) : new Date();
+  const prev = await dolarPrevios(new Date(ref.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })));
+  const byCasa = {}; cur.forEach(x => { byCasa[x.casa] = x; });
+  const rows = [];
+  const fromApi = (casa, label, plazo, dec) => {
+    const x = byCasa[casa]; if (!x) return;
+    const v = x.venta || x.compra; const p = prev[casa]?.venta;
+    rows.push({ label, plazo, v, dec, var: p ? (v / p - 1) * 100 : null });
+  };
+  fromApi('mayorista', 'Mayorista <span class="ov-src">A3500</span>', '', 2);
+  fromApi('oficial', 'Oficial <span class="ov-src">BNA</span>', '', 0);
+  fromApi('blue', 'Blue', '', 0);
+  let bolsaNote = '';
+  if (bm.MEPT0 || bm.MEPT1) {
+    for (const k of ['MEPT0', 'MEPT1', 'CCLT0', 'CCLT1']) {
+      const x = bm[k]; if (!x) continue;
+      rows.push({ label: k.slice(0, 3), plazo: k.slice(3), v: x.v, dec: 1, var: x.prev ? (x.v / x.prev - 1) * 100 : null });
+    }
+    const hora = (bm.MEPT1 || bm.MEPT0).hora;
+    bolsaNote = 'MEP y CCL: AL30 en BYMA' + (hora ? ', último ' + hora : '') + ' (20 min de demora). T0: contado inmediato, T1: 24 h.';
+  } else {
+    fromApi('bolsa', 'MEP', '', 1);
+    fromApi('contadoconliqui', 'CCL', '', 1);
+    bolsaNote = 'MEP y CCL de dolarapi.com: BYMA no respondió y no se puede indicar el plazo.';
+  }
+  if (!rows.length) { el.innerHTML = '<div class="ov-loading">Sin datos del dólar</div>'; return; }
+  el.innerHTML = '<table class="ov-tbl ov-dolar-tbl"><thead><tr><th>Dólar</th><th>Plazo</th><th>Precio</th><th>1D</th></tr></thead><tbody>'
+    + rows.map(r => '<tr><td>' + r.label + '</td><td class="ov-plazo">' + (r.plazo || '') + '</td><td>' + fmtArs(r.v, r.dec) + '</td><td>' + fmtVar(r.var) + '</td></tr>').join('')
+    + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (ArgentinaDatos para oficial, mayorista y blue).</div>';
+}
+
+// GGAL: gráfico propio (1D cada 5 min, 1M y 1A diarios)
+let ggalRange = '1D';
+const ggalCache = {};
+async function loadGgal(range) {
+  if (range) ggalRange = range;
+  document.querySelectorAll('#ggalRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.r === ggalRange));
+  const q = { '1D': 'range=1d&interval=5m', '1M': 'range=1mo', '1A': 'range=1y' }[ggalRange];
+  try {
+    if (!ggalCache[ggalRange] || Date.now() - ggalCache[ggalRange].t > 120000) {
+      const j = await fetch(BASE_URL + '/api/spark?symbols=GGAL&' + q).then(r => r.json());
+      const s = j.spark?.result?.[0];
+      if (!s) throw new Error('sin datos');
+      const resp = s.response[0];
+      const pts = (resp.timestamp || []).map((t, i) => ({ t, c: resp.indicators.quote[0].close[i] })).filter(p => p.c != null);
+      ggalCache[ggalRange] = { t: Date.now(), pts, prevClose: resp.meta?.chartPreviousClose ?? null, quote: s.quote };
+    }
+    drawGgal();
+  } catch (e) {
+    document.getElementById('ggalHead').innerHTML = '<span class="na">GGAL sin datos</span>';
+  }
+}
+
+function drawGgal(hoverI) {
+  const d = ggalCache[ggalRange];
+  const cv = document.getElementById('ggalCanvas');
+  if (!d || !cv || !d.pts.length) return;
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1;
+  const W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const pts = d.pts, n = pts.length;
+  const base = ggalRange === '1D' ? (d.prevClose || pts[0].c) : pts[0].c;
+  const lastC = pts[n - 1].c, up = lastC >= base;
+  const col = cssVar(up ? '--up' : '--down'), grid = cssVar('--chart-grid'), text = cssVar('--chart-text');
+  const P = { l: 6, r: 52, t: 8, b: 20 };
+  const vals = pts.map(p => p.c).concat([base]);
+  let mn = Math.min(...vals), mx = Math.max(...vals); const pad = (mx - mn) * 0.08 || 0.5; mn -= pad; mx += pad;
+  const t0 = pts[0].t, t1 = pts[n - 1].t;
+  const xs = i => P.l + (n > 1 ? (pts[i].t - t0) / (t1 - t0 || 1) : 0.5) * (W - P.l - P.r);
+  const ys = v => P.t + (1 - (v - mn) / (mx - mn)) * (H - P.t - P.b);
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  [mn + pad, (mn + mx) / 2, mx - pad].forEach(v => {
+    const y = Math.round(ys(v)) + 0.5;
+    ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke();
+    ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText('$' + v.toFixed(2), W - P.r + 6, y + 4);
+  });
+  // eje x: horas en 1D, fechas en 1M/1A
+  ctx.textAlign = 'center'; ctx.fillStyle = text;
+  const fmtT = t => { const dt = new Date(t * 1000); return ggalRange === '1D'
+    ? dt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })
+    : ggalRange === '1M' ? dt.getDate() + ' ' + MES_CORTO[dt.getMonth()].toLowerCase() : MES_CORTO[dt.getMonth()] + ' ' + String(dt.getFullYear()).slice(2); };
+  [0, Math.floor((n - 1) / 2), n - 1].forEach((i, k) => { ctx.textAlign = k === 0 ? 'left' : k === 2 ? 'right' : 'center'; ctx.fillText(fmtT(pts[i].t), k === 2 ? W - P.r : xs(i), H - 5); });
+  // base: cierre anterior en 1D, primer dato en 1M/1A
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = text; ctx.globalAlpha = 0.6;
+  ctx.beginPath(); ctx.moveTo(P.l, ys(base)); ctx.lineTo(W - P.r, ys(base)); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  // área y línea
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(xs(i), ys(p.c)) : ctx.moveTo(xs(i), ys(p.c)));
+  ctx.lineTo(xs(n - 1), ys(base)); ctx.lineTo(xs(0), ys(base)); ctx.closePath();
+  ctx.fillStyle = rgbaOf(col, 0.1); ctx.fill();
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(xs(i), ys(p.c)) : ctx.moveTo(xs(i), ys(p.c)));
+  ctx.strokeStyle = col; ctx.lineWidth = 1.75; ctx.stroke();
+  const i = hoverI != null ? hoverI : n - 1;
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(xs(i), ys(pts[i].c), 3.5, 0, Math.PI * 2); ctx.fill();
+  if (hoverI != null) { ctx.strokeStyle = text; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(Math.round(xs(i)) + 0.5, P.t); ctx.lineTo(Math.round(xs(i)) + 0.5, H - P.b); ctx.stroke(); ctx.globalAlpha = 1; }
+  // encabezado: precio y variación (o el punto bajo el cursor)
+  const p = pts[i], ch = (p.c / base - 1) * 100;
+  const when = hoverI != null ? ' <span class="ov-ggal-when">' + (ggalRange === '1D' ? fmtT(p.t) + ' ET' : new Date(p.t * 1000).toLocaleDateString('es-AR')) + '</span>' : '';
+  const lbl = ggalRange === '1D' ? 'hoy' : ggalRange === '1M' ? '1 mes' : '1 año';
+  document.getElementById('ggalHead').innerHTML = '<span class="ov-ggal-px">US$ ' + p.c.toFixed(2) + '</span> ' + fmtVar(ch) + ' <span class="ov-ggal-when">' + lbl + '</span>' + when;
+  cv.onpointermove = e => {
+    const r = cv.getBoundingClientRect(), mx2 = e.clientX - r.left;
+    const tt = t0 + (mx2 - P.l) / (W - P.l - P.r) * (t1 - t0);
+    let best = 0; for (let k = 1; k < n; k++) if (Math.abs(pts[k].t - tt) < Math.abs(pts[best].t - tt)) best = k;
+    drawGgal(best);
+  };
+  cv.onpointerleave = () => drawGgal();
 }
 
 // ── HEATMAP ──────────────────────────────────────────────
@@ -2522,6 +2695,7 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
+window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active') && ggalCache[ggalRange]) drawGgal(); });
 
 updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); paintHmLegend();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (pebgData) renderPebg(pebgData); });

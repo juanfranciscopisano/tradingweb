@@ -491,18 +491,23 @@ app.get("/api/quote", async (req, res) => {
   }
 });
 
-const SPARK_RANGES = ["5d", "1mo", "3mo", "6mo", "ytd", "1y", "2y"];
+const SPARK_RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "ytd", "1y", "2y"];
+const SPARK_INTERVALS = ["1d", "5m", "15m", "30m", "60m"];
 app.get("/api/spark", async (req, res) => {
   const syms = parseSyms(req.query.symbols);
   if (!syms.length) return res.status(400).json({ error: "symbols required" });
-  const range = SPARK_RANGES.includes(req.query.range) ? req.query.range : "1y";
+  let range = SPARK_RANGES.includes(req.query.range) ? req.query.range : "1y";
+  const interval = SPARK_INTERVALS.includes(req.query.interval) ? req.query.interval : "1d";
+  if (interval !== "1d" && !["1d", "5d"].includes(range)) range = "1d"; // Yahoo da intradiario solo para ventanas cortas
   try {
-    const data = await cached(`spark:${range}:${syms.join(",")}`, 10 * 60 * 1000, async () => {
-      const m = await series(syms, range, "1d");
+    const ttl = interval === "1d" ? 10 * 60 * 1000 : 2 * 60 * 1000;
+    const data = await cached(`spark:${range}:${interval}:${syms.join(",")}`, ttl, async () => {
+      const m = await series(syms, range, interval);
       const result = syms.filter(s => m[s]).map(s => ({
         symbol: s,
         quote: quoteFrom(s, m[s]),
-        response: [{ timestamp: m[s].timestamp || [], indicators: { quote: [{ close: m[s].indicators?.quote?.[0]?.close || [] }] } }],
+        // chartPreviousClose: cierre previo a la ventana (con range=1d, el de ayer)
+        response: [{ meta: { chartPreviousClose: m[s].meta?.chartPreviousClose ?? null }, timestamp: m[s].timestamp || [], indicators: { quote: [{ close: m[s].indicators?.quote?.[0]?.close || [] }] } }],
       }));
       return { spark: { result, error: null } };
     }, d => d.spark.result.length > 0);
@@ -526,7 +531,7 @@ function zqTickers(n = 9) {
 
 const OV_SYMBOLS = [
   "^GSPC", "^IXIC", "^DJI", "^RUT", "ES=F", "NQ=F", "YM=F", "RTY=F", "^VIX",
-  "^STOXX50E", "^GDAXI", "^FTSE", "^N225", "^HSI", "^MERV",
+  "^STOXX50E", "^GDAXI", "^N225", "^HSI", "^MERV", "DX-Y.NYB",
   "GC=F", "CL=F", "BZ=F", "SI=F", "HG=F", "NG=F",
   "^IRX", "^FVX", "^TNX", "^TYX",
 ];
