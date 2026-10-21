@@ -351,6 +351,10 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .arg-col-3 > .ov-card{flex:1;min-width:0}
   .arg-charts{grid-template-columns:minmax(0,1fr)}
 }
+@media (max-width:960px){
+  .arg-grid{grid-template-columns:minmax(0,1fr)}
+  .arg-col-3{flex-direction:column;align-items:stretch}
+}
 @media (max-width:1180px) and (min-width:769px){
   .ov-body{flex-wrap:wrap;align-content:flex-start}
   .ov-col-wide,.ov-col-mid{flex:1 1 calc(50% - 9px)}
@@ -379,8 +383,6 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .ov-body{flex-direction:column;padding:12px var(--side)}
   .ov-col-wide,.ov-col-mid,.ov-col-news{flex:none;width:100%}
   .arg-body{padding:12px var(--side);gap:12px}
-  .arg-grid{grid-template-columns:minmax(0,1fr)}
-  .arg-col-3{flex-direction:column;align-items:stretch}
   .arg-chart-box{height:240px}
   #pebgOuter{flex-direction:column}
   .pebg-panel{width:100%;border-left:none;border-top:1px solid var(--line);max-height:240px}
@@ -3119,7 +3121,7 @@ function drawCauCurve(hoverI) {
   const ys = v => P.t + (1 - (v - mn) / (mx - mn)) * (H - P.t - P.b);
   const grid = cssVar('--chart-grid'), text = cssVar('--chart-text'), acc = cssVar('--accent');
   ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
-  niceTicks(mn, mx, 3).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'right'; ctx.fillText(numAR(v, 0, 1) + '%', P.l - 5, y + 4); });
+  niceTicks(mn, mx, 4).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'right'; ctx.fillText(numAR(v, 0, 1) + '%', P.l - 5, y + 4); });
   ctx.textAlign = 'center';
   [1, 7, 14, 30].filter(dd => dd <= dmax).forEach(dd => ctx.fillText(dd + 'd', xs(dd), H - 6));
   const line = (key, col, dash) => { ctx.strokeStyle = col; ctx.setLineDash(dash); ctx.lineWidth = 1.75; ctx.beginPath(); let st = false; pts.forEach(p => { if (p[key] == null) return; const x = xs(p.dias), y = ys(p[key]); st ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st = true; }); ctx.stroke(); ctx.setLineDash([]); };
