@@ -193,6 +193,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-tool-txt{font-size:12.5px;font-weight:600}
 .pebg-tool:hover:not(:disabled){border-color:var(--ink2)}
 .pebg-tool:disabled{color:var(--faint);cursor:default}
+.pebg-tool[aria-pressed="false"]{color:var(--faint)}
 .pebg-tool:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pebg-tooltip{position:absolute;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-size:12.5px;pointer-events:none;display:none;z-index:100;min-width:214px;box-shadow:0 6px 24px rgba(20,30,50,.14)}
 .pebg-tooltip-date{color:var(--muted);font-size:12px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
@@ -883,6 +884,7 @@ function checkPwd(){
         <button type="button" class="pebg-tool" onclick="pebgZoomBy(1 / 1.5)" aria-label="Acercar" title="Acercar">+</button>
         <button type="button" class="pebg-tool" onclick="pebgZoomBy(1.5)" aria-label="Alejar" title="Alejar">−</button>
         <button type="button" class="pebg-tool pebg-tool-txt" id="pebgReset" onclick="resetPebgZoom()" disabled>Restablecer</button>
+        <button type="button" class="pebg-tool pebg-tool-txt" id="pebgLegBtn" onclick="togglePebgLegend()" aria-pressed="true" title="Mostrar u ocultar la leyenda">Leyenda</button>
       </div>
       <div class="pebg-tooltip" id="pebgTooltip">
         <div class="pebg-tooltip-date" id="pebgTipDate"></div>
@@ -2861,6 +2863,14 @@ let pebgRaf = 0;
 let pebgZoom = null, pebgZoomKey = '', pebgGeom = null, pebgDrag = null, pebgPinch = null;
 const pebgPtr = new Map();
 let pebgScale = 'lin';
+let pebgLegendOn = true;
+try { if (localStorage.getItem('pebgLegend') === 'off') pebgLegendOn = false; } catch (e) {}
+function togglePebgLegend() {
+  pebgLegendOn = !pebgLegendOn;
+  try { localStorage.setItem('pebgLegend', pebgLegendOn ? 'on' : 'off'); } catch (e) {}
+  const b = document.getElementById('pebgLegBtn'); if (b) b.setAttribute('aria-pressed', pebgLegendOn);
+  document.getElementById('pebgLegend').style.display = pebgLegendOn ? 'flex' : 'none';
+}
 try { if (localStorage.getItem('pebgScale') === 'log') pebgScale = 'log'; } catch (e) {}
 
 function syncPebgScaleBtns() {
@@ -2967,6 +2977,7 @@ function drawPebgChart(hoverT) {
   const canvas = document.getElementById('pebgCanvas');
   bindPebgCanvas(canvas);
   syncPebgScaleBtns();
+  { const lb = document.getElementById('pebgLegBtn'); if (lb) lb.setAttribute('aria-pressed', pebgLegendOn); }
   const dpr = window.devicePixelRatio || 1;
   const W = container.clientWidth, H = container.clientHeight;
   if (!W || !H) return;
@@ -3010,21 +3021,22 @@ function drawPebgChart(hoverT) {
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
   const PAD = { top: 46, right: 78, bottom: 30, left: 62 };
   const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom;
+  // eje vertical: manda la línea principal, que se ve entera (en lineal se ignora el 0,5% más alto, picos de
+  // EPS casi cero). Las bandas pueden ampliar el eje hasta un 60% del rango de la línea (en log, el doble o la
+  // mitad); lo que pasa de ahí se corta, para que una banda que se dispara no aplaste el gráfico.
+  const wantLog = pebgScale === 'log';
   const lineVals = lineVis.map(yOf);
-  const vals = lineVals.slice();
-  series.filter(visible).forEach(p => { for (let b = 0; b < 5; b++) { const v = bandOf(p, b); if (v != null && v > 0) vals.push(v); } });
-  let yMin = Math.min(...vals), yMax = Math.max(...vals);
-  if (mv) {
-    // el múltiplo se dispara cuando el EPS está cerca de cero: el eje se corta en 2,5 veces la mediana de lo visible
-    const med = lineVals.slice().sort((a, b) => a - b)[Math.floor(lineVals.length / 2)];
-    yMax = Math.min(yMax, med * 2.5);
-  } else {
-    // el PEG puede proyectar bandas lejanas: el eje se limita a 4 veces el rango del precio
-    const pMin = Math.min(...lineVals), pMax = Math.max(...lineVals);
-    yMin = Math.max(yMin, pMin / 4); yMax = Math.min(yMax, pMax * 4);
+  const sortedL = lineVals.slice().sort((a, b) => a - b);
+  let yMin = sortedL[0], yMax = wantLog ? sortedL[sortedL.length - 1] : sortedL[Math.floor(0.995 * (sortedL.length - 1))];
+  const lineRange = [yMin, yMax];
+  let bMin = Infinity, bMax = -Infinity;
+  series.forEach(p => { if (!visible(p)) return; for (let b = 0; b < 5; b++) { const v = bandOf(p, b); if (v != null && v > 0) { if (v < bMin) bMin = v; if (v > bMax) bMax = v; } } });
+  if (isFinite(bMin)) {
+    if (wantLog) { yMin = Math.max(Math.min(yMin, bMin), lineRange[0] / 2); yMax = Math.min(Math.max(yMax, bMax), lineRange[1] * 2); }
+    else { const r = lineRange[1] - lineRange[0]; yMin = Math.max(Math.min(yMin, bMin), lineRange[0] - 0.6 * r); yMax = Math.min(Math.max(yMax, bMax), lineRange[1] + 0.6 * r); }
   }
   if (!(yMax > yMin)) { yMax = yMin * 1.05 + 1e-6; yMin *= 0.95; }
-  const useLog = pebgScale === 'log' && yMin > 0;
+  const useLog = wantLog && yMin > 0;
   if (useLog) { yMin *= 0.9; yMax *= 1.08; } else { const r = yMax - yMin; yMin = Math.max(0, yMin - r * 0.06); yMax += r * 0.06; }
   const ty = v => useLog ? Math.log(v) : v;
   const l0 = ty(yMin), l1 = ty(yMax);
@@ -3045,7 +3057,8 @@ function drawPebgChart(hoverT) {
     const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= raw);
     for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) ticks.push(+v.toFixed(10));
   }
-  const money = mv ? (v => peg ? String(+v.toFixed(2)) : String(+v.toFixed(1)) + 'x')
+  const num = v => v >= 10 ? v.toFixed(0) : v >= 1 ? String(+v.toFixed(1)) : String(+v.toFixed(2));
+  const money = mv ? (v => num(v) + (peg ? '' : 'x'))
     : (v => '$' + (Math.abs(v - Math.round(v)) < 1e-9 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)));
   ctx.save();
   ctx.beginPath(); ctx.rect(0, PAD.top - 1, W, cH + 2); ctx.clip();
@@ -3162,11 +3175,11 @@ function drawPebgChart(hoverT) {
       + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}${trim ? ', recalculados por trimestre' : ''}</div>`
       + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: crecimiento menor a 3% o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
-    leg.style.display = 'flex';
+    leg.style.display = pebgLegendOn ? 'flex' : 'none';
   }
 
   pebgGeom = {
-    cW,
+    cW, yRange: [yMin, yMax], lineRange,
     tAt: clientX => t0 + (clientX - rectOf().left - PAD.left) / cW * (t1 - t0),
     hideTip: () => { tooltip.style.display = 'none'; },
     leave: () => { tooltip.style.display = 'none'; pebgRedraw(); },
