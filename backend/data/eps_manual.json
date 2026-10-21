@@ -1,0 +1,508 @@
+{
+ "_leeme": "EPS trimestral cargado a mano para tickers que EDGAR no cubre (presentan 20-F/6-K). El backend lo usa en /api/pebg antes que Finnhub. 'fin' = cierre del trimestre. Montos en millones de US$, acciones en millones. Para sumar un trimestre: agregar una fila al final con los mismos campos.",
+ "NU": {
+  "nombre": "Nu Holdings",
+  "unidad": "US$ por acción ordinaria (NYSE: 1 acción = 1 título), EPS diluido",
+  "metodo": "Resultado atribuible a los accionistas y EPS diluido de los estados trimestrales (6-K nufs). El cuarto trimestre = anual (20-F o 6-K anual) menos nueve meses. En 2021 se divide por 4.600 millones de acciones (post salida a bolsa) porque el 6-K usa el conteo previo a la reorganización.",
+  "normalizado": "Adjusted Net Income que publica Nu (sin compensación en acciones ni efectos puntuales como la terminación del CSA en 4T22) dividido por acciones diluidas. Nu dejó de publicarlo en 2T26: desde ahí el normalizado usa el contable.",
+  "trimestres": [
+   {
+    "q": "2021Q3",
+    "fin": "2021-09-30",
+    "resultado": -34.212,
+    "acciones": 4600.0,
+    "eps": -0.0074,
+    "resultadoAjustado": 6.6,
+    "epsAjustado": 0.0014,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281422004473/nufs3q22_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281422000527/nupr4q21_6k.htm"
+   },
+   {
+    "q": "2021Q4",
+    "fin": "2021-12-31",
+    "resultado": -66.078,
+    "acciones": 4600.0,
+    "eps": -0.0144,
+    "resultadoAjustado": 3.2,
+    "epsAjustado": 0.0007,
+    "fuente": "20-F 2021 menos 9M (fs3q22)",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281422000527/nupr4q21_6k.htm"
+   },
+   {
+    "q": "2022Q1",
+    "fin": "2022-03-31",
+    "resultado": -45.101,
+    "acciones": 4660.405,
+    "eps": -0.0097,
+    "resultadoAjustado": 10.1,
+    "epsAjustado": 0.0022,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423002286/nufs1q23_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281422002316/nupr1q22_6k.htm"
+   },
+   {
+    "q": "2022Q2",
+    "fin": "2022-06-30",
+    "resultado": -29.697,
+    "acciones": 4670.972,
+    "eps": -0.0064,
+    "resultadoAjustado": 17.0,
+    "epsAjustado": 0.0036,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423003591/nufs2q23_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281422003520/nupr2q22_6k.htm"
+   },
+   {
+    "q": "2022Q3",
+    "fin": "2022-09-30",
+    "resultado": 7.833,
+    "acciones": 4824.031,
+    "eps": 0.0016,
+    "resultadoAjustado": 63.1,
+    "epsAjustado": 0.0131,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281422004473/nufs3q22_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423004660/nu20231114_6k1.htm"
+   },
+   {
+    "q": "2022Q4",
+    "fin": "2022-12-31",
+    "resultado": -297.613,
+    "acciones": 4821.0,
+    "eps": -0.0637,
+    "resultadoAjustado": 133.0,
+    "epsAjustado": 0.0276,
+    "fuente": "20-F 2022 menos 9M (fs3q23)",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423000433/nu20230214_6k1.htm"
+   },
+   {
+    "q": "2023Q1",
+    "fin": "2023-03-31",
+    "resultado": 141.751,
+    "acciones": 4818.2,
+    "eps": 0.0294,
+    "resultadoAjustado": 182.4,
+    "epsAjustado": 0.0379,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423002286/nufs1q23_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423002293/nu20230515_6k1.htm"
+   },
+   {
+    "q": "2023Q2",
+    "fin": "2023-06-30",
+    "resultado": 224.866,
+    "acciones": 4843.835,
+    "eps": 0.0464,
+    "resultadoAjustado": 263.0,
+    "epsAjustado": 0.0543,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423003591/nufs2q23_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281424003122/nu20240813_6k1.htm"
+   },
+   {
+    "q": "2023Q3",
+    "fin": "2023-09-30",
+    "resultado": 303.036,
+    "acciones": 4856.845,
+    "eps": 0.0624,
+    "resultadoAjustado": 355.6,
+    "epsAjustado": 0.0732,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423004655/nufs3q23_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281423004660/nu20231114_6k1.htm"
+   },
+   {
+    "q": "2023Q4",
+    "fin": "2023-12-31",
+    "resultado": 360.877,
+    "acciones": 4885.707,
+    "eps": 0.074,
+    "resultadoAjustado": 395.8,
+    "epsAjustado": 0.081,
+    "fuente": "20-F 2023 menos 9M (fs3q23)",
+    "fuenteAjustado": "comunicado 4Q23 (nubank.com.br)"
+   },
+   {
+    "q": "2024Q1",
+    "fin": "2024-03-31",
+    "resultado": 378.814,
+    "acciones": 4886.361,
+    "eps": 0.0775,
+    "resultadoAjustado": 442.7,
+    "epsAjustado": 0.0906,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281425002063/nufs1q25_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281424002077/nu20240514_6k1.htm"
+   },
+   {
+    "q": "2024Q2",
+    "fin": "2024-06-30",
+    "resultado": 487.272,
+    "acciones": 4880.953,
+    "eps": 0.0998,
+    "resultadoAjustado": 562.5,
+    "epsAjustado": 0.1152,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281425003063/nufs2q25_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281424004194/nupr3q24_6k.htm"
+   },
+   {
+    "q": "2024Q3",
+    "fin": "2024-09-30",
+    "resultado": 553.386,
+    "acciones": 4889.409,
+    "eps": 0.1132,
+    "resultadoAjustado": 592.2,
+    "epsAjustado": 0.1211,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281425003943/nufs3q25_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281424004194/nupr3q24_6k.htm"
+   },
+   {
+    "q": "2024Q4",
+    "fin": "2024-12-31",
+    "resultado": 552.64,
+    "acciones": 4904.074,
+    "eps": 0.1128,
+    "resultadoAjustado": 610.1,
+    "epsAjustado": 0.1244,
+    "fuente": "20-F 2024 menos 9M (fs3q25)",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426000503/nu20260225_6k1.htm"
+   },
+   {
+    "q": "2025Q1",
+    "fin": "2025-03-31",
+    "resultado": 557.203,
+    "acciones": 4892.628,
+    "eps": 0.1139,
+    "resultadoAjustado": 606.5,
+    "epsAjustado": 0.124,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281425002063/nufs1q25_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426000503/nu20260225_6k1.htm"
+   },
+   {
+    "q": "2025Q2",
+    "fin": "2025-06-30",
+    "resultado": 636.838,
+    "acciones": 4899.768,
+    "eps": 0.13,
+    "resultadoAjustado": 694.5,
+    "epsAjustado": 0.1417,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281425003063/nufs2q25_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426000503/nu20260225_6k1.htm"
+   },
+   {
+    "q": "2025Q3",
+    "fin": "2025-09-30",
+    "resultado": 782.473,
+    "acciones": 4905.133,
+    "eps": 0.1595,
+    "resultadoAjustado": 829.0,
+    "epsAjustado": 0.169,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281425003943/nufs3q25_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426000503/nu20260225_6k1.htm"
+   },
+   {
+    "q": "2025Q4",
+    "fin": "2025-12-31",
+    "resultado": 892.378,
+    "acciones": 4919.877,
+    "eps": 0.1815,
+    "resultadoAjustado": 942.8,
+    "epsAjustado": 0.1916,
+    "fuente": "fs4q25 (anual) menos 9M (fs3q25)",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426000503/nu20260225_6k1.htm"
+   },
+   {
+    "q": "2026Q1",
+    "fin": "2026-03-31",
+    "resultado": 872.056,
+    "acciones": 4910.266,
+    "eps": 0.1776,
+    "resultadoAjustado": 937.1,
+    "epsAjustado": 0.1908,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426003053/nufs1q26_6k.htm",
+    "fuenteAjustado": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426003055/nu20260514_6k.htm"
+   },
+   {
+    "q": "2026Q2",
+    "fin": "2026-06-30",
+    "resultado": 1060.199,
+    "acciones": 4904.837,
+    "eps": 0.2162,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426004225/nufs2q26_6k.htm"
+   }
+  ]
+ },
+ "PAM": {
+  "nombre": "Pampa Energía",
+  "unidad": "US$ por ADS (1 ADS = 25 acciones ordinarias)",
+  "metodo": "Resultado atribuible a los dueños de la sociedad en US$ (moneda funcional) de los comunicados trimestrales y, desde 2024, de los estados en US$. Cuarto trimestre = anual menos nueve meses. Acciones: promedio ponderado del trimestre, derivado de los promedios acumulados de cada estado contable. Antes de 2018 Pampa reportaba en pesos con moneda funcional peso: no hay serie trimestral en US$ comparable.",
+  "normalizado": null,
+  "trimestres": [
+   {
+    "q": "2018Q1",
+    "fin": "2018-03-31",
+    "resultado": 134,
+    "acciones": 2078,
+    "eps": 1.6121,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281419002725/ (6-K 2Q19, comparativos 2018 en US$) y 000129281419003820, 000129281420000711"
+   },
+   {
+    "q": "2018Q2",
+    "fin": "2018-06-30",
+    "resultado": -71,
+    "acciones": 1990,
+    "eps": -0.892,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281419002725/ (6-K 2Q19, comparativos 2018 en US$) y 000129281419003820, 000129281420000711"
+   },
+   {
+    "q": "2018Q3",
+    "fin": "2018-09-30",
+    "resultado": -128,
+    "acciones": 1896,
+    "eps": -1.6878,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281419002725/ (6-K 2Q19, comparativos 2018 en US$) y 000129281419003820, 000129281420000711"
+   },
+   {
+    "q": "2018Q4",
+    "fin": "2018-12-31",
+    "resultado": 289,
+    "acciones": 1872,
+    "eps": 3.8595,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281419002725/ (6-K 2Q19, comparativos 2018 en US$) y 000129281419003820, 000129281420000711"
+   },
+   {
+    "q": "2019Q1",
+    "fin": "2019-03-31",
+    "resultado": 167,
+    "acciones": 1875,
+    "eps": 2.2267,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281420001818/, 000129281420003059/, 000129281420004302/, 000129281421000847/ (comparativos 2019 en US$)"
+   },
+   {
+    "q": "2019Q2",
+    "fin": "2019-06-30",
+    "resultado": 400,
+    "acciones": 1833,
+    "eps": 5.4555,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281420001818/, 000129281420003059/, 000129281420004302/, 000129281421000847/ (comparativos 2019 en US$)"
+   },
+   {
+    "q": "2019Q3",
+    "fin": "2019-09-30",
+    "resultado": 116,
+    "acciones": 1782,
+    "eps": 1.6274,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281420001818/, 000129281420003059/, 000129281420004302/, 000129281421000847/ (comparativos 2019 en US$)"
+   },
+   {
+    "q": "2019Q4",
+    "fin": "2019-12-31",
+    "resultado": 9,
+    "acciones": 1706,
+    "eps": 0.1319,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281420001818/, 000129281420003059/, 000129281420004302/, 000129281421000847/ (comparativos 2019 en US$)"
+   },
+   {
+    "q": "2020Q1",
+    "fin": "2020-03-31",
+    "resultado": 14,
+    "acciones": 1641,
+    "eps": 0.2133,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281421002253/, 000129281421003383/, 000129281421004343/, 000129281421000847/"
+   },
+   {
+    "q": "2020Q2",
+    "fin": "2020-06-30",
+    "resultado": 4,
+    "acciones": 1571,
+    "eps": 0.0637,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281421002253/, 000129281421003383/, 000129281421004343/, 000129281421000847/"
+   },
+   {
+    "q": "2020Q3",
+    "fin": "2020-09-30",
+    "resultado": 78,
+    "acciones": 1546,
+    "eps": 1.2613,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281421002253/, 000129281421003383/, 000129281421004343/, 000129281421000847/"
+   },
+   {
+    "q": "2020Q4",
+    "fin": "2020-12-31",
+    "resultado": -463,
+    "acciones": 1530,
+    "eps": -7.5654,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281421002253/, 000129281421003383/, 000129281421004343/, 000129281421000847/"
+   },
+   {
+    "q": "2021Q1",
+    "fin": "2021-03-31",
+    "resultado": 33,
+    "acciones": 1451,
+    "eps": 0.5686,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281422002274/, 000129281422003473/, 000129281422004321/, 000129281422000872/"
+   },
+   {
+    "q": "2021Q2",
+    "fin": "2021-06-30",
+    "resultado": 70,
+    "acciones": 1405,
+    "eps": 1.2456,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281422002274/, 000129281422003473/, 000129281422004321/, 000129281422000872/"
+   },
+   {
+    "q": "2021Q3",
+    "fin": "2021-09-30",
+    "resultado": 131,
+    "acciones": 1383,
+    "eps": 2.368,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281422002274/, 000129281422003473/, 000129281422004321/, 000129281422000872/"
+   },
+   {
+    "q": "2021Q4",
+    "fin": "2021-12-31",
+    "resultado": 39,
+    "acciones": 1381,
+    "eps": 0.706,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281422002274/, 000129281422003473/, 000129281422004321/, 000129281422000872/"
+   },
+   {
+    "q": "2022Q1",
+    "fin": "2022-03-31",
+    "resultado": 99,
+    "acciones": 1382,
+    "eps": 1.7909,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281423002184/, 000129281423003484/, 000129281423004516/, 000129281423000818/"
+   },
+   {
+    "q": "2022Q2",
+    "fin": "2022-06-30",
+    "resultado": 66,
+    "acciones": 1380,
+    "eps": 1.1957,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281423002184/, 000129281423003484/, 000129281423004516/, 000129281423000818/"
+   },
+   {
+    "q": "2022Q3",
+    "fin": "2022-09-30",
+    "resultado": 178,
+    "acciones": 1381,
+    "eps": 3.2223,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281423002184/, 000129281423003484/, 000129281423004516/, 000129281423000818/"
+   },
+   {
+    "q": "2022Q4",
+    "fin": "2022-12-31",
+    "resultado": 113,
+    "acciones": 1381,
+    "eps": 2.0456,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281423002184/, 000129281423003484/, 000129281423004516/, 000129281423000818/"
+   },
+   {
+    "q": "2023Q1",
+    "fin": "2023-03-31",
+    "resultado": 141,
+    "acciones": 1380,
+    "eps": 2.5543,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281424001893/, 000129281424003019/, 000129281424004039/, 000129281424000682/"
+   },
+   {
+    "q": "2023Q2",
+    "fin": "2023-06-30",
+    "resultado": 164,
+    "acciones": 1364,
+    "eps": 3.0059,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281424001893/, 000129281424003019/, 000129281424004039/, 000129281424000682/"
+   },
+   {
+    "q": "2023Q3",
+    "fin": "2023-09-30",
+    "resultado": 152,
+    "acciones": 1360,
+    "eps": 2.7941,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281424001893/, 000129281424003019/, 000129281424004039/, 000129281424000682/"
+   },
+   {
+    "q": "2023Q4",
+    "fin": "2023-12-31",
+    "resultado": -155,
+    "acciones": 1360,
+    "eps": -2.8493,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281424001893/, 000129281424003019/, 000129281424004039/, 000129281424000682/"
+   },
+   {
+    "q": "2024Q1",
+    "fin": "2024-03-31",
+    "resultado": 267,
+    "acciones": 1360,
+    "eps": 4.9081,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281425000785/ (estados en US$)"
+   },
+   {
+    "q": "2024Q2",
+    "fin": "2024-06-30",
+    "resultado": 100,
+    "acciones": 1360,
+    "eps": 1.8382,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281425000785/ (estados en US$)"
+   },
+   {
+    "q": "2024Q3",
+    "fin": "2024-09-30",
+    "resultado": 146,
+    "acciones": 1360,
+    "eps": 2.6838,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281425000785/ (estados en US$)"
+   },
+   {
+    "q": "2024Q4",
+    "fin": "2024-12-31",
+    "resultado": 106,
+    "acciones": 1360,
+    "eps": 1.9485,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281425000785/ (estados en US$)"
+   },
+   {
+    "q": "2025Q1",
+    "fin": "2025-03-31",
+    "resultado": 153,
+    "acciones": 1360,
+    "eps": 2.8125,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281426000625/ (estados en US$)"
+   },
+   {
+    "q": "2025Q2",
+    "fin": "2025-06-30",
+    "resultado": 40,
+    "acciones": 1360,
+    "eps": 0.7353,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281426000625/ (estados en US$)"
+   },
+   {
+    "q": "2025Q3",
+    "fin": "2025-09-30",
+    "resultado": 23,
+    "acciones": 1360,
+    "eps": 0.4228,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281426000625/ (estados en US$)"
+   },
+   {
+    "q": "2025Q4",
+    "fin": "2025-12-31",
+    "resultado": 161,
+    "acciones": 1360,
+    "eps": 2.9596,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281425002129/, 000129281425002987/, 000129281425003797/, 000129281426000625/ (estados en US$)"
+   },
+   {
+    "q": "2026Q1",
+    "fin": "2026-03-31",
+    "resultado": 214,
+    "acciones": 1360,
+    "eps": 3.9338,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281426002838/, 000129281426004045/ (estados en US$)"
+   },
+   {
+    "q": "2026Q2",
+    "fin": "2026-06-30",
+    "resultado": 172,
+    "acciones": 1360,
+    "eps": 3.1618,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281426002838/, 000129281426004045/ (estados en US$)"
+   }
+  ]
+ }
+}

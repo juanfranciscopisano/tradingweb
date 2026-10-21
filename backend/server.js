@@ -6,6 +6,7 @@
 import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
+import { readFileSync } from "node:fs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -416,6 +417,31 @@ async function edgarEPS(sym, splits = []) {
   return { gaap, norm: n.eps, normMethod: n.method };
 }
 
+// ---------------------------------------------------------------- EPS cargado a mano
+// data/eps_manual.json: trimestres relevados de los 6-K/20-F para los que EDGAR no estructura
+// por trimestre (NU, PAM). Se edita a mano; el backend lo lee al arrancar.
+let MANUAL_EPS = {};
+try {
+  MANUAL_EPS = JSON.parse(readFileSync(new URL("./data/eps_manual.json", import.meta.url), "utf8"));
+} catch (e) {
+  console.log("eps_manual.json: " + e.message);
+}
+function manualEPS(sym) {
+  const m = MANUAL_EPS[sym];
+  if (!m || !Array.isArray(m.trimestres)) return null;
+  const rows = m.trimestres
+    .filter(r => r.fin && isFinite(r.eps))
+    .map(r => ({ date: Math.floor(Date.parse(r.fin + "T00:00:00Z") / 1000), eps: +r.eps, adj: r.epsAjustado }))
+    .sort((a, b) => a.date - b.date);
+  if (rows.length < 4) return null;
+  return {
+    gaap: rows.map(r => ({ date: r.date, eps: r.eps })),
+    // donde la empresa no publicó ajustado, el contable
+    norm: m.normalizado ? rows.map(r => ({ date: r.date, eps: r.adj != null && isFinite(r.adj) ? +r.adj : r.eps })) : [],
+    normNote: m.normalizado || null,
+  };
+}
+
 // ---------------------------------------------------------------- Finnhub
 async function finnhub(path) {
   if (!FINNHUB_KEY) throw new Error("FINNHUB_KEY no configurada");
@@ -547,7 +573,8 @@ app.get("/api/pebg", async (req, res) => {
       const splits = Object.values(chart.events?.splits || {})
         .map(s => ({ date: s.date, ratio: (s.numerator && s.denominator) ? s.numerator / s.denominator : null }))
         .filter(s => s.ratio && isFinite(s.ratio) && s.ratio > 0);
-      const edgarAll = await edgarEPS(sym, splits);
+      const manual = manualEPS(sym);
+      const edgarAll = manual ? { gaap: [], norm: [] } : await edgarEPS(sym, splits);
       const ts = chart.timestamp || [];
       const closes = chart.indicators?.quote?.[0]?.close || [];
       const prices = ts.map((t, i) => ({ date: t, close: closes[i] == null ? null : +closes[i].toFixed(4) })).filter(p => p.close != null);
@@ -555,22 +582,39 @@ app.get("/api/pebg", async (req, res) => {
 
       // EDGAR (GAAP) manda; Finnhub completa trimestres que EDGAR todavía no tiene o reemplaza si no hay 10-Q (20-F).
       const toQKey = t => { const d = new Date(t * 1000); return d.getUTCFullYear() + "Q" + (Math.floor(d.getUTCMonth() / 3) + 1); };
-      let eps, source;
-      // Finnhub solo si hace falta: sin 10-Q (20-F) o con el último trimestre de EDGAR viejo (>110 días)
-      const edgarStale = !edgar.length || (Date.now() / 1000 - edgar[edgar.length - 1].date) > 110 * 86400;
-      const fh = (edgar.length < 4 || edgarStale) ? await finnhubEPS(sym) : [];
-      if (edgar.length >= 4) {
-        const have = new Set(edgar.map(e => toQKey(e.date)));
-        const gaps = fh.filter(e => !have.has(toQKey(e.date)) && e.date > edgar[edgar.length - 1].date);
-        eps = [...edgar, ...gaps].sort((a, b) => a.date - b.date);
-        source = gaps.length ? "edgar+finnhub" : "edgar";
+      let eps, source, epsNorm, normMethod, normNote = null;
+      if (manual) {
+        // trimestres posteriores al último cargado a mano: Finnhub, solo si en el último trimestre que
+        // tienen en común coincide (si no, viene en otra moneda o por acción local, como PAM en pesos)
+        const fh = await finnhubEPS(sym);
+        const mq = new Map(manual.gaap.map(e => [toQKey(e.date), e.eps]));
+        const common = fh.filter(e => mq.has(toQKey(e.date))).pop();
+        const ref = common ? mq.get(toQKey(common.date)) : null;
+        const sameUnits = common && Math.abs(common.eps - ref) <= 0.2 * Math.max(Math.abs(ref), 0.01);
+        const lastDate = manual.gaap[manual.gaap.length - 1].date;
+        const extra = sameUnits ? fh.filter(e => e.date > lastDate + 20 * 86400 && !mq.has(toQKey(e.date))) : [];
+        eps = [...manual.gaap, ...extra];
+        source = extra.length ? "manual+finnhub" : "manual";
+        epsNorm = manual.norm.length ? [...manual.norm, ...extra] : [];
+        normMethod = manual.norm.length ? "ajustado_empresa" : null;
+        normNote = manual.normNote;
       } else {
-        eps = fh.length ? fh : edgar;
-        source = fh.length ? "finnhub" : (edgar.length ? "edgar" : "none");
+        // Finnhub solo si hace falta: sin 10-Q (20-F) o con el último trimestre de EDGAR viejo (>110 días)
+        const edgarStale = !edgar.length || (Date.now() / 1000 - edgar[edgar.length - 1].date) > 110 * 86400;
+        const fh = (edgar.length < 4 || edgarStale) ? await finnhubEPS(sym) : [];
+        if (edgar.length >= 4) {
+          const have = new Set(edgar.map(e => toQKey(e.date)));
+          const gaps = fh.filter(e => !have.has(toQKey(e.date)) && e.date > edgar[edgar.length - 1].date);
+          eps = [...edgar, ...gaps].sort((a, b) => a.date - b.date);
+          source = gaps.length ? "edgar+finnhub" : "edgar";
+        } else {
+          eps = fh.length ? fh : edgar;
+          source = fh.length ? "finnhub" : (edgar.length ? "edgar" : "none");
+        }
+        // Normalizado: el operativo de EDGAR; para los que presentan 20-F, el ajustado de Finnhub (es lo único que hay)
+        epsNorm = edgarAll.norm; normMethod = epsNorm.length >= 4 ? edgarAll.normMethod : null;
+        if (!normMethod && source === "finnhub") { epsNorm = fh; normMethod = "ajustado"; }
       }
-      // Normalizado: el operativo de EDGAR; para los que presentan 20-F, el ajustado de Finnhub (es lo único que hay)
-      let epsNorm = edgarAll.norm, normMethod = epsNorm.length >= 4 ? edgarAll.normMethod : null;
-      if (!normMethod && source === "finnhub") { epsNorm = fh; normMethod = "ajustado"; }
       const meta = chart.meta || {};
       const last4 = eps.slice(-4);
       return {
@@ -580,6 +624,7 @@ app.get("/api/pebg", async (req, res) => {
         eps: eps.map(e => ({ date: e.date, eps: e.eps })),
         epsNorm: normMethod ? epsNorm.map(e => ({ date: e.date, eps: e.eps })) : [],
         normMethod,
+        normNote,
         epsCount: eps.length,
         epsSource: source,
         splits: splits.map(x => ({ date: x.date, ratio: x.ratio })),

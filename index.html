@@ -1978,6 +1978,7 @@ const NORM_NOTE = {
   operativo: ['resultado operativo', 'Resultado operativo menos intereses netos, más resultado de asociadas, a la tasa efectiva típica de los últimos 12 trimestres. Deja afuera cargos puntuales, impuestos extraordinarios y resultados no recurrentes debajo de la línea operativa.'],
   impuestos: ['antes de impuestos', 'La empresa no informa resultado operativo (bancos, aseguradoras, algunos conglomerados): resultado antes de impuestos a la tasa efectiva típica. Neutraliza impuestos puntuales, no otros cargos extraordinarios.'],
   ajustado: ['ajustado (Finnhub)', 'EPS ajustado que informa la empresa, vía Finnhub. Solo los últimos 4 trimestres.'],
+  ajustado_empresa: ['ajustado por la empresa', 'Resultado ajustado que publica la empresa, cargado a mano desde sus reportes trimestrales.'],
 };
 function hasNorm(d) { return !!(d && Array.isArray(d.epsNorm) && d.epsNorm.length >= 4); }
 function baseEps(d) { return ((epsMode === 'norm' && hasNorm(d)) ? d.epsNorm : (d.eps || [])).slice().sort((a, b) => a.date - b.date); }
@@ -2276,7 +2277,7 @@ function updEpsNote(d) {
   }
   const n = NORM_NOTE[d.normMethod] || ['normalizado', ''];
   el.textContent = 'Normalizado: ' + n[0];
-  el.title = n[1];
+  el.title = d.normNote || n[1];
 }
 
 function renderPebg(data) {
