@@ -2164,6 +2164,7 @@ let pebgLoaded = false;
 let pebgManualEps = []; // trimestres cargados a mano, previos al primero disponible
 let pebgPanelOpen = false;
 let pebgData = null;
+let pebgReq = 0;
 let pebgYears = 1;
 try { const y = parseInt(localStorage.getItem('pebgYears')); if ([1, 2, 3, 5, 10, 15].includes(y)) pebgYears = y; } catch (e) {}
 
@@ -2247,17 +2248,20 @@ async function loadPebg() {
   status.textContent = 'Cargando...';
   pebgLoaded = true;
   pebgManualEps = [];
+  const req = ++pebgReq; // si llega una respuesta vieja después de otra más nueva, se descarta
   try {
     const r = await fetch(BASE_URL + '/api/pebg?symbol=' + encodeURIComponent(sym));
     const d = await r.json();
+    if (req !== pebgReq) return;
     if (d.error) throw new Error(d.error);
     await loadFund();
+    if (req !== pebgReq) return;
     if (d.forwardPE == null) d.forwardPE = fundFor(sym, d.currentPrice).fpe || null;
     pebgData = d;
     renderPebg(d);
     if (pebgPanelOpen) populatePebgPanel(d);
   } catch (e) {
-    status.textContent = 'Error: ' + e.message;
+    if (req === pebgReq) status.textContent = 'Error: ' + e.message;
   }
 }
 
@@ -2374,9 +2378,13 @@ function drawPebgChart(hoverIdx) {
   // grilla horizontal
   let ticks = [];
   if (useLog) {
-    for (let k = Math.floor(Math.log10(yMin)) - 1; k <= Math.ceil(Math.log10(yMax)); k++)
-      [1, 2, 5].forEach(b => { const v = b * 10 ** k; if (v >= yMin && v <= yMax) ticks.push(v); });
-    if (ticks.length < 4) { ticks = []; for (let i = 0; i <= 5; i++) ticks.push(Math.exp(t0 + (t1 - t0) * i / 5)); }
+    // marcas redondas: 1-2-5 si alcanzan, si no 1-1,5-2-3-5-7
+    for (const bases of [[1, 2, 5], [1, 1.5, 2, 3, 5, 7]]) {
+      ticks = [];
+      for (let k = Math.floor(Math.log10(yMin)) - 1; k <= Math.ceil(Math.log10(yMax)); k++)
+        bases.forEach(b => { const v = b * 10 ** k; if (v >= yMin && v <= yMax) ticks.push(v); });
+      if (ticks.length >= 4) break;
+    }
   } else {
     const raw = (yMax - yMin) / 6, mag = 10 ** Math.floor(Math.log10(raw));
     const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= raw);
