@@ -211,19 +211,67 @@ async function cikFor(sym) {
   return map[sym] || map[sym.replace(/\./g, "-")] || null;
 }
 
-// EPS diluido trimestral desde companyfacts. Q1-Q3 salen de los frames CY####Q#; el trimestre
-// faltante se deriva como anual menos YTD (soporta cierres de ejercicio no calendario).
-function quarterlyFromFacts(facts, symbol) {
-  const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
-  const quarterly = {}, annualByYear = {}, ytdQ1ByYear = {}, ytdQ2ByYear = {}, ytdQ3ByYear = {};
-  const ts = d => Math.floor(new Date(d).getTime() / 1000);
+// ---- EDGAR: EPS contable y normalizado ----
+// Los datos crudos se cachean por ticker; el ajuste por splits se hace en cada pedido con los splits de Yahoo.
+// Splits: EDGAR guarda cada trimestre tal como se presentó. Si un split ocurrió DESPUÉS del cierre del
+// trimestre y DESPUÉS de presentado el dato, ese dato está sin ajustar (los precios de Yahoo sí están
+// ajustados), así que se divide por el ratio. Si la empresa lo volvió a presentar después del split, ya
+// viene reexpresado y no se toca.
+const EDGAR_TAGS = {
+  eps: [["EarningsPerShareDiluted"], "USD/shares"],
+  oi: [["OperatingIncomeLoss"], "USD"],
+  pt: [["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"], "USD"],
+  tx: [["IncomeTaxExpenseBenefit"], "USD"],
+  ni: [["NetIncomeLoss"], "USD"],
+  sh: [["WeightedAverageNumberOfDilutedSharesOutstanding"], "shares"],
+  ie: [["InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt", "InterestAndDebtExpense"], "USD"],
+  ii: [["InvestmentIncomeInterest", "InterestIncomeOther", "InvestmentIncomeInterestAndDividend"], "USD"],
+  eq: [["IncomeLossFromEquityMethodInvestments"], "USD"],
+};
+function rawFromFacts(facts) {
+  const g = facts?.facts?.["us-gaap"] || {};
+  const out = {};
+  for (const [k, [tags, unit]] of Object.entries(EDGAR_TAGS)) {
+    // las empresas cambian de etiqueta con los años: se combinan por período (frame), con prioridad a la primera
+    const arr = [], seen = new Set();
+    let primary = null;
+    for (const t of tags) {
+      const a = g[t]?.units?.[unit];
+      if (!a?.length) continue;
+      if (!primary) primary = t;
+      for (const e of a) {
+        if (e.frame) { if (seen.has(e.frame)) continue; seen.add(e.frame); arr.push(e); }
+        else if (t === primary) arr.push(e);
+      }
+    }
+    out[k] = arr.map(e => ({ start: e.start, end: e.end, val: e.val, fp: e.fp, form: e.form, frame: e.frame, filed: e.filed }));
+  }
+  return out;
+}
 
+function makeSplitFactor(splits) {
+  return (end, filed) => {
+    const tEnd = Date.parse(end) / 1000, tFiled = filed ? Date.parse(filed) / 1000 : 0;
+    let f = 1;
+    for (const s of splits) if (s.date > tEnd && s.date > tFiled) f *= s.ratio;
+    return f;
+  };
+}
+
+// trimestre calendario por el punto medio del período (sirve para ejercicios que no cierran en diciembre)
+const qkeyOf = end => { const d = new Date(Date.parse(end) - 45 * 86400000); return d.getUTCFullYear() + "Q" + (Math.floor(d.getUTCMonth() / 3) + 1); };
+
+// EPS diluido trimestral (contable). Q1-Q3 salen de los frames CY####Q#; el trimestre faltante se
+// deriva como anual menos YTD (soporta cierres de ejercicio no calendario).
+function gaapQuarterly(raw, splitFactor, symbol) {
+  const epsData = raw.eps.map(e => ({ ...e, val: e.val / splitFactor(e.end, e.filed) }));
+  const quarterly = {}, annualByYear = {}, ytdQ2ByYear = {}, ytdQ3ByYear = {};
+  const ts = d => Math.floor(new Date(d).getTime() / 1000);
   epsData.forEach(e => {
     const endYear = String(new Date(e.end).getFullYear());
     if (!e.frame) {
-      if (e.fp === "Q1" && e.form === "10-Q") {
-        if (!ytdQ1ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ1ByYear[endYear].val)) ytdQ1ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
-      } else if (e.fp === "Q2" && e.form === "10-Q") {
+      if (e.fp === "Q2" && e.form === "10-Q") {
         if (!ytdQ2ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ2ByYear[endYear].val)) ytdQ2ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
       } else if (e.fp === "Q3" && e.form === "10-Q") {
         if (!ytdQ3ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ3ByYear[endYear].val)) ytdQ3ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
@@ -237,7 +285,6 @@ function quarterlyFromFacts(facts, symbol) {
       if (!annualByYear[frameYr] || e.end > annualByYear[frameYr].end) annualByYear[frameYr] = { date: ts(e.end), val: e.val, end: e.end };
     }
   });
-
   const derived = Object.entries(quarterly).map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
   Object.keys(annualByYear).forEach(yr => {
     const ann = annualByYear[yr], q3ytd = ytdQ3ByYear[yr];
@@ -249,27 +296,124 @@ function quarterlyFromFacts(facts, symbol) {
     else { missingFrame = `CY${yr}Q4`; ytd = q3ytd; }
     if (!quarterly[missingFrame]) derived.push({ date: ann.date, eps: ann.val - ytd.val, frame: missingFrame });
   });
-
   const out = derived
-    .filter(e => !isNaN(e.eps))
+    .filter(e => isFinite(e.eps))
     .sort((a, b) => a.date - b.date)
     .filter((e, i, arr) => i === arr.findIndex(x => x.frame === e.frame));
   console.log(`pebg ${symbol}: EDGAR ${out.length} trimestres`);
   return out;
 }
 
-async function edgarEPS(sym) {
+// EPS normalizado trimestral: (resultado operativo - intereses pagados + intereses ganados + resultado de
+// asociadas por el método de la participación) x (1 - tasa efectiva típica) / acciones diluidas.
+// Queda lo recurrente; afuera queda lo puntual: cargos o beneficios impositivos, ganancias o pérdidas de
+// mercado por tenencias de acciones, diferencias de cambio y demás resultados no operativos. La tasa es la mediana de la
+// tasa efectiva de los 12 trimestres previos, descartando trimestres anómalos (fuera de 0-45%).
+// Acciones: resultado neto / EPS contable ajustado (consistente con el split); si el EPS es casi cero,
+// el dato de acciones de EDGAR, con control de escala (algunas empresas lo cargan en miles o millones).
+// Si la empresa no reporta resultado operativo al día (bancos, aseguradoras, JNJ desde 2014), se normaliza
+// solo el impuesto: resultado antes de impuestos x (1 - tasa típica). Devuelve { eps, method }.
+function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
+  if (!gaap.length) return { eps: [], method: null };
+  const quarterly = arr => {
+    const q = new Map();
+    for (const e of arr) if (/^CY\d{4}Q\d$/.test(e.frame || "")) q.set(qkeyOf(e.end), { end: e.end, start: e.start, val: e.val });
+    for (const a of arr) {
+      if (!/^CY\d{4}$/.test(a.frame || "") || !a.start) continue;
+      const inside = [...q.values()].filter(x => x.start && x.start >= a.start && x.end <= a.end);
+      const k = qkeyOf(a.end);
+      if (inside.length === 3 && !q.has(k)) q.set(k, { end: a.end, start: null, val: a.val - inside.reduce((s, x) => s + x.val, 0) });
+    }
+    return q;
+  };
+  const OI = quarterly(raw.oi), PT = quarterly(raw.pt), TX = quarterly(raw.tx), NI = quarterly(raw.ni);
+  const IE = quarterly(raw.ie || []), II = quarterly(raw.ii || []), EQ = quarterly(raw.eq || []);
+  // si a un trimestre le falta el dato de intereses, el del trimestre anterior (es una serie estable)
+  const steady = (m, k) => { if (!m.size) return 0; if (m.has(k)) return m.get(k).val; const ks = [...m.keys()].sort(); const prev = ks.filter(x => x <= k).pop() || ks[0]; return m.get(prev).val; };
+  const EPS = new Map(gaap.map(e => [e.frame.slice(2), e.eps]));
+  // método: operativo si la serie llega hasta el último trimestre contable (o el anterior); si no, antes de impuestos
+  const lastG = gaap[gaap.length - 1].frame.slice(2);
+  const prevQ = k => { const [y, q] = k.split("Q").map(Number); return q > 1 ? `${y}Q${q - 1}` : `${y - 1}Q4`; };
+  const reaches = m => m.size > 0 && [...m.keys()].sort().pop() >= prevQ(lastG);
+  const PRE = new Map();
+  for (const k of new Set([...PT.keys(), ...NI.keys()])) {
+    const v = PT.get(k)?.val ?? ((NI.has(k) && TX.has(k)) ? NI.get(k).val + TX.get(k).val : null);
+    if (v != null) PRE.set(k, { end: (PT.get(k) || NI.get(k)).end, val: v });
+  }
+  const method = reaches(OI) ? "operativo" : (reaches(PRE) ? "impuestos" : null);
+  if (!method) return { eps: [], method: null };
+  const BASE = method === "operativo" ? OI : PRE;
+  const keys = [...BASE.keys()].sort((a, b) => BASE.get(a).end.localeCompare(BASE.get(b).end));
+
+  // acciones implícitas = resultado neto / EPS (ya ajustado por splits)
+  const implied = new Map();
+  for (const k of keys) {
+    const ni = NI.get(k)?.val, eps = EPS.get(k);
+    if (ni != null && eps != null && Math.abs(eps) >= 0.05 && ni / eps > 0) implied.set(k, ni / eps);
+  }
+  const median = a => { const s = [...a].sort((x, y) => x - y); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null; };
+  const medImplied = median([...implied.values()]);
+  const reported = new Map();
+  for (const e of raw.sh) {
+    if (!/^CY\d{4}Q\d$/.test(e.frame || "") || !(e.val > 0)) continue;
+    let v = e.val * splitFactor(e.end, e.filed);
+    if (medImplied) { // escala: unidades, miles o millones, la que quede más cerca de las implícitas
+      v = [1, 1e3, 1e6].map(s => v * s).reduce((best, x) => Math.abs(Math.log(x / medImplied)) < Math.abs(Math.log(best / medImplied)) ? x : best);
+    }
+    reported.set(qkeyOf(e.end), v);
+  }
+  const sharesFor = k => {
+    if (implied.has(k)) return implied.get(k);
+    if (reported.has(k)) return reported.get(k);
+    const near = [...implied.keys(), ...reported.keys()].sort();
+    const prev = near.filter(x => x <= k).pop() || near.find(x => x > k);
+    return prev ? (implied.get(prev) ?? reported.get(prev)) : null;
+  };
+
+  // tasa efectiva = impuesto / resultado antes de impuestos (si no está, resultado neto + impuesto)
+  const etr = k => {
+    const t = TX.get(k)?.val; if (t == null) return null;
+    const p = PT.get(k)?.val ?? (NI.has(k) ? NI.get(k).val + t : null);
+    if (!(p > 0)) return null; const r = t / p; return (r >= 0 && r <= 0.45) ? r : null;
+  };
+  const allRates = keys.map(etr).filter(r => r != null);
+  const globalRate = allRates.length >= 4 ? median(allRates) : 0.21;
+  const out = [];
+  keys.forEach((k, i) => {
+    const win = keys.slice(Math.max(0, i - 11), i + 1).map(etr).filter(r => r != null);
+    const t = Math.min(0.35, Math.max(0.05, win.length >= 4 ? median(win) : globalRate));
+    const sh = sharesFor(k);
+    if (!sh) return;
+    const base = method === "operativo"
+      ? OI.get(k).val - steady(IE, k) + steady(II, k) + (EQ.has(k) ? EQ.get(k).val : 0)
+      : PRE.get(k).val;
+    const eps = base * (1 - t) / sh;
+    if (isFinite(eps)) out.push({ date: Math.floor(Date.parse(BASE.get(k).end) / 1000), eps: +eps.toFixed(4), frame: "CY" + k });
+  });
+  console.log(`pebg ${symbol}: normalizado (${method}) ${out.length} trimestres, tasa típica ${(globalRate * 100).toFixed(1)}%`);
+  return { eps: out, method };
+}
+
+async function edgarRaw(sym) {
   return cached(`edgar:${sym}`, 12 * 3600 * 1000, async () => {
     try {
       const cik = await cikFor(sym);
-      if (!cik) return [];
-      const facts = await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
-      return quarterlyFromFacts(facts, sym);
+      if (!cik) return null;
+      return rawFromFacts(await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`));
     } catch (e) {
       console.log(`pebg ${sym}: EDGAR error ${e.message}`);
-      return [];
+      return null;
     }
-  }, a => a.length >= 4);
+  }, d => d != null && d.eps.length >= 4);
+}
+
+async function edgarEPS(sym, splits = []) {
+  const raw = await edgarRaw(sym);
+  if (!raw) return { gaap: [], norm: [] };
+  const f = makeSplitFactor(splits);
+  const gaap = gaapQuarterly(raw, f, sym);
+  const n = normalizedQuarterly(raw, f, gaap, sym);
+  return { gaap, norm: n.eps, normMethod: n.method };
 }
 
 // ---------------------------------------------------------------- Finnhub
@@ -391,12 +535,23 @@ app.get("/api/pebg", async (req, res) => {
   const sym = (req.query.symbol || "").toUpperCase().trim();
   if (!sym) return res.status(400).json({ error: "symbol required" });
   try {
-    const payload = await cached(`pebg:${sym}`, 30 * 60 * 1000, async () => {
-      const [chart, edgar] = await Promise.all([chartOne(sym, "3y", "1d"), edgarEPS(sym)]);
+    // años de precios: P/E Hist pide 16 (ventanas de hasta 15 años); Cartera pide 2 para ir más liviana
+    const years = Math.min(16, Math.max(1, parseInt(req.query.years, 10) || 16));
+    const payload = await cached(`pebg:${sym}:${years}`, 30 * 60 * 1000, async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const p1 = now - Math.round(years * 365.25 * 86400);
+      const chartJ = await yahoo(`/v8/finance/chart/${encodeURIComponent(sym)}?period1=${p1}&period2=${now}&interval=1d&events=splits`);
+      const chart = chartJ?.chart?.result?.[0];
       if (!chart) throw new Error("Sin precios para " + sym);
+      // splits dentro de la ventana pedida (alcanza: los EPS más viejos que la ventana no se usan)
+      const splits = Object.values(chart.events?.splits || {})
+        .map(s => ({ date: s.date, ratio: (s.numerator && s.denominator) ? s.numerator / s.denominator : null }))
+        .filter(s => s.ratio && isFinite(s.ratio) && s.ratio > 0);
+      const edgarAll = await edgarEPS(sym, splits);
       const ts = chart.timestamp || [];
       const closes = chart.indicators?.quote?.[0]?.close || [];
-      const prices = ts.map((t, i) => ({ date: t, close: closes[i] })).filter(p => p.close != null);
+      const prices = ts.map((t, i) => ({ date: t, close: closes[i] == null ? null : +closes[i].toFixed(4) })).filter(p => p.close != null);
+      const edgar = edgarAll.gaap;
 
       // EDGAR (GAAP) manda; Finnhub completa trimestres que EDGAR todavía no tiene o reemplaza si no hay 10-Q (20-F).
       const toQKey = t => { const d = new Date(t * 1000); return d.getUTCFullYear() + "Q" + (Math.floor(d.getUTCMonth() / 3) + 1); };
@@ -413,6 +568,9 @@ app.get("/api/pebg", async (req, res) => {
         eps = fh.length ? fh : edgar;
         source = fh.length ? "finnhub" : (edgar.length ? "edgar" : "none");
       }
+      // Normalizado: el operativo de EDGAR; para los que presentan 20-F, el ajustado de Finnhub (es lo único que hay)
+      let epsNorm = edgarAll.norm, normMethod = epsNorm.length >= 4 ? edgarAll.normMethod : null;
+      if (!normMethod && source === "finnhub") { epsNorm = fh; normMethod = "ajustado"; }
       const meta = chart.meta || {};
       const last4 = eps.slice(-4);
       return {
@@ -420,8 +578,11 @@ app.get("/api/pebg", async (req, res) => {
         shortName: meta.shortName || meta.longName || sym,
         prices,
         eps: eps.map(e => ({ date: e.date, eps: e.eps })),
+        epsNorm: normMethod ? epsNorm.map(e => ({ date: e.date, eps: e.eps })) : [],
+        normMethod,
         epsCount: eps.length,
         epsSource: source,
+        splits: splits.map(x => ({ date: x.date, ratio: x.ratio })),
         currentPrice: meta.regularMarketPrice ?? (prices.length ? prices[prices.length - 1].close : null),
         currentPE: null,
         forwardPE: null, // el frontend lo completa con fundamentals.json
@@ -438,16 +599,12 @@ app.get("/api/pebg", async (req, res) => {
 app.get("/debug-edgar", async (req, res) => {
   try {
     const sym = (req.query.symbol || "META").toUpperCase();
-    const cik = await cikFor(sym);
-    if (!cik) return res.json({ error: "ticker not found" });
-    const facts = await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
-    const epsData = facts?.facts?.["us-gaap"]?.EarningsPerShareDiluted?.units?.["USD/shares"] || [];
-    const recent = epsData
-      .filter(e => e.form === "10-Q" || e.form === "10-K")
-      .sort((a, b) => a.end.localeCompare(b.end))
-      .slice(-24)
-      .map(e => ({ end: e.end, fp: e.fp, fy: e.fy, val: e.val, frame: e.frame || "", form: e.form }));
-    res.json({ cik, sym, count: epsData.length, recent });
+    const raw = await edgarRaw(sym);
+    if (!raw) return res.json({ error: "ticker not found o EDGAR sin datos" });
+    const { gaap, norm } = await edgarEPS(sym, []);
+    const nmap = new Map(norm.map(e => [e.frame, e.eps]));
+    res.json({ sym, trimestres: gaap.length, normalizados: norm.length,
+      ultimos: gaap.slice(-12).map(e => ({ frame: e.frame, contable: e.eps, normalizado: nmap.get(e.frame) ?? null })) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
