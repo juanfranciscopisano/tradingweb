@@ -316,6 +316,11 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .gate-input:focus{border-color:var(--accent)}
 .gate-err{color:var(--down);font-size:13px;display:none}
 
+@media (max-width:1180px) and (min-width:769px){
+  .ov-body{flex-wrap:wrap;align-content:flex-start}
+  .ov-col-wide,.ov-col-mid{flex:1 1 calc(50% - 9px)}
+  .ov-col-news{flex:1 1 100%}
+}
 @media (max-width:768px){
   .logo-text,.logo-sub,.hdr-time,.tab-spacer{display:none}
   .tab-logo{margin-right:6px}
