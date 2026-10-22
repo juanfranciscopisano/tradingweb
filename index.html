@@ -3999,7 +3999,8 @@ const METODO = [
 
 let metoQ = '';
 const metoNorm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const metoEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// 10-Q, 10-K, 20-F, 6-K con guion que no corta la línea
+const metoEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(\d)-([QKF])\b/g, '$1\u2011$2');
 function metoMark(s, q) {
   s = String(s);
   if (!q) return metoEsc(s);
