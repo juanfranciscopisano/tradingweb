@@ -77,18 +77,28 @@ function sharesByWeek(sh, weeks) {
   return out;
 }
 
-// Trimestres de Yahoo (EPS diluido contable) después del último de la SEC: completan lo que la SEC todavía no tiene
-// (10-Q presentado y no cargado en su base, o resultado anunciado y 10-Q pendiente). Si los dos tienen el último
-// trimestre de la SEC y difieren en más de 20%, no se completa (otra unidad o otra definición).
-function fillAfter(quarters, extra) {
-  if (!extra?.length) return { q: quarters, filled: [] };
-  const last = quarters[quarters.length - 1];
-  if (last) {
-    const same = extra.find(x => Math.abs(x.date - last.date) <= 10 * DAY);
-    if (same && Math.abs(same.eps - last.eps) > 0.2 * Math.max(Math.abs(last.eps), 0.05)) return { q: quarters, filled: [], rejected: true };
+// Trimestres de Yahoo (EPS diluido contable) donde la SEC no tiene dato: los que todavía no cargó (10-Q presentado y no
+// procesado, o resultado anunciado y 10-Q pendiente) y los huecos (un cuarto trimestre que no se puede derivar porque
+// el 10-K no trae el EPS en la base, como en las eléctricas que presentan con sus controladas). Se usa la serie de
+// Yahoo (operaciones continuas o total) que coincide con la SEC en el último trimestre que tienen los dos (±20%); si
+// ninguna coincide, no se completa (otra unidad u otra definición).
+function fillGaps(quarters, extra) {
+  const series = (Array.isArray(extra) ? [extra] : [extra?.cont, extra?.tot]).filter(x => x?.length);
+  if (!series.length) return { q: quarters, filled: [] };
+  const near = t => quarters.find(x => Math.abs(x.date - t) <= 10 * DAY);
+  let match = null, overlap = false;
+  for (const ys of series) {
+    const ov = [...ys].reverse().find(y => near(y.date));
+    if (!ov) continue;
+    overlap = true;
+    const q = near(ov.date);
+    if (Math.abs(ov.eps - q.eps) <= 0.2 * Math.max(Math.abs(q.eps), 0.05)) { match = ys; break; }
   }
-  const add = extra.filter(x => !last || x.date > last.date + 20 * DAY);
-  return { q: [...quarters, ...add.map(x => ({ date: x.date, eps: x.eps, src: "yahoo" }))], filled: add };
+  // sin ningún trimestre en común (la SEC dejó de tener datos hace años, como BRK) se usa la primera serie
+  const pick = match || (overlap ? null : series[0]);
+  if (!pick) return { q: quarters, filled: [], rejected: true };
+  const add = pick.filter(y => !near(y.date));
+  return { q: [...quarters, ...add.map(x => ({ date: x.date, eps: x.eps, src: "yahoo" }))].sort((a, b) => a.date - b.date), filled: add };
 }
 
 // series de una empresa: precio, EPS de 12 meses (contable y normalizado) y acciones, por semana.
@@ -114,7 +124,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     const shNow = fundRow && fundRow.mc > 0 && fundRow.p > 0 ? fundRow.mc / fundRow.p : null;
     const ni = netIncomeQuarterly(raw);
     const epsLike = shNow && ni.length >= 4 ? ni.map(q => ({ date: q.date, eps: q.ni / shNow })) : [];
-    const fl = shNow ? fillAfter(epsLike, extra) : { q: [], filled: [] };
+    const fl = shNow ? fillGaps(epsLike, extra) : { q: [], filled: [] };
     if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
     const shMap = new Map(weeks.map(w => [w, shNow]));
     return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0,
@@ -122,12 +132,15 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   }
   const norm = normalizedQuarterly(raw, f, gaap, "").eps;
   const sh = sharesQuarterly(raw, f, gaap);
-  const fl = fillAfter(gaap, extra);
+  const fl = fillGaps(gaap, extra);
+  // hueco en los últimos dos años (un trimestre que no se pudo derivar): se busca en Yahoo
+  const rec = gaap.filter(q => q.date > gaap[gaap.length - 1].date - 730 * DAY);
+  const hole = rec.some((q, i) => i > 0 && q.date - rec[i - 1].date > 120 * DAY);
   return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length,
-    lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
+    lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
 
-// EPS diluido trimestral de Yahoo (fundamentals-timeseries): el de operaciones continuas si está, si no el total
+// EPS diluido trimestral de Yahoo (fundamentals-timeseries): operaciones continuas y total, por separado
 async function yahooQuarterlyEPS(fetchImpl, sym, session, nowS) {
   const types = "quarterlyDilutedContinuousOperations,quarterlyDilutedEPS";
   const url = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}`
@@ -139,9 +152,7 @@ async function yahooQuarterlyEPS(fetchImpl, sym, session, nowS) {
     return (r?.[type] || []).filter(x => x && x.asOfDate && isFinite(x.reportedValue?.raw) && (!x.currencyCode || x.currencyCode === "USD") && (!x.periodType || x.periodType === "3M"))
       .map(x => ({ date: Math.floor(Date.parse(x.asOfDate + "T00:00:00Z") / 1000), eps: +x.reportedValue.raw }));
   };
-  const m = new Map(pick("quarterlyDilutedEPS").map(q => [q.date, q]));
-  for (const q of pick("quarterlyDilutedContinuousOperations")) m.set(q.date, q);
-  return [...m.values()].sort((a, b) => a.date - b.date);
+  return { cont: pick("quarterlyDilutedContinuousOperations").sort((a, b) => a.date - b.date), tot: pick("quarterlyDilutedEPS").sort((a, b) => a.date - b.date) };
 }
 
 // P/E de cada grupo por semana. cos: { sym: series } ; groups: { key: [syms] }
@@ -216,6 +227,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const cos = {}, missing = [], viaNI = [], conYahoo = [], yahooRechazado = [];
   // sesión de Yahoo para los trimestres que la SEC todavía no tiene (si falla, se sigue sin completar)
   let ySession = null, yOk = true, yErr = 0;
+  const yDiag = {};
   try { ySession = await yahooSession(fetchImpl); } catch (e) { log("Yahoo (sesión): " + e.message); }
   await mapLimit(list, concurrency, async (c, k) => {
     try {
@@ -227,13 +239,15 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const chart = cj?.chart?.result?.[0];
       if (!facts || !chart) { missing.push(c.s + (facts ? " (sin precios)" : " (sin EDGAR)")); return; }
       let ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s] });
-      // sin trimestres o con el último de hace más de 100 días: se busca en Yahoo lo que falta
-      if (yOk && (ser.quarters < 4 || !ser.lastQ || p2 - ser.lastQ > 100 * DAY)) {
+      // sin trimestres, con el último de hace más de 100 días o con un hueco en los últimos dos años: se busca en Yahoo
+      if (yOk && (ser.quarters < 4 || !ser.lastQ || p2 - ser.lastQ > 100 * DAY || ser.hole)) {
         try {
           const extra = await yahooQuarterlyEPS(fetchImpl, c.s, ySession, p2);
-          if (extra.length) ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], extra });
+          yDiag[c.s] = `continuas ${extra.cont.length}, total ${extra.tot.length}`;
+          if (extra.cont.length || extra.tot.length) ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], extra });
         } catch (e) {
           if (/HTTP 40[13]/.test(e.message)) yOk = false;
+          yDiag[c.s] = "error " + e.message;
           if (yErr++ < 3) log(`Yahoo (EPS trimestral) ${c.s}: ${e.message}`);
         }
       }
@@ -312,7 +326,8 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     fill,
   }));
   log(`eps_ttm.json: ${Object.keys(ultimos).length} empresas`);
-  const diag = { splits: {}, fechas: {} };
+  const diag = { splits: {}, fechas: {}, yahoo: yDiag,
+    sinUltimoDato: list.filter(c => !ultimos[c.s]).map(c => c.s + (cos[c.s] ? ` (último trimestre ${cos[c.s].lastQ ? iso(cos[c.s].lastQ) : "?"}${cos[c.s].fillRejected ? ", Yahoo no coincide" : ""}${yDiag[c.s] ? ", Yahoo: " + yDiag[c.s] : ""})` : " (sin datos)")) };
   for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
   for (const d of ["2019-06-24", "2021-06-28", "2024-06-24", "2025-06-23"]) {
     const w = weekOf(Date.parse(d) / 1000);

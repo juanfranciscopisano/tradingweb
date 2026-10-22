@@ -503,10 +503,10 @@ app.get("/api/pebg", async (req, res) => {
         normMethod = manual.norm.length ? "ajustado_empresa" : null;
         normNote = manual.normNote;
       } else {
-        // trimestres posteriores al último de EDGAR: primero los de Yahoo que usa el proceso de múltiplos (contables);
+        // trimestres que EDGAR no tiene: primero los de Yahoo que usa el proceso de múltiplos (contables);
         // Finnhub (ajustado) solo si todavía falta: sin 10-Q (20-F) o con el último trimestre viejo (>110 días)
-        const yf = edgar.length ? (await yahooFill(sym)).filter(e => e.date > edgar[edgar.length - 1].date + 20 * 86400) : [];
-        const sec = [...edgar, ...yf];
+        const yf = edgar.length ? (await yahooFill(sym)).filter(e => !edgar.some(x => Math.abs(x.date - e.date) <= 10 * 86400)) : [];
+        const sec = [...edgar, ...yf].sort((a, b) => a.date - b.date);
         const edgarStale = !sec.length || (Date.now() / 1000 - sec[sec.length - 1].date) > 110 * 86400;
         const fh = (sec.length < 4 || edgarStale) ? await finnhubEPS(sym) : [];
         if (sec.length >= 4) {
