@@ -203,17 +203,18 @@ td:nth-child(-n+4){text-align:left}
 .pebg-tool:hover:not(:disabled){border-color:var(--ink2)}
 .pebg-tool:disabled{color:var(--faint);cursor:default}
 .pebg-tool[aria-pressed="false"]{color:var(--faint)}
-.pebg-measure{position:absolute;top:46px;right:86px;z-index:6;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-size:12.5px;box-shadow:0 6px 24px rgba(20,30,50,.14);min-width:300px}
-.pebg-measure-head{display:flex;align-items:center;gap:10px;color:var(--ink2);font-weight:650;margin-bottom:6px}
+.pebg-measure{position:absolute;top:54px;right:86px;z-index:6;background:color-mix(in srgb,var(--surf) 94%,transparent);border:1px solid var(--line2);border-radius:7px;padding:6px 9px 7px;font-size:12px;box-shadow:0 4px 14px rgba(20,30,50,.12);transition:left .18s ease,top .18s ease;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){.pebg-measure{transition:none}}
+.pebg-measure-head{display:flex;align-items:center;gap:8px;color:var(--ink2);font-weight:650;margin-bottom:3px;white-space:nowrap}
 .pebg-measure-head .cs{flex:1}
 .pebg-measure-x{font:inherit;font-size:15px;line-height:1;border:none;background:none;color:var(--muted);cursor:pointer;padding:0 2px}
 .pebg-measure table{border-collapse:collapse;width:100%}
-.pebg-measure th{font-weight:600;color:var(--muted);text-align:right;padding:2px 0 4px 12px;font-size:11.5px}
+.pebg-measure th{font-weight:600;color:var(--muted);text-align:right;padding:1px 0 2px 10px;font-size:11px}
 .pebg-measure th:first-child,.pebg-measure td:first-child{text-align:left;padding-left:0}
-.pebg-measure td{text-align:right;padding:3px 0 3px 12px;color:var(--ink2);white-space:nowrap}
+.pebg-measure td{text-align:right;padding:1px 0 1px 10px;color:var(--ink2);white-space:nowrap}
 .pebg-measure td:first-child{color:var(--ink);font-weight:600}
 .pebg-measure tr.pebg-m-px td{font-weight:650;color:var(--ink)}
-.pebg-measure-foot{margin-top:7px;padding-top:7px;border-top:1px solid var(--line);color:var(--ink2);line-height:1.45}
+.pebg-measure-foot{margin-top:4px;padding-top:4px;border-top:1px solid var(--line);color:var(--ink2);line-height:1.35;white-space:nowrap}
 .pebg-measure-foot span{color:var(--muted)}
 .pebg-tool:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pebg-tooltip{position:absolute;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-size:12.5px;pointer-events:none;display:none;z-index:100;min-width:214px;box-shadow:0 6px 24px rgba(20,30,50,.14)}
@@ -685,7 +686,8 @@ function checkPwd(){
 <div class="view active" id="view-screener">
   <div class="stats-bar">
     <div class="stat"><div class="stat-val" id="sN">&mdash;</div><div class="stat-lbl">Empresas</div></div>
-    <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" id="sPELbl" title="Capitalización total sobre ganancias contables de 12 meses de la SEC, con precios de ahora. Las pérdidas restan y cada empresa cuenta una vez. Es la misma cuenta que el S&amp;P 500 de la pestaña Sectores y del panel de comparación: al cierre dan igual; durante la rueda este se mueve con los precios.">P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sPEn">&mdash;</div><div class="stat-lbl" id="sPEnLbl" title="Capitalización sobre EPS normalizado de 12 meses de la SEC, con precios de ahora. Es el S&amp;P 500 normalizado de la pestaña Sectores: al cierre dan igual.">P/E normalizado</div></div>
+    <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" id="sPELbl" title="Capitalización total sobre ganancias contables de 12 meses de la SEC, con precios de ahora. Las pérdidas restan y cada empresa cuenta una vez. Es la misma cuenta que el S&amp;P 500 de la pestaña Sectores y del panel de comparación: al cierre dan igual; durante la rueda este se mueve con los precios.">P/E contable</div></div>
     <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas: el EPS de consenso que usa Yahoo para su Fw P/E (en general, el del próximo ejercicio fiscal). Yahoo no publica Fw P/E si la ganancia esperada es negativa: esas empresas quedan afuera.">Fw P/E agregado</div></div>
     <div class="stat"><div class="stat-val up" id="sG">&mdash;</div><div class="stat-lbl">Suben hoy</div></div>
     <div class="stat"><div class="stat-val dn" id="sL">&mdash;</div><div class="stat-lbl">Bajan hoy</div></div>
@@ -1519,7 +1521,7 @@ async function loadData() {
     let pe=f.pe??null, peSrc=pe!=null?'yahoo':null;
     if(se&&px>0){ peSrc='sec'; pe=se[0]>0?px/se[0]:null; }
     rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:px,
-      marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, shSec:se?se[2]:null, qSec:se?se[3]:null, fSec:se?se[5]:null,
+      marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, eNSec:se?se[1]:null, shSec:se?se[2]:null, qSec:se?se[3]:null, fSec:se?se[5]:null,
       fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
       ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252)});
   }
@@ -1543,6 +1545,16 @@ function updateStats() {
   uRows.forEach(r=>{ if(r.eSec!=null&&r.shSec>0&&r.price>0){ M+=r.price*r.shSec; E+=r.eSec*r.shSec; nSec++; } });
   const peSec = (E>0 && nSec>=300) ? M/E : null;
   sv('sPE', fmx(peSec ?? agg('pe')));
+  // P/E normalizado del índice: misma cuenta con el EPS normalizado; solo las empresas que lo tienen
+  let Mn=0, En=0, Ec=0, nN=0;
+  uRows.forEach(r=>{ if(r.eNSec!=null&&r.shSec>0&&r.price>0){ Mn+=r.price*r.shSec; En+=r.eNSec*r.shSec; Ec+=(r.eSec||0)*r.shSec; nN++; } });
+  const peN = (En>0 && nN>=300) ? Mn/En : null;
+  sv('sPEn', fmx(peN));
+  const lblN = document.getElementById('sPEnLbl');
+  if (lblN) lblN.title = peN == null ? 'Sin el archivo de EPS de la SEC no hay P/E normalizado.'
+    : 'Capitalización sobre EPS normalizado de 12 meses de la SEC, con precios de ahora. Es el S&P 500 normalizado de la pestaña Sectores: al cierre dan igual. '
+      + 'Cubre ' + nN + ' de ' + nSec + ' empresas (' + Math.round(Mn / M * 100) + '% de la capitalización): no entran las que no tienen resultado operativo al día en la SEC, como BRK o V. '
+      + 'Con esas mismas empresas, el contable da ' + (Ec > 0 ? (Mn / Ec).toFixed(1) + 'x' : '—') + '.';
   const lbl = document.getElementById('sPELbl');
   if (lbl && peSec == null) lbl.title = 'Sin el archivo de EPS de la SEC: capitalización sobre ganancias de 12 meses de Yahoo, sin las empresas con pérdidas (no es comparable con el S&P 500 de la pestaña Sectores).';
   sv('sFwd', fmx(agg('fwdPE')));
@@ -3203,20 +3215,53 @@ function renderPebgMeasure(m) {
   const fd = t => new Date(t * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   const pc = v => v == null ? '<span class="na">—</span>' : (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(1) + '%';
   const yt = m.yrs >= 1 ? m.yrs.toFixed(1) + ' años' : Math.round(m.yrs * 12) + ' meses';
-  const row = (cls, lbl, a, b, r, an) => `<tr class="${cls}"><td>${lbl}</td><td>${a}</td><td>${b}</td><td>${pc(r)}</td><td>${pc(an)}</td></tr>`;
-  const money = v => v == null ? '<span class="na">—</span>' : '$' + v.toFixed(2);
-  const mult = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
+  // compacto: variación y anualizada; los valores de inicio y fin quedan al pasar el mouse por cada fila
+  const money = v => v == null ? '—' : '$' + v.toFixed(2);
+  const mult = v => v == null ? '—' : v.toFixed(1) + 'x';
+  const row = (cls, lbl, a, b, r, an) => `<tr class="${cls}" title="${lbl}: ${a} → ${b}"><td>${lbl}</td><td>${pc(r)}</td><td>${pc(an)}</td></tr>`;
   const foot = m.shE != null
-    ? `Del cambio de precio, <b>${Math.round(m.shE * 100)}%</b> vino del EPS y <b>${Math.round(m.shM * 100)}%</b> del P/E. <span>Atribución logarítmica; sin dividendos.</span>`
-    : (m.rE == null ? '<span>Sin EPS positivo en alguna de las dos fechas: no se puede separar EPS y P/E.</span>' : '<span>El precio casi no cambió: la atribución no es informativa.</span>');
-  el.innerHTML = `<div class="pebg-measure-head">${fd(m.A.date)} → ${fd(m.B.date)} <span style="color:var(--muted);font-weight:500">(${yt})</span><div class="cs"></div>`
+    ? `<span title="Parte del cambio de precio que vino de cada uno (atribución logarítmica, sin dividendos)">Del precio: <b>${Math.round(m.shE * 100)}%</b> EPS, <b>${Math.round(m.shM * 100)}%</b> P/E</span>`
+    : (m.rE == null ? '<span>Sin EPS positivo en una de las fechas</span>' : '<span>El precio casi no cambió</span>');
+  el.innerHTML = `<div class="pebg-measure-head">${fd(m.A.date)} → ${fd(m.B.date)} <span style="color:var(--muted);font-weight:500">${yt}</span><div class="cs"></div>`
     + `<button type="button" class="pebg-measure-x" onclick="clearPebgMeasure()" aria-label="Cerrar medición" title="Cerrar (Esc)">×</button></div>`
-    + `<table><thead><tr><th></th><th>Inicio</th><th>Fin</th><th>Var.</th><th>Anual</th></tr></thead><tbody>`
+    + `<table><thead><tr><th></th><th>Var.</th><th>Anual</th></tr></thead><tbody>`
     + row('pebg-m-px', 'Precio', money(m.A.px), money(m.B.px), m.rP, m.aP)
     + row('', 'EPS 12m', money(m.A.eps), money(m.B.eps), m.rE, m.aE)
     + row('', 'P/E', mult(m.A.pe), mult(m.B.pe), m.rM, m.aM)
     + `</tbody></table><div class="pebg-measure-foot">${foot}</div>`;
   el.style.display = 'block';
+}
+
+// ubica el cuadro de la medición dentro del gráfico donde tape menos: prueba una grilla de posiciones y se queda con
+// la que cubre menos puntos de la línea (peso 1), de las bandas (0,3) y de las dos marcas de la medición (40), sin
+// pisar la leyenda. Mientras se mueve el mouse no salta: cambia de lugar solo si el nuevo tapa claramente menos.
+let pebgMeasPos = null;
+function placePebgMeasure(g) {
+  const el = document.getElementById('pebgMeasure');
+  if (!el || el.style.display === 'none') return;
+  const bw = el.offsetWidth, bh = el.offsetHeight, m = 8;
+  const x0 = g.L + m, x1 = g.L + g.cW - bw - m, y0 = g.T + m, y1 = g.T + g.cH - bh - m;
+  if (!(bw > 0) || x1 < x0 || y1 < y0) { el.style.left = ''; el.style.top = ''; el.style.right = ''; return; }
+  const cost = (x, y) => {
+    let c = 0; const xa = x - 6, xb = x + bw + 6, ya = y - 6, yb = y + bh + 6;
+    for (const [px, py, w] of g.obs) if (px >= xa && px <= xb && py >= ya && py <= yb) c += w;
+    for (const r of g.avoid) {
+      const ox = Math.max(0, Math.min(xb, r.x + r.w) - Math.max(xa, r.x)), oy = Math.max(0, Math.min(yb, r.y + r.h) - Math.max(ya, r.y));
+      c += ox * oy / 30;
+    }
+    return c;
+  };
+  // primero las esquinas (arriba a la derecha, la de siempre), después el resto de la grilla
+  const cands = [[x1, y0], [x0, y0], [x1, y1], [x0, y1]];
+  for (let i = 0; i <= 6; i++) for (let j = 0; j <= 4; j++) cands.push([x0 + (x1 - x0) * i / 6, y0 + (y1 - y0) * j / 4]);
+  let best = null;
+  for (const [x, y] of cands) { const c = cost(x, y); if (!best || c < best.c) best = { x, y, c }; }
+  if (pebgMeasPos) {
+    const px = Math.min(x1, Math.max(x0, pebgMeasPos.x)), py = Math.min(y1, Math.max(y0, pebgMeasPos.y)), c = cost(px, py);
+    if (c <= best.c + 3) best = { x: px, y: py, c };
+  }
+  pebgMeasPos = best;
+  el.style.right = 'auto'; el.style.left = Math.round(best.x) + 'px'; el.style.top = Math.round(best.y) + 'px';
 }
 
 // alejar más allá de toda la historia agranda el eje vertical hasta que entren todas las bandas (0 = recorte normal, 1 = todo)
@@ -3506,8 +3551,17 @@ function drawPebgChart(hoverT) {
       ctx.fillStyle = cssVar('--accent'); ctx.strokeStyle = C.bg; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(x, yS(yOf(p)), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });
-    if (mEnd != null && mEnd !== pebgMeasure.a) renderPebgMeasure(pebgMeasureStats(pebgMeasure.a, mEnd));
-    else { const el = document.getElementById('pebgMeasure'); if (el) el.style.display = 'none'; }
+    if (mEnd != null && mEnd !== pebgMeasure.a) {
+      renderPebgMeasure(pebgMeasureStats(pebgMeasure.a, mEnd));
+      const obs = [], sN = Math.max(1, Math.floor(lineVis.length / 400));
+      lineVis.forEach((p, i) => { if (i % sN === 0) { const v = yOf(p); if (v != null) obs.push([xS(p.date), yS(v), 1]); } });
+      const sv = series.filter(visible), sB = Math.max(1, Math.floor(sv.length / 150));
+      sv.forEach((p, i) => { if (i % sB) return; for (let b = 0; b < 5; b++) if (has(p, b)) obs.push([xS(p.date), yS(bandOf(p, b)), 0.3]); });
+      [pebgMeasure.a, mEnd].forEach(t => { if (t >= t0 && t <= t1) { const p = nearL(t); if (p && yOf(p) != null) obs.push([xS(p.date), yS(yOf(p)), 40]); } });
+      const avoid = [], lg = document.getElementById('pebgLegend');
+      if (lg && lg.style.display !== 'none' && lg.offsetWidth) avoid.push({ x: lg.offsetLeft, y: lg.offsetTop, w: lg.offsetWidth, h: lg.offsetHeight });
+      placePebgMeasure({ L: PAD.left, T: PAD.top, cW, cH, obs, avoid });
+    } else { const el = document.getElementById('pebgMeasure'); if (el) el.style.display = 'none'; }
   }
   // etiquetas en el borde derecho: valores en la última fecha visible
   const lastS = series.filter(visible).pop() || null, lastV = yOf(lineVis[lineVis.length - 1]);
@@ -3557,7 +3611,7 @@ function drawPebgChart(hoverT) {
       if (mx < PAD.left || mx > W - PAD.right) return;
       const pp = nearest(lineVis, Math.min(t1, t0 + (mx - PAD.left) / cW * (tR - t0)));
       const now = Date.now();
-      if (!pebgMeasure || pebgMeasure.b != null) pebgMeasure = { a: pp.date, b: null, hover: null, at: now };
+      if (!pebgMeasure || pebgMeasure.b != null) { pebgMeasure = { a: pp.date, b: null, hover: null, at: now }; pebgMeasPos = null; }
       else if (now - pebgMeasure.at < 400 && Math.abs(pp.date - pebgMeasure.a) < 3 * 86400) return;   // doble clic
       else pebgMeasure.b = pp.date;
       tooltip.style.display = 'none';
@@ -3757,18 +3811,37 @@ function drawPebgCmp(geo) {
   pts.forEach((p, i) => { const b = bands[i]; if (!b || p.date < t0 || p.date > t1) return; yMin = Math.max(Math.min(yMin, b.mu - b.sd), lv[0] - r0); yMax = Math.min(Math.max(yMax, b.mu + b.sd), lv[lv.length - 1] + r0); });
   const pad = (yMax - yMin) * 0.08 || 0.1; yMin -= pad; yMax += pad;
   const yS = v => P.top + (1 - (v - yMin) / (yMax - yMin)) * cH;
-  // grilla
+  const cols = bandColors();
+  // etiquetas del eje derecho (último valor y media): se ubican antes de la grilla para que no se pisen entre sí ni
+  // con los números del eje. Si quedan a menos de una etiqueta de distancia se separan lo justo, cada una hacia su
+  // lado, y una marca en el eje señala el valor exacto.
+  const lastV = vis[vis.length - 1], lb = bands[pts.indexOf(lastV)];
+  const PH = 18, yLo = P.top + PH / 2, yHi = P.top + cH - PH / 2;
+  const pills = [{ v: lastV.v, bg: cssVar('--price') }];
+  if (lb) pills.push({ v: lb.mu, bg: cols[2] });
+  pills.forEach(p => { p.y0 = yS(p.v); p.y = Math.max(yLo, Math.min(yHi, p.y0)); });
+  if (pills.length === 2) {
+    const [a, b] = pills[0].y <= pills[1].y ? pills : [pills[1], pills[0]];   // a queda arriba
+    const gap = PH + 2;
+    if (b.y - a.y < gap) {
+      const mid = (a.y + b.y) / 2;
+      a.y = mid - gap / 2; b.y = mid + gap / 2;
+      if (a.y < yLo) { a.y = yLo; b.y = yLo + gap; }
+      if (b.y > yHi) { b.y = yHi; a.y = yHi - gap; }
+    }
+  }
+  // grilla (sin el número del eje donde cae una etiqueta)
   ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
   const raw = (yMax - yMin) / 4, mag = 10 ** Math.floor(Math.log10(raw)), step = [1, 2, 2.5, 5, 10].map(x => x * mag).find(x => x >= raw);
   for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) {
     const y = Math.round(yS(v)) + 0.5;
     ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+    if (pills.some(p => Math.abs(p.y - y) < PH / 2 + 7)) continue;
     ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText(rel ? (+v.toFixed(2)) + 'x' : (+v.toFixed(1)) + 'x', W - PAD.right + 8, y + 4);
   }
   if (rel && 1 > yMin && 1 < yMax) { const y = Math.round(yS(1)) + 0.5; ctx.strokeStyle = text; ctx.globalAlpha = 0.5; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   ctx.save(); ctx.beginPath(); ctx.rect(PAD.left, P.top, cW, cH); ctx.clip();
   // zona μ ± 1σ y media
-  const cols = bandColors();
   const segs = []; let cur = [];
   pts.forEach((p, i) => { const b = bands[i]; if (b && p.date >= t0 - 30 * 86400 && p.date <= t1) cur.push([p.date, b]); else if (cur.length) { segs.push(cur); cur = []; } });
   if (cur.length) segs.push(cur);
@@ -3788,16 +3861,17 @@ function drawPebgCmp(geo) {
   pts.forEach(p => { if (p.date < t0 - 30 * 86400 || p.date > t1) { prev = null; return; } const x = xS(p.date), y = yS(p.v); (prev && p.date - prev.date < 30 * 86400) ? ctx.lineTo(x, y) : ctx.moveTo(x, y); prev = p; });
   ctx.stroke();
   ctx.restore();
-  // último valor y media como etiquetas sobre el eje derecho
-  const lastV = vis[vis.length - 1], lb = bands[pts.indexOf(lastV)];
-  const pill = (v, bg, fg) => {
-    const y = Math.max(P.top + 8, Math.min(P.top + cH - 8, yS(v))), txt = fx(v);
+  // último valor y media sobre el eje derecho, en la posición ya separada
+  const X0 = W - PAD.right;
+  pills.slice().reverse().forEach(p => {
+    const txt = fx(p.v);
     ctx.font = `700 11.5px ${CANVAS_FONT}`; const mt = ctx.measureText(txt), w = ((mt && mt.width) || txt.length * 7) + 10;
-    ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(W - PAD.right + 3, y - 9, w, 18, 4) : ctx.rect(W - PAD.right + 3, y - 9, w, 18); ctx.fill();
-    ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText(txt, W - PAD.right + 8, y + 4);
-  };
-  if (lb) pill(lb.mu, cols[2], cssVar('--chart-bg'));
-  pill(lastV.v, cssVar('--price'), cssVar('--chart-bg'));
+    if (Math.abs(p.y - p.y0) > 1 && p.y0 >= P.top && p.y0 <= P.top + cH) {   // marca en el valor exacto, unida a la etiqueta
+      ctx.strokeStyle = p.bg; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X0 - 4, p.y0); ctx.lineTo(X0 + 3, p.y0); ctx.lineTo(X0 + 6, p.y); ctx.stroke();
+    }
+    ctx.fillStyle = p.bg; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(X0 + 6, p.y - PH / 2, w, PH, 4) : ctx.rect(X0 + 6, p.y - PH / 2, w, PH); ctx.fill();
+    ctx.fillStyle = cssVar('--chart-bg'); ctx.textAlign = 'left'; ctx.fillText(txt, X0 + 11, p.y + 4);
+  });
   // cursor sincronizado con el gráfico de arriba
   const tip = document.getElementById('pebgCmpTip');
   if (geo.hoverT != null && geo.hoverT >= t0 && geo.hoverT <= t1) {
@@ -3884,14 +3958,14 @@ const METODO = [
       { d: 'Z-score: la distancia del P/E de hoy a la media, en desvíos. Debajo de −1 se marca barato y arriba de +1, caro.',
         p: 'Los umbrales son una convención para leer rápido. Un P/E que pasó dos años por encima de la media puede seguir ahí, sobre todo si el crecimiento cambió.' },
       { d: 'Medición entre dos puntos: variación del precio (anualizada si el tramo es de un mes o más) y cuánto vino del EPS y cuánto del P/E.',
-        p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan, y como el precio no incluye dividendos, la variación es solo de precio.' },
+        p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan, y como el precio no incluye dividendos, la variación es solo de precio. El cuadro se ubica solo, dentro del gráfico, donde tapa menos línea; los valores de inicio y fin aparecen al pasar el mouse por cada fila.' },
       { d: 'PEG: P/E dividido por el crecimiento tendencial del EPS en porcentaje.',
         p: 'El crecimiento es la pendiente de una regresión log-lineal del EPS de 12 meses de los últimos cinco años (21 puntos trimestrales), con lo que hacen falta seis años de EPS. Con crecimiento menor a 3% no se calcula, porque el cociente se dispara sin decir nada. Las bandas son percentiles (10, 25, 50, 75 y 90) y no desvíos, ya que el PEG es muy asimétrico. Arranca con EPS normalizado, porque un cargo puntual en el contable mueve a la vez el P/E y el crecimiento y el PEG lo cuenta dos veces, y en vista de múltiplo.',
         x: 'El crecimiento punta a punta: un piso o un pico en la base lo hace saltar (con META pasaba de 3% a 51% en tres años).' },
     ] },
 
   { id: 'mult', t: 'P/E del S&P 500, de sus sectores y subindustrias',
-    i: 'Es lo que muestran la pestaña Sectores, el panel de comparación y el P/E agregado del screener.',
+    i: 'Es lo que muestran la pestaña Sectores, el panel de comparación y los P/E del índice arriba del screener.',
     items: [
       { d: 'P/E del grupo = suma de capitalizaciones / suma de ganancias de 12 meses. Capitalización = precio × acciones diluidas; ganancias = EPS de 12 meses × esas acciones.',
         p: 'Es el P/E de comprar el grupo entero, el precio del índice sobre las ganancias del índice. El promedio o la mediana de los P/E individuales pesa igual a una empresa chica que a NVDA y se rompe con las que tienen EPS cerca de cero.' },
@@ -3937,7 +4011,7 @@ const METODO = [
         p: 'El relativo saca el ciclo del mercado. Si la empresa está barata contra su historia pero el relativo está en su media, lo que se movió fue el múltiplo de todo el sector, como pasó con ADBE y el software. Para cada día se usa el punto semanal vigente, si tiene 21 días o menos.' },
       { d: 'La zona sombreada es media ± 1σ, con la misma ventana y el mismo modo (fija o móvil) que el gráfico de arriba.' },
       { d: 'Sigue el modo Contable o Normalizado del gráfico de arriba; si la referencia no tiene normalizado, usa contable y lo aclara.',
-        p: 'Contable y normalizado pueden diferir en varios puntos. Para compararlo con el screener, que es contable, hay que mirarlo en Contable.' },
+        p: 'Contable y normalizado pueden diferir en varios puntos, así que una empresa normalizada se compara contra el índice normalizado; el panel lo hace solo porque sigue el selector.' },
     ] },
 
   { id: 'scr', t: 'Screener',
@@ -3945,8 +4019,8 @@ const METODO = [
       { d: 'Universo: las empresas que hoy están en el S&P 500 (503 tickers, unas 500 empresas).' },
       { d: 'P/E de cada empresa: precio en vivo sobre el EPS de 12 meses de la SEC, con el mismo relleno de Yahoo. Con pérdidas dice "pérd."; sin dato de la SEC queda el P/E de Yahoo con asterisco.',
         p: 'Al pasar el mouse se ve el EPS usado y la fecha del último trimestre.' },
-      { d: 'P/E agregado: la misma cuenta que el último punto del S&P 500 en Sectores, con los precios de ahora.',
-        p: 'Al cierre dan igual; durante la rueda el del screener se mueve con los precios y el de la serie queda en el cierre anterior.',
+      { d: 'P/E contable y P/E normalizado del índice: la misma cuenta que el último punto del S&P 500 en Sectores, con los precios de ahora.',
+        p: 'Al cierre dan igual; durante la rueda los del screener se mueven con los precios y la serie queda en el cierre anterior. El normalizado cubre menos empresas (las que tienen resultado operativo al día en la SEC), y al pasar el mouse se ve cuánto da el contable con esas mismas empresas, que es la comparación limpia.',
         x: 'Lo que hacía antes: P/E de Yahoo, sin las empresas con pérdidas y con Alphabet contada dos veces. Contra el panel en modo normalizado la diferencia llegaba a cuatro puntos.' },
       { d: 'Fw P/E, P/BV y market cap: Yahoo (o Finnhub), del archivo diario, reescalados con el precio en vivo.',
         p: 'Si el precio se movió más de 2 a 1 contra el de referencia no se reescala, porque lo más probable es que haya un split en el medio.' },
