@@ -962,7 +962,7 @@ function checkPwd(){
       <canvas id="pebgCanvas" aria-label="Gráfico de bandas: arrastrá para mover, rueda o pellizco para acercar o alejar, doble clic para volver"></canvas>
       <div class="pebg-measure" id="pebgMeasure" style="display:none" role="status" aria-live="polite"></div>
       <div class="pebg-tools">
-        <span class="pebg-hint">Clic en dos fechas mide la variación. Arrastrá para moverte; rueda, pellizco o + y − para acercar. Doble clic vuelve al período.</span>
+        <span class="pebg-hint">Clic en dos fechas mide la variación; clic derecho la borra. Arrastrá para moverte; rueda, pellizco o + y − para acercar. Doble clic vuelve al período.</span>
         <div class="cs"></div>
         <div class="pebg-period-btns" id="pebgScaleBtns" role="group" aria-label="Escala">
           <span class="pebg-period active" data-s="lin" onclick="setPebgScale('lin')">Lineal</span>
@@ -3297,6 +3297,7 @@ function bindPebgCanvas(canvas) {
   if (canvas.dataset.bound) return;
   canvas.dataset.bound = '1';
   canvas.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;   // clic derecho o del medio: ni arrastra ni mide
     if (e.pointerType === 'mouse') e.preventDefault();   // que arrastrar no seleccione texto de la página
     pebgPtr.set(e.pointerId, e.clientX);
     try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
@@ -3337,6 +3338,10 @@ function bindPebgCanvas(canvas) {
     if (!pebgPtr.size) { pebgDrag = null; canvas.style.cursor = ''; }
   };
   canvas.addEventListener('pointerup', end);
+  // clic derecho borra la medición (sobre el gráfico o sobre el cuadro); sin medición queda el menú normal
+  const undo = e => { if (pebgMeasure) { e.preventDefault(); clearPebgMeasure(); } };
+  canvas.addEventListener('contextmenu', undo);
+  const mbox = document.getElementById('pebgMeasure'); if (mbox) mbox.addEventListener('contextmenu', undo);
   canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('pointerleave', () => { if (!pebgPtr.size && pebgGeom) pebgGeom.leave(); });
   canvas.addEventListener('wheel', e => {
@@ -3958,7 +3963,7 @@ const METODO = [
       { d: 'Z-score: la distancia del P/E de hoy a la media, en desvíos. Debajo de −1 se marca barato y arriba de +1, caro.',
         p: 'Los umbrales son una convención para leer rápido. Un P/E que pasó dos años por encima de la media puede seguir ahí, sobre todo si el crecimiento cambió.' },
       { d: 'Medición entre dos puntos: variación del precio (anualizada si el tramo es de un mes o más) y cuánto vino del EPS y cuánto del P/E.',
-        p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan, y como el precio no incluye dividendos, la variación es solo de precio. El cuadro se ubica solo, dentro del gráfico, donde tapa menos línea; los valores de inicio y fin aparecen al pasar el mouse por cada fila.' },
+        p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan, y como el precio no incluye dividendos, la variación es solo de precio. El cuadro se ubica solo, dentro del gráfico, donde tapa menos línea; los valores de inicio y fin aparecen al pasar el mouse por cada fila. Clic derecho, Esc o la cruz borran la medición.' },
       { d: 'PEG: P/E dividido por el crecimiento tendencial del EPS en porcentaje.',
         p: 'El crecimiento es la pendiente de una regresión log-lineal del EPS de 12 meses de los últimos cinco años (21 puntos trimestrales), con lo que hacen falta seis años de EPS. Con crecimiento menor a 3% no se calcula, porque el cociente se dispara sin decir nada. Las bandas son percentiles (10, 25, 50, 75 y 90) y no desvíos, ya que el PEG es muy asimétrico. Arranca con EPS normalizado, porque un cargo puntual en el contable mueve a la vez el P/E y el crecimiento y el PEG lo cuenta dos veces, y en vista de múltiplo.',
         x: 'El crecimiento punta a punta: un piso o un pico en la base lo hace saltar (con META pasaba de 3% a 51% en tres años).' },
