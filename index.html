@@ -175,7 +175,15 @@ td:nth-child(-n+4){text-align:left}
 .pebg-stat-val{font-size:17px;font-weight:650;color:var(--ink);white-space:nowrap;font-stretch:92%}
 .pebg-stat-sub{font-size:11.5px;color:var(--faint)}
 #pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden;margin:14px var(--side);border:1px solid var(--line);border-radius:10px;background:var(--chart-bg)}
-#pebgContainer{flex:1;position:relative;overflow:hidden;background:var(--chart-bg);min-width:0;user-select:none;-webkit-user-select:none}
+#pebgContainer{flex:1;position:relative;overflow:hidden;background:var(--chart-bg);min-width:0;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+#pebgMain{flex:1;position:relative;min-height:0;overflow:hidden}
+.pebg-cmp{flex:0 0 240px;display:flex;flex-direction:column;border-top:1px solid var(--line);min-height:0}
+.pebg-cmp-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px 2px 62px;font-size:12.5px}
+.pebg-cmp-sum{color:var(--ink2)}
+.pebg-cmp-sum b{color:var(--ink)}
+.pebg-cmp-box{flex:1;position:relative;min-height:0}
+#pebgCmpCanvas{display:block;width:100%;height:100%}
+.pebg-period.is-off{opacity:.4;pointer-events:none}
 .pebg-panel{width:270px;flex-shrink:0;background:var(--surf2);border-left:1px solid var(--line);padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column}
 .pebg-panel-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .pebg-panel-sub{font-size:12px;color:var(--muted);margin-bottom:6px}
@@ -367,6 +375,17 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .arg-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .arg-chip-dot{width:8px;height:8px;border-radius:50%}
 .arg-chart-box{position:relative;height:300px}
+.sect-body{display:flex;flex-direction:column;gap:18px;padding:20px var(--side)}
+.sect-tbl tbody tr{cursor:pointer}
+.sect-tbl tbody tr:hover td{background:var(--surf2)}
+.sect-tbl tbody tr.sel td{background:var(--accent-soft)}
+.sect-tbl tbody tr.sect-idx td{font-weight:700;color:var(--ink)}
+.sect-tbl tbody tr.sect-sub td:first-child{padding-left:26px;font-weight:500;color:var(--ink2)}
+.sect-tbl tbody td.sect-now{font-weight:700;color:var(--ink)}
+.sect-tg{font:inherit;border:none;background:none;color:var(--muted);cursor:pointer;width:18px;padding:0;margin-right:4px}
+.sect-tg:focus-visible{outline:2px solid var(--accent)}
+.sect-date{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink)}
+.sect-chart-box{position:relative;height:340px}
 
 @media (max-width:1180px){
   .arg-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -411,6 +430,10 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .pebg-panel{width:100%;border-left:none;border-top:1px solid var(--line);max-height:240px}
   .pebg-legend{display:none!important}
   .pebg-hint{display:none}
+  .pebg-cmp{flex-basis:210px}
+  .pebg-cmp-bar{padding-left:12px}
+  .sect-body{padding:12px var(--side);gap:12px}
+  .sect-chart-box{height:260px}
   .cmp-price-bar{flex-wrap:wrap;padding:8px var(--side);gap:8px}
   .cmp-price-sep{display:none}
   .cmp-price-block{padding:0 8px}
@@ -465,6 +488,7 @@ function checkPwd(){
   <div class="tab" id="tab-heatmap" onclick="switchTab('heatmap')">Heatmap</div>
   <div class="tab" id="tab-cartera" onclick="switchTab('cartera')">Cartera</div>
   <div class="tab" id="tab-pebg" onclick="switchTab('pebg')">P/E histórico</div>
+  <div class="tab" id="tab-sect" onclick="switchTab('sect')">Sectores</div>
   <div class="tab" id="tab-calendar" onclick="switchTab('calendar')">Calendario</div>
   <div class="tab-spacer"></div>
   <span class="hdr-time" id="lastUpd">&mdash;</span>
@@ -886,6 +910,7 @@ function checkPwd(){
   </div>
   <div id="pebgOuter">
     <div id="pebgContainer">
+     <div id="pebgMain">
       <canvas id="pebgCanvas" aria-label="Gráfico de bandas: arrastrá para mover, rueda o pellizco para acercar o alejar, doble clic para volver"></canvas>
       <div class="pebg-measure" id="pebgMeasure" style="display:none" role="status" aria-live="polite"></div>
       <div class="pebg-tools">
@@ -899,12 +924,30 @@ function checkPwd(){
         <button type="button" class="pebg-tool" onclick="pebgZoomBy(1.5)" aria-label="Alejar" title="Alejar">−</button>
         <button type="button" class="pebg-tool pebg-tool-txt" id="pebgReset" onclick="resetPebgZoom()" disabled>Restablecer</button>
         <button type="button" class="pebg-tool pebg-tool-txt" id="pebgLegBtn" onclick="togglePebgLegend()" aria-pressed="true" title="Mostrar u ocultar la leyenda">Leyenda</button>
+        <button type="button" class="pebg-tool pebg-tool-txt" id="pebgCmpBtn" onclick="togglePebgCmp()" aria-pressed="false" title="P/E del S&amp;P 500, del sector o de la subindustria debajo del gráfico">Comparar</button>
       </div>
       <div class="pebg-tooltip" id="pebgTooltip">
         <div class="pebg-tooltip-date" id="pebgTipDate"></div>
         <div id="pebgTipRows"></div>
       </div>
       <div class="pebg-legend" id="pebgLegend" style="display:none"></div>
+     </div>
+     <div class="pebg-cmp" id="pebgCmp" style="display:none">
+      <div class="pebg-cmp-bar">
+        <span class="pebg-note">Comparar con</span>
+        <div class="pebg-period-btns" id="pebgCmpRef" role="group" aria-label="Referencia">
+          <span class="pebg-period" data-r="spx" onclick="setPebgCmp('ref','spx')">S&amp;P 500</span>
+          <span class="pebg-period" data-r="sec" onclick="setPebgCmp('ref','sec')">Sector</span>
+          <span class="pebg-period" data-r="sub" onclick="setPebgCmp('ref','sub')">Subindustria</span>
+        </div>
+        <div class="pebg-period-btns" id="pebgCmpMode" role="group" aria-label="Qué se grafica">
+          <span class="pebg-period" data-m="pe" onclick="setPebgCmp('mode','pe')" title="P/E de la referencia">P/E</span>
+          <span class="pebg-period" data-m="rel" onclick="setPebgCmp('mode','rel')" title="P/E del ticker dividido el de la referencia">Relativo</span>
+        </div>
+        <span class="pebg-cmp-sum" id="pebgCmpSum"></span>
+      </div>
+      <div class="pebg-cmp-box"><canvas id="pebgCmpCanvas"></canvas><div class="pebg-tooltip" id="pebgCmpTip"></div></div>
+     </div>
     </div>
     <div class="pebg-panel" id="pebgPanel" style="display:none">
       <div class="pebg-panel-title">EPS trimestral</div>
@@ -914,6 +957,40 @@ function checkPwd(){
       <div id="pebgManualRows"></div>
       <button class="btn" style="width:100%;margin-top:14px" onclick="applyPebgManual()">Aplicar</button>
       <div class="pebg-note" style="margin-top:10px;line-height:1.5">Sirve cuando la historia es corta. La fecha es el cierre del trimestre.</div>
+    </div>
+  </div>
+</div>
+
+<div class="view view-scroll" id="view-sect">
+  <div class="ov-clock-bar">
+    <span class="arg-title">Múltiplos del S&amp;P 500 por sector</span>
+    <div class="pebg-period-btns eps-mode-btns" role="group" aria-label="EPS">
+      <span class="pebg-period" data-m="gaap" onclick="setEpsMode('gaap')">Contable</span>
+      <span class="pebg-period" data-m="norm" onclick="setEpsMode('norm')">Normalizado</span>
+    </div>
+    <label class="pebg-note" for="sectDateIn">P/E al</label>
+    <input type="date" id="sectDateIn" class="sect-date" min="2010-04-01" onchange="setSectDate(this.value)">
+    <div class="cs"></div>
+    <span class="arg-status" id="sectStatus">—</span>
+  </div>
+  <div class="sect-body">
+    <div class="ov-card">
+      <div id="sectTable"><div class="ov-loading">Cargando...</div></div>
+      <div class="arg-note">P/E = suma de capitalizaciones / suma de ganancias de 12 meses de las empresas del grupo; las pérdidas restan. Son las empresas que hoy están en el índice, así que hacia atrás hay sesgo de supervivencia. Z y percentil contra los últimos 10 años; Fw P/E con el consenso de hoy. Tocá un grupo para ver su historia; la flecha abre las subindustrias.</div>
+    </div>
+    <div class="ov-card">
+      <div class="arg-chart-top">
+        <div class="ov-card-title" id="sectChartTitle">S&amp;P 500</div>
+        <div class="cs"></div>
+        <div class="pebg-period-btns" id="sectRangeBtns" role="group" aria-label="Período">
+          <span class="pebg-period" data-y="3" onclick="setSectRange(3)">3A</span>
+          <span class="pebg-period" data-y="5" onclick="setSectRange(5)">5A</span>
+          <span class="pebg-period active" data-y="10" onclick="setSectRange(10)">10A</span>
+          <span class="pebg-period" data-y="0" onclick="setSectRange(0)">Todo</span>
+        </div>
+      </div>
+      <div class="arg-chips" id="sectLegend"></div>
+      <div class="sect-chart-box"><canvas id="sectCanvas"></canvas><div class="pebg-tooltip" id="sectCanvasTip"></div></div>
     </div>
   </div>
 </div>
@@ -1001,6 +1078,7 @@ function toggleTheme() {
                    document.getElementById('cmpB').value.trim().toUpperCase() || 'META', cmpCurrentRange);
   if (document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap();
   if (argData) { drawArgCharts(); drawCauCurve(); }
+  if (MULT && document.getElementById('tab-sect').classList.contains('active')) drawSectChart();
   if (pebgData) renderPebg(pebgData);
   if (ggalCache[ggalRange]) drawGgal();
 }
@@ -1048,6 +1126,7 @@ function switchTab(t) {
   if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
   if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
+  if(t==='sect') { if(!MULT) loadSect(); else renderSect(); }
   if(t==='calendar') initCalendar();
 }
 
@@ -2330,6 +2409,7 @@ function setEpsMode(m) {
   syncEpsButtons();
   if (pebgData) { renderPebg(pebgData); if (pebgPanelOpen) populatePebgPanel(pebgData); }
   if (Object.keys(carteraRaw).length) buildCartera();
+  if (MULT && document.getElementById('tab-sect').classList.contains('active')) renderSect();
 }
 
 // P/E TTM diario: precio / suma de los últimos 4 trimestres de EPS publicados a esa fecha
@@ -2611,6 +2691,8 @@ async function loadPebg() {
   status.textContent = 'Cargando...';
   pebgLoaded = true;
   pebgManualEps = [];
+  loadSpx();
+  if (pebgCmp.on) loadMultiples();
   const req = ++pebgReq; // si llega una respuesta vieja después de otra más nueva, se descarta
   try {
     const r = await fetch(BASE_URL + '/api/pebg?symbol=' + encodeURIComponent(sym));
@@ -3060,7 +3142,7 @@ function drawPebgChart(hoverT) {
   const mv = pebgAxis === 'mult';
   const yOf = p => mv ? (peg ? p.peg : p.pe) : p.close;
   const bandOf = (p, b) => mv ? (p.band ? p.band.mult[b] : null) : (p.bandPx ? p.bandPx[b] : null);
-  const container = document.getElementById('pebgContainer');
+  const container = document.getElementById('pebgMain');
   const canvas = document.getElementById('pebgCanvas');
   bindPebgCanvas(canvas);
   syncPebgScaleBtns();
@@ -3348,6 +3430,259 @@ function drawPebgChart(hoverT) {
       pebgRaf = requestAnimationFrame(() => drawPebgChart(pp.date));
     },
   };
+  drawPebgCmp({ t0, t1, tR, PAD, hoverT });
+}
+
+// ── MÚLTIPLOS DEL ÍNDICE Y SECTORES (multiples.json, lo arma scripts/multiples.mjs una vez por semana) ──
+let MULT = null, multLoading = null;
+function loadMultiples() {
+  if (!multLoading) multLoading = fetch('multiples.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
+    .then(j => { MULT = j && j.series ? j : null; return MULT; }).catch(() => null);
+  return multLoading;
+}
+const GICS_ES = {
+  'Information Technology': 'Tecnología', 'Financials': 'Financiero', 'Health Care': 'Salud', 'Consumer Discretionary': 'Consumo discrecional',
+  'Communication Services': 'Comunicaciones', 'Industrials': 'Industria', 'Consumer Staples': 'Consumo básico', 'Energy': 'Energía',
+  'Materials': 'Materiales', 'Real Estate': 'Real estate', 'Utilities': 'Servicios públicos',
+};
+const multName = key => { const s = MULT && MULT.series[key]; if (!s) return key; return s.type === 'index' ? 'S&P 500' : s.type === 'sector' ? (GICS_ES[s.name] || s.name) : s.name; };
+// fecha (viernes) de cada punto semanal
+function multDates() {
+  if (!MULT) return [];
+  if (!MULT._dates) {
+    const wk = MULT.weekList || Array.from({ length: MULT.weeks }, (_, i) => MULT.week0 + i);
+    MULT._dates = wk.map(w => MULT.monday0 + w * 7 * 86400 + 4 * 86400);
+  }
+  return MULT._dates;
+}
+// serie [{ date, v }] de un grupo; normalizada si se pide y hay dato (si no, contable)
+function multSeries(key, norm) {
+  const s = MULT && MULT.series[key]; if (!s) return [];
+  const arr = (norm && s.n.some(v => v != null)) ? s.n : s.g, d = multDates();
+  const out = [];
+  arr.forEach((v, i) => { if (v != null) out.push({ date: d[i], v }); });
+  return out;
+}
+const multUsesNorm = (key, norm) => norm && MULT && MULT.series[key] && MULT.series[key].n.some(v => v != null);
+
+// media y desvío por punto: fija (últimos N años, solo dentro de esa ventana) o móvil (N años previos a cada fecha)
+function multBands(pts, years, fija) {
+  const W = years * YR_S, out = new Array(pts.length).fill(null);
+  if (!pts.length) return out;
+  if (fija) {
+    const cut = pts[pts.length - 1].date - W, win = pts.filter(p => p.date >= cut).map(p => p.v);
+    if (win.length < 8) return out;
+    const mu = win.reduce((a, b) => a + b, 0) / win.length, sd = Math.sqrt(win.reduce((a, v) => a + (v - mu) ** 2, 0) / win.length);
+    pts.forEach((p, i) => { if (p.date >= cut) out[i] = { mu, sd }; });
+    return out;
+  }
+  // los puntos pueden ser diarios (relativo) o semanales: la cobertura mínima se mide en tiempo
+  let lo = 0, sx = 0, sxx = 0, n = 0;
+  for (let i = 0; i < pts.length; i++) {
+    sx += pts[i].v; sxx += pts[i].v ** 2; n++;
+    while (pts[lo].date <= pts[i].date - W) { sx -= pts[lo].v; sxx -= pts[lo].v ** 2; n--; lo++; }
+    if (pts[i].date - pts[lo].date < W * 0.6 || n < 8) continue;
+    const mu = sx / n; out[i] = { mu, sd: Math.sqrt(Math.max(0, sxx / n - mu * mu)) };
+  }
+  return out;
+}
+
+// ---------- panel de comparación debajo de P/E histórico ----------
+let pebgCmp = { on: false, ref: 'sub', mode: 'rel' };
+try { const c = JSON.parse(localStorage.getItem('pebgCmp') || 'null'); if (c) pebgCmp = { ...pebgCmp, ...c }; } catch (e) {}
+function savePebgCmp() { try { localStorage.setItem('pebgCmp', JSON.stringify(pebgCmp)); } catch (e) {} }
+function togglePebgCmp() {
+  pebgCmp.on = !pebgCmp.on; savePebgCmp();
+  document.getElementById('pebgCmp').style.display = pebgCmp.on ? 'flex' : 'none';
+  if (pebgCmp.on) { loadMultiples().then(() => loadSpx()).then(() => pebgRedraw()); }
+  pebgRedraw();
+}
+function setPebgCmp(k, v) { pebgCmp[k] = v; savePebgCmp(); pebgRedraw(); }
+// referencia para el ticker: S&P 500, su sector o su subindustria (si está en el índice y la subindustria se publica)
+function pebgCmpKey(sym) {
+  const info = SPX_INFO[sym];
+  const opts = { spx: 'SPX', sec: info ? 'sec:' + info.gics : null, sub: info && MULT && MULT.series['sub:' + info.sub] ? 'sub:' + info.sub : null };
+  let ref = pebgCmp.ref;
+  if (!opts[ref]) ref = opts.sec ? 'sec' : 'spx';
+  return { key: opts[ref], ref, opts };
+}
+
+function drawPebgCmp(geo) {
+  const box = document.getElementById('pebgCmp');
+  const btn = document.getElementById('pebgCmpBtn');
+  if (btn) btn.setAttribute('aria-pressed', pebgCmp.on);
+  if (!box) return;
+  box.style.display = pebgCmp.on ? 'flex' : 'none';
+  if (!pebgCmp.on || !pebgView) return;
+  const cv = document.getElementById('pebgCmpCanvas'), holder = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1, W = holder.clientWidth, H = holder.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const text = cssVar('--chart-text'), grid = cssVar('--chart-grid');
+  const msg = m => { ctx.fillStyle = text; ctx.font = `13px ${CANVAS_FONT}`; ctx.textAlign = 'center'; ctx.fillText(m, W / 2, H / 2); };
+  const sum = document.getElementById('pebgCmpSum');
+  if (!MULT) { sum.textContent = ''; msg(multLoading ? 'Cargando múltiplos…' : 'Sin múltiplos del índice todavía'); if (!multLoading) loadMultiples().then(() => pebgRedraw()); return; }
+
+  const sym = pebgData ? pebgData.symbol : '';
+  const { key, ref, opts } = pebgCmpKey(sym);
+  // botones: los que no aplican quedan apagados
+  document.querySelectorAll('#pebgCmpRef .pebg-period').forEach(e => {
+    const k = e.dataset.r; e.classList.toggle('active', k === ref); e.classList.toggle('is-off', !opts[k]);
+    e.title = !opts[k] ? (k === 'spx' ? '' : sym + ' no está en el S&P 500' + (k === 'sub' && SPX_INFO[sym] ? ' o su subindustria tiene menos de 3 empresas' : '')) : (k === 'sec' || k === 'sub') && opts[k] ? multName(opts[k]) : 'S&P 500';
+  });
+  document.querySelectorAll('#pebgCmpMode .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.m === pebgCmp.mode));
+
+  const norm = epsMode === 'norm' && hasNorm(pebgData);
+  const bench = multSeries(key, norm);
+  const benchNorm = multUsesNorm(key, norm);
+  const rel = pebgCmp.mode === 'rel';
+  let pts = bench;
+  if (rel) {   // P/E del ticker / P/E de la referencia (el semanal vigente a cada fecha)
+    pts = []; let j = 0;
+    for (const p of pebgView.full) {
+      if (!(p.pe > 0)) continue;
+      while (j + 1 < bench.length && bench[j + 1].date <= p.date) j++;
+      if (!bench.length || bench[j].date > p.date || p.date - bench[j].date > 21 * 86400) continue;
+      pts.push({ date: p.date, v: p.pe / bench[j].v });
+    }
+  }
+  const years = pebgView.years, fija = pebgView.fija;
+  const bands = multBands(pts, years, fija);
+  const lastI = pts.length - 1;
+  const fx = v => rel ? v.toFixed(2) + 'x' : v.toFixed(1) + 'x';
+  if (lastI >= 0) {
+    const b = bands[lastI], z = b && b.sd > 0 ? (pts[lastI].v - b.mu) / b.sd : null;
+    sum.innerHTML = (rel ? `${sym} / ${multName(key)}: <b>${fx(pts[lastI].v)}</b>` : `${multName(key)}: P/E <b>${fx(pts[lastI].v)}</b>`)
+      + (b ? `, media ${fija ? '' : 'móvil '}${years}A ${fx(b.mu)}, z ${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(2)}σ` : '')
+      + (norm && !benchNorm ? ' <span class="na">(referencia contable)</span>' : '');
+  } else sum.textContent = '';
+
+  const { t0, t1, tR, PAD } = geo, cW = W - PAD.left - PAD.right;
+  const P = { top: 10, bottom: 22 }, cH = H - P.top - P.bottom;
+  const vis = pts.filter(p => p.date >= t0 && p.date <= t1);
+  if (vis.length < 2) { msg(rel ? 'Sin P/E relativo en este tramo' : 'Sin P/E de la referencia en este tramo'); return; }
+  const xS = t => PAD.left + (t - t0) / (tR - t0) * cW;
+  const lv = vis.map(p => p.v).sort((a, b) => a - b);
+  let yMin = lv[0], yMax = lv[Math.floor(0.995 * (lv.length - 1))];
+  const r0 = yMax - yMin || yMax * 0.1;
+  pts.forEach((p, i) => { const b = bands[i]; if (!b || p.date < t0 || p.date > t1) return; yMin = Math.max(Math.min(yMin, b.mu - b.sd), lv[0] - r0); yMax = Math.min(Math.max(yMax, b.mu + b.sd), lv[lv.length - 1] + r0); });
+  const pad = (yMax - yMin) * 0.08 || 0.1; yMin -= pad; yMax += pad;
+  const yS = v => P.top + (1 - (v - yMin) / (yMax - yMin)) * cH;
+  // grilla
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  const raw = (yMax - yMin) / 4, mag = 10 ** Math.floor(Math.log10(raw)), step = [1, 2, 2.5, 5, 10].map(x => x * mag).find(x => x >= raw);
+  for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) {
+    const y = Math.round(yS(v)) + 0.5;
+    ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+    ctx.fillStyle = text; ctx.textAlign = 'right'; ctx.fillText(rel ? (+v.toFixed(2)) + 'x' : (+v.toFixed(1)) + 'x', PAD.left - 8, y + 4);
+  }
+  if (rel && 1 > yMin && 1 < yMax) { const y = Math.round(yS(1)) + 0.5; ctx.strokeStyle = text; ctx.globalAlpha = 0.5; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+  ctx.save(); ctx.beginPath(); ctx.rect(PAD.left, P.top, cW, cH); ctx.clip();
+  // zona μ ± 1σ y media
+  const cols = bandColors();
+  const segs = []; let cur = [];
+  pts.forEach((p, i) => { const b = bands[i]; if (b && p.date >= t0 - 30 * 86400 && p.date <= t1) cur.push([p.date, b]); else if (cur.length) { segs.push(cur); cur = []; } });
+  if (cur.length) segs.push(cur);
+  segs.forEach(sg => {
+    ctx.fillStyle = cssVar('--band-fill'); ctx.beginPath();
+    sg.forEach(([t, b], i) => i ? ctx.lineTo(xS(t), yS(b.mu + b.sd)) : ctx.moveTo(xS(t), yS(b.mu + b.sd)));
+    for (let i = sg.length - 1; i >= 0; i--) ctx.lineTo(xS(sg[i][0]), yS(sg[i][1].mu - sg[i][1].sd));
+    ctx.closePath(); ctx.fill();
+    [[b => b.mu + b.sd, cols[1], [5, 4]], [b => b.mu, cols[2], []], [b => b.mu - b.sd, cols[3], [5, 4]]].forEach(([f, c, d]) => {
+      ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.setLineDash(d); ctx.beginPath();
+      sg.forEach(([t, b], i) => i ? ctx.lineTo(xS(t), yS(f(b))) : ctx.moveTo(xS(t), yS(f(b)))); ctx.stroke(); ctx.setLineDash([]);
+    });
+  });
+  // línea
+  ctx.strokeStyle = cssVar('--price'); ctx.lineWidth = 1.75; ctx.lineJoin = 'round'; ctx.beginPath();
+  let prev = null;
+  pts.forEach(p => { if (p.date < t0 - 30 * 86400 || p.date > t1) { prev = null; return; } const x = xS(p.date), y = yS(p.v); (prev && p.date - prev.date < 30 * 86400) ? ctx.lineTo(x, y) : ctx.moveTo(x, y); prev = p; });
+  ctx.stroke();
+  ctx.restore();
+  // valores en el borde derecho
+  const lastV = vis[vis.length - 1], lb = bands[pts.indexOf(lastV)];
+  ctx.textAlign = 'left'; ctx.font = `700 12px ${CANVAS_FONT}`; ctx.fillStyle = cssVar('--price');
+  const ly = yS(lastV.v); ctx.fillText(fx(lastV.v), W - PAD.right + 8, ly + 4);
+  if (lb && Math.abs(yS(lb.mu) - ly) > 13) { ctx.font = `600 12px ${CANVAS_FONT}`; ctx.fillStyle = cols[2]; ctx.fillText(fx(lb.mu), W - PAD.right + 8, yS(lb.mu) + 4); }
+  // cursor sincronizado con el gráfico de arriba
+  const tip = document.getElementById('pebgCmpTip');
+  if (geo.hoverT != null && geo.hoverT >= t0 && geo.hoverT <= t1) {
+    const x = Math.round(xS(geo.hoverT)) + 0.5;
+    ctx.strokeStyle = text; ctx.globalAlpha = 0.5; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, P.top); ctx.lineTo(x, P.top + cH); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    let q = null; for (const p of vis) { if (p.date <= geo.hoverT + 4 * 86400) q = p; else break; }
+    if (q) {
+      const b = bands[pts.indexOf(q)];
+      ctx.fillStyle = cssVar('--price'); ctx.beginPath(); ctx.arc(xS(q.date), yS(q.v), 3.5, 0, Math.PI * 2); ctx.fill();
+      tip.innerHTML = `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl">${rel ? 'Relativo' : 'P/E ' + multName(key)}</span><span class="pebg-tooltip-val">${fx(q.v)}</span></div>`
+        + (b ? `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:${cols[2]}"></span>Media</span><span class="pebg-tooltip-val">${fx(b.mu)}</span></div>` : '');
+      tip.style.display = 'block'; tip.style.minWidth = '170px';
+      const tw = tip.offsetWidth || 180; tip.style.left = (x + 14 + tw > W ? x - tw - 14 : x + 14) + 'px'; tip.style.top = '6px';
+    }
+  } else tip.style.display = 'none';
+}
+
+// ---------- pestaña Sectores ----------
+let sectSel = 'SPX', sectOpen = new Set(), sectRange = 10, sectDate = '';
+function sectStats(key, norm) {
+  const pts = multSeries(key, norm); if (!pts.length) return null;
+  const last = pts[pts.length - 1], now = last.date;
+  const avg = y => { const w = pts.filter(p => p.date > now - y * YR_S).map(p => p.v); return w.length >= y * 52 * 0.6 ? w.reduce((a, b) => a + b, 0) / w.length : null; };
+  const w10 = pts.filter(p => p.date > now - 10 * YR_S).map(p => p.v);
+  const mu = w10.length ? w10.reduce((a, b) => a + b, 0) / w10.length : null, sd = mu != null ? Math.sqrt(w10.reduce((a, v) => a + (v - mu) ** 2, 0) / w10.length) : null;
+  let atD = null;
+  if (sectDate) { const t = Date.parse(sectDate + 'T12:00:00Z') / 1000; for (const p of pts) { if (p.date <= t + 3 * 86400) atD = p; else break; } }
+  return { now: last.v, a1: avg(1), a3: avg(3), a5: avg(5), a10: avg(10), z: (mu != null && sd > 0 && w10.length >= 260) ? (last.v - mu) / sd : null,
+    pct: w10.length >= 260 ? w10.filter(v => v <= last.v).length / w10.length : null, atD };
+}
+async function loadSect() {
+  document.getElementById('sectStatus').textContent = 'Cargando…';
+  await loadMultiples();
+  renderSect();
+}
+function renderSect() {
+  const st = document.getElementById('sectStatus'), tb = document.getElementById('sectTable');
+  syncEpsButtons();
+  if (!MULT) { st.textContent = 'Todavía no hay múltiplos calculados (se arman una vez por semana).'; tb.innerHTML = ''; return; }
+  const norm = epsMode === 'norm';
+  st.textContent = `Semanal, al ${MULT.asOf.split('-').reverse().join('/')}. Empresas que hoy están en el índice; EPS de la SEC.`;
+  const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
+  const row = (key, cls, toggle) => {
+    const s = MULT.series[key], x = sectStats(key, norm); if (!x) return '';
+    const z = x.z == null ? '<span class="na">—</span>' : Math.abs(x.z) < 0.05 ? '0.0σ' : (x.z > 0 ? '+' : '−') + Math.abs(x.z).toFixed(1) + 'σ';
+    return `<tr class="${cls}${key === sectSel ? ' sel' : ''}" onclick="selectSect('${key.replace(/'/g, "\\'")}')">`
+      + `<td>${toggle}${multName(key)}</td><td>${s.count}</td><td class="sect-now">${f1(x.now)}</td><td>${f1(s.fw)}</td>`
+      + `<td>${f1(x.a1)}</td><td>${f1(x.a3)}</td><td>${f1(x.a5)}</td><td>${f1(x.a10)}</td><td>${z}</td>`
+      + `<td>${x.pct == null ? '<span class="na">—</span>' : Math.round(x.pct * 100) + '%'}</td>`
+      + `<td>${sectDate ? f1(x.atD && x.atD.v) : '<span class="na">—</span>'}</td></tr>`;
+  };
+  const secs = Object.keys(MULT.series).filter(k => MULT.series[k].type === 'sector').sort((a, b) => multName(a).localeCompare(multName(b), 'es'));
+  let html = '<table class="ov-tbl sect-tbl"><thead><tr><th>Grupo</th><th>Empresas</th><th>P/E hoy</th><th>Fw P/E</th><th>Media 1A</th><th>3A</th><th>5A</th><th>10A</th><th>Z vs 10A</th><th>Percentil 10A</th>'
+    + `<th>${sectDate ? 'Al ' + sectDate.split('-').reverse().join('/') : 'A una fecha'}</th></tr></thead><tbody>` + row('SPX', 'sect-idx', '');
+  secs.forEach(k => {
+    const open = sectOpen.has(k), subs = Object.keys(MULT.series).filter(s => MULT.series[s].type === 'sub' && MULT.series[s].sector === MULT.series[k].name).sort((a, b) => multName(a).localeCompare(multName(b)));
+    html += row(k, 'sect-sec', `<button type="button" class="sect-tg" aria-expanded="${open}" onclick="event.stopPropagation();toggleSect('${k}')" title="Subindustrias">${open ? '▾' : '▸'}</button>`);
+    if (open) subs.forEach(s => { html += row(s, 'sect-sub', ''); });
+  });
+  tb.innerHTML = html + '</tbody></table>';
+  drawSectChart();
+}
+function toggleSect(k) { sectOpen.has(k) ? sectOpen.delete(k) : sectOpen.add(k); renderSect(); }
+function selectSect(k) { sectSel = k; renderSect(); }
+function setSectRange(y) { sectRange = y; document.querySelectorAll('#sectRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.y === y)); drawSectChart(); }
+function setSectDate(v) { sectDate = v || ''; renderSect(); }
+function drawSectChart() {
+  if (!MULT) return;
+  const norm = epsMode === 'norm', key = MULT.series[sectSel] ? sectSel : 'SPX';
+  const x = sectStats(key, norm);
+  document.getElementById('sectChartTitle').innerHTML = multName(key) + ' <span>P/E de 12 meses' + (multUsesNorm(key, norm) ? ', normalizado' : ', contable') + '</span>';
+  const since = sectRange ? Date.now() / 1000 - sectRange * YR_S : 0;
+  const toPts = arr => arr.filter(p => p.date >= since).map(p => ({ t: p.date, v: p.v }));
+  const series = [{ name: multName(key), color: cssVar('--accent'), pts: toPts(multSeries(key, norm)) }];
+  if (key !== 'SPX') series.push({ name: 'S&P 500', color: cssVar('--ink2'), pts: toPts(multSeries('SPX', norm)) });
+  if (x && x.a10 != null && series[0].pts.length) series.push({ name: 'Media 10A', color: cssVar('--b1p'), pts: [{ t: series[0].pts[0].t, v: x.a10 }, { t: series[0].pts[series[0].pts.length - 1].t, v: x.a10 }] });
+  drawLines('sectCanvas', series.filter(s => s.pts.length > 1), (v, tip) => (tip ? v.toFixed(1) : String(+v.toFixed(1))) + 'x');
+  document.getElementById('sectLegend').innerHTML = series.map(s => `<span class="arg-chip on" style="cursor:default"><span class="arg-chip-dot" style="background:${s.color}"></span>${s.name}</span>`).join('');
 }
 
 // ── ARGENTINA: tasas, liquidez y agregados (API de estadísticas del BCRA v4 + cauciones de BYMA) ──
@@ -3606,6 +3941,7 @@ function drawLines(id, series, fmt, hoverT) {
 }
 
 window.addEventListener('resize', () => { if (document.getElementById('tab-arg').classList.contains('active') && argData) { drawArgCharts(); drawCauCurve(); } });
+window.addEventListener('resize', () => { if (document.getElementById('tab-sect').classList.contains('active') && MULT) drawSectChart(); });
 
 window.addEventListener('resize', () => {
   if(document.getElementById('tab-pebg')?.classList.contains('active') && pebgData) renderPebg(pebgData);
