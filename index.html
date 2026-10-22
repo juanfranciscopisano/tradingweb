@@ -3134,7 +3134,9 @@ function drawPebgChart(hoverT) {
   if (useLog) { yMin *= 0.9; yMax *= 1.08; } else { const r = yMax - yMin; yMin = Math.max(0, yMin - r * 0.06); yMax += r * 0.06; }
   const ty = v => useLog ? Math.log(v) : v;
   const l0 = ty(yMin), l1 = ty(yMax);
-  const xS = t => PAD.left + ((t - t0) / (t1 - t0)) * cW;
+  // aire entre el último dato y el borde del gráfico: el eje de tiempo se estira 16 px más allá de t1
+  const tR = t1 + (t1 - t0) * 16 / Math.max(1, cW - 16);
+  const xS = t => PAD.left + ((t - t0) / (tR - t0)) * cW;
   const yS = v => PAD.top + cH - ((ty(Math.min(Math.max(v, useLog ? yMin * 0.5 : yMin - (yMax - yMin)), yMax * 2)) - l0) / (l1 - l0)) * cH;
 
   // grilla horizontal
@@ -3296,13 +3298,13 @@ function drawPebgChart(hoverT) {
 
   pebgGeom = {
     cW, yRange: [yMin, yMax], lineRange, fullRange, yExp: pebgYExp,
-    tAt: clientX => t0 + (clientX - rectOf().left - PAD.left) / cW * (t1 - t0),
+    tAt: clientX => Math.min(t1, t0 + (clientX - rectOf().left - PAD.left) / cW * (tR - t0)),
     hideTip: () => { tooltip.style.display = 'none'; },
     leave: () => { tooltip.style.display = 'none'; pebgRedraw(); },
     click: e => {
       const mx = e.clientX - rectOf().left;
       if (mx < PAD.left || mx > W - PAD.right) return;
-      const pp = nearest(lineVis, t0 + (mx - PAD.left) / cW * (t1 - t0));
+      const pp = nearest(lineVis, Math.min(t1, t0 + (mx - PAD.left) / cW * (tR - t0)));
       const now = Date.now();
       if (!pebgMeasure || pebgMeasure.b != null) pebgMeasure = { a: pp.date, b: null, hover: null, at: now };
       else if (now - pebgMeasure.at < 400 && Math.abs(pp.date - pebgMeasure.a) < 3 * 86400) return;   // doble clic
@@ -3314,7 +3316,7 @@ function drawPebgChart(hoverT) {
       const rect = rectOf();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
       if (mx < PAD.left || mx > W - PAD.right) { tooltip.style.display = 'none'; return; }
-      const t = t0 + (mx - PAD.left) / cW * (t1 - t0);
+      const t = Math.min(t1, t0 + (mx - PAD.left) / cW * (tR - t0));
       if (pebgMeasure && pebgMeasure.b == null) {   // midiendo: la franja sigue al cursor, sin tooltip
         tooltip.style.display = 'none';
         pebgMeasure.hover = nearest(lineVis, t).date;
