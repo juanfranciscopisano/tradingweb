@@ -391,6 +391,17 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .sect-tg:focus-visible{outline:2px solid var(--accent)}
 .sect-date{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink)}
 .sect-chart-box{position:relative;height:340px}
+.sect-tbl thead th.srt,.sect-co thead th.srt{cursor:pointer;user-select:none}
+.sect-tbl thead th.srt:hover,.sect-co thead th.srt:hover{color:var(--ink)}
+.sect-tbl thead th.on,.sect-co thead th.on{color:var(--accent)}
+.sect-tbl thead th:focus-visible,.sect-co thead th:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sect-par{font-size:11px;font-weight:400;color:var(--muted);margin-top:1px}
+.sect-tbl tbody tr.sect-flat td:first-child{padding-left:0}
+.sect-co-wrap{max-height:460px;overflow:auto}
+.sect-co thead th{position:sticky;top:0;background:var(--surf);z-index:1}
+.sect-co tbody tr{cursor:pointer}
+.sect-co tbody tr:hover td{background:var(--surf2)}
+.sect-co td .sect-nm{font-weight:400;color:var(--muted);margin-left:6px}
 
 @media (max-width:1180px){
   .arg-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -1018,6 +1029,10 @@ function checkPwd(){
       <span class="pebg-period" data-m="gaap" onclick="setEpsMode('gaap')">Contable</span>
       <span class="pebg-period" data-m="norm" onclick="setEpsMode('norm')">Normalizado</span>
     </div>
+    <div class="pebg-period-btns" id="sectViewBtns" role="group" aria-label="Vista">
+      <span class="pebg-period active" data-v="sec" onclick="setSectView('sec')" title="Sectores, con sus subindustrias al desplegar">Sectores</span>
+      <span class="pebg-period" data-v="sub" onclick="setSectView('sub')" title="Las subindustrias de todos los sectores en una sola lista">Subindustrias</span>
+    </div>
     <label class="pebg-note" for="sectDateIn">P/E al</label>
     <input type="date" id="sectDateIn" class="sect-date" min="2010-04-01" onchange="setSectDate(this.value)">
     <div class="cs"></div>
@@ -1041,6 +1056,11 @@ function checkPwd(){
       </div>
       <div class="arg-chips" id="sectLegend"></div>
       <div class="sect-chart-box"><canvas id="sectCanvas"></canvas><div class="pebg-tooltip" id="sectCanvasTip"></div></div>
+    </div>
+    <div class="ov-card" id="sectCoCard">
+      <div class="ov-card-title" id="sectCoTitle">Empresas</div>
+      <div class="sect-co-wrap" id="sectCo"><div class="ov-loading">Cargando...</div></div>
+      <div class="arg-note" id="sectCoNote"></div>
     </div>
   </div>
 </div>
@@ -4066,6 +4086,10 @@ const METODO = [
         p: 'Diez años incluyen más de un ciclo, y con menos de cinco el desvío dice poco.' },
       { d: 'A una fecha: el punto semanal más cercano anterior a la fecha elegida.' },
       { d: 'Contable o Normalizado: el mismo selector que P/E histórico y Cartera.' },
+      { d: 'Ordenar: clic en cualquier columna. El primer clic ordena de menor a mayor, así en P/E, z y percentil queda lo más barato arriba; el segundo, al revés.',
+        p: 'El S&P 500 queda siempre primero como referencia. En la vista de sectores, las subindustrias se ordenan dentro de cada sector; la vista Subindustrias las pone todas en una sola lista para compararlas entre sectores.' },
+      { d: 'Empresas del grupo elegido: peso por capitalización, P/E contable y normalizado, Fw P/E y la parte de la ganancia del grupo que pone cada una.',
+        p: 'Usa el mismo precio y el mismo EPS que arman el P/E del grupo, así que se puede ver qué lo explica: una empresa que pesa mucho en capitalización y poco en ganancias lo sube (hoy, en Application Software, PLTR es 29% de la capitalización y 6% de las ganancias). Clic en una empresa abre su P/E histórico.' },
     ] },
 
   { id: 'cmp', t: 'Panel de comparación de P/E histórico',
@@ -4183,6 +4207,81 @@ function openMetodo(id) { switchTab('metodo'); if (id) setTimeout(() => metoGo(i
 
 // ---------- pestaña Sectores ----------
 let sectSel = 'SPX', sectOpen = new Set(), sectRange = 10, sectDate = '';
+// orden de la tabla: columna y sentido (null = alfabético por sector). De menor a mayor primero: lo más barato arriba
+let sectSort = { k: null, dir: 1 }, sectView = 'sec', sectCoSort = { k: 'w', dir: -1 };
+try { const v = JSON.parse(localStorage.getItem('sectSort') || 'null'); if (v) { sectSort = v.sort || sectSort; sectView = v.view === 'sub' ? 'sub' : 'sec'; } } catch (e) {}
+const saveSect = () => { try { localStorage.setItem('sectSort', JSON.stringify({ sort: sectSort, view: sectView })); } catch (e) {} };
+const SECT_COLS = [['name', 'Grupo'], ['count', 'Empresas'], ['now', 'P/E hoy'], ['fw', 'Fw P/E'], ['a1', 'Media 1A'], ['a3', '3A'], ['a5', '5A'], ['a10', '10A'], ['z', 'Z vs 10A'], ['pct', 'Percentil 10A'], ['atD', 'A una fecha']];
+function setSectSort(k) {
+  if (sectSort.k === k) sectSort.dir = -sectSort.dir;
+  else sectSort = { k, dir: 1 };
+  if (k === 'name' && sectSort.dir === 1) sectSort = { k: null, dir: 1 };   // nombre ascendente = orden de siempre
+  saveSect(); renderSect();
+}
+function setSectView(v) { sectView = v === 'sub' ? 'sub' : 'sec'; saveSect(); renderSect(); }
+function sectKeyVal(key, x) {
+  const s = MULT.series[key];
+  switch (sectSort.k) {
+    case 'name': return multName(key);
+    case 'count': return s.count;
+    case 'fw': return s.fw;
+    case 'atD': return x && x.atD ? x.atD.v : null;
+    default: return x ? x[sectSort.k] : null;
+  }
+}
+// ordena claves de grupos según la columna elegida; los que no tienen dato van al final
+function sectOrder(keys, norm) {
+  if (!sectSort.k) return keys.slice().sort((a, b) => multName(a).localeCompare(multName(b), 'es'));
+  const st = new Map(keys.map(k => [k, sectKeyVal(k, sectStats(k, norm))]));
+  return keys.slice().sort((a, b) => {
+    const va = st.get(a), vb = st.get(b);
+    if (va == null && vb == null) return 0; if (va == null) return 1; if (vb == null) return -1;
+    return typeof va === 'string' ? sectSort.dir * va.localeCompare(vb, 'es') : sectSort.dir * (va - vb);
+  });
+}
+// empresas de un grupo (una vez por CIK, como en el cálculo)
+function groupMembers(key) {
+  const isSec = key && key.startsWith('sec:'), isSub = key && key.startsWith('sub:'), name = key ? key.slice(4) : '', seen = new Set();
+  return Object.entries(SPX_INFO).filter(([, x]) => (key === 'SPX' || (isSec && x.gics === name) || (isSub && x.sub === name)) && !seen.has(x.cik) && seen.add(x.cik)).map(([sym, x]) => ({ sym, info: x }));
+}
+function setSectCoSort(k) { if (sectCoSort.k === k) sectCoSort.dir = -sectCoSort.dir; else sectCoSort = { k, dir: k === 'sym' ? 1 : (k === 'w' || k === 'es') ? -1 : 1 }; renderSectCo(); }
+function openPebgFor(sym) { document.getElementById('pebgSym').value = sym; const was = pebgLoaded; switchTab('pebg'); if (was) loadPebg(); }
+// empresas del grupo elegido: peso, P/E de cada una y cuánto aporta a las ganancias del grupo
+function renderSectCo() {
+  const box = document.getElementById('sectCo'), title = document.getElementById('sectCoTitle'), note = document.getElementById('sectCoNote');
+  if (!box || !MULT) return;
+  const key = MULT.series[sectSel] ? sectSel : 'SPX', norm = epsMode === 'norm';
+  const mem = groupMembers(key);
+  if (!mem.length) { box.innerHTML = '<div class="ov-loading">' + (Object.keys(SPX_INFO).length ? 'Sin empresas' : 'Cargando...') + '</div>'; return; }
+  const rows = mem.map(({ sym, info }) => {
+    const d = SEC_EPS && SEC_EPS[sym], f = FUND && FUND[sym];
+    const px = d && d[4] ? d[4] : (f && f.p) || null;
+    const cap = d && d[4] && d[2] ? d[4] * d[2] : (f && f.mc) || null;
+    const earn = d && d[2] ? (norm ? (d[1] != null ? d[1] * d[2] : null) : d[0] * d[2]) : null;
+    const fpe = f && f.fpe > 0 ? (f.p > 0 && px ? f.fpe * px / f.p : f.fpe) : null;
+    return { sym, name: (f && f.n) || info.n || sym, cap, earn,
+      pe: d && d[0] > 0 && px ? px / d[0] : null, peNeg: !!(d && d[0] <= 0),
+      peN: d && d[1] > 0 && px ? px / d[1] : null, fpe };
+  });
+  const capT = rows.reduce((a, r) => a + (r.cap || 0), 0), earnT = rows.reduce((a, r) => a + (r.earn != null ? r.earn : 0), 0);
+  rows.forEach(r => { r.w = capT > 0 && r.cap ? r.cap / capT : null; r.es = earnT > 0 && r.earn != null ? r.earn / earnT : null; });
+  const k = sectCoSort.k, dir = sectCoSort.dir;
+  rows.sort((a, b) => {
+    const va = k === 'sym' ? a.sym : a[k], vb = k === 'sym' ? b.sym : b[k];
+    if (va == null && vb == null) return 0; if (va == null) return 1; if (vb == null) return -1;
+    return typeof va === 'string' ? dir * va.localeCompare(vb) : dir * (va - vb);
+  });
+  const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
+  const pc = v => v == null ? '<span class="na">—</span>' : (v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(1) + '%';
+  const COLS = [['sym', 'Empresa'], ['w', 'Peso'], ['pe', 'P/E contable'], ['peN', 'P/E normalizado'], ['fpe', 'Fw P/E'], ['es', '% de las ganancias']];
+  const th = COLS.map(([c, l], i) => `<th class="srt${k === c ? ' on' : ''}" tabindex="0" onclick="setSectCoSort('${c}')" onkeydown="if(event.key==='Enter')setSectCoSort('${c}')"${k === c ? ` aria-sort="${dir > 0 ? 'ascending' : 'descending'}"` : ''}>${l}${k === c ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
+  box.innerHTML = `<table class="ov-tbl sect-co"><thead><tr>${th}</tr></thead><tbody>` + rows.map(r =>
+    `<tr onclick="openPebgFor('${r.sym}')" title="Abrir ${r.sym} en P/E histórico"><td>${r.sym}<span class="sect-nm">${r.name.replace(/</g, '&lt;')}</span></td><td>${pc(r.w)}</td>`
+    + `<td>${r.peNeg ? '<span class="na">pérd.</span>' : f1(r.pe)}</td><td>${f1(r.peN)}</td><td>${f1(r.fpe)}</td><td>${pc(r.es)}</td></tr>`).join('') + '</tbody></table>';
+  title.innerHTML = 'Empresas de ' + multName(key) + ' <span>' + mem.length + (mem.length === 1 ? ' empresa' : ' empresas') + '</span>';
+  note.textContent = 'Peso por capitalización. P/E con el precio y el EPS de la SEC al cierre del ' + (SEC_EPS_AS_OF || MULT.asOf).split('-').reverse().join('/')
+    + ', los mismos que arman el P/E del grupo; "% de las ganancias" es la parte de la ganancia ' + (norm ? 'normalizada' : 'contable') + ' del grupo que pone cada una (las pérdidas restan). Clic en una empresa abre su P/E histórico.';
+}
 function sectStats(key, norm) {
   const pts = multSeries(key, norm); if (!pts.length) return null;
   const last = pts[pts.length - 1], now = last.date;
@@ -4196,7 +4295,7 @@ function sectStats(key, norm) {
 }
 async function loadSect() {
   document.getElementById('sectStatus').textContent = 'Cargando…';
-  await loadMultiples();
+  await Promise.all([loadMultiples(), loadSpx(), loadSecEps(), loadFund()]);
   renderSect();
 }
 function renderSect() {
@@ -4206,25 +4305,37 @@ function renderSect() {
   const norm = epsMode === 'norm';
   st.innerHTML = `Al cierre del ${MULT.asOf.split('-').reverse().join('/')}; historia semanal. Empresas que hoy están en el índice, EPS de la SEC. <a class="sect-link" onclick="openMetodo('mult')">Cómo se calcula</a>`;
   const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
-  const row = (key, cls, toggle) => {
+  const row = (key, cls, toggle, parent) => {
     const s = MULT.series[key], x = sectStats(key, norm); if (!x) return '';
     const z = x.z == null ? '<span class="na">—</span>' : Math.abs(x.z) < 0.05 ? '0.0σ' : (x.z > 0 ? '+' : '−') + Math.abs(x.z).toFixed(1) + 'σ';
     return `<tr class="${cls}${key === sectSel ? ' sel' : ''}" onclick="selectSect('${key.replace(/'/g, "\\'")}')">`
-      + `<td>${toggle}${multName(key)}</td><td>${s.count}</td><td class="sect-now">${f1(x.now)}</td><td>${f1(s.fw)}</td>`
+      + `<td>${toggle}${multName(key)}${parent ? `<div class="sect-par">${parent}</div>` : ''}</td><td>${s.count}</td><td class="sect-now">${f1(x.now)}</td><td>${f1(s.fw)}</td>`
       + `<td>${f1(x.a1)}</td><td>${f1(x.a3)}</td><td>${f1(x.a5)}</td><td>${f1(x.a10)}</td><td>${z}</td>`
       + `<td>${x.pct == null ? '<span class="na">—</span>' : Math.round(x.pct * 100) + '%'}</td>`
       + `<td>${sectDate ? f1(x.atD && x.atD.v) : '<span class="na">—</span>'}</td></tr>`;
   };
-  const secs = Object.keys(MULT.series).filter(k => MULT.series[k].type === 'sector').sort((a, b) => multName(a).localeCompare(multName(b), 'es'));
-  let html = '<table class="ov-tbl sect-tbl"><thead><tr><th>Grupo</th><th>Empresas</th><th>P/E hoy</th><th>Fw P/E</th><th>Media 1A</th><th>3A</th><th>5A</th><th>10A</th><th>Z vs 10A</th><th>Percentil 10A</th>'
-    + `<th>${sectDate ? 'Al ' + sectDate.split('-').reverse().join('/') : 'A una fecha'}</th></tr></thead><tbody>` + row('SPX', 'sect-idx', '');
-  secs.forEach(k => {
-    const open = sectOpen.has(k), subs = Object.keys(MULT.series).filter(s => MULT.series[s].type === 'sub' && MULT.series[s].sector === MULT.series[k].name).sort((a, b) => multName(a).localeCompare(multName(b)));
-    html += row(k, 'sect-sec', `<button type="button" class="sect-tg" aria-expanded="${open}" onclick="event.stopPropagation();toggleSect('${k}')" title="Subindustrias">${open ? '▾' : '▸'}</button>`);
-    if (open) subs.forEach(s => { html += row(s, 'sect-sub', ''); });
-  });
+  document.querySelectorAll('#sectViewBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.v === sectView));
+  // encabezados que ordenan: primer clic de menor a mayor (lo más barato arriba), el segundo al revés
+  const th = SECT_COLS.map(([c, l]) => {
+    const on = sectSort.k === c || (c === 'name' && !sectSort.k), arrow = sectSort.k === c ? (sectSort.dir > 0 ? ' ▲' : ' ▼') : '';
+    const lbl = c === 'atD' ? (sectDate ? 'Al ' + sectDate.split('-').reverse().join('/') : 'A una fecha') : c === 'name' && sectView === 'sub' ? 'Subindustria' : l;
+    return `<th class="srt${sectSort.k === c ? ' on' : ''}" tabindex="0" onclick="setSectSort('${c}')" onkeydown="if(event.key==='Enter')setSectSort('${c}')"${on && sectSort.k ? ` aria-sort="${sectSort.dir > 0 ? 'ascending' : 'descending'}"` : ''} title="Ordenar">${lbl}${arrow}</th>`;
+  }).join('');
+  let html = `<table class="ov-tbl sect-tbl"><thead><tr>${th}</tr></thead><tbody>` + row('SPX', 'sect-idx', '');
+  const all = Object.keys(MULT.series);
+  if (sectView === 'sub') {
+    // todas las subindustrias juntas, con su sector abajo del nombre
+    sectOrder(all.filter(k => MULT.series[k].type === 'sub'), norm).forEach(s => { html += row(s, 'sect-sub sect-flat', '', GICS_ES[MULT.series[s].sector] || MULT.series[s].sector); });
+  } else {
+    sectOrder(all.filter(k => MULT.series[k].type === 'sector'), norm).forEach(k => {
+      const open = sectOpen.has(k), subs = sectOrder(all.filter(s => MULT.series[s].type === 'sub' && MULT.series[s].sector === MULT.series[k].name), norm);
+      html += row(k, 'sect-sec', `<button type="button" class="sect-tg" aria-expanded="${open}" onclick="event.stopPropagation();toggleSect('${k}')" title="Subindustrias">${open ? '▾' : '▸'}</button>`);
+      if (open) subs.forEach(s => { html += row(s, 'sect-sub', ''); });
+    });
+  }
   tb.innerHTML = html + '</tbody></table>';
   drawSectChart();
+  renderSectCo();
 }
 function toggleSect(k) { sectOpen.has(k) ? sectOpen.delete(k) : sectOpen.add(k); renderSect(); }
 function selectSect(k) { sectSel = k; renderSect(); }
