@@ -7,7 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly } from "./edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, PREDECESSOR_CIK } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -218,7 +218,9 @@ async function edgarRaw(sym) {
     try {
       const cik = await cikFor(sym);
       if (!cik) return null;
-      return rawFromFacts(await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`));
+      const raw = rawFromFacts(await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`));
+      const pre = PREDECESSOR_CIK[sym];   // XOM se reorganizó como holding: la historia está en el CIK anterior
+      return pre ? mergeRaw(raw, rawFromFacts(await secJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${pre}.json`).catch(() => null))) : raw;
     } catch (e) {
       console.log(`pebg ${sym}: EDGAR error ${e.message}`);
       return null;

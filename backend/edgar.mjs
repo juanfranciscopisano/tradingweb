@@ -207,3 +207,30 @@ export function sharesQuarterly(raw, splitFactor, gaap) {
   }
   return [...out.values()].sort((a, b) => a.date - b.date);
 }
+
+// empresas que cambiaron de CIK (reorganización como holding): la historia está en el registro anterior
+export const PREDECESSOR_CIK = { XOM: "0000034088" };
+// une los datos crudos de dos registros; manda el nuevo y el viejo completa los períodos que faltan
+export function mergeRaw(newer, older) {
+  if (!older) return newer;
+  if (!newer) return older;
+  const out = {};
+  for (const k of new Set([...Object.keys(newer), ...Object.keys(older)])) {
+    const a = newer[k] || [], b = older[k] || [];
+    const seen = new Set(a.map(e => e.frame || (e.start + e.end + e.fp)));
+    out[k] = [...b.filter(e => !seen.has(e.frame || (e.start + e.end + e.fp))), ...a];
+  }
+  return out;
+}
+// resultado neto trimestral (frames CY####Q#; el trimestre faltante = anual - los otros 3)
+export function netIncomeQuarterly(raw) {
+  const q = new Map();
+  for (const e of raw.ni) if (/^CY\d{4}Q\d$/.test(e.frame || "")) q.set(qkeyOf(e.end), { end: e.end, start: e.start, val: e.val });
+  for (const a of raw.ni) {
+    if (!/^CY\d{4}$/.test(a.frame || "") || !a.start) continue;
+    const inside = [...q.values()].filter(x => x.start && x.start >= a.start && x.end <= a.end);
+    const k = qkeyOf(a.end);
+    if (inside.length === 3 && !q.has(k)) q.set(k, { end: a.end, start: null, val: a.val - inside.reduce((t, x) => t + x.val, 0) });
+  }
+  return [...q.values()].map(x => ({ date: Math.floor(Date.parse(x.end) / 1000), ni: x.val })).sort((a, b) => a.date - b.date);
+}

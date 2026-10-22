@@ -9,7 +9,7 @@
 // (no la composición de cada fecha): hacia atrás hay sesgo de supervivencia.
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly } from "../backend/edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, PREDECESSOR_CIK } from "../backend/edgar.mjs";
 
 const CSV_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -70,18 +70,29 @@ function sharesByWeek(sh, weeks) {
   return out;
 }
 
-// series de una empresa: precio, EPS de 12 meses (contable y normalizado) y acciones, por semana
-export function companySeries({ facts, chart }) {
+// series de una empresa: precio, EPS de 12 meses (contable y normalizado) y acciones, por semana.
+// Si EDGAR no trae EPS trimestral (V, KKR, ABNB... lo informan por clase de acción o con etiquetas propias), se usa
+// el resultado neto con las acciones de hoy (capitalización / precio de fundamentals.json): sin normalizado.
+export function companySeries({ facts, chart, olderFacts = null, fundRow = null }) {
   const ts = chart?.timestamp || [], cl = chart?.indicators?.quote?.[0]?.close || [];
   const price = new Map();
   ts.forEach((t, i) => { if (cl[i] != null && cl[i] > 0) price.set(weekOf(t), cl[i]); });
   const splits = Object.values(chart?.events?.splits || {}).map(s => ({ date: s.date, ratio: s.numerator / s.denominator })).filter(s => s.ratio > 0 && isFinite(s.ratio));
-  const raw = rawFromFacts(facts);
+  const raw = mergeRaw(rawFromFacts(facts), olderFacts ? rawFromFacts(olderFacts) : null);
   const f = makeSplitFactor(splits);
   const gaap = gaapQuarterly(raw, f, "");
-  const norm = gaap.length ? normalizedQuarterly(raw, f, gaap, "").eps : [];
-  const sh = sharesQuarterly(raw, f, gaap);
   const weeks = [...price.keys()].sort((a, b) => a - b);
+  if (gaap.length < 4) {
+    const shNow = fundRow && fundRow.mc > 0 && fundRow.p > 0 ? fundRow.mc / fundRow.p : null;
+    const ni = netIncomeQuarterly(raw);
+    if (!shNow || ni.length < 4) return { price, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0, splits: splits.length };
+    const epsLike = ni.map(q => ({ date: q.date, eps: q.ni / shNow }));
+    const shMap = new Map(weeks.map(w => [w, shNow]));
+    const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
+    return { price, eG: clean(ttmByWeek(epsLike, weeks)), eN: new Map(), sh: shMap, quarters: ni.length, splits: splits.length, viaNI: true };
+  }
+  const norm = normalizedQuarterly(raw, f, gaap, "").eps;
+  const sh = sharesQuarterly(raw, f, gaap);
   // datos que no pueden ser ciertos (EPS de 12 meses mayor que el precio, o una pérdida de más de 3 veces el precio):
   // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
   const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
@@ -154,27 +165,33 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     lastSec = Date.now();
     return getJSON(fetchImpl, url, { "User-Agent": secUA, "Accept": "application/json" });
   };
+  let fund = {};
+  try { fund = JSON.parse(await readFile(new URL("fundamentals.json", root), "utf8")).data || {}; } catch (e) { log("fundamentals.json: " + e.message); }
   const p1 = Math.floor(now.getTime() / 1000) - 30 * 365 * DAY, p2 = Math.floor(now.getTime() / 1000);
-  const cos = {}, missing = [];
+  const cos = {}, missing = [], viaNI = [];
   await mapLimit(list, concurrency, async (c, k) => {
     try {
-      const [facts, cj] = await Promise.all([
+      const [facts, cj, olderFacts] = await Promise.all([
         secGet(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`),
         getJSON(fetchImpl, `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(c.s)}?period1=${p1}&period2=${p2}&interval=1wk&events=splits`, { "User-Agent": UA, "Accept": "application/json" }),
+        PREDECESSOR_CIK[c.s] ? secGet(`https://data.sec.gov/api/xbrl/companyfacts/CIK${PREDECESSOR_CIK[c.s]}.json`) : null,
       ]);
       const chart = cj?.chart?.result?.[0];
       if (!facts || !chart) { missing.push(c.s + (facts ? " (sin precios)" : " (sin EDGAR)")); return; }
-      const ser = companySeries({ facts, chart });
+      const ser = companySeries({ facts, chart, olderFacts, fundRow: fund[c.s] });
       if (ser.quarters < 4) { missing.push(c.s + " (sin EPS trimestral)"); return; }
+      if (ser.viaNI) viaNI.push(c.s);
       cos[c.s] = ser;
     } catch (e) { missing.push(`${c.s} (${e.message})`); }
     if (k % 50 === 49) log(`  ${k + 1}/${list.length}`);
   });
-  log(`Con datos: ${Object.keys(cos).length}/${list.length}. Faltan: ${missing.join(", ") || "ninguna"}`);
+  log(`Con datos: ${Object.keys(cos).length}/${list.length}. Con resultado neto: ${viaNI.join(", ") || "ninguna"}. Faltan: ${missing.join(", ") || "ninguna"}`);
 
   // 3) grupos y semanas (desde la primera semana con P/E del índice)
-  const groups = { SPX: list.map(c => c.s) };
-  for (const c of list) {
+  const seenCik = new Set();
+  const uniq = list.filter(c => !seenCik.has(c.cik) && seenCik.add(c.cik));
+  const groups = { SPX: uniq.map(c => c.s) };
+  for (const c of uniq) {
     (groups["sec:" + c.gics] ||= []).push(c.s);
     (groups["sub:" + c.sub] ||= []).push(c.s);
   }
@@ -190,8 +207,6 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   for (const v of Object.values(agg)) { v.g = v.g.slice(first); v.n = v.n.slice(first); }
 
   // 4) fw P/E de hoy por grupo, con fundamentals.json (capitalización / ganancias esperadas)
-  let fund = {};
-  try { fund = JSON.parse(await readFile(new URL("fundamentals.json", root), "utf8")).data || {}; } catch (e) { log("fundamentals.json: " + e.message); }
   const fwOf = syms => { let M = 0, E = 0; for (const s of syms) { const f = fund[s]; if (f?.mc > 0 && f?.fpe > 0) { M += f.mc; E += f.mc / f.fpe; } } return E > 0 ? +(M / E).toFixed(1) : null; };
 
   const series = {};
@@ -206,6 +221,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     week0: weeks[0], monday0: MONDAY0, weeks: weeks.length,
     series,
     sinDatos: missing,
+    conResultadoNeto: viaNI,
   };
   // las semanas son consecutivas salvo feriados largos: se guarda la lista solo si hay huecos
   if (weeks[weeks.length - 1] - weeks[0] + 1 !== weeks.length) out.weekList = weeks;
