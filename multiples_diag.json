@@ -20,25 +20,25 @@
     "GOOGL M 759 E 27.9 En 23.2 pe 27.2",
     "GOOG M 757 E 27.9 En 23.2 pe 27.1",
     "META M 552 E 19.2 En 19.1 pe 28.7",
+    "BRK-B M 526 E undefined En 24.2 pe undefined",
     "JPM M 387 E 32.1 En 30.4 pe 12.0",
     "JNJ M 376 E 14.6 En 13.6 pe 25.8",
     "XOM M 327 E 18.5 En 19.9 pe 17.7",
     "V M 326 E 11.1 En undefined pe 29.3",
-    "WMT M 319 E 8.3 En 13.7 pe 38.2",
-    "BAC M 303 E 28.1 En 25.2 pe 10.8"
+    "WMT M 319 E 8.3 En 13.7 pe 38.5"
    ],
    "E": [
     "AAPL M 938 E 56.3 En 50.2 pe 16.6",
     "MSFT M 1035 E 34.8 En 32.1 pe 29.8",
     "JPM M 387 E 32.1 En 30.4 pe 12.0",
     "BAC M 303 E 28.1 En 25.2 pe 10.8",
-    "GOOG M 757 E 27.9 En 23.2 pe 27.1",
     "GOOGL M 759 E 27.9 En 23.2 pe 27.2",
+    "GOOG M 757 E 27.9 En 23.2 pe 27.1",
     "WFC M 231 E 22.1 En 19.4 pe 10.5",
+    "GE M 92 E -20.9 En -17.7 pe -4.4",
     "INTC M 219 E 20.2 En 18.1 pe 10.8",
     "T M 245 E 19.6 En 13.5 pe 12.5",
     "META M 552 E 19.2 En 19.1 pe 28.7",
-    "GE M 94 E -18.7 En -18.6 pe -5.0",
     "XOM M 327 E 18.5 En 19.9 pe 17.7"
    ],
    "En": [
@@ -46,146 +46,146 @@
     "MSFT M 1035 E 34.8 En 32.1 pe 29.8",
     "JPM M 387 E 32.1 En 30.4 pe 12.0",
     "BAC M 303 E 28.1 En 25.2 pe 10.8",
-    "GOOG M 757 E 27.9 En 23.2 pe 27.1",
+    "BRK-B M 526 E undefined En 24.2 pe undefined",
     "GOOGL M 759 E 27.9 En 23.2 pe 27.2",
+    "GOOG M 757 E 27.9 En 23.2 pe 27.1",
     "XOM M 327 E 18.5 En 19.9 pe 17.7",
     "WFC M 231 E 22.1 En 19.4 pe 10.5",
     "META M 552 E 19.2 En 19.1 pe 28.7",
-    "GE M 94 E -18.7 En -18.6 pe -5.0",
     "INTC M 219 E 20.2 En 18.1 pe 10.8",
-    "C M 176 E 17.3 En 15.7 pe 10.2"
+    "GE M 92 E -20.9 En -17.7 pe -4.4"
    ]
   },
   "2021-06-28": {
    "M": [
     "AAPL M 2341 E 85.5 En 84.3 pe 27.4",
-    "MSFT M 2114 E 66.5 En 62.5 pe 31.8",
+    "MSFT M 2114 E 61.3 En 57.5 pe 34.5",
     "AMZN M 1797 E 29.4 En 24.1 pe 61.1",
     "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
-    "TSLA M 760 E 2.1 En 2.3 pe 353.6",
+    "TSLA M 760 E 2.1 En 2.4 pe 353.6",
+    "BRK-B M 688 E undefined En 106.6 pe undefined",
     "NVDA M 515 E 5.3 En 5.0 pe 96.6",
     "JPM M 493 E 47.4 En 47.4 pe 10.4",
     "JNJ M 451 E 15.1 En 15.1 pe 29.9",
-    "V M 448 E 10.9 En undefined pe 41.2",
-    "WMT M 394 E 12.1 En 16.7 pe 32.5"
+    "V M 448 E 10.9 En undefined pe 41.2"
    ],
    "E": [
     "AAPL M 2341 E 85.5 En 84.3 pe 27.4",
-    "MSFT M 2114 E 66.5 En 62.5 pe 31.8",
-    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
+    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
+    "MSFT M 2114 E 61.3 En 57.5 pe 34.5",
     "JPM M 493 E 47.4 En 47.4 pe 10.4",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
     "AMZN M 1797 E 29.4 En 24.1 pe 61.1",
     "BAC M 369 E 26.8 En 22.7 pe 13.8",
-    "C M 153 E 21.2 En 21.3 pe 7.2",
+    "C M 146 E 20.2 En 21.5 pe 7.2",
     "VZ M 234 E 20.0 En 20.4 pe 11.7",
     "GS M 137 E 20.0 En 20.3 pe 6.8",
-    "ORCL M 245 E 18.6 En 14.5 pe 13.2"
+    "INTC M 232 E 18.4 En 17.1 pe 12.6"
    ],
    "En": [
+    "BRK-B M 688 E undefined En 106.6 pe undefined",
     "AAPL M 2341 E 85.5 En 84.3 pe 27.4",
-    "MSFT M 2114 E 66.5 En 62.5 pe 31.8",
-    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
+    "MSFT M 2114 E 61.3 En 57.5 pe 34.5",
     "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
+    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "JPM M 493 E 47.4 En 47.4 pe 10.4",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
     "AMZN M 1797 E 29.4 En 24.1 pe 61.1",
     "BAC M 369 E 26.8 En 22.7 pe 13.8",
-    "C M 153 E 21.2 En 21.3 pe 7.2",
+    "C M 146 E 20.2 En 21.5 pe 7.2",
     "VZ M 234 E 20.0 En 20.4 pe 11.7",
-    "GS M 137 E 20.0 En 20.3 pe 6.8",
-    "PG M 353 E 17.1 En 17.1 pe 20.6"
+    "GS M 137 E 20.0 En 20.3 pe 6.8"
    ]
   },
   "2024-06-24": {
    "M": [
-    "MSFT M 3335 E 94.2 En 93.4 pe 35.4",
+    "MSFT M 3335 E 86.2 En 85.5 pe 38.7",
     "AAPL M 3254 E 99.3 En 98.8 pe 32.8",
-    "NVDA M 3064 E 42.4 En 44.0 pe 72.3",
+    "NVDA M 3064 E 42.4 En 44.1 pe 72.2",
     "GOOG M 2296 E 81.6 En 80.2 pe 28.1",
     "GOOGL M 2280 E 81.6 En 80.2 pe 27.9",
     "AMZN M 2057 E 38.1 En 40.6 pe 54.0",
     "META M 1324 E 45.7 En 43.6 pe 29.0",
+    "BRK-B M 1003 E undefined En 74.0 pe undefined",
     "LLY M 819 E 6.1 En 6.7 pe 133.3",
-    "AVGO M 770 E 11.1 En 10.5 pe 69.4",
+    "AVGO M 770 E 11.1 En 10.5 pe 69.5",
     "TSLA M 671 E 13.5 En 7.4 pe 49.6",
-    "JPM M 611 E 50.1 En 50.8 pe 12.2",
-    "WMT M 549 E 18.9 En 19.3 pe 29.1"
+    "JPM M 611 E 50.1 En 50.8 pe 12.2"
    ],
    "E": [
     "AAPL M 3254 E 99.3 En 98.8 pe 32.8",
-    "MSFT M 3335 E 94.2 En 93.4 pe 35.4",
-    "GOOG M 2296 E 81.6 En 80.2 pe 28.1",
+    "MSFT M 3335 E 86.2 En 85.5 pe 38.7",
     "GOOGL M 2280 E 81.6 En 80.2 pe 27.9",
+    "GOOG M 2296 E 81.6 En 80.2 pe 28.1",
     "JPM M 611 E 50.1 En 50.8 pe 12.2",
     "META M 1324 E 45.7 En 43.6 pe 29.0",
-    "NVDA M 3064 E 42.4 En 44.0 pe 72.3",
+    "NVDA M 3064 E 42.4 En 44.1 pe 72.2",
     "AMZN M 2057 E 38.1 En 40.6 pe 54.0",
-    "JNJ M 355 E 36.9 En 16.5 pe 9.6",
     "XOM M 459 E 32.6 En 34.8 pe 14.1",
-    "BAC M 349 E 25.5 En 28.5 pe 13.7",
-    "CVX M 290 E 20.1 En 19.9 pe 14.4"
+    "BAC M 349 E 25.2 En 27.9 pe 13.9",
+    "CVX M 290 E 20.1 En 19.9 pe 14.4",
+    "WMT M 547 E 18.8 En 19.0 pe 29.1"
    ],
    "En": [
     "AAPL M 3254 E 99.3 En 98.8 pe 32.8",
-    "MSFT M 3335 E 94.2 En 93.4 pe 35.4",
-    "GOOG M 2296 E 81.6 En 80.2 pe 28.1",
+    "MSFT M 3335 E 86.2 En 85.5 pe 38.7",
     "GOOGL M 2280 E 81.6 En 80.2 pe 27.9",
+    "GOOG M 2296 E 81.6 En 80.2 pe 28.1",
+    "BRK-B M 1003 E undefined En 74.0 pe undefined",
     "JPM M 611 E 50.1 En 50.8 pe 12.2",
-    "NVDA M 3064 E 42.4 En 44.0 pe 72.3",
+    "NVDA M 3064 E 42.4 En 44.1 pe 72.2",
     "META M 1324 E 45.7 En 43.6 pe 29.0",
     "AMZN M 2057 E 38.1 En 40.6 pe 54.0",
     "XOM M 459 E 32.6 En 34.8 pe 14.1",
-    "BAC M 349 E 25.5 En 28.5 pe 13.7",
-    "UNH M 469 E 15.1 En 25.7 pe 31.1",
-    "CVX M 290 E 20.1 En 19.9 pe 14.4"
+    "BAC M 349 E 25.2 En 27.9 pe 13.9",
+    "UNH M 469 E 15.1 En 25.7 pe 31.1"
    ]
   },
   "2025-06-23": {
    "M": [
     "NVDA M 3897 E 76.8 En 77.0 pe 50.7",
-    "MSFT M 3701 E 113.9 En 115.9 pe 32.5",
+    "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
     "AAPL M 3020 E 96.4 En 106.2 pe 31.3",
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
     "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
     "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "META M 1899 E 66.3 En 60.0 pe 28.7",
-    "AVGO M 1300 E undefined En 15.9 pe undefined",
+    "AVGO M 1300 E 13.2 En 15.9 pe 98.3",
+    "BRK-B M 1198 E undefined En 81.3 pe undefined",
     "TSLA M 1103 E 6.0 En 6.6 pe 184.9",
     "JPM M 829 E 58.8 En 60.4 pe 14.1",
-    "WMT M 779 E 18.8 En 21.1 pe 41.4",
-    "LLY M 699 E 11.1 En 11.9 pe 63.1"
+    "WMT M 783 E 18.9 En 21.1 pe 41.4"
    ],
    "E": [
-    "MSFT M 3701 E 113.9 En 115.9 pe 32.5",
-    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
+    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
+    "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
     "AAPL M 3020 E 96.4 En 106.2 pe 31.3",
     "NVDA M 3897 E 76.8 En 77.0 pe 50.7",
     "META M 1899 E 66.3 En 60.0 pe 28.7",
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
     "JPM M 829 E 58.8 En 60.4 pe 14.1",
     "XOM M 479 E 33.0 En 33.6 pe 14.5",
-    "BAC M 390 E 27.6 En 31.7 pe 14.1",
+    "BAC M 390 E 27.5 En 31.5 pe 14.2",
     "UNH M 284 E 21.9 En 27.1 pe 12.9",
     "JNJ M 369 E 21.8 En 22.4 pe 17.0"
    ],
    "En": [
-    "MSFT M 3701 E 113.9 En 115.9 pe 32.5",
     "AAPL M 3020 E 96.4 En 106.2 pe 31.3",
-    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
+    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
+    "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
+    "BRK-B M 1198 E undefined En 81.3 pe undefined",
     "NVDA M 3897 E 76.8 En 77.0 pe 50.7",
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
     "JPM M 829 E 58.8 En 60.4 pe 14.1",
     "META M 1899 E 66.3 En 60.0 pe 28.7",
     "XOM M 479 E 33.0 En 33.6 pe 14.5",
-    "BAC M 390 E 27.6 En 31.7 pe 14.1",
-    "UNH M 284 E 21.9 En 27.1 pe 12.9",
-    "JNJ M 369 E 21.8 En 22.4 pe 17.0"
+    "BAC M 390 E 27.5 En 31.5 pe 14.2",
+    "UNH M 284 E 21.9 En 27.1 pe 12.9"
    ]
   }
  }
