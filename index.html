@@ -298,6 +298,7 @@ td:nth-child(-n+4){text-align:left}
 .ov-ggal-px{font-weight:650;color:var(--ink);font-size:15px}
 .ov-ggal-when{color:var(--muted);font-size:12px}
 .ov-ggal-box{height:170px;position:relative}
+.ov-spy-box{flex:1;min-height:200px;position:relative}
 #ggalCanvas{display:block;touch-action:none}
 
 /* calendario */
@@ -571,8 +572,17 @@ function checkPwd(){
     <!-- Col 1: SPY chart + Local market -->
     <div class="ov-col ov-col-wide">
       <div class="ov-card" style="flex:1;display:flex;flex-direction:column;min-height:260px">
-        <div class="ov-card-title">SPY <span>TradingView, tiempo real</span></div>
-        <div id="ovSpChart" style="flex:1;min-height:200px"></div>
+        <div class="ov-ggal-top">
+          <a class="ov-link ov-ggal-name" onclick="openChart('AMEX:SPY','SPDR S&amp;P 500 ETF')" title="Ver gráfico completo">SPY</a>
+          <span id="spyHead"></span>
+          <div class="cs"></div>
+          <div class="pebg-period-btns" id="spyRangeBtns" role="group" aria-label="Período de SPY">
+            <span class="pebg-period active" data-r="1D" onclick="loadMini('spy','1D')">1D</span>
+            <span class="pebg-period" data-r="1M" onclick="loadMini('spy','1M')">1M</span>
+            <span class="pebg-period" data-r="1A" onclick="loadMini('spy','1A')">1A</span>
+          </div>
+        </div>
+        <div class="ov-spy-box"><canvas id="spyCanvas"></canvas></div>
       </div>
       <div class="ov-card">
         <div class="ov-card-title">Mercado local</div>
@@ -607,7 +617,7 @@ function checkPwd(){
         <div id="ovComm"><div class="ov-loading">Cargando...</div></div>
       </div>
       <div class="ov-card">
-        <div class="ov-card-title">Treasuries <span>cambios en bp</span></div>
+        <div class="ov-card-title">Treasuries</div>
         <div id="ovTreas"><div class="ov-loading">Cargando...</div></div>
       </div>
     </div>
@@ -641,7 +651,7 @@ function checkPwd(){
 <div class="view active" id="view-screener">
   <div class="stats-bar">
     <div class="stat"><div class="stat-val" id="sN">&mdash;</div><div class="stat-lbl">Empresas</div></div>
-    <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" title="Market cap total sobre ganancias totales. No incluye empresas con pérdidas.">P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" title="Market cap total sobre ganancias contables de 12 meses (Yahoo), una vez por empresa. Las empresas con pérdidas no tienen P/E y quedan afuera; por eso da algo menos que el P/E del índice de la pestaña Sectores, que las resta.">P/E agregado</div></div>
     <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Market cap total sobre ganancias totales. No incluye empresas con pérdidas.">Fw P/E agregado</div></div>
     <div class="stat"><div class="stat-val up" id="sG">&mdash;</div><div class="stat-lbl">Suben hoy</div></div>
     <div class="stat"><div class="stat-val dn" id="sL">&mdash;</div><div class="stat-lbl">Bajan hoy</div></div>
@@ -1083,6 +1093,7 @@ function toggleTheme() {
   if (MULT && document.getElementById('tab-sect').classList.contains('active')) drawSectChart();
   if (pebgData) renderPebg(pebgData);
   if (ggalCache[ggalRange]) drawGgal();
+  if (MINI.spy.cache[MINI.spy.range]) drawMini('spy');
 }
 
 const SECTOR_MAP = {'A':'Healthcare','AAPL':'Technology','ABBV':'Healthcare','ABNB':'Consumer Cyclical','ABT':'Healthcare','ACGL':'Financial Services','ACN':'Technology','ADBE':'Technology','ADI':'Technology','ADM':'Consumer Defensive','ADP':'Industrials','ADSK':'Technology','AEE':'Utilities','AEP':'Utilities','AES':'Utilities','AFL':'Financial Services','AIG':'Financial Services','AIZ':'Financial Services','AJG':'Financial Services','AKAM':'Technology','ALB':'Basic Materials','ALGN':'Healthcare','ALL':'Financial Services','ALLE':'Industrials','AMAT':'Technology','AMCR':'Basic Materials','AMD':'Technology','AME':'Industrials','AMGN':'Healthcare','AMP':'Financial Services','AMT':'Real Estate','AMZN':'Consumer Cyclical','ANET':'Technology','AON':'Financial Services','AOS':'Industrials','APA':'Energy','APD':'Basic Materials','APH':'Technology','APO':'Financial Services','APP':'Communication Services','APTV':'Consumer Cyclical','ARE':'Real Estate','ARES':'Financial Services','ATO':'Utilities','AVGO':'Technology','AVY':'Basic Materials','AWK':'Utilities','AXON':'Industrials','AXP':'Financial Services','AZO':'Consumer Cyclical','BA':'Industrials','BAC':'Financial Services','BALL':'Basic Materials','BAX':'Healthcare','BBY':'Consumer Cyclical','BDX':'Healthcare','BE':'Industrials','BEN':'Financial Services','BF-B':'Consumer Defensive','BG':'Consumer Defensive','BIIB':'Healthcare','BKNG':'Consumer Cyclical','BKR':'Energy','BLK':'Financial Services','BMY':'Healthcare','BNY':'Financial Services','BR':'Industrials','BRK-B':'Financial Services','BRO':'Financial Services','BSX':'Healthcare','BX':'Financial Services','BXP':'Real Estate','C':'Financial Services','CAH':'Healthcare','CARR':'Industrials','CASY':'Consumer Defensive','CAT':'Industrials','CB':'Financial Services','CBOE':'Financial Services','CBRE':'Real Estate','CCI':'Real Estate','CCL':'Consumer Cyclical','CDNS':'Technology','CDW':'Technology','CEG':'Utilities','CF':'Basic Materials','CFG':'Financial Services','CHD':'Consumer Defensive','CHRW':'Industrials','CHTR':'Communication Services','CI':'Healthcare','CIEN':'Technology','CINF':'Financial Services','CL':'Consumer Defensive','CLX':'Consumer Defensive','CMCSA':'Communication Services','CME':'Financial Services','CMG':'Consumer Cyclical','CMI':'Industrials','CMS':'Utilities','CNC':'Healthcare','CNP':'Utilities','COF':'Financial Services','COHR':'Technology','COIN':'Financial Services','COO':'Healthcare','COP':'Energy','COR':'Healthcare','COST':'Consumer Defensive','CPAY':'Financial Services','CPRT':'Industrials','CPT':'Real Estate','CRH':'Basic Materials','CRL':'Healthcare','CRM':'Technology','CRWD':'Technology','CSCO':'Technology','CSGP':'Real Estate','CSX':'Industrials','CTAS':'Industrials','CTSH':'Technology','CVNA':'Consumer Cyclical','CVS':'Healthcare','CVX':'Energy','D':'Utilities','DAL':'Industrials','DASH':'Consumer Cyclical','DD':'Industrials','DDOG':'Technology','DE':'Industrials','DECK':'Consumer Cyclical','DELL':'Technology','DG':'Consumer Defensive','DGX':'Healthcare','DHI':'Consumer Cyclical','DHR':'Healthcare','DIS':'Communication Services','DLR':'Real Estate','DLTR':'Consumer Defensive','DOC':'Real Estate','DOV':'Industrials','DOW':'Basic Materials','DPZ':'Consumer Cyclical','DRI':'Consumer Cyclical','DTE':'Utilities','DUK':'Utilities','DVA':'Healthcare','DVN':'Energy','DXCM':'Healthcare','EBAY':'Consumer Cyclical','ECHO':'Communication Services','ECL':'Basic Materials','ED':'Utilities','EFX':'Industrials','EG':'Financial Services','EIX':'Utilities','EL':'Consumer Defensive','ELV':'Healthcare','EME':'Industrials','EMR':'Industrials','EOG':'Energy','EQIX':'Real Estate','EQT':'Energy','ERIE':'Financial Services','ES':'Utilities','ESS':'Real Estate','ETN':'Industrials','ETR':'Utilities','EVRG':'Utilities','EW':'Healthcare','EXC':'Utilities','EXE':'Energy','EXPD':'Industrials','EXPE':'Consumer Cyclical','EXR':'Real Estate','F':'Consumer Cyclical','FANG':'Energy','FAST':'Industrials','FCX':'Basic Materials','FDS':'Financial Services','FDX':'Industrials','FDXF':'Industrials','FE':'Utilities','FERG':'Industrials','FFIV':'Technology','FICO':'Technology','FIS':'Financial Services','FISV':'Financial Services','FITB':'Financial Services','FIX':'Industrials','FLEX':'Technology','FOX':'Communication Services','FOXA':'Communication Services','FRT':'Real Estate','FSLR':'Technology','FTNT':'Technology','FTV':'Industrials','GD':'Industrials','GDDY':'Technology','GE':'Industrials','GEHC':'Healthcare','GEN':'Technology','GEV':'Industrials','GILD':'Healthcare','GIS':'Consumer Defensive','GL':'Financial Services','GLW':'Technology','GM':'Consumer Cyclical','GNRC':'Industrials','GOOG':'Communication Services','GOOGL':'Communication Services','GPC':'Consumer Cyclical','GPN':'Financial Services','GRMN':'Consumer Cyclical','GS':'Financial Services','GWW':'Industrials','HAL':'Energy','HAS':'Consumer Cyclical','HBAN':'Financial Services','HCA':'Healthcare','HD':'Consumer Cyclical','HIG':'Financial Services','HII':'Industrials','HLT':'Consumer Cyclical','HON':'Industrials','HONA':'Industrials','HOOD':'Financial Services','HPE':'Technology','HPQ':'Technology','HRL':'Consumer Defensive','HSIC':'Healthcare','HST':'Real Estate','HSY':'Consumer Defensive','HUBB':'Industrials','HUM':'Healthcare','HWM':'Industrials','IBKR':'Financial Services','IBM':'Technology','ICE':'Financial Services','IDXX':'Healthcare','IEX':'Industrials','IFF':'Basic Materials','ILMN':'Healthcare','INCY':'Healthcare','INTC':'Technology','INTU':'Technology','INVH':'Real Estate','IP':'Basic Materials','IQV':'Healthcare','IR':'Industrials','IRM':'Real Estate','ISRG':'Healthcare','IT':'Technology','ITW':'Industrials','IVZ':'Financial Services','J':'Industrials','JBHT':'Industrials','JBL':'Technology','JCI':'Industrials','JKHY':'Financial Services','JNJ':'Healthcare','JPM':'Financial Services','KDP':'Consumer Defensive','KEY':'Financial Services','KEYS':'Technology','KHC':'Consumer Defensive','KIM':'Real Estate','KKR':'Financial Services','KLAC':'Technology','KMB':'Consumer Defensive','KMI':'Energy','KO':'Consumer Defensive','KR':'Consumer Defensive','KVUE':'Consumer Defensive','L':'Financial Services','LDOS':'Industrials','LEN':'Consumer Cyclical','LH':'Healthcare','LHX':'Industrials','LII':'Industrials','LIN':'Basic Materials','LITE':'Technology','LLY':'Healthcare','LMT':'Industrials','LNT':'Utilities','LOW':'Consumer Cyclical','LRCX':'Technology','LULU':'Consumer Cyclical','LUV':'Industrials','LVS':'Consumer Cyclical','LYB':'Basic Materials','LYV':'Communication Services','MA':'Financial Services','MAA':'Real Estate','MAR':'Consumer Cyclical','MAS':'Industrials','MCD':'Consumer Cyclical','MCHP':'Technology','MCK':'Healthcare','MCO':'Financial Services','MDLZ':'Consumer Defensive','MDT':'Healthcare','MET':'Financial Services','META':'Communication Services','MGM':'Consumer Cyclical','MKC':'Consumer Defensive','MLM':'Basic Materials','MMM':'Industrials','MNST':'Consumer Defensive','MO':'Consumer Defensive','MOS':'Basic Materials','MPC':'Energy','MPWR':'Technology','MRK':'Healthcare','MRNA':'Healthcare','MRSH':'Financial Services','MRVL':'Technology','MS':'Financial Services','MSCI':'Financial Services','MSFT':'Technology','MSI':'Technology','MTB':'Financial Services','MTD':'Healthcare','MU':'Technology','NCLH':'Consumer Cyclical','NDAQ':'Financial Services','NDSN':'Industrials','NEE':'Utilities','NEM':'Basic Materials','NFLX':'Communication Services','NI':'Utilities','NKE':'Consumer Cyclical','NOC':'Industrials','NOW':'Technology','NRG':'Utilities','NSC':'Industrials','NTAP':'Technology','NTRS':'Financial Services','NUE':'Basic Materials','NVDA':'Technology','NVR':'Consumer Cyclical','NWS':'Communication Services','NWSA':'Communication Services','NXPI':'Technology','O':'Real Estate','ODFL':'Industrials','OKE':'Energy','OMC':'Communication Services','ON':'Technology','ORCL':'Technology','ORLY':'Consumer Cyclical','OTIS':'Industrials','OXY':'Energy','P':'Technology','PANW':'Technology','PAYX':'Industrials','PCAR':'Industrials','PCG':'Utilities','PEG':'Utilities','PEP':'Consumer Defensive','PFE':'Healthcare','PFG':'Financial Services','PG':'Consumer Defensive','PGR':'Financial Services','PH':'Industrials','PHM':'Consumer Cyclical','PKG':'Basic Materials','PLD':'Real Estate','PLTR':'Technology','PM':'Consumer Defensive','PNC':'Financial Services','PNR':'Industrials','PNW':'Utilities','PODD':'Healthcare','PPG':'Basic Materials','PPL':'Utilities','PRU':'Financial Services','PSA':'Real Estate','PSX':'Energy','PTC':'Technology','PWR':'Industrials','PYPL':'Financial Services','Q':'Technology','QCOM':'Technology','RCL':'Consumer Cyclical','RDDT':'Communication Services','REG':'Real Estate','REGN':'Healthcare','RF':'Financial Services','RJF':'Financial Services','RL':'Consumer Cyclical','RMD':'Healthcare','ROK':'Industrials','ROL':'Industrials','ROP':'Technology','ROST':'Consumer Cyclical','RSG':'Industrials','RTX':'Industrials','RVTY':'Healthcare','SBAC':'Real Estate','SBUX':'Consumer Cyclical','SCHW':'Financial Services','SHW':'Basic Materials','SJM':'Consumer Defensive','SKYD':'Communication Services','SLB':'Energy','SMCI':'Technology','SNA':'Industrials','SNDK':'Technology','SNPS':'Technology','SO':'Utilities','SOLV':'Healthcare','SPG':'Real Estate','SPGI':'Financial Services','SRE':'Utilities','STE':'Healthcare','STLD':'Basic Materials','STT':'Financial Services','STX':'Technology','STZ':'Consumer Defensive','SW':'Basic Materials','SWK':'Industrials','SWKS':'Technology','SYF':'Financial Services','SYK':'Healthcare','SYY':'Consumer Defensive','T':'Communication Services','TDG':'Industrials','TDY':'Technology','TECH':'Healthcare','TEL':'Technology','TER':'Technology','TFC':'Financial Services','TGT':'Consumer Defensive','TJX':'Consumer Cyclical','TKO':'Communication Services','TMO':'Healthcare','TMUS':'Communication Services','TPL':'Energy','TPR':'Consumer Cyclical','TRGP':'Energy','TRMB':'Technology','TROW':'Financial Services','TRV':'Financial Services','TSCO':'Consumer Cyclical','TSLA':'Consumer Cyclical','TSN':'Consumer Defensive','TT':'Industrials','TTWO':'Communication Services','TWLO':'Technology','TXN':'Technology','TXT':'Industrials','TYL':'Technology','UAL':'Industrials','UBER':'Industrials','UDR':'Real Estate','UHS':'Healthcare','ULTA':'Consumer Cyclical','UNH':'Healthcare','UNP':'Industrials','UPS':'Industrials','URI':'Industrials','USB':'Financial Services','V':'Financial Services','VEEV':'Healthcare','VICI':'Real Estate','VLO':'Energy','VLTO':'Industrials','VMC':'Basic Materials','VMRK':'Real Estate','VRSK':'Industrials','VRSN':'Technology','VRT':'Industrials','VRTX':'Healthcare','VST':'Utilities','VTR':'Real Estate','VTRS':'Healthcare','VYLR':'Consumer Defensive','VZ':'Communication Services','WAB':'Industrials','WAT':'Healthcare','WDAY':'Technology','WDC':'Technology','WEC':'Utilities','WELL':'Real Estate','WFC':'Financial Services','WM':'Industrials','WMB':'Energy','WMT':'Consumer Defensive','WRB':'Financial Services','WSM':'Consumer Cyclical','WST':'Healthcare','WTW':'Financial Services','WY':'Real Estate','WYNN':'Consumer Cyclical','XEL':'Utilities','XOM':'Energy','XYL':'Industrials','XYZ':'Financial Services','YUM':'Consumer Cyclical','ZBH':'Healthcare','ZBRA':'Technology','ZTS':'Healthcare'};
@@ -1470,7 +1481,10 @@ function updateStats() {
   const fmx=v=>v!=null?v.toFixed(1)+'x':'—';
   // Múltiplo agregado = market cap total / ganancias totales = Σmc / Σ(mc/ratio).
   // Las empresas con pérdidas no tienen P/E publicado y quedan afuera.
-  const agg=key=>{ let m=0,e=0; rows.forEach(r=>{ const mc=r.marketCap, x=r[key]; if(mc>0&&x>0&&isFinite(x)){ m+=mc; e+=mc/x; } }); return e>0?m/e:null; };
+  // una vez por empresa: GOOG/GOOGL, FOX/FOXA y NWS/NWSA son la misma empresa y Yahoo da la capitalización total en cada una
+  const seenCo = new Set();
+  const uRows = rows.filter(r => { const k = (SPX_INFO[r.symbol] && SPX_INFO[r.symbol].cik) || r.symbol; if (seenCo.has(k)) return false; seenCo.add(k); return true; });
+  const agg=key=>{ let m=0,e=0; uRows.forEach(r=>{ const mc=r.marketCap, x=r[key]; if(mc>0&&x>0&&isFinite(x)){ m+=mc; e+=mc/x; } }); return e>0?m/e:null; };
   sv('sPE', fmx(agg('pe')));
   sv('sFwd', fmx(agg('fwdPE')));
   sv('sPB', fmx(agg('pb')));
@@ -1479,7 +1493,7 @@ function updateStats() {
   sv('sL', rows.filter(r=>r.ret1d<0).length);
 
   // Retorno de la canasta ponderada por market cap: Σmc hoy / Σmc al inicio - 1, con mc inicio = mc / (1 + r)
-  const basket=key=>{ let now=0,then=0; rows.forEach(r=>{ const mc=r.marketCap, x=r[key]; if(mc>0&&x!=null&&isFinite(x)&&x>-100){ now+=mc; then+=mc/(1+x/100); } }); return then>0?(now/then-1)*100:null; };
+  const basket=key=>{ let now=0,then=0; uRows.forEach(r=>{ const mc=r.marketCap, x=r[key]; if(mc>0&&x!=null&&isFinite(x)&&x>-100){ now+=mc; then+=mc/(1+x/100); } }); return then>0?(now/then-1)*100:null; };
   const showRet=(id,v)=>{ const el=document.getElementById(id); if(v==null){ el.textContent='—'; el.className='stat-val'; return; } el.textContent=(v>=0?'+':'')+v.toFixed(2)+'%'; el.className='stat-val '+(v>=0?'up':'dn'); };
   showRet('s1D', basket('ret1d'));
   showRet('sYTD', basket('retYTD'));
@@ -1627,6 +1641,7 @@ async function loadOverview(silent) {
     ];
     loadOvDolar();
     loadGgal(silent ? ggalRange : undefined);
+    loadMini('spy');
 
     const [ovRes, sparkRes, ustRes, mervRes] = await Promise.allSettled([
       fetch(BASE_URL+'/api/overview').then(r=>r.json()),
@@ -1860,7 +1875,7 @@ function renderOvTreas(q) {
   const DAY = 86400;
   const at = (hist, t) => { let v = null; for (const [ti, c] of hist) { if (ti <= t + 3600) v = c; else break; } return v; };
   const lvl = {};
-  const bp = v => v == null || !isFinite(v) ? '<span class="na">—</span>' : '<span class="' + (v > 0.5 ? 'pp' : v < -0.5 ? 'pn' : '') + '">' + (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + Math.abs(Math.round(v)) + '</span>';
+  const bp = v => v == null || !isFinite(v) ? '<span class="na">—</span>' : '<span class="' + (v > 0.5 ? 'pp' : v < -0.5 ? 'pn' : '') + '">' + (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + Math.abs(Math.round(v)) + ' bps</span>';
   let cmtDate = null;
   const body = ROWS.map(r => {
     let y = null, d1 = null, hist = [], now = Date.now() / 1000, open = '';
@@ -1887,7 +1902,7 @@ function renderOvTreas(q) {
   // 10A−2A con la curva oficial (mismo día para las dos tasas); 10A−13S con Yahoo (las dos intradiarias)
   const lc = U.cmt.length ? U.cmt[U.cmt.length - 1] : null;
   const s2 = lc && lc['10Y'] != null && lc['2Y'] != null ? Math.round((lc['10Y'] - lc['2Y']) * 100) : null, s3 = sp('10 años', '13 sem');
-  const fmtS = v => v == null ? '—' : '<span class="' + (v >= 0 ? 'up' : 'dn') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' bp</span>';
+  const fmtS = v => v == null ? '—' : '<span class="' + (v >= 0 ? 'up' : 'dn') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' bps</span>';
   document.getElementById('ovTreas').innerHTML = '<table class="ov-tbl ov-treas-tbl"><thead><tr><th>Plazo</th><th>Tasa</th><th class="ov-th-1d">1D</th><th>1S</th><th>1M</th><th>3M</th><th>6M</th></tr></thead><tbody>'
     + body + '</tbody></table>'
     + '<div class="ov-tcurve">Curva 10A−2A*: ' + fmtS(s2) + '; 10A−13S: ' + fmtS(s3) + '</div>'
@@ -2061,31 +2076,40 @@ async function loadOvDolar() {
     + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (ArgentinaDatos para oficial, mayorista y blue).</div>';
 }
 
-// GGAL: gráfico propio (1D cada 5 min, 1M y 1A diarios)
+// Gráficos chicos del Resumen (SPY y GGAL): 1D cada 5 min con el cierre anterior como base, 1M y 1A diarios
+const MINI = {
+  spy: { sym: 'SPY', range: '1D', cache: {}, canvas: 'spyCanvas', head: 'spyHead', btns: 'spyRangeBtns' },
+  ggal: { sym: 'GGAL', range: '1D', cache: {}, canvas: 'ggalCanvas', head: 'ggalHead', btns: 'ggalRangeBtns' },
+};
 let ggalRange = '1D';
-const ggalCache = {};
-async function loadGgal(range) {
-  if (range) ggalRange = range;
-  document.querySelectorAll('#ggalRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.r === ggalRange));
-  const q = { '1D': 'range=1d&interval=5m', '1M': 'range=1mo', '1A': 'range=1y' }[ggalRange];
+const ggalCache = MINI.ggal.cache;
+async function loadMini(id, range) {
+  const m = MINI[id];
+  if (range) m.range = range;
+  if (id === 'ggal') ggalRange = m.range;
+  document.querySelectorAll('#' + m.btns + ' .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.r === m.range));
+  const q = { '1D': 'range=1d&interval=5m', '1M': 'range=1mo', '1A': 'range=1y' }[m.range];
   try {
-    if (!ggalCache[ggalRange] || Date.now() - ggalCache[ggalRange].t > 120000) {
-      const j = await fetch(BASE_URL + '/api/spark?symbols=GGAL&' + q).then(r => r.json());
-      const s = j.spark?.result?.[0];
-      if (!s) throw new Error('sin datos');
-      const resp = s.response[0];
+    if (!m.cache[m.range] || Date.now() - m.cache[m.range].t > 60000) {
+      const j = await fetch(BASE_URL + '/api/spark?symbols=' + m.sym + '&' + q).then(r => r.json());
+      const sp = j.spark?.result?.[0];
+      if (!sp) throw new Error('sin datos');
+      const resp = sp.response[0];
       const pts = (resp.timestamp || []).map((t, i) => ({ t, c: resp.indicators.quote[0].close[i] })).filter(p => p.c != null);
-      ggalCache[ggalRange] = { t: Date.now(), pts, prevClose: resp.meta?.chartPreviousClose ?? null, quote: s.quote };
+      m.cache[m.range] = { t: Date.now(), pts, prevClose: resp.meta?.chartPreviousClose ?? null, quote: sp.quote };
     }
-    drawGgal();
+    drawMini(id);
   } catch (e) {
-    document.getElementById('ggalHead').innerHTML = '<span class="na">GGAL sin datos</span>';
+    const h = document.getElementById(m.head); if (h) h.innerHTML = '<span class="na">' + m.sym + ' sin datos</span>';
   }
 }
+function loadGgal(range) { return loadMini('ggal', range); }
+function drawGgal(hoverI) { drawMini('ggal', hoverI); }
 
-function drawGgal(hoverI) {
-  const d = ggalCache[ggalRange];
-  const cv = document.getElementById('ggalCanvas');
+function drawMini(id, hoverI) {
+  const m = MINI[id], rng = m.range;
+  const d = m.cache[rng];
+  const cv = document.getElementById(m.canvas);
   if (!d || !cv || !d.pts.length) return;
   const box = cv.parentElement, dpr = window.devicePixelRatio || 1;
   const W = box.clientWidth, H = box.clientHeight;
@@ -2093,26 +2117,28 @@ function drawGgal(hoverI) {
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
   const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
   const pts = d.pts, n = pts.length;
-  const base = ggalRange === '1D' ? (d.prevClose || pts[0].c) : pts[0].c;
+  const base = rng === '1D' ? (d.prevClose || pts[0].c) : pts[0].c;
   const lastC = pts[n - 1].c, up = lastC >= base;
   const col = cssVar(up ? '--up' : '--down'), grid = cssVar('--chart-grid'), text = cssVar('--chart-text');
-  const P = { l: 6, r: 52, t: 8, b: 20 };
+  const P = { l: 6, r: 56, t: 8, b: 20 };
   const vals = pts.map(p => p.c).concat([base]);
   let mn = Math.min(...vals), mx = Math.max(...vals); const pad = (mx - mn) * 0.08 || 0.5; mn -= pad; mx += pad;
   const t0 = pts[0].t, t1 = pts[n - 1].t;
-  const xs = i => P.l + (n > 1 ? (pts[i].t - t0) / (t1 - t0 || 1) : 0.5) * (W - P.l - P.r);
+  const xs = i => P.l + (n > 1 ? (pts[i].t - t0) / (t1 - t0 || 1) : 0.5) * (W - P.l - P.r - 8);
   const ys = v => P.t + (1 - (v - mn) / (mx - mn)) * (H - P.t - P.b);
   ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
-  [mn + pad, (mn + mx) / 2, mx - pad].forEach(v => {
+  const nT = H > 220 ? 5 : 3;
+  for (let k = 0; k < nT; k++) {
+    const v = mn + pad + (mx - mn - 2 * pad) * k / (nT - 1);
     const y = Math.round(ys(v)) + 0.5;
     ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke();
     ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText('$' + v.toFixed(2), W - P.r + 6, y + 4);
-  });
+  }
   // eje x: horas en 1D, fechas en 1M/1A
   ctx.textAlign = 'center'; ctx.fillStyle = text;
-  const fmtT = t => { const dt = new Date(t * 1000); return ggalRange === '1D'
+  const fmtT = t => { const dt = new Date(t * 1000); return rng === '1D'
     ? dt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/New_York' })
-    : ggalRange === '1M' ? dt.getDate() + ' ' + MES_CORTO[dt.getMonth()].toLowerCase() : MES_CORTO[dt.getMonth()] + ' ' + String(dt.getFullYear()).slice(2); };
+    : rng === '1M' ? dt.getDate() + ' ' + MES_CORTO[dt.getMonth()].toLowerCase() : MES_CORTO[dt.getMonth()] + ' ' + String(dt.getFullYear()).slice(2); };
   [0, Math.floor((n - 1) / 2), n - 1].forEach((i, k) => { ctx.textAlign = k === 0 ? 'left' : k === 2 ? 'right' : 'center'; ctx.fillText(fmtT(pts[i].t), k === 2 ? W - P.r : xs(i), H - 5); });
   // base: cierre anterior en 1D, primer dato en 1M/1A
   ctx.setLineDash([3, 3]); ctx.strokeStyle = text; ctx.globalAlpha = 0.6;
@@ -2129,16 +2155,16 @@ function drawGgal(hoverI) {
   if (hoverI != null) { ctx.strokeStyle = text; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(Math.round(xs(i)) + 0.5, P.t); ctx.lineTo(Math.round(xs(i)) + 0.5, H - P.b); ctx.stroke(); ctx.globalAlpha = 1; }
   // encabezado: precio y variación (o el punto bajo el cursor)
   const p = pts[i], ch = (p.c / base - 1) * 100;
-  const when = hoverI != null ? ' <span class="ov-ggal-when">' + (ggalRange === '1D' ? fmtT(p.t) + ' ET' : new Date(p.t * 1000).toLocaleDateString('es-AR')) + '</span>' : '';
-  const lbl = ggalRange === '1D' ? 'hoy' : ggalRange === '1M' ? '1 mes' : '1 año';
-  document.getElementById('ggalHead').innerHTML = '<span class="ov-ggal-px">US$ ' + p.c.toFixed(2) + '</span> ' + fmtVar(ch) + ' <span class="ov-ggal-when">' + lbl + '</span>' + when;
+  const when = hoverI != null ? ' <span class="ov-ggal-when">' + (rng === '1D' ? fmtT(p.t) + ' ET' : new Date(p.t * 1000).toLocaleDateString('es-AR')) + '</span>' : '';
+  const lbl = rng === '1D' ? 'hoy' : rng === '1M' ? '1 mes' : '1 año';
+  document.getElementById(m.head).innerHTML = '<span class="ov-ggal-px">US$ ' + p.c.toFixed(2) + '</span> ' + fmtVar(ch) + ' <span class="ov-ggal-when">' + lbl + '</span>' + when;
   cv.onpointermove = e => {
     const r = cv.getBoundingClientRect(), mx2 = e.clientX - r.left;
-    const tt = t0 + (mx2 - P.l) / (W - P.l - P.r) * (t1 - t0);
+    const tt = t0 + (mx2 - P.l) / (W - P.l - P.r - 8) * (t1 - t0);
     let best = 0; for (let k = 1; k < n; k++) if (Math.abs(pts[k].t - tt) < Math.abs(pts[best].t - tt)) best = k;
-    drawGgal(best);
+    drawMini(id, best);
   };
-  cv.onpointerleave = () => drawGgal();
+  cv.onpointerleave = () => drawMini(id);
 }
 
 // ── HEATMAP ──────────────────────────────────────────────
@@ -3560,9 +3586,21 @@ function multBands(pts, years, fija) {
 }
 
 // ---------- panel de comparación debajo de P/E histórico ----------
-let pebgCmp = { on: false, ref: 'sub', mode: 'rel' };
-try { const c = JSON.parse(localStorage.getItem('pebgCmp') || 'null'); if (c) pebgCmp = { ...pebgCmp, ...c }; } catch (e) {}
-function savePebgCmp() { try { localStorage.setItem('pebgCmp', JSON.stringify(pebgCmp)); } catch (e) {} }
+// por defecto: S&P 500 y P/E (la clave nueva descarta lo guardado con el default anterior)
+let pebgCmp = { on: false, ref: 'spx', mode: 'pe' };
+try { const c = JSON.parse(localStorage.getItem('pebgCmp2') || 'null'); if (c) pebgCmp = { ...pebgCmp, ...c }; } catch (e) {}
+function savePebgCmp() { try { localStorage.setItem('pebgCmp2', JSON.stringify(pebgCmp)); } catch (e) {} }
+// composición de un sector o subindustria, con el peso de cada empresa por capitalización
+function multComposition(key) {
+  if (!key || key === 'SPX') return 'S&P 500: las ~500 empresas del índice, ponderadas por capitalización';
+  const isSec = key.startsWith('sec:'), name = key.slice(4), seen = new Set();
+  const mem = Object.entries(SPX_INFO).filter(([, x]) => (isSec ? x.gics === name : x.sub === name) && !seen.has(x.cik) && seen.add(x.cik))
+    .map(([sym]) => ({ sym, mc: (fundFor(sym).mc || 0) })).sort((a, b) => b.mc - a.mc);
+  const tot = mem.reduce((a, m) => a + m.mc, 0);
+  const show = isSec ? mem.slice(0, 15) : mem;
+  const list = show.map(m => m.sym + (tot > 0 && m.mc > 0 ? ' ' + Math.round(m.mc / tot * 100) + '%' : '')).join(', ');
+  return (isSec ? 'Sector ' : 'Subindustria ') + multName(key) + ' (' + mem.length + ' empresas, peso por capitalización): ' + list + (mem.length > show.length ? ' y ' + (mem.length - show.length) + ' más' : '');
+}
 function togglePebgCmp() {
   pebgCmp.on = !pebgCmp.on; savePebgCmp();
   document.getElementById('pebgCmp').style.display = pebgCmp.on ? 'flex' : 'none';
@@ -3599,10 +3637,14 @@ function drawPebgCmp(geo) {
   const sym = pebgData ? pebgData.symbol : '';
   const { key, ref, opts } = pebgCmpKey(sym);
   // botones: los que no aplican quedan apagados
+  if (!FUND) loadFund().then(() => {});   // para los pesos de la composición
   document.querySelectorAll('#pebgCmpRef .pebg-period').forEach(e => {
     const k = e.dataset.r; e.classList.toggle('active', k === ref); e.classList.toggle('is-off', !opts[k]);
-    e.title = !opts[k] ? (k === 'spx' ? '' : sym + ' no está en el S&P 500' + (k === 'sub' && SPX_INFO[sym] ? ' o su subindustria tiene menos de 3 empresas' : '')) : (k === 'sec' || k === 'sub') && opts[k] ? multName(opts[k]) : 'S&P 500';
+    e.title = opts[k] ? multComposition(opts[k]) : sym + ' no está en el S&P 500' + (k === 'sub' && SPX_INFO[sym] ? ' o su subindustria tiene menos de 3 empresas' : '');
   });
+  // los botones apagados no reciben el mouse: el aviso va en el contenedor
+  const refBox = document.getElementById('pebgCmpRef');
+  if (refBox) refBox.title = !opts.sec ? sym + ' no está en el S&P 500: solo se compara con el índice' : '';
   document.querySelectorAll('#pebgCmpMode .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.m === pebgCmp.mode));
 
   const norm = epsMode === 'norm' && hasNorm(pebgData);
@@ -3625,8 +3667,9 @@ function drawPebgCmp(geo) {
   const fx = v => rel ? v.toFixed(2) + 'x' : v.toFixed(1) + 'x';
   if (lastI >= 0) {
     const b = bands[lastI], z = b && b.sd > 0 ? (pts[lastI].v - b.mu) / b.sd : null;
-    sum.innerHTML = (rel ? `${sym} / ${multName(key)}: <b>${fx(pts[lastI].v)}</b>` : `${multName(key)}: P/E <b>${fx(pts[lastI].v)}</b>`)
-      + (b ? `, media ${fija ? '' : 'móvil '}${years}A ${fx(b.mu)}, z ${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(2)}σ` : '')
+    const modo = benchNorm ? 'normalizado' : 'contable';
+    sum.innerHTML = (rel ? `${sym} / ${multName(key)} (${modo}): <b>${fx(pts[lastI].v)}</b>` : `${multName(key)}, P/E ${modo}: <b>${fx(pts[lastI].v)}</b>`)
+      + (b ? `, media ${fija ? '' : 'móvil '}${years}A ${fx(b.mu)}, z ${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(2)}σ; zona sombreada: media ± 1σ` : '')
       + (norm && !benchNorm ? ' <span class="na">(referencia contable)</span>' : '');
   } else sum.textContent = '';
 
@@ -3647,7 +3690,7 @@ function drawPebgCmp(geo) {
   for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) {
     const y = Math.round(yS(v)) + 0.5;
     ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
-    ctx.fillStyle = text; ctx.textAlign = 'right'; ctx.fillText(rel ? (+v.toFixed(2)) + 'x' : (+v.toFixed(1)) + 'x', PAD.left - 8, y + 4);
+    ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText(rel ? (+v.toFixed(2)) + 'x' : (+v.toFixed(1)) + 'x', W - PAD.right + 8, y + 4);
   }
   if (rel && 1 > yMin && 1 < yMax) { const y = Math.round(yS(1)) + 0.5; ctx.strokeStyle = text; ctx.globalAlpha = 0.5; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   ctx.save(); ctx.beginPath(); ctx.rect(PAD.left, P.top, cW, cH); ctx.clip();
@@ -3672,11 +3715,16 @@ function drawPebgCmp(geo) {
   pts.forEach(p => { if (p.date < t0 - 30 * 86400 || p.date > t1) { prev = null; return; } const x = xS(p.date), y = yS(p.v); (prev && p.date - prev.date < 30 * 86400) ? ctx.lineTo(x, y) : ctx.moveTo(x, y); prev = p; });
   ctx.stroke();
   ctx.restore();
-  // valores en el borde derecho
+  // último valor y media como etiquetas sobre el eje derecho
   const lastV = vis[vis.length - 1], lb = bands[pts.indexOf(lastV)];
-  ctx.textAlign = 'left'; ctx.font = `700 12px ${CANVAS_FONT}`; ctx.fillStyle = cssVar('--price');
-  const ly = yS(lastV.v); ctx.fillText(fx(lastV.v), W - PAD.right + 8, ly + 4);
-  if (lb && Math.abs(yS(lb.mu) - ly) > 13) { ctx.font = `600 12px ${CANVAS_FONT}`; ctx.fillStyle = cols[2]; ctx.fillText(fx(lb.mu), W - PAD.right + 8, yS(lb.mu) + 4); }
+  const pill = (v, bg, fg) => {
+    const y = Math.max(P.top + 8, Math.min(P.top + cH - 8, yS(v))), txt = fx(v);
+    ctx.font = `700 11.5px ${CANVAS_FONT}`; const mt = ctx.measureText(txt), w = ((mt && mt.width) || txt.length * 7) + 10;
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(W - PAD.right + 3, y - 9, w, 18, 4) : ctx.rect(W - PAD.right + 3, y - 9, w, 18); ctx.fill();
+    ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText(txt, W - PAD.right + 8, y + 4);
+  };
+  if (lb) pill(lb.mu, cols[2], cssVar('--chart-bg'));
+  pill(lastV.v, cssVar('--price'), cssVar('--chart-bg'));
   // cursor sincronizado con el gráfico de arriba
   const tip = document.getElementById('pebgCmpTip');
   if (geo.hoverT != null && geo.hoverT >= t0 && geo.hoverT <= t1) {
@@ -4020,7 +4068,7 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
-window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active') && ggalCache[ggalRange]) drawGgal(); });
+window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active')) { if (ggalCache[ggalRange]) drawGgal(); if (MINI.spy.cache[MINI.spy.range]) drawMini('spy'); } });
 
 pegAxisSwitch(null);
 updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns(); syncPebgScaleBtns(); paintHmLegend();
