@@ -7,7 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, PREDECESSOR_CIK } from "./edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -229,8 +229,9 @@ async function edgarRaw(sym) {
 }
 
 async function edgarEPS(sym, splits = []) {
-  const raw = await edgarRaw(sym);
+  let raw = await edgarRaw(sym);
   if (!raw) return { gaap: [], norm: [] };
+  if (EPS_PER_SHARE_DIV[sym]) raw = { ...raw, eps: raw.eps.map(e => ({ ...e, val: e.val / EPS_PER_SHARE_DIV[sym] })) };
   const f = makeSplitFactor(splits);
   const gaap = gaapQuarterly(raw, f, sym);
   const n = normalizedQuarterly(raw, f, gaap, sym);
@@ -279,6 +280,21 @@ function manualEPS(sym) {
     norm: m.normalizado ? rows.map(r => ({ date: r.date, eps: r.adj != null && isFinite(r.adj) ? +r.adj : r.eps })) : [],
     normNote: m.normalizado || null,
   };
+}
+
+// ---------------------------------------------------------------- trimestres que la SEC todavía no tiene
+// El proceso diario de múltiplos los completa con el EPS diluido contable de Yahoo y los publica en eps_ttm.json
+// (campo fill). P/E histórico usa esos mismos, así el P/E de cada empresa coincide con el del screener.
+const EPS_TTM_URL = process.env.EPS_TTM_URL || "https://juanfranciscopisano.github.io/tradingweb/eps_ttm.json";
+let FILL = { t: 0, data: {} };
+async function yahooFill(sym) {
+  if (Date.now() - FILL.t > 3600 * 1000) {
+    try {
+      const j = await getJSON(EPS_TTM_URL, { timeout: 8000 });
+      FILL = { t: Date.now(), data: (j && j.fill) || {} };
+    } catch (e) { FILL = { t: Date.now() - 3000 * 1000, data: FILL.data }; }   // reintenta en 10 min
+  }
+  return (FILL.data[sym] || []).map(([d, eps]) => ({ date: Math.floor(Date.parse(d + "T00:00:00Z") / 1000), eps }));
 }
 
 // ---------------------------------------------------------------- Finnhub
@@ -487,17 +503,20 @@ app.get("/api/pebg", async (req, res) => {
         normMethod = manual.norm.length ? "ajustado_empresa" : null;
         normNote = manual.normNote;
       } else {
-        // Finnhub solo si hace falta: sin 10-Q (20-F) o con el último trimestre de EDGAR viejo (>110 días)
-        const edgarStale = !edgar.length || (Date.now() / 1000 - edgar[edgar.length - 1].date) > 110 * 86400;
-        const fh = (edgar.length < 4 || edgarStale) ? await finnhubEPS(sym) : [];
-        if (edgar.length >= 4) {
-          const have = new Set(edgar.map(e => toQKey(e.date)));
-          const gaps = fh.filter(e => !have.has(toQKey(e.date)) && e.date > edgar[edgar.length - 1].date);
-          eps = [...edgar, ...gaps].sort((a, b) => a.date - b.date);
-          source = gaps.length ? "edgar+finnhub" : "edgar";
+        // trimestres posteriores al último de EDGAR: primero los de Yahoo que usa el proceso de múltiplos (contables);
+        // Finnhub (ajustado) solo si todavía falta: sin 10-Q (20-F) o con el último trimestre viejo (>110 días)
+        const yf = edgar.length ? (await yahooFill(sym)).filter(e => e.date > edgar[edgar.length - 1].date + 20 * 86400) : [];
+        const sec = [...edgar, ...yf];
+        const edgarStale = !sec.length || (Date.now() / 1000 - sec[sec.length - 1].date) > 110 * 86400;
+        const fh = (sec.length < 4 || edgarStale) ? await finnhubEPS(sym) : [];
+        if (sec.length >= 4) {
+          const have = new Set(sec.map(e => toQKey(e.date)));
+          const gaps = fh.filter(e => !have.has(toQKey(e.date)) && e.date > sec[sec.length - 1].date);
+          eps = [...sec, ...gaps].sort((a, b) => a.date - b.date);
+          source = "edgar" + (yf.length ? "+yahoo" : "") + (gaps.length ? "+finnhub" : "");
         } else {
-          eps = fh.length ? fh : edgar;
-          source = fh.length ? "finnhub" : (edgar.length ? "edgar" : "none");
+          eps = fh.length ? fh : sec;
+          source = fh.length ? "finnhub" : (sec.length ? "edgar" : "none");
         }
         // Normalizado: el operativo de EDGAR; para los que presentan 20-F, el ajustado de Finnhub (es lo único que hay)
         epsNorm = edgarAll.norm; normMethod = epsNorm.length >= 4 ? edgarAll.normMethod : null;

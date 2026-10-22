@@ -21,7 +21,7 @@ function tickersFrom(html, spx = []) {
   return [...new Set([...spx, ...arr("TKS"), ...arr("CARTERA_TICKERS"), ...arr("TOP50_TICKERS")])];
 }
 
-async function yahooSession(f) {
+export async function yahooSession(f) {
   const r1 = await f("https://fc.yahoo.com/", { headers: { "User-Agent": UA }, redirect: "manual" });
   const raw = typeof r1.headers.getSetCookie === "function" ? r1.headers.getSetCookie() : [r1.headers.get("set-cookie")].filter(Boolean);
   const cookie = raw.map(c => c.split(";")[0]).filter(Boolean).join("; ");

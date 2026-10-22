@@ -11,7 +11,8 @@
 // (no la composición de cada fecha): hacia atrás hay sesgo de supervivencia.
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, PREDECESSOR_CIK } from "../backend/edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
+import { yahooSession } from "./fundamentals.mjs";
 
 const CSV_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -47,7 +48,10 @@ export function constituents(csvText) {
   })).sort((a, b) => a.s.localeCompare(b.s));
 }
 
-// EPS de 12 meses por semana: suma de los últimos 4 trimestres con cierre anterior a la semana (como P/E histórico)
+// EPS de 12 meses por semana: suma de los últimos 4 trimestres con cierre anterior a la semana (como P/E histórico).
+// Si el último trimestre cerró hace más de 200 días, el dato está viejo (la empresa cambió de etiqueta o la SEC no
+// cargó sus presentaciones): esa semana la empresa no entra.
+const STALE_DAYS = 200;
 function ttmByWeek(quarters, weeks) {
   const q = quarters.slice().sort((a, b) => a.date - b.date), out = new Map();
   let j = 0;
@@ -55,6 +59,7 @@ function ttmByWeek(quarters, weeks) {
     const t = MONDAY0 + w * WEEK + 4 * DAY;             // viernes de esa semana
     while (j < q.length && q[j].date <= t) j++;
     if (j < 4) continue;
+    if (t - q[j - 1].date > STALE_DAYS * DAY) continue;
     // los 4 trimestres tienen que ser consecutivos (sin huecos de más de ~4 meses entre sí)
     if (q[j - 1].date - q[j - 4].date > 300 * DAY) continue;
     out.set(w, q[j - 1].eps + q[j - 2].eps + q[j - 3].eps + q[j - 4].eps);
@@ -72,33 +77,71 @@ function sharesByWeek(sh, weeks) {
   return out;
 }
 
+// Trimestres de Yahoo (EPS diluido contable) después del último de la SEC: completan lo que la SEC todavía no tiene
+// (10-Q presentado y no cargado en su base, o resultado anunciado y 10-Q pendiente). Si los dos tienen el último
+// trimestre de la SEC y difieren en más de 20%, no se completa (otra unidad o otra definición).
+function fillAfter(quarters, extra) {
+  if (!extra?.length) return { q: quarters, filled: [] };
+  const last = quarters[quarters.length - 1];
+  if (last) {
+    const same = extra.find(x => Math.abs(x.date - last.date) <= 10 * DAY);
+    if (same && Math.abs(same.eps - last.eps) > 0.2 * Math.max(Math.abs(last.eps), 0.05)) return { q: quarters, filled: [], rejected: true };
+  }
+  const add = extra.filter(x => !last || x.date > last.date + 20 * DAY);
+  return { q: [...quarters, ...add.map(x => ({ date: x.date, eps: x.eps, src: "yahoo" }))], filled: add };
+}
+
 // series de una empresa: precio, EPS de 12 meses (contable y normalizado) y acciones, por semana.
 // Si EDGAR no trae EPS trimestral (V, KKR, ABNB... lo informan por clase de acción o con etiquetas propias), se usa
 // el resultado neto con las acciones de hoy (capitalización / precio de fundamentals.json): sin normalizado.
-export function companySeries({ facts, chart, olderFacts = null, fundRow = null }) {
+// extra: trimestres de Yahoo para completar después del último de la SEC.
+export function companySeries({ sym = "", facts, chart, olderFacts = null, fundRow = null, extra = null }) {
   const ts = chart?.timestamp || [], cl = chart?.indicators?.quote?.[0]?.close || [];
   const price = new Map();
   ts.forEach((t, i) => { if (cl[i] != null && cl[i] > 0) price.set(weekOf(t), cl[i]); });
   const splits = Object.values(chart?.events?.splits || {}).map(s => ({ date: s.date, ratio: s.numerator / s.denominator })).filter(s => s.ratio > 0 && isFinite(s.ratio));
   const raw = mergeRaw(rawFromFacts(facts), olderFacts ? rawFromFacts(olderFacts) : null);
+  // BRK informa el EPS por acción clase A; el precio es el de la B (1 A = 1.500 B)
+  if (EPS_PER_SHARE_DIV[sym]) raw.eps = raw.eps.map(e => ({ ...e, val: e.val / EPS_PER_SHARE_DIV[sym] }));
   const f = makeSplitFactor(splits);
   const gaap = gaapQuarterly(raw, f, "");
   const weeks = [...price.keys()].sort((a, b) => a - b);
-  if (gaap.length < 4) {
-    const shNow = fundRow && fundRow.mc > 0 && fundRow.p > 0 ? fundRow.mc / fundRow.p : null;
-    const ni = netIncomeQuarterly(raw);
-    if (!shNow || ni.length < 4) return { price, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0, splits: splits.length };
-    const epsLike = ni.map(q => ({ date: q.date, eps: q.ni / shNow }));
-    const shMap = new Map(weeks.map(w => [w, shNow]));
-    const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
-    return { price, eG: clean(ttmByWeek(epsLike, weeks)), eN: new Map(), sh: shMap, quarters: ni.length, splits: splits.length, viaNI: true, lastQ: ni[ni.length - 1].date };
-  }
-  const norm = normalizedQuarterly(raw, f, gaap, "").eps;
-  const sh = sharesQuarterly(raw, f, gaap);
   // datos que no pueden ser ciertos (EPS de 12 meses mayor que el precio, o una pérdida de más de 3 veces el precio):
   // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
   const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
-  return { price, eG: clean(ttmByWeek(gaap, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, splits: splits.length, lastQ: gaap[gaap.length - 1].date };
+  const base = { price, splits: splits.length };
+  if (gaap.length < 4) {
+    const shNow = fundRow && fundRow.mc > 0 && fundRow.p > 0 ? fundRow.mc / fundRow.p : null;
+    const ni = netIncomeQuarterly(raw);
+    const epsLike = shNow && ni.length >= 4 ? ni.map(q => ({ date: q.date, eps: q.ni / shNow })) : [];
+    const fl = shNow ? fillAfter(epsLike, extra) : { q: [], filled: [] };
+    if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
+    const shMap = new Map(weeks.map(w => [w, shNow]));
+    return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0,
+      lastQ: fl.q[fl.q.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
+  }
+  const norm = normalizedQuarterly(raw, f, gaap, "").eps;
+  const sh = sharesQuarterly(raw, f, gaap);
+  const fl = fillAfter(gaap, extra);
+  return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length,
+    lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
+}
+
+// EPS diluido trimestral de Yahoo (fundamentals-timeseries): el de operaciones continuas si está, si no el total
+async function yahooQuarterlyEPS(fetchImpl, sym, session, nowS) {
+  const types = "quarterlyDilutedContinuousOperations,quarterlyDilutedEPS";
+  const url = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}`
+    + `&type=${types}&period1=${nowS - 3 * 365 * DAY}&period2=${nowS + DAY}` + (session ? `&crumb=${encodeURIComponent(session.crumb)}` : "");
+  const j = await getJSON(fetchImpl, url, { "User-Agent": UA, "Accept": "application/json", ...(session ? { Cookie: session.cookie } : {}) }, 2);
+  const res = j?.timeseries?.result || [];
+  const pick = type => {
+    const r = res.find(x => x?.meta?.type?.[0] === type);
+    return (r?.[type] || []).filter(x => x && x.asOfDate && isFinite(x.reportedValue?.raw) && (!x.currencyCode || x.currencyCode === "USD") && (!x.periodType || x.periodType === "3M"))
+      .map(x => ({ date: Math.floor(Date.parse(x.asOfDate + "T00:00:00Z") / 1000), eps: +x.reportedValue.raw }));
+  };
+  const m = new Map(pick("quarterlyDilutedEPS").map(q => [q.date, q]));
+  for (const q of pick("quarterlyDilutedContinuousOperations")) m.set(q.date, q);
+  return [...m.values()].sort((a, b) => a.date - b.date);
 }
 
 // P/E de cada grupo por semana. cos: { sym: series } ; groups: { key: [syms] }
@@ -170,7 +213,10 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   let fund = {};
   try { fund = JSON.parse(await readFile(new URL("fundamentals.json", root), "utf8")).data || {}; } catch (e) { log("fundamentals.json: " + e.message); }
   const p1 = Math.floor(now.getTime() / 1000) - 30 * 365 * DAY, p2 = Math.floor(now.getTime() / 1000);
-  const cos = {}, missing = [], viaNI = [];
+  const cos = {}, missing = [], viaNI = [], conYahoo = [], yahooRechazado = [];
+  // sesión de Yahoo para los trimestres que la SEC todavía no tiene (si falla, se sigue sin completar)
+  let ySession = null, yOk = true, yErr = 0;
+  try { ySession = await yahooSession(fetchImpl); } catch (e) { log("Yahoo (sesión): " + e.message); }
   await mapLimit(list, concurrency, async (c, k) => {
     try {
       const [facts, cj, olderFacts] = await Promise.all([
@@ -180,14 +226,27 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       ]);
       const chart = cj?.chart?.result?.[0];
       if (!facts || !chart) { missing.push(c.s + (facts ? " (sin precios)" : " (sin EDGAR)")); return; }
-      const ser = companySeries({ facts, chart, olderFacts, fundRow: fund[c.s] });
+      let ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s] });
+      // sin trimestres o con el último de hace más de 100 días: se busca en Yahoo lo que falta
+      if (yOk && (ser.quarters < 4 || !ser.lastQ || p2 - ser.lastQ > 100 * DAY)) {
+        try {
+          const extra = await yahooQuarterlyEPS(fetchImpl, c.s, ySession, p2);
+          if (extra.length) ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], extra });
+        } catch (e) {
+          if (/HTTP 40[13]/.test(e.message)) yOk = false;
+          if (yErr++ < 3) log(`Yahoo (EPS trimestral) ${c.s}: ${e.message}`);
+        }
+      }
       if (ser.quarters < 4) { missing.push(c.s + " (sin EPS trimestral)"); return; }
       if (ser.viaNI) viaNI.push(c.s);
+      if (ser.filled?.length) conYahoo.push(c.s);
+      if (ser.fillRejected) yahooRechazado.push(c.s);
       cos[c.s] = ser;
     } catch (e) { missing.push(`${c.s} (${e.message})`); }
     if (k % 50 === 49) log(`  ${k + 1}/${list.length}`);
   });
   log(`Con datos: ${Object.keys(cos).length}/${list.length}. Con resultado neto: ${viaNI.join(", ") || "ninguna"}. Faltan: ${missing.join(", ") || "ninguna"}`);
+  log(`Completadas con Yahoo: ${conYahoo.length} (${conYahoo.join(", ")}). Rechazadas por no coincidir: ${yahooRechazado.join(", ") || "ninguna"}`);
 
   // 3) grupos y semanas (desde la primera semana con P/E del índice)
   const seenCik = new Set();
@@ -224,6 +283,8 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     series,
     sinDatos: missing,
     conResultadoNeto: viaNI,
+    completadasConYahoo: conYahoo,
+    yahooNoCoincide: yahooRechazado,
   };
   // las semanas son consecutivas salvo feriados largos: se guarda la lista solo si hay huecos
   if (weeks[weeks.length - 1] - weeks[0] + 1 !== weeks.length) out.weekList = weeks;
@@ -237,14 +298,18 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     const s = cos[c.s]; if (!s) continue;
     const e = s.eG.get(lastW), en = s.eN.get(lastW), sh = s.sh.get(lastW), p = s.price.get(lastW);
     if (e == null || !sh) continue;
-    ultimos[c.s] = [+e.toFixed(4), en != null ? +en.toFixed(4) : null, Math.round(sh), s.lastQ ? iso(s.lastQ) : null, p ? +p.toFixed(2) : null];
+    ultimos[c.s] = [+e.toFixed(4), en != null ? +en.toFixed(4) : null, Math.round(sh), s.lastQ ? iso(s.lastQ) : null, p ? +p.toFixed(2) : null, s.filled?.length ? "sec+yahoo" : "sec"];
   }
+  // trimestres completados con Yahoo, para que P/E histórico (backend) use exactamente los mismos
+  const fill = {};
+  for (const [sym, s] of Object.entries(cos)) if (s.filled?.length) fill[sym] = s.filled.map(q => [iso(q.date), +q.eps.toFixed(4)]);
   await writeFile(new URL("eps_ttm.json", root), JSON.stringify({
     asOf: out.asOf,
     nota: "Último EPS de 12 meses de la SEC por empresa (contable y normalizado), acciones diluidas, cierre del último trimestre presentado y precio usado en multiples.json",
-    campos: ["eps12m", "eps12mNormalizado", "acciones", "ultimoTrimestre", "precio"],
+    campos: ["eps12m", "eps12mNormalizado", "acciones", "ultimoTrimestre", "precio", "fuente"],
     spx: series.SPX.g.at(-1), spxN: series.SPX.n.at(-1),
     data: ultimos,
+    fill,
   }));
   log(`eps_ttm.json: ${Object.keys(ultimos).length} empresas`);
   const diag = { splits: {}, fechas: {} };

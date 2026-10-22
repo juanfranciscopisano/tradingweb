@@ -1484,7 +1484,7 @@ async function loadData() {
     let pe=f.pe??null, peSrc=pe!=null?'yahoo':null;
     if(se&&px>0){ peSrc='sec'; pe=se[0]>0?px/se[0]:null; }
     rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:px,
-      marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, shSec:se?se[2]:null, qSec:se?se[3]:null,
+      marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, shSec:se?se[2]:null, qSec:se?se[3]:null, fSec:se?se[5]:null,
       fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
       ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252)});
   }
@@ -1549,7 +1549,8 @@ function getF() {
 
 function peCell(r) {
   if (r.peSrc === 'sec') {
-    const q = r.qSec ? ', último trimestre al ' + r.qSec.split('-').reverse().join('/') : '';
+    const q = (r.qSec ? ', último trimestre al ' + r.qSec.split('-').reverse().join('/') : '')
+      + (r.fSec === 'sec+yahoo' ? '; los trimestres que la SEC todavía no cargó, de Yahoo' : '');
     if (r.eSec <= 0) return '<td title="EPS de 12 meses (SEC): ' + r.eSec.toFixed(2) + q + '"><span class="na">pérd.</span></td>';
     return '<td title="Precio / EPS de 12 meses de la SEC (' + r.eSec.toFixed(2) + q + ')">' + fMx(r.pe, 1000) + '</td>';
   }
@@ -1756,14 +1757,11 @@ function ovRet(sym, n) {
   const p = v[Math.max(0,v.length-1-n)]; if(!p) return null;
   return (v[v.length-1]-p)/p*100;
 }
+// YTD contra el último cierre del año anterior, como en el screener (rY)
 function ovRetYTD(sym) {
   const sp = ovSparkMap[sym];
   if(!sp||!sp.closes||!sp.timestamps||sp.closes.length<2) return null;
-  const ys = new Date(new Date().getFullYear(),0,1).getTime()/1000;
-  let si=0; for(let i=0;i<sp.timestamps.length;i++){if(sp.timestamps[i]>=ys){si=i;break;}}
-  const sc=sp.closes.slice(si).find(x=>x!=null), lc=[...sp.closes].reverse().find(x=>x!=null);
-  if(!sc||!lc) return null;
-  return (lc-sc)/sc*100;
+  return rY(sp.closes, sp.timestamps);
 }
 
 function fmtRet(v) {
@@ -2577,6 +2575,8 @@ function buildPESeries(data, eps) {
   for (const p of prices) {
     while (j < eps.length && eps[j].date <= p.date) j++;
     if (j < 4) continue;
+    // último trimestre de hace más de 200 días: el dato está viejo y no se usa (mismo criterio que los múltiplos)
+    if (p.date - eps[j - 1].date > 200 * 86400) continue;
     let s = 0;
     for (let k = j - 4; k < j; k++) s += eps[k].eps;
     if (s <= 0.01) continue;

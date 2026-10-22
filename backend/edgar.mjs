@@ -7,8 +7,11 @@
 // ajustados), así que se divide por el ratio. Si la empresa lo volvió a presentar después del split, ya
 // viene reexpresado y no se toca.
 export const EDGAR_TAGS = {
-  // XOM publica "básico y diluido" en una sola etiqueta; algunas (V, clases de acciones) solo el básico
-  eps: [["EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted", "EarningsPerShareBasic"], "USD/shares"],
+  // primero el de operaciones continuas: lo discontinuado (una escisión, un negocio vendido) ya no está en el precio.
+  // Varias empresas (MNST, VRSN, GD) solo informan ese desde hace años. XOM publica "básico y diluido" en una sola
+  // etiqueta; algunas (V, clases de acciones) solo el básico. Se combinan por período, en este orden de prioridad.
+  eps: [["IncomeLossFromContinuingOperationsPerDilutedShare", "EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted",
+         "IncomeLossFromContinuingOperationsPerBasicShare", "EarningsPerShareBasic"], "USD/shares"],
   oi: [["OperatingIncomeLoss"], "USD"],
   pt: [["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"], "USD"],
@@ -23,6 +26,13 @@ export function rawFromFacts(facts) {
   const g = facts?.facts?.["us-gaap"] || {};
   const out = {};
   for (const [k, [tags, unit]] of Object.entries(EDGAR_TAGS)) {
+    if (k === "eps") {
+      // EPS: todas las etiquetas por separado (cada una arma sus trimestres; después se combinan por prioridad)
+      out.eps = [];
+      for (const t of tags) for (const e of g[t]?.units?.[unit] || [])
+        out.eps.push({ tag: t, start: e.start, end: e.end, val: e.val, fp: e.fp, form: e.form, frame: e.frame, filed: e.filed });
+      continue;
+    }
     // las empresas cambian de etiqueta con los años: se combinan por período (frame), con prioridad a la primera
     const arr = [], seen = new Set();
     let primary = null;
@@ -52,44 +62,49 @@ export function makeSplitFactor(splits) {
 // trimestre calendario por el punto medio del período (sirve para ejercicios que no cierran en diciembre)
 export const qkeyOf = end => { const d = new Date(Date.parse(end) - 45 * 86400000); return d.getUTCFullYear() + "Q" + (Math.floor(d.getUTCMonth() / 3) + 1); };
 
-// EPS diluido trimestral (contable). Q1-Q3 salen de los frames CY####Q#; el trimestre faltante se
-// deriva como anual menos YTD (soporta cierres de ejercicio no calendario).
-export function gaapQuarterly(raw, splitFactor, symbol) {
-  const epsData = raw.eps.map(e => ({ ...e, val: e.val / splitFactor(e.end, e.filed) }));
-  const quarterly = {}, annualByYear = {}, ytdQ2ByYear = {}, ytdQ3ByYear = {};
-  const ts = d => Math.floor(new Date(d).getTime() / 1000);
-  epsData.forEach(e => {
-    const endYear = String(new Date(e.end).getFullYear());
-    if (!e.frame) {
-      if (e.fp === "Q2" && e.form === "10-Q") {
-        if (!ytdQ2ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ2ByYear[endYear].val)) ytdQ2ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
-      } else if (e.fp === "Q3" && e.form === "10-Q") {
-        if (!ytdQ3ByYear[endYear] || Math.abs(e.val) > Math.abs(ytdQ3ByYear[endYear].val)) ytdQ3ByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
-      } else if (e.fp === "FY" && e.form === "10-K") {
-        if (!annualByYear[endYear] || e.end > annualByYear[endYear].end) annualByYear[endYear] = { date: ts(e.end), val: e.val, end: e.end };
-      }
-    } else if (/^CY\d{4}Q\d$/.test(e.frame)) {
-      if (!quarterly[e.frame] || e.end > quarterly[e.frame].end) quarterly[e.frame] = { date: ts(e.end), eps: e.val, end: e.end };
-    } else if (/^CY\d{4}$/.test(e.frame)) {
-      const frameYr = e.frame.slice(2); // año del frame, no el del cierre (NVDA cierra en enero)
-      if (!annualByYear[frameYr] || e.end > annualByYear[frameYr].end) annualByYear[frameYr] = { date: ts(e.end), val: e.val, end: e.end };
+// EPS diluido trimestral (contable), por período real (sirve para ejercicios no calendario y trimestres de 12 o 16
+// semanas, como COST). Por etiqueta: los trimestres informados (70 a 125 días) y los que faltan, como período
+// acumulado menos el acumulado anterior del mismo ejercicio (anual - 9 meses, 9 meses - 6 meses, 6 meses - Q1).
+// Si un período se presentó más de una vez (reexpresiones, comparativos), vale la última presentación. Después se
+// combinan las etiquetas en el orden de EDGAR_TAGS.eps: un trimestre de una etiqueta posterior solo entra si no hay
+// otro que cierre esa misma fecha (±10 días).
+const DAY_MS = 86400000;
+function quartersOf(facts, splitFactor) {
+  const per = new Map();
+  for (const e of facts) {
+    if (!e.start || !e.end || !isFinite(e.val)) continue;
+    const k = e.start + "|" + e.end, o = per.get(k);
+    if (!o || (e.filed || "") > (o.filed || "")) per.set(k, { start: e.start, end: e.end, filed: e.filed, val: e.val / splitFactor(e.end, e.filed), s: Date.parse(e.start), t: Date.parse(e.end) });
+  }
+  const ps = [...per.values()], days = (a, b) => (b - a) / DAY_MS;
+  const out = [];
+  const near = t => out.some(q => Math.abs(q.t - t) <= 10 * DAY_MS);
+  for (const p of ps.filter(p => days(p.s, p.t) >= 70 && days(p.s, p.t) <= 125).sort((a, b) => a.t - b.t)) if (!near(p.t)) out.push({ t: p.t, end: p.end, eps: p.val });
+  const byStart = new Map();
+  for (const p of ps) { if (!byStart.has(p.start)) byStart.set(p.start, []); byStart.get(p.start).push(p); }
+  for (const g of byStart.values()) {
+    g.sort((a, b) => a.t - b.t);
+    for (const L of g) {
+      if (near(L.t)) continue;
+      const S = g.filter(x => x.t < L.t && days(x.t, L.t) >= 70 && days(x.t, L.t) <= 125).pop();
+      if (S) out.push({ t: L.t, end: L.end, eps: L.val - S.val, derived: true });
     }
-  });
-  const derived = Object.entries(quarterly).map(([frame, v]) => ({ date: v.date, eps: v.eps, frame }));
-  Object.keys(annualByYear).forEach(yr => {
-    const ann = annualByYear[yr], q3ytd = ytdQ3ByYear[yr];
-    if (!q3ytd || ann.date <= q3ytd.date) return;
-    const ytdMonth = new Date(q3ytd.end).getMonth();
-    let missingFrame, ytd;
-    if (ytdMonth <= 3) { missingFrame = `CY${yr}Q2`; ytd = ytdQ2ByYear[yr] || q3ytd; }
-    else if (ytdMonth <= 6) { missingFrame = `CY${yr}Q3`; ytd = q3ytd; }
-    else { missingFrame = `CY${yr}Q4`; ytd = q3ytd; }
-    if (!quarterly[missingFrame]) derived.push({ date: ann.date, eps: ann.val - ytd.val, frame: missingFrame });
-  });
-  const out = derived
-    .filter(e => isFinite(e.eps))
-    .sort((a, b) => a.date - b.date)
-    .filter((e, i, arr) => i === arr.findIndex(x => x.frame === e.frame));
+  }
+  return out;
+}
+export const isContinuingTag = t => /ContinuingOperations/.test(t || "");
+export function gaapQuarterly(raw, splitFactor, symbol) {
+  const order = EDGAR_TAGS.eps[0], byTag = new Map();
+  for (const e of raw.eps || []) { const t = e.tag || order[1]; if (!byTag.has(t)) byTag.set(t, []); byTag.get(t).push(e); }
+  const merged = [];
+  for (const t of order) {
+    if (!byTag.has(t)) continue;
+    for (const q of quartersOf(byTag.get(t), splitFactor)) {
+      if (!isFinite(q.eps) || merged.some(m => Math.abs(m.t - q.t) <= 10 * DAY_MS)) continue;
+      merged.push({ ...q, tag: t });
+    }
+  }
+  const out = merged.sort((a, b) => a.t - b.t).map(q => ({ date: Math.floor(q.t / 1000), eps: +q.eps.toFixed(4), frame: "CY" + qkeyOf(q.end), end: q.end, tag: q.tag, derived: !!q.derived }));
   console.log(`pebg ${symbol}: EDGAR ${out.length} trimestres`);
   return out;
 }
@@ -120,7 +135,9 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   const IE = quarterly(raw.ie || []), II = quarterly(raw.ii || []), EQ = quarterly(raw.eq || []);
   // si a un trimestre le falta el dato de intereses, el del trimestre anterior (es una serie estable)
   const steady = (m, k) => { if (!m.size) return 0; if (m.has(k)) return m.get(k).val; const ks = [...m.keys()].sort(); const prev = ks.filter(x => x <= k).pop() || ks[0]; return m.get(prev).val; };
-  const EPS = new Map(gaap.map(e => [e.frame.slice(2), e.eps]));
+  // para las acciones implícitas (resultado neto / EPS) solo sirve el EPS total: el de operaciones continuas no
+  // corresponde al resultado neto cuando hay operaciones discontinuadas
+  const EPS = new Map(gaap.filter(e => !isContinuingTag(e.tag)).map(e => [e.frame.slice(2), e.eps]));
   // método: operativo si la serie llega hasta el último trimestre contable (o el anterior); si no, antes de impuestos
   const lastG = gaap[gaap.length - 1].frame.slice(2);
   const prevQ = k => { const [y, q] = k.split("Q").map(Number); return q > 1 ? `${y}Q${q - 1}` : `${y - 1}Q4`; };
@@ -193,6 +210,7 @@ export function sharesQuarterly(raw, splitFactor, gaap) {
   for (const e of raw.ni) if (/^CY\d{4}Q\d$/.test(e.frame || "")) NI.set(qkeyOf(e.end), e.val);
   const out = new Map();
   for (const g of gaap) {
+    if (isContinuingTag(g.tag)) continue;   // el resultado neto incluye lo discontinuado: no se divide por el EPS continuo
     const k = g.frame.slice(2), ni = NI.get(k);
     if (ni != null && Math.abs(g.eps) >= 0.05 && ni / g.eps > 0) out.set(k, { date: g.date, shares: ni / g.eps });
   }
@@ -210,6 +228,8 @@ export function sharesQuarterly(raw, splitFactor, gaap) {
 
 // empresas que cambiaron de CIK (reorganización como holding): la historia está en el registro anterior
 export const PREDECESSOR_CIK = { XOM: "0000034088", GOOGL: "0001288776", GOOG: "0001288776" };   // Alphabet: la historia está en Google Inc.
+// EPS informado por otra clase de acción que la que cotiza en el índice: BRK lo publica por acción A (1 A = 1.500 B)
+export const EPS_PER_SHARE_DIV = { "BRK-B": 1500 };
 // une los datos crudos de dos registros; manda el nuevo y el viejo completa los períodos que faltan
 export function mergeRaw(newer, older) {
   if (!older) return newer;
@@ -217,8 +237,9 @@ export function mergeRaw(newer, older) {
   const out = {};
   for (const k of new Set([...Object.keys(newer), ...Object.keys(older)])) {
     const a = newer[k] || [], b = older[k] || [];
-    const seen = new Set(a.map(e => e.frame || (e.start + e.end + e.fp)));
-    out[k] = [...b.filter(e => !seen.has(e.frame || (e.start + e.end + e.fp))), ...a];
+    const key = e => (e.tag || "") + "|" + (e.frame || (e.start + e.end + e.fp));
+    const seen = new Set(a.map(key));
+    out[k] = [...b.filter(e => !seen.has(key(e))), ...a];
   }
   return out;
 }
