@@ -291,6 +291,8 @@ td:nth-child(-n+4){text-align:left}
 .ov-src{color:var(--faint);font-weight:400;font-size:12px}
 .ov-dolar-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
 .ov-ggal{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.ov-treas-tbl tbody td:nth-child(2){font-weight:650;color:var(--ink)}
+.ov-sup{font-size:10px;color:var(--muted);margin-left:1px}
 .ov-ggal-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
 .ov-ggal-name{font-size:14px}
 .ov-ggal-px{font-weight:650;color:var(--ink);font-size:15px}
@@ -562,7 +564,7 @@ function checkPwd(){
     <span class="ov-pipe">|</span>
     <span id="ovMktStatus">—</span>
     <div class="cs"></div>
-    <span class="pebg-note">Precios con 15 minutos de demora, Yahoo Finance</span>
+    <span class="pebg-note" id="ovUpd" title="Contado de EEUU en tiempo real; futuros, DXY y commodities con 10 min; VIX, Russell y Treasuries con 15 min; Europa con 15-20 min; Merval de BYMA con 20 min. Pasá el mouse por una fila para ver la hora de su último dato.">Se actualiza cada minuto</span>
     <button class="btn btn-ghost" style="margin-left:12px" onclick="loadOverview()">Actualizar</button>
   </div>
   <div class="ov-body">
@@ -593,19 +595,19 @@ function checkPwd(){
     <!-- Col 2: Indices + Commodities + Treasuries (narrow) -->
     <div class="ov-col ov-col-mid">
       <div class="ov-card">
-        <div class="ov-card-title" id="ovFutTitle">Índices EEUU</div>
+        <div class="ov-card-title"><span id="ovFutTitle" style="font-size:inherit;color:inherit;font-weight:inherit">Índices EEUU</span> <span>contado en tiempo real, futuros 10 min, VIX y Russell 15 min</span></div>
         <div id="ovFutures"><div class="ov-loading">Cargando...</div></div>
       </div>
       <div class="ov-card">
-        <div class="ov-card-title">Índices mundiales</div>
+        <div class="ov-card-title">Índices mundiales <span>Europa 15-20 min, Merval BYMA 20 min</span></div>
         <div id="ovWorld"><div class="ov-loading">Cargando...</div></div>
       </div>
       <div class="ov-card">
-        <div class="ov-card-title">Commodities</div>
+        <div class="ov-card-title">Commodities <span>futuros, 10 min</span></div>
         <div id="ovComm"><div class="ov-loading">Cargando...</div></div>
       </div>
       <div class="ov-card">
-        <div class="ov-card-title">Treasuries</div>
+        <div class="ov-card-title">Treasuries <span>cambios en bp</span></div>
         <div id="ovTreas"><div class="ov-loading">Cargando...</div></div>
       </div>
     </div>
@@ -1536,7 +1538,7 @@ const OV_LABEL = {
   '^GSPC':'S&P 500','^IXIC':'Nasdaq', '^DJI':'Dow Jones','^RUT':'Russell 2K',
   '^VIX':'VIX',
   '^STOXX50E':'Euro Stoxx','^GDAXI':'DAX','DX-Y.NYB':'DXY (dólar)',
-  '^N225':'Nikkei','^HSI':'Hang Seng','^MERV':'Merval',
+  '^N225':'Nikkei','^HSI':'Hang Seng','^MERV':'Merval (MSCI)',
   'GC=F':'Oro','SI=F':'Plata','CL=F':'WTI','BZ=F':'Brent','HG=F':'Cobre','NG=F':'Gas Nat.',
 };
 // símbolo de TradingView para abrir cada fila en la pestaña Gráfico
@@ -1548,8 +1550,18 @@ const OV_TV = {
   'GC=F':'CAPITALCOM:GOLD','SI=F':'CAPITALCOM:SILVER','CL=F':'CAPITALCOM:OIL_CRUDE','BZ=F':'CAPITALCOM:OIL_BRENT','HG=F':'CAPITALCOM:COPPER','NG=F':'CAPITALCOM:NATURALGAS',
   '^IRX':'FRED:DGS3MO','^FVX':'FRED:DGS5','^TNX':'FRED:DGS10','^TYX':'FRED:DGS30',
 };
-const ovOpen = (sym, name) => OV_TV[sym] ? ' onclick="openChart(\'' + OV_TV[sym] + '\',\'' + String(name).replace(/'/g, '') + '\')" title="Ver gráfico"' : '';
-const ovClick = (sym, name) => OV_TV[sym] ? ' class="ov-click"' + ovOpen(sym, name) : '';
+// antigüedad del dato: hora del último precio que trajo la fuente
+function ovAge(sym) {
+  const q = window._ovQmap && window._ovQmap[sym];
+  if (!q) return '';
+  if (q._src) return q._src;
+  if (!q.regularMarketTime) return '';
+  const t = new Date(q.regularMarketTime * 1000), mins = Math.round((Date.now() - t) / 60000);
+  const hh = t.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return 'Último dato ' + (mins < 24 * 60 ? hh : t.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' + hh) + ' (hace ' + (mins < 90 ? mins + ' min' : mins < 2880 ? Math.round(mins / 60) + ' h' : Math.round(mins / 1440) + ' días') + ')';
+}
+const ovOpen = (sym, name) => OV_TV[sym] ? ' onclick="openChart(\'' + OV_TV[sym] + '\',\'' + String(name).replace(/'/g, '') + '\')" title="Ver gráfico. ' + ovAge(sym) + '"' : '';
+const ovClick = (sym, name) => OV_TV[sym] ? ' class="ov-click"' + ovOpen(sym, name) : ' title="' + ovAge(sym) + '"';
 
 let ovLoaded = false, clockTimer = null;
 let ovSparkMap = {};
@@ -1579,12 +1591,32 @@ function startClock() {
   tick(); clockTimer = setInterval(tick, 1000);
 }
 
-async function loadOverview() {
+// Merval: Yahoo dejó de actualizar ^MERV; el índice vigente es el MSCI MERVAL que publica BYMA (20 min de demora)
+async function bymaMerval() {
+  const r = await fetch('https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/index-price', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const j = await r.json();
+  const m = (j.data || []).find(x => x.symbol === 'MMSCI') || (j.data || []).find(x => /MERVAL/i.test(x.description || ''));
+  return m && m.price > 0 ? m : null;
+}
+let ovUst = null, ovTimer = null;
+// refresco automático: cada minuto mientras el Resumen está a la vista
+function ovAutoRefresh() {
+  if (ovTimer) return;
+  ovTimer = setInterval(() => {
+    if (!document.hidden && document.getElementById('tab-overview').classList.contains('active')) loadOverview(true);
+  }, 60000);
+}
+
+async function loadOverview(silent) {
   ovLoaded = true;
-  ['ovFutures','ovWorld','ovComm','ovTreas','ovFed','ovDolar'].forEach(id=>{
-    const e=document.getElementById(id); if(e) e.innerHTML='<div class="ov-loading">Cargando...</div>';
-  });
-  initOvCharts();
+  ovAutoRefresh();
+  if (!silent) {
+    ['ovFutures','ovWorld','ovComm','ovTreas','ovFed','ovDolar'].forEach(id=>{
+      const e=document.getElementById(id); if(e) e.innerHTML='<div class="ov-loading">Cargando...</div>';
+    });
+    initOvCharts();
+  }
 
   try {
     // Parallel: overview data + dolar + spark for overview symbols
@@ -1594,16 +1626,29 @@ async function loadOverview() {
       'GC=F','SI=F','CL=F','BZ=F','HG=F','NG=F'
     ];
     loadOvDolar();
-    loadGgal();
+    loadGgal(silent ? ggalRange : undefined);
 
-    const [ovRes, sparkRes] = await Promise.allSettled([
+    const [ovRes, sparkRes, ustRes, mervRes] = await Promise.allSettled([
       fetch(BASE_URL+'/api/overview').then(r=>r.json()),
       fetch(BASE_URL+'/api/spark?symbols='+OV_SPARK_SYMS.join(',')).then(r=>r.json()),
+      fetch(BASE_URL+'/api/ust').then(r=>r.json()),
+      bymaMerval(),
     ]);
 
     const d = ovRes.status==='fulfilled' ? ovRes.value : {quotes:[],zqTickers:[]};
     const qmap = {};
     (d.quotes||[]).forEach(q=>{ qmap[q.symbol]=q; });
+    if (ustRes.status==='fulfilled' && ustRes.value && !ustRes.value.error) ovUst = ustRes.value;
+    // Merval de BYMA en lugar del ^MERV de Yahoo (sin historia del índice nuevo: solo precio y variación del día)
+    delete qmap['^MERV'];
+    if (mervRes.status==='fulfilled' && mervRes.value) {
+      const m = mervRes.value;
+      qmap['^MERV'] = { symbol: '^MERV', regularMarketPrice: m.price, regularMarketChangePercent: m.previousClosingPrice > 0 ? (m.price / m.previousClosingPrice - 1) * 100 : m.variation * 100,
+        _src: 'MSCI MERVAL, BYMA (20 min de demora)' };
+    }
+    window._ovQmap = qmap;   // ovAge (hora de cada dato) lee de acá
+    const upd = document.getElementById('ovUpd');
+    if (upd) upd.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }) + ', se refresca cada minuto';
 
     // Build spark map for overview
     if(sparkRes.status==='fulfilled') {
@@ -1614,6 +1659,7 @@ async function loadOverview() {
           ovSparkMap[s.symbol]={closes:r.indicators?.quote?.[0]?.close||[],timestamps:r.timestamp||[]};
         }
       });
+      delete ovSparkMap['^MERV'];   // la historia de Yahoo es del índice viejo y está trabada
     }
 
     renderOvFutures(qmap);
@@ -1803,23 +1849,47 @@ function renderOvComm(q) {
 }
 
 function renderOvTreas(q) {
-  const bonds = [{label:'13 sem',sym:'^IRX'},{label:'5 años',sym:'^FVX'},{label:'10 años',sym:'^TNX'},{label:'30 años',sym:'^TYX'}];
-  let html = '';
-  const yields = {};
-  bonds.forEach(b => {
-    const d = q[b.sym]; if(!d){html+='<div class="ov-trow"><span class="ov-tmat">'+b.label+'</span><span class="ov-tyield" style="font-size:13px;color:var(--muted)">—</span></div>';return;}
-    const y=d.regularMarketPrice, chg=d.regularMarketChange;
-    yields[b.sym]=y;
-    const cls=chg>0?'pp':chg<0?'pn':'';
-    const bp=chg!=null?(chg>=0?'+':'')+Math.round(chg*100)+' bp':'—';
-    html+='<div class="ov-trow ov-click"'+ovOpen(b.sym,'Treasury '+b.label)+'><span class="ov-tmat">'+b.label+'</span><span class="ov-tyield">'+y.toFixed(2)+'%</span><span class="ov-tchg '+cls+'">'+bp+'</span></div>';
-  });
-  if(yields['^TNX']&&yields['^IRX']){
-    const spread=Math.round((yields['^TNX']-yields['^IRX'])*100);
-    const cls=spread>=0?'up':'dn';
-    html+='<div class="ov-tcurve">Curva 10Y\u221213W: <span class="'+cls+'">'+(spread>0?'+':'')+spread+' bp</span></div>';
-  }
-  document.getElementById('ovTreas').innerHTML=html;
+  // 13 sem, 5, 10 y 30 años: Yahoo (dato intradiario, 15 min) con su propia historia diaria para los cambios.
+  // 1 y 2 años: curva oficial del Tesoro (cierre del último día hábil publicado), que Yahoo no tiene.
+  const U = ovUst || { cmt: [], yahoo: {} };
+  const ROWS = [
+    { label: '13 sem', sym: '^IRX' }, { label: '1 año', cmt: '1Y', tv: 'FRED:DGS1' }, { label: '2 años', cmt: '2Y', tv: 'FRED:DGS2' },
+    { label: '5 años', sym: '^FVX' }, { label: '10 años', sym: '^TNX' }, { label: '30 años', sym: '^TYX' },
+  ];
+  const HZ = [['1S', 7], ['1M', 30], ['3M', 91], ['6M', 182]];
+  const DAY = 86400;
+  const at = (hist, t) => { let v = null; for (const [ti, c] of hist) { if (ti <= t + 3600) v = c; else break; } return v; };
+  const lvl = {};
+  const bp = v => v == null || !isFinite(v) ? '<span class="na">—</span>' : '<span class="' + (v > 0.5 ? 'pp' : v < -0.5 ? 'pn' : '') + '">' + (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + Math.abs(Math.round(v)) + '</span>';
+  let cmtDate = null;
+  const body = ROWS.map(r => {
+    let y = null, d1 = null, hist = [], now = Date.now() / 1000, open = '';
+    if (r.sym) {
+      const d = q[r.sym];
+      if (d) { y = d.regularMarketPrice; d1 = d.regularMarketChange != null ? d.regularMarketChange * 100 : null; }
+      hist = (U.yahoo[r.sym] || []).map(([t, c]) => [t, c]);
+      open = OV_TV[r.sym] ? ' class="ov-click"' + ovOpen(r.sym, 'Treasury ' + r.label) : '';
+    } else {
+      hist = U.cmt.filter(x => x[r.cmt] != null).map(x => [Date.parse(x.date + 'T20:00:00Z') / 1000, x[r.cmt]]);
+      if (hist.length) {
+        const L = hist[hist.length - 1]; y = L[1]; now = L[0]; cmtDate = L[0];
+        if (hist.length > 1) d1 = (L[1] - hist[hist.length - 2][1]) * 100;
+      }
+      open = ' class="ov-click" onclick="openChart(\'' + r.tv + '\',\'Treasury ' + r.label + '\')" title="Ver gráfico. Cierre oficial del Tesoro"';
+    }
+    if (y == null) return '<tr><td>' + r.label + '</td><td class="na">—</td>' + '<td></td>'.repeat(5) + '</tr>';
+    lvl[r.label] = y;
+    const ch = HZ.map(([, dd]) => { const p = at(hist, now - dd * DAY); return p == null ? null : (y - p) * 100; });
+    return '<tr' + open + '><td>' + r.label + (r.cmt ? '<sup class="ov-sup">*</sup>' : '') + '</td><td>' + y.toFixed(2) + '%</td><td class="ov-td-1d">' + bp(d1) + '</td>'
+      + ch.map(v => '<td>' + bp(v) + '</td>').join('') + '</tr>';
+  }).join('');
+  const sp = (a, b) => (lvl[a] != null && lvl[b] != null) ? Math.round((lvl[a] - lvl[b]) * 100) : null;
+  const s2 = sp('10 años', '2 años'), s3 = sp('10 años', '13 sem');
+  const fmtS = v => v == null ? '—' : '<span class="' + (v >= 0 ? 'up' : 'dn') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' bp</span>';
+  document.getElementById('ovTreas').innerHTML = '<table class="ov-tbl ov-treas-tbl"><thead><tr><th>Plazo</th><th>Tasa</th><th class="ov-th-1d">1D</th><th>1S</th><th>1M</th><th>3M</th><th>6M</th></tr></thead><tbody>'
+    + body + '</tbody></table>'
+    + '<div class="ov-tcurve">Curva 10A−2A: ' + fmtS(s2) + '; 10A−13S: ' + fmtS(s3) + '</div>'
+    + '<div class="ov-dolar-note">* Cierre oficial del Tesoro' + (cmtDate ? ' del ' + new Date(cmtDate * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : '') + '; el resto, Yahoo con 15 min de demora. Los cambios comparan contra el cierre de esa fecha.</div>';
 }
 
 function renderOvFed(qmap, zqTickers, effr, fedTarget) {

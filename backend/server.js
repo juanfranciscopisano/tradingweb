@@ -382,6 +382,49 @@ app.get("/api/overview", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------- Treasuries: curva oficial y cambios
+// Curva par del Tesoro (cierre oficial de cada día hábil, se publica a la tarde): da 1 y 2 años, que Yahoo no tiene.
+// Para 13 semanas, 5, 10 y 30 años se usan las series diarias de Yahoo (^IRX, ^FVX, ^TNX, ^TYX), las mismas del
+// dato intradiario, así los cambios a 1 semana, 1, 3 y 6 meses no mezclan fuentes.
+const UST_COLS = { "3 Mo": "3M", "6 Mo": "6M", "1 Yr": "1Y", "2 Yr": "2Y", "5 Yr": "5Y", "10 Yr": "10Y", "30 Yr": "30Y" };
+async function treasuryYear(year) {
+  return cached(`ust:${year}`, (year === new Date().getUTCFullYear() ? 30 * 60 : 24 * 3600) * 1000, async () => {
+    const url = `https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${year}/all?type=daily_treasury_yield_curve&field_tdr_date_value=${year}&page&_format=csv`;
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      const r = await fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
+      if (!r.ok) return [];
+      const lines = (await r.text()).trim().split(/\r?\n/);
+      const head = lines[0].split(",").map(h => h.replace(/"/g, "").trim());
+      return lines.slice(1).map(l => {
+        const c = l.split(","), [m, d, y] = c[0].split("/");
+        const row = { date: `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}` };
+        head.forEach((h, i) => { if (UST_COLS[h] && c[i] !== "" && isFinite(+c[i])) row[UST_COLS[h]] = +c[i]; });
+        return row;
+      }).filter(r => r.date.length === 10);
+    } finally { clearTimeout(t); }
+  }, rows => rows.length > 0).catch(() => []);
+}
+app.get("/api/ust", async (req, res) => {
+  try {
+    const payload = await cached("ust", 5 * 60 * 1000, async () => {
+      const y = new Date().getUTCFullYear();
+      const [a, b, hist] = await Promise.all([treasuryYear(y - 1), treasuryYear(y), series(["^IRX", "^FVX", "^TNX", "^TYX"], "1y", "1d")]);
+      const cmt = [...a, ...b].sort((p, q) => p.date.localeCompare(q.date));
+      const yahoo = {};
+      for (const [sym, r] of Object.entries(hist || {})) {
+        const ts = r.timestamp || [], cl = r.indicators?.quote?.[0]?.close || [];
+        yahoo[sym] = ts.map((t, i) => [t, cl[i]]).filter(x => x[1] != null).map(([t, c]) => [t, +c.toFixed(3)]);
+      }
+      return { cmt, yahoo };
+    }, d => d.cmt.length > 0 || Object.keys(d.yahoo).length > 0);
+    res.json(payload);
+  } catch (e) {
+    console.error("ust:", e.message);
+    res.status(502).json({ error: e.message });
+  }
+});
+
 app.get("/api/pebg", async (req, res) => {
   const sym = (req.query.symbol || "").toUpperCase().trim();
   if (!sym) return res.status(400).json({ error: "symbol required" });
