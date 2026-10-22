@@ -1884,11 +1884,13 @@ function renderOvTreas(q) {
       + ch.map(v => '<td>' + bp(v) + '</td>').join('') + '</tr>';
   }).join('');
   const sp = (a, b) => (lvl[a] != null && lvl[b] != null) ? Math.round((lvl[a] - lvl[b]) * 100) : null;
-  const s2 = sp('10 años', '2 años'), s3 = sp('10 años', '13 sem');
+  // 10A−2A con la curva oficial (mismo día para las dos tasas); 10A−13S con Yahoo (las dos intradiarias)
+  const lc = U.cmt.length ? U.cmt[U.cmt.length - 1] : null;
+  const s2 = lc && lc['10Y'] != null && lc['2Y'] != null ? Math.round((lc['10Y'] - lc['2Y']) * 100) : null, s3 = sp('10 años', '13 sem');
   const fmtS = v => v == null ? '—' : '<span class="' + (v >= 0 ? 'up' : 'dn') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' bp</span>';
   document.getElementById('ovTreas').innerHTML = '<table class="ov-tbl ov-treas-tbl"><thead><tr><th>Plazo</th><th>Tasa</th><th class="ov-th-1d">1D</th><th>1S</th><th>1M</th><th>3M</th><th>6M</th></tr></thead><tbody>'
     + body + '</tbody></table>'
-    + '<div class="ov-tcurve">Curva 10A−2A: ' + fmtS(s2) + '; 10A−13S: ' + fmtS(s3) + '</div>'
+    + '<div class="ov-tcurve">Curva 10A−2A*: ' + fmtS(s2) + '; 10A−13S: ' + fmtS(s3) + '</div>'
     + '<div class="ov-dolar-note">* Cierre oficial del Tesoro' + (cmtDate ? ' del ' + new Date(cmtDate * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : '') + '; el resto, Yahoo con 15 min de demora. Los cambios comparan contra el cierre de esa fecha.</div>';
 }
 
