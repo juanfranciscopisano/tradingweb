@@ -448,6 +448,26 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .table-wrap table{min-width:800px}
   .cartera-table{min-width:900px}
 }
+/* metodología */
+.mt-search{padding-left:10px;width:300px;max-width:46vw}
+.mt-wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;padding:20px var(--side);align-items:start}
+.mt-nav{position:sticky;top:12px;display:flex;flex-direction:column;gap:1px}
+.mt-nav a{color:var(--ink2);text-decoration:none;padding:6px 10px;border-radius:6px;font-size:13px;line-height:1.3}
+.mt-nav a:hover{background:var(--surf2);color:var(--ink)}
+.mt-nav a:focus-visible{outline:2px solid var(--accent)}
+.mt-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.mt-sec{padding:18px 22px 8px;overflow:visible;scroll-margin-top:12px}
+.mt-h{font-size:17px;font-weight:700;color:var(--ink);margin:0 0 4px;font-stretch:106%}
+.mt-intro{color:var(--muted);max-width:74ch;margin:0 0 6px;line-height:1.5}
+.mt-item{padding:12px 0;border-top:1px solid var(--line)}
+.mt-sec .mt-item:first-of-type{border-top:none}
+.mt-d{margin:0;font-weight:650;color:var(--ink);max-width:78ch;line-height:1.45}
+.mt-p{margin:5px 0 0;color:var(--ink2);max-width:78ch;line-height:1.6}
+.mt-x{margin:5px 0 0;color:var(--muted);max-width:78ch;line-height:1.55}
+.mt-xl{font-weight:600;color:var(--ink2)}
+.mt-main mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:2px}
+.sect-link{color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+@media (max-width:900px){.mt-wrap{grid-template-columns:1fr}.mt-nav{display:none}.mt-sec{padding:14px 16px 6px}}
 </style>
 </head>
 <body>
@@ -493,6 +513,7 @@ function checkPwd(){
   <div class="tab" id="tab-pebg" onclick="switchTab('pebg')">P/E histórico</div>
   <div class="tab" id="tab-sect" onclick="switchTab('sect')">Sectores</div>
   <div class="tab" id="tab-calendar" onclick="switchTab('calendar')">Calendario</div>
+  <div class="tab" id="tab-metodo" onclick="switchTab('metodo')">Metodología</div>
   <div class="tab-spacer"></div>
   <span class="hdr-time" id="lastUpd">&mdash;</span>
   <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">Modo oscuro</button>
@@ -645,6 +666,19 @@ function checkPwd(){
     <button class="cal-nav-btn" onclick="calShift(-1)">&#8249; Mes anterior</button>
     <button class="cal-nav-btn cal-today-btn" onclick="calToday()">Hoy</button>
     <button class="cal-nav-btn" onclick="calShift(1)">Mes siguiente &#8250;</button>
+  </div>
+</div>
+
+<div class="view view-scroll" id="view-metodo">
+  <div class="ov-clock-bar">
+    <span class="arg-title">Metodología</span>
+    <input type="search" id="metoSearch" class="ctrl-input mt-search" placeholder="Buscar: pérdidas, splits, z, Yahoo…" oninput="setMetoQ(this.value)" aria-label="Buscar en la metodología">
+    <div class="cs"></div>
+    <span class="arg-status" id="metoStatus">—</span>
+  </div>
+  <div class="mt-wrap">
+    <nav class="mt-nav" id="metoNav" aria-label="Secciones"></nav>
+    <div class="mt-main" id="metoBody"></div>
   </div>
 </div>
 
@@ -1141,6 +1175,7 @@ function switchTab(t) {
   if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
   if(t==='sect') { if(!MULT) loadSect(); else renderSect(); }
   if(t==='calendar') initCalendar();
+  if(t==='metodo') renderMetodo();
 }
 
 let calendarLoaded = false;
@@ -3707,7 +3742,8 @@ function drawPebgCmp(geo) {
     const al = MULT.asOf ? ' al ' + MULT.asOf.split('-').reverse().slice(0, 2).join('/') : '';
     sum.innerHTML = (rel ? `${sym} / ${multName(key)} (${modo}): <b>${fx(pts[lastI].v)}</b>` : `${multName(key)}, P/E ${modo}${al}: <b>${fx(pts[lastI].v)}</b>`)
       + (b ? `, media ${fija ? '' : 'móvil '}${years}A ${fx(b.mu)}, z ${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(2)}σ; zona sombreada: media ± 1σ` : '')
-      + (norm && !benchNorm ? ' <span class="na">(referencia contable)</span>' : '');
+      + (norm && !benchNorm ? ' <span class="na">(referencia contable)</span>' : '')
+      + ' <a class="sect-link" onclick="openMetodo(\'cmp\')">cómo se calcula</a>';
   } else sum.textContent = '';
 
   const { t0, t1, tR, PAD } = geo, cW = W - PAD.left - PAD.right;
@@ -3779,6 +3815,230 @@ function drawPebgCmp(geo) {
   } else tip.style.display = 'none';
 }
 
+// ── METODOLOGÍA: cada decisión de cálculo, por qué se tomó y qué se descartó ──
+// d: la decisión; p: por qué; x: alternativa descartada; o: advertencia (opcionales)
+const METODO = [
+  { id: 'fuentes', t: 'De dónde sale cada dato',
+    i: 'Cuando dos fuentes dan el mismo dato manda la primaria, y la otra solo completa lo que falta, con aviso en la página.',
+    items: [
+      { d: 'Precios de acciones, índices, futuros y commodities: Yahoo Finance, a través del backend.',
+        p: 'Es la única fuente gratis con precios intradiarios e historia diaria de 30 años para todo el universo. Los precios vienen ajustados por splits pero no por dividendos, que es lo que corresponde para un P/E, porque el EPS tampoco se ajusta por dividendos.',
+        x: 'Precios ajustados por dividendos: sirven para retorno total, pero combinados con EPS sin ajustar bajan los P/E viejos.' },
+      { d: 'Ganancias pasadas (EPS): la base XBRL de la SEC (EDGAR), con lo que cada empresa presentó en sus 10-Q y 10-K.',
+        p: 'Es la fuente primaria y se puede auditar, porque cada número trae el formulario y la fecha de presentación de donde sale. Yahoo y Finnhub dan pocos trimestres y, en muchos casos, el EPS ajustado que define cada empresa.' },
+      { d: 'Lo que la SEC no tiene se completa con el EPS diluido contable de Yahoo.',
+        p: 'Pasa en tres casos: entre el anuncio del resultado y la presentación del 10-Q (los bancos grandes lo presentan dos o tres semanas después), cuando la SEC no cargó una presentación en su base (los 10-Q de fines de julio de 2026 de KO, ABT, V, NEE y PLD, entre otras, no están) y cuando un trimestre no se puede derivar porque el 10-K no trae el EPS en la base, como en las eléctricas que presentan junto con sus controladas. Yahoo tiene dos series, operaciones continuas y total, y se usa la que coincide con la SEC (dentro de 20%) en el último trimestre que tienen los dos; si ninguna coincide no se completa, porque lo más probable es que midan otra cosa. Cuando la SEC carga el trimestre, reemplaza al de Yahoo.',
+        x: 'Finnhub como relleno: da el EPS ajustado que miran los analistas, no el contable. Queda como último recurso en P/E histórico, para las empresas que presentan 20-F.' },
+      { d: 'Estimaciones (Fw P/E): el consenso que publica Yahoo; si Yahoo no lo tiene, Finnhub.',
+        p: 'No hay una fuente primaria gratis de estimaciones. Yahoo arma su Fw P/E con el EPS esperado del próximo ejercicio fiscal en la mayoría de los casos, así que no son exactamente los próximos 12 meses.' },
+      { d: 'Composición del S&P 500: la lista de datasets/s-and-p-500-companies, que sale de Wikipedia, con sector y subindustria GICS y el CIK de cada empresa.',
+        p: 'S&P no publica la composición gratis. Wikipedia se actualiza el día de cada cambio, y el CIK permite cruzar cada empresa con la SEC sin depender del ticker.' },
+      { d: 'Tasas y Fed: curva oficial del Tesoro, Yahoo para los plazos con dato intradiario, la Fed de Nueva York para la EFFR y el rango objetivo, y FRED como respaldo.' },
+      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar.' },
+      { d: 'Cuándo se actualiza cada cosa.',
+        p: 'Los fundamentals (market cap, Fw P/E, P/BV) se bajan cada día hábil a las 18:47 de Buenos Aires; los múltiplos y el EPS por empresa, a las 19:17. GitHub a veces demora las corridas programadas un par de horas. En la página, el Resumen se refresca cada minuto, y el backend guarda los precios entre 45 y 60 segundos, P/E histórico 30 minutos y lo de la SEC 12 horas.' },
+    ] },
+
+  { id: 'eps', t: 'Cómo se arma el EPS de cada empresa',
+    i: 'Es el mismo EPS en P/E histórico, Cartera, el screener y los múltiplos del índice, así que el P/E de una empresa da igual en todas las pestañas.',
+    items: [
+      { d: 'EPS contable: el diluido por acción de operaciones continuas; si la empresa no lo informa, el diluido total, y si tampoco, el básico.',
+        p: 'Lo discontinuado (un negocio vendido, una escisión) ya no está en lo que el precio valúa. Es también la definición de S&P para sus ganancias "as reported". Además, MNST, VRSN y GD informan solo el de operaciones continuas desde hace años, y con el total el sistema se quedaba con datos de 2011, 2013 y 2019.',
+        x: 'El EPS total siempre: es el más fácil de conseguir, pero mezcla resultados de negocios que la empresa ya no tiene.' },
+      { d: 'Cada trimestre sale del período real que informó la empresa, no del trimestre calendario.',
+        p: 'El cuarto trimestre casi nunca se informa por separado: se calcula como el año menos los nueve meses acumulados, y lo mismo con cualquier trimestre que falte (nueve meses menos seis, seis menos el primero). Con las fechas reales se resuelven los ejercicios que no cierran en diciembre y los trimestres de 12 y 16 semanas, como los de COST, que con trimestres calendario se pisaban entre sí y dejaban huecos.' },
+      { d: 'Si un período se presentó más de una vez, vale la última presentación.',
+        p: 'Las reexpresiones y los comparativos de años siguientes corrigen el dato original, y la última versión es la que la empresa sostiene hoy.',
+        x: 'El dato como se conocía en cada momento (point-in-time): es mejor para medir estrategias, pero exige guardar cada versión.' },
+      { d: 'Splits: los precios de Yahoo ya vienen ajustados, y el EPS de la SEC se divide por los splits posteriores a su presentación.',
+        p: 'La SEC guarda cada dato como se presentó. Si la empresa lo volvió a presentar después del split, ya viene reexpresado y no se toca.' },
+      { d: 'Fecha de cada EPS: el cierre del trimestre.',
+        p: 'Deja cada resultado en su período y es lo más simple. El costo es que el P/E se mueve entre una y seis semanas antes de que el mercado conociera el número: para mirar la historia no cambia nada, para medir si convenía comprar barato sí.',
+        x: 'La fecha de presentación, más correcta para medir estrategias. Es un cambio pendiente.' },
+      { d: 'Si el último trimestre cerró hace más de 200 días, el EPS se considera viejo y no se usa.',
+        p: 'En 200 días entra el plazo de presentación del 10-K con margen. Pasado eso, casi siempre se trata de una empresa que cambió de etiqueta o de una presentación que la SEC no cargó, y seguir con el último dato daba P/E absurdos, como el de MNST con el EPS de 2011.' },
+      { d: 'EPS normalizado: resultado operativo, menos intereses pagados, más intereses ganados y resultado de asociadas, a la tasa de impuesto típica de la empresa, dividido por las acciones diluidas.',
+        p: 'Saca lo que mueve el contable sin decir nada del negocio, como los cargos o beneficios impositivos puntuales, las ganancias por tenencias de acciones o las diferencias de cambio. La tasa típica es la mediana de la tasa efectiva de los últimos 12 trimestres, descartando los que quedan fuera de 0 a 45%, y acotada entre 5 y 35%. Bancos y aseguradoras no informan resultado operativo, y en ellos se normaliza solo el impuesto sobre el resultado antes de impuestos.',
+        x: 'El EPS ajustado que publica cada empresa: cada una lo define a su manera, no está en la SEC y Finnhub solo da cuatro trimestres.' },
+      { d: 'Antes de 2008, cuando no había XBRL, el EPS está cargado a mano desde los 10-K originales para AAPL, MSFT, NVDA, ORCL, AMZN, GOOGL y MELI.',
+        p: 'Se copió tal como se publicó, con la fecha de presentación, y se ajusta por los splits posteriores. Solo se agrega si empalma con el primer trimestre de la SEC. En modo normalizado esos años quedan en contable, porque no hay con qué normalizarlos.',
+        o: 'MSFT y ORCL 1996-97 usan EPS primario (la regla anterior a 1997), algo más alto que el diluido. ORCL 2000 incluye la venta de parte de Oracle Japan. MELI 2007 tiene las acciones de antes de salir a la bolsa. AAPL muestra un escalón chico en 2008, donde se junta con datos que Apple reexpresó después.' },
+      { d: 'Casos especiales.',
+        p: 'BRK informa el EPS por acción A y en el índice cotiza la B, así que se divide por 1.500; además dejó de etiquetar el EPS en la SEC en 2014, y su historia de 2014 en adelante queda con un hueco salvo los trimestres recientes de Yahoo. NU y PAM presentan 20-F, que la SEC no estructura por trimestre: sus trimestres están cargados a mano desde los 6-K y 20-F. XOM y Alphabet cambiaron de CIK al reorganizarse como holding, y su historia sale del registro anterior.' },
+    ] },
+
+  { id: 'pe', t: 'P/E histórico de una empresa',
+    items: [
+      { d: 'P/E diario: el cierre del día dividido por la suma de los últimos cuatro trimestres de EPS cerrados a esa fecha.',
+        p: 'Si esa suma es cero o negativa no hay P/E ese día y la línea se corta, porque un P/E negativo no se puede comparar con uno positivo.' },
+      { d: 'Bandas: media y desvíos (±1σ y ±2σ) del P/E diario en la ventana elegida, de 1 a 15 años.',
+        p: 'Los P/E de 500 o más quedan afuera de la cuenta: aparecen cuando el EPS está cerca de cero, y un solo trimestre así desarma la media.' },
+      { d: 'Fija: una sola media y un solo desvío con los últimos N años, dibujados solo sobre esos N años.',
+        p: 'Contesta cómo está hoy contra los últimos N años, que es la vista de Bloomberg.' },
+      { d: 'Móvil diaria: para cada día, la media y el desvío de los N años anteriores.',
+        p: 'Muestra qué era caro o barato en cada momento con la información de entonces. Arranca cuando hay por lo menos 60% de las ruedas de la ventana.' },
+      { d: 'Móvil por trimestre: la banda móvil congelada en el valor que tenía cuando entró el último trimestre de EPS.',
+        p: 'Entre trimestres la banda queda plana en múltiplo, así que en la vista de precio las líneas solo se mueven con el EPS, como en la fija, pero con historia.' },
+      { d: 'Precio o Múltiplo: en precio, cada banda es su múltiplo por el EPS de 12 meses de ese día.',
+        p: 'Por eso en precio las bandas tienen escalones y curvatura aunque el múltiplo sea fijo: copian la trayectoria del EPS. En múltiplo la banda fija es una recta. Lineal o logarítmica cambia solo el eje.' },
+      { d: 'Z-score: la distancia del P/E de hoy a la media, en desvíos. Debajo de −1 se marca barato y arriba de +1, caro.',
+        p: 'Los umbrales son una convención para leer rápido. Un P/E que pasó dos años por encima de la media puede seguir ahí, sobre todo si el crecimiento cambió.' },
+      { d: 'Medición entre dos puntos: variación del precio (anualizada si el tramo es de un mes o más) y cuánto vino del EPS y cuánto del P/E.',
+        p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan. El precio no incluye dividendos.' },
+      { d: 'PEG: P/E dividido por el crecimiento tendencial del EPS en porcentaje.',
+        p: 'El crecimiento es la pendiente de una regresión log-lineal del EPS de 12 meses de los últimos cinco años (21 puntos trimestrales), con lo que hacen falta seis años de EPS. Con crecimiento menor a 3% no se calcula, porque el cociente se dispara sin decir nada. Las bandas son percentiles (10, 25, 50, 75 y 90) y no desvíos, ya que el PEG es muy asimétrico. Por defecto usa EPS normalizado y vista de múltiplo.',
+        x: 'El crecimiento punta a punta: un piso o un pico en la base lo hace saltar (con META pasaba de 3% a 51% en tres años).' },
+    ] },
+
+  { id: 'mult', t: 'P/E del S&P 500, de sus sectores y subindustrias',
+    i: 'Es lo que muestran la pestaña Sectores, el panel de comparación y el P/E agregado del screener.',
+    items: [
+      { d: 'P/E del grupo = suma de capitalizaciones / suma de ganancias de 12 meses. Capitalización = precio × acciones diluidas; ganancias = EPS de 12 meses × esas acciones.',
+        p: 'Es el P/E de comprar el grupo entero, el precio del índice sobre las ganancias del índice. El promedio o la mediana de los P/E individuales pesa igual a una empresa chica que a NVDA y se rompe con las que tienen EPS cerca de cero.' },
+      { d: 'Las pérdidas restan.',
+        p: 'S&P arma el EPS del índice sumando las ganancias de todas las empresas, así que una pérdida resta. Sacar a las que pierden plata baja el P/E justo cuando más empresas pierden (2009, 2020), que es cuando más importa.',
+        x: 'Excluirlas, como hacía antes el screener con el P/E de Yahoo: daba alrededor de un punto menos que esta serie.' },
+      { d: 'Composición: las empresas que están hoy en el índice, para toda la historia.',
+        p: 'No hay una fuente gratis de la composición histórica. El costo es el sesgo de supervivencia, porque hacia atrás el índice se ve como si siempre hubiera tenido a los ganadores de hoy. Cuanto más lejos, menos representativo.' },
+      { d: 'Cada empresa cuenta una vez, por CIK: GOOG y GOOGL, FOX y FOXA o NWS y NWSA son la misma empresa.',
+        p: 'Las acciones diluidas de la SEC son las de toda la empresa, y contar las dos clases duplicaba a Alphabet.' },
+      { d: 'Acciones: resultado neto dividido por el EPS total del trimestre; si el EPS está cerca de cero, el dato de acciones de la SEC, con control de escala.',
+        p: 'Así las acciones quedan en la misma base de splits que el EPS. Algunas empresas cargan las acciones en miles o millones, y se toma la escala más cercana a las acciones implícitas.' },
+      { d: 'Empresas que no informan EPS trimestral en la SEC (V, KKR, ABNB, ARES, ERIE, STZ): resultado neto con las acciones de hoy.',
+        p: 'Lo informan por clase de acción o con etiquetas propias. No tienen normalizado.' },
+      { d: 'Datos imposibles afuera: un EPS de 12 meses mayor que el precio, o una pérdida de más de tres veces el precio, saca a la empresa del cálculo esa semana.',
+        p: 'Casi siempre es un split sin ajustar o una unidad mal cargada en la SEC. Antes de este filtro, 2019 daba un P/E fuera de rango por un par de empresas.' },
+      { d: 'Cobertura mínima: una semana se publica si las empresas con dato suman al menos 60% de la capitalización actual del grupo (50% en subindustrias). Las subindustrias necesitan tres empresas o más.',
+        p: 'Por eso la serie del índice arranca a fines de 2009: antes, la SEC no tiene cuatro trimestres en XBRL para suficientes empresas.' },
+      { d: 'Puntos semanales, con el de la semana en curso rehecho cada día hábil con el cierre de ese día.',
+        p: 'Semanal alcanza para ver ciclos y pesa cinco veces menos que diario.' },
+      { d: 'Fw P/E del grupo: suma de capitalizaciones sobre suma de ganancias esperadas (capitalización / Fw P/E de cada empresa).',
+        p: 'Las empresas sin Fw P/E en Yahoo, que son las que tienen pérdida esperada, quedan afuera, así que con muchas pérdidas esperadas da algo bajo.' },
+      { d: 'Normalizado: la misma fórmula con el EPS normalizado.',
+        p: 'En el normalizado no se completa con Yahoo, porque Yahoo no da resultado operativo: esas empresas quedan con su último trimestre de la SEC, y si tiene más de 200 días, afuera. Por eso en temporada de balances el normalizado puede calcularse con menos empresas que el contable.' },
+    ] },
+
+  { id: 'sect', t: 'Pestaña Sectores',
+    items: [
+      { d: 'Medias de 1, 3, 5 y 10 años: promedio simple de los puntos semanales; cada una necesita 60% de las semanas.' },
+      { d: 'Z y percentil contra los últimos 10 años, con por lo menos 5 años de datos.',
+        p: 'Diez años incluyen más de un ciclo, y con menos de cinco el desvío dice poco.' },
+      { d: 'A una fecha: el punto semanal más cercano anterior a la fecha elegida.' },
+      { d: 'Contable o Normalizado: el mismo selector que P/E histórico y Cartera.' },
+    ] },
+
+  { id: 'cmp', t: 'Panel de comparación de P/E histórico',
+    items: [
+      { d: 'Referencia: el S&P 500 por defecto, o el sector o la subindustria GICS de la empresa si está en el índice.' },
+      { d: 'P/E muestra el de la referencia; Relativo, el P/E de la empresa dividido por el de la referencia.',
+        p: 'El relativo saca el ciclo del mercado. Si la empresa está barata contra su historia pero el relativo está en su media, lo que se movió fue el múltiplo de todo el sector, como pasó con ADBE y el software. Para cada día se usa el punto semanal vigente, si tiene 21 días o menos.' },
+      { d: 'La zona sombreada es media ± 1σ, con la misma ventana y el mismo modo (fija o móvil) que el gráfico de arriba.' },
+      { d: 'Sigue el modo Contable o Normalizado del gráfico de arriba; si la referencia no tiene normalizado, usa contable y lo aclara.',
+        p: 'Contable y normalizado pueden diferir en varios puntos. Para compararlo con el screener, que es contable, hay que mirarlo en Contable.' },
+    ] },
+
+  { id: 'scr', t: 'Screener',
+    items: [
+      { d: 'Universo: las empresas que hoy están en el S&P 500 (503 tickers, unas 500 empresas).' },
+      { d: 'P/E de cada empresa: precio en vivo sobre el EPS de 12 meses de la SEC, con el mismo relleno de Yahoo. Con pérdidas dice "pérd."; sin dato de la SEC queda el P/E de Yahoo con asterisco.',
+        p: 'Al pasar el mouse se ve el EPS usado y la fecha del último trimestre.' },
+      { d: 'P/E agregado: la misma cuenta que el último punto del S&P 500 en Sectores, con los precios de ahora.',
+        p: 'Al cierre dan igual; durante la rueda el del screener se mueve con los precios y el de la serie queda en el cierre anterior.',
+        x: 'Lo que hacía antes: P/E de Yahoo, sin las empresas con pérdidas y con Alphabet contada dos veces. Contra el panel en modo normalizado la diferencia llegaba a cuatro puntos.' },
+      { d: 'Fw P/E, P/BV y market cap: Yahoo (o Finnhub), del archivo diario, reescalados con el precio en vivo.',
+        p: 'Si el precio se movió más de 2 a 1 contra el de referencia no se reescala, porque lo más probable es que haya un split en el medio.' },
+      { d: 'Retornos: 1D contra el cierre anterior; 5D, 1M y 1Y en ruedas (5, 21 y 252); YTD contra el último cierre del año anterior.' },
+      { d: '1D y YTD ponderados: retorno de la canasta ponderada por capitalización, con la capitalización al inicio igual a capitalización / (1 + retorno).' },
+    ] },
+
+  { id: 'cart', t: 'Cartera',
+    items: [
+      { d: 'Media, desvío y z del P/E diario del último año.',
+        p: 'Es una vista rápida para el día a día; para ventanas largas está P/E histórico.' },
+      { d: 'P/E anualizado: precio sobre el EPS del último trimestre por cuatro.',
+        p: 'Detecta un cambio de tendencia que el de 12 meses todavía no muestra. En negocios estacionales mete ruido.' },
+      { d: 'Var. a μ: cuánto se movería el precio si el P/E volviera a la media del año con el EPS de hoy. La versión fw usa el EPS esperado del consenso (precio / Fw P/E).' },
+    ] },
+
+  { id: 'res', t: 'Resumen',
+    items: [
+      { d: 'Precios de Yahoo, con la hora del último dato de cada fila al pasar el mouse. La pestaña se refresca cada minuto mientras está a la vista.' },
+      { d: 'Merval: el MSCI MERVAL de BYMA, con 20 minutos de demora.',
+        p: 'Yahoo dejó de actualizar ^MERV y su historia es la del índice viejo, por eso esa fila no tiene retornos a plazo.' },
+      { d: 'Treasuries: 13 semanas, 5, 10 y 30 años de Yahoo (intradiario, 15 minutos de demora); 1 y 2 años de la curva oficial del Tesoro (cierre del último día publicado), con asterisco.',
+        p: 'Yahoo no tiene 1 y 2 años. Cada serie se compara contra su propia historia, así los cambios no mezclan fuentes.' },
+      { d: 'Cambios en bps contra el cierre más cercano anterior a 7, 30, 91 y 182 días corridos.' },
+      { d: 'Curva: 10A−2A con la curva oficial, con las dos tasas del mismo día; 10A−13S con Yahoo.' },
+      { d: 'Probabilidades de la Fed: el método de CME FedWatch con los futuros de fed funds (ZQ).',
+        p: 'Cada contrato liquida contra el promedio de la EFFR del mes. Si la reunión cae tarde en el mes y el mes siguiente no tiene reunión, se usa ese contrato, porque despejar pocos días del mes multiplica el ruido. Las probabilidades se encadenan reunión a reunión contra el rango actual.' },
+      { d: 'Retornos a plazo: 5, 21 y 252 ruedas; YTD contra el último cierre del año anterior.',
+        p: 'Hasta octubre de 2026 el YTD del Resumen medía desde el primer cierre del año y dejaba afuera el movimiento del primer día; ahora es la misma cuenta que el screener.' },
+    ] },
+
+  { id: 'arg', t: 'Argentina',
+    items: [
+      { d: 'Tasas: la caución más corta (un día, o tres un viernes) y la de una semana con más monto (6 a 10 días), de BYMA; el resto, series del BCRA con su variación diaria en bps.' },
+      { d: 'Curva de cauciones: plazos de hasta 45 días con al menos $20 millones operados, hoy contra el cierre anterior.' },
+      { d: 'Saldos del BCRA: variación del día y de 30 días; los factores de explicación de la base se suman en lo que va del mes.' },
+      { d: 'Valores reales: deflactados por IPC, con el índice mensual interpolado geométricamente dentro de cada mes y, después del último dato, extendido con la última variación mensual.',
+        p: 'El IPC sale con un mes y medio de rezago, y extenderlo con el último dato es la proyección más neutra sin meter una estimación propia.' },
+    ] },
+
+  { id: 'lim', t: 'Lo que todavía no está resuelto',
+    items: [
+      { d: 'Sesgo de supervivencia en los múltiplos del índice y los sectores: se usan las empresas de hoy para toda la historia.' },
+      { d: 'El EPS entra en la fecha de cierre del trimestre y no en la de presentación, así que el P/E histórico se adelanta al mercado entre una y seis semanas.' },
+      { d: 'La SEC no siempre carga todas las presentaciones. El relleno de Yahoo cubre los últimos trimestres, pero una empresa que dejó de etiquetar el EPS hace años (BRK desde 2014) tiene un hueco en el medio.' },
+      { d: 'El Fw P/E de Yahoo no tiene una definición pareja entre empresas (en general, el próximo ejercicio fiscal).' },
+      { d: 'Los retornos que se miden en P/E histórico no incluyen dividendos.' },
+    ] },
+];
+
+let metoQ = '';
+const metoNorm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const metoEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function metoMark(s, q) {
+  s = String(s);
+  if (!q) return metoEsc(s);
+  // búsqueda sin tildes ni mayúsculas: se normaliza letra por letra (mismo largo) y se marca el tramo original
+  const n = s.split('').map(ch => (metoNorm(ch) || ch)[0]).join(''), out = [];
+  let i = 0, k;
+  while ((k = n.indexOf(q, i)) >= 0) { out.push(metoEsc(s.slice(i, k)), '<mark>', metoEsc(s.slice(k, k + q.length)), '</mark>'); i = k + q.length; }
+  out.push(metoEsc(s.slice(i)));
+  return out.join('');
+}
+function renderMetodo() {
+  const box = document.getElementById('metoBody'), nav = document.getElementById('metoNav');
+  if (!box) return;
+  const q = metoNorm(metoQ.trim());
+  let shown = 0, total = 0;
+  const secs = METODO.map(s => {
+    const its = s.items.filter(it => { total++; return !q || metoNorm([s.t, it.d, it.p || '', it.x || '', it.o || ''].join(' ')).includes(q); });
+    shown += its.length;
+    if (!its.length) return '';
+    return `<section class="ov-card mt-sec" id="meto-${s.id}"><h2 class="mt-h">${metoMark(s.t, q)}</h2>`
+      + (s.i ? `<p class="mt-intro">${metoMark(s.i, q)}</p>` : '')
+      + its.map(it => `<div class="mt-item"><p class="mt-d">${metoMark(it.d, q)}</p>`
+        + (it.p ? `<p class="mt-p">${metoMark(it.p, q)}</p>` : '')
+        + (it.x ? `<p class="mt-x"><span class="mt-xl">Descartado:</span> ${metoMark(it.x, q)}</p>` : '')
+        + (it.o ? `<p class="mt-x"><span class="mt-xl">Ojo:</span> ${metoMark(it.o, q)}</p>` : '') + '</div>').join('')
+      + '</section>';
+  }).join('');
+  box.innerHTML = secs || '<div class="ov-card"><p class="mt-p">No hay decisiones con esa palabra. Probá con otra, por ejemplo "pérdidas", "splits" o "z".</p></div>';
+  if (nav) nav.innerHTML = METODO.map(s => `<a href="#meto-${s.id}" onclick="metoGo('${s.id}');return false">${metoEsc(s.t)}</a>`).join('');
+  const st = document.getElementById('metoStatus');
+  if (st) st.textContent = q ? `${shown} de ${total} decisiones` : `${total} decisiones`;
+}
+function metoGo(id) {
+  const el = document.getElementById('meto-' + id);
+  if (!el) { metoQ = ''; const i = document.getElementById('metoSearch'); if (i) i.value = ''; renderMetodo(); }
+  const t = document.getElementById('meto-' + id);
+  if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function setMetoQ(v) { metoQ = v || ''; renderMetodo(); }
+// abre la metodología en una sección (para los enlaces desde otras pestañas)
+function openMetodo(id) { switchTab('metodo'); if (id) setTimeout(() => metoGo(id), 30); }
+
 // ---------- pestaña Sectores ----------
 let sectSel = 'SPX', sectOpen = new Set(), sectRange = 10, sectDate = '';
 function sectStats(key, norm) {
@@ -3802,7 +4062,7 @@ function renderSect() {
   syncEpsButtons();
   if (!MULT) { st.textContent = 'Todavía no hay múltiplos calculados (se arman cada día hábil al cierre).'; tb.innerHTML = ''; return; }
   const norm = epsMode === 'norm';
-  st.textContent = `Al cierre del ${MULT.asOf.split('-').reverse().join('/')}; historia semanal. Empresas que hoy están en el índice, EPS de la SEC. Cómo se calcula: pestaña Metodología.`;
+  st.innerHTML = `Al cierre del ${MULT.asOf.split('-').reverse().join('/')}; historia semanal. Empresas que hoy están en el índice, EPS de la SEC. <a class="sect-link" onclick="openMetodo('mult')">Cómo se calcula</a>`;
   const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
   const row = (key, cls, toggle) => {
     const s = MULT.series[key], x = sectStats(key, norm); if (!x) return '';

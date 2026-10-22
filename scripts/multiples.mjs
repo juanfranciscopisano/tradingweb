@@ -120,9 +120,12 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
   const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
   const base = { price, splits: splits.length };
-  if (gaap.length < 4) {
+  const ni = netIncomeQuarterly(raw);
+  // sin EPS trimestral, o con el EPS cortado hace años mientras el resultado neto sigue (BRK dejó de etiquetar el
+  // EPS en 2014): resultado neto con las acciones de hoy
+  const epsCut = gaap.length >= 4 && ni.length >= 4 && ni[ni.length - 1].date - gaap[gaap.length - 1].date > STALE_DAYS * DAY;
+  if (gaap.length < 4 || epsCut) {
     const shNow = fundRow && fundRow.mc > 0 && fundRow.p > 0 ? fundRow.mc / fundRow.p : null;
-    const ni = netIncomeQuarterly(raw);
     const epsLike = shNow && ni.length >= 4 ? ni.map(q => ({ date: q.date, eps: q.ni / shNow })) : [];
     const fl = shNow ? fillGaps(epsLike, extra) : { q: [], filled: [] };
     if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
@@ -243,7 +246,8 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       if (yOk && (ser.quarters < 4 || !ser.lastQ || p2 - ser.lastQ > 100 * DAY || ser.hole)) {
         try {
           const extra = await yahooQuarterlyEPS(fetchImpl, c.s, ySession, p2);
-          yDiag[c.s] = `continuas ${extra.cont.length}, total ${extra.tot.length}`;
+          const rg = a => a.length ? ` (${new Date(a[0].date * 1000).toISOString().slice(0, 10)} a ${new Date(a.at(-1).date * 1000).toISOString().slice(0, 10)})` : "";
+          yDiag[c.s] = `continuas ${extra.cont.length}${rg(extra.cont)}, total ${extra.tot.length}${rg(extra.tot)}`;
           if (extra.cont.length || extra.tot.length) ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], extra });
         } catch (e) {
           if (/HTTP 40[13]/.test(e.message)) yOk = false;
