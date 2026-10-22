@@ -195,6 +195,18 @@ td:nth-child(-n+4){text-align:left}
 .pebg-tool:hover:not(:disabled){border-color:var(--ink2)}
 .pebg-tool:disabled{color:var(--faint);cursor:default}
 .pebg-tool[aria-pressed="false"]{color:var(--faint)}
+.pebg-measure{position:absolute;top:46px;right:86px;z-index:6;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-size:12.5px;box-shadow:0 6px 24px rgba(20,30,50,.14);min-width:300px}
+.pebg-measure-head{display:flex;align-items:center;gap:10px;color:var(--ink2);font-weight:650;margin-bottom:6px}
+.pebg-measure-head .cs{flex:1}
+.pebg-measure-x{font:inherit;font-size:15px;line-height:1;border:none;background:none;color:var(--muted);cursor:pointer;padding:0 2px}
+.pebg-measure table{border-collapse:collapse;width:100%}
+.pebg-measure th{font-weight:600;color:var(--muted);text-align:right;padding:2px 0 4px 12px;font-size:11.5px}
+.pebg-measure th:first-child,.pebg-measure td:first-child{text-align:left;padding-left:0}
+.pebg-measure td{text-align:right;padding:3px 0 3px 12px;color:var(--ink2);white-space:nowrap}
+.pebg-measure td:first-child{color:var(--ink);font-weight:600}
+.pebg-measure tr.pebg-m-px td{font-weight:650;color:var(--ink)}
+.pebg-measure-foot{margin-top:7px;padding-top:7px;border-top:1px solid var(--line);color:var(--ink2);line-height:1.45}
+.pebg-measure-foot span{color:var(--muted)}
 .pebg-tool:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pebg-tooltip{position:absolute;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-size:12.5px;pointer-events:none;display:none;z-index:100;min-width:214px;box-shadow:0 6px 24px rgba(20,30,50,.14)}
 .pebg-tooltip-date{color:var(--muted);font-size:12px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
@@ -875,8 +887,9 @@ function checkPwd(){
   <div id="pebgOuter">
     <div id="pebgContainer">
       <canvas id="pebgCanvas" aria-label="Gráfico de bandas: arrastrá para mover, rueda o pellizco para acercar o alejar, doble clic para volver"></canvas>
+      <div class="pebg-measure" id="pebgMeasure" style="display:none" role="status" aria-live="polite"></div>
       <div class="pebg-tools">
-        <span class="pebg-hint">Arrastrá para moverte en el tiempo; rueda, pellizco o + y − para acercar. Doble clic vuelve al período.</span>
+        <span class="pebg-hint">Clic en dos fechas mide la variación. Arrastrá para moverte; rueda, pellizco o + y − para acercar. Doble clic vuelve al período.</span>
         <div class="cs"></div>
         <div class="pebg-period-btns" id="pebgScaleBtns" role="group" aria-label="Escala">
           <span class="pebg-period active" data-s="lin" onclick="setPebgScale('lin')">Lineal</span>
@@ -2852,7 +2865,10 @@ function renderPebg(data) {
   // el gráfico muestra más años que la ventana del promedio
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
   const zKey = data.symbol + '|' + pebgYears + '|' + pebgBand;
-  if (zKey !== pebgZoomKey) { pebgZoom = null; pebgYExp = 0; pebgZoomKey = zKey; }
+  if (zKey !== pebgZoomKey) {
+    if (!pebgZoomKey.startsWith(data.symbol + '|')) { pebgMeasure = null; const m = document.getElementById('pebgMeasure'); if (m) m.style.display = 'none'; }
+    pebgZoom = null; pebgYExp = 0; pebgZoomKey = zKey;
+  }
   pebgView = { full, metric: pebgMetric, labels, years: pebgYears, fija, trim, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
     prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
@@ -2899,6 +2915,59 @@ function pebgCurWindow() {
   if (b > B.hi) { b = B.hi; a = b - span; }
   return [Math.max(B.lo, a), b];
 }
+// medición entre dos clics: fechas (segundos) de inicio y fin; mientras falta el fin, sigue al cursor
+let pebgMeasure = null;
+function clearPebgMeasure() {
+  pebgMeasure = null;
+  const el = document.getElementById('pebgMeasure'); if (el) el.style.display = 'none';
+  pebgRedraw();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && pebgMeasure) clearPebgMeasure(); });
+// variación de precio entre dos fechas, anualizada, y cuánto vino del EPS y cuánto del P/E:
+// precio = P/E x EPS, así que ln(P1/P0) = ln(EPS1/EPS0) + ln(PE1/PE0); cada parte sobre el total da la atribución
+function pebgMeasureStats(a, b) {
+  const { full, prices } = pebgView;
+  const near = (arr, t) => { if (!arr || !arr.length) return null; let lo = 0, hi = arr.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (arr[m].date < t) lo = m; else hi = m; } return Math.abs(arr[lo].date - t) <= Math.abs(arr[hi].date - t) ? arr[lo] : arr[hi]; };
+  const at = t => {
+    const pp = near(prices && prices.length ? prices : full, t);
+    const sp = near(full, t);
+    const ok = sp && Math.abs(sp.date - pp.date) <= 4 * 86400;
+    return { date: pp.date, px: pp.close, eps: ok ? sp.eps4q : null, pe: ok ? sp.pe : null };
+  };
+  const A = at(Math.min(a, b)), B = at(Math.max(a, b));
+  const yrs = (B.date - A.date) / YR_S;
+  const chg = (x, y) => (x > 0 && y > 0) ? y / x - 1 : null;
+  const ann = r => (r != null && yrs >= 1 / 12) ? Math.pow(1 + r, 1 / yrs) - 1 : null;
+  const rP = chg(A.px, B.px), rE = chg(A.eps, B.eps), rM = chg(A.pe, B.pe);
+  let shE = null, shM = null;
+  if (rE != null && rM != null && Math.abs(Math.log(1 + rP)) >= 0.02) {
+    const lp = Math.log(1 + rE) + Math.log(1 + rM);   // = ln del cambio de precio en la serie de P/E
+    shE = Math.log(1 + rE) / lp; shM = Math.log(1 + rM) / lp;
+  }
+  return { A, B, yrs, rP, aP: ann(rP), rE, aE: ann(rE), rM, aM: ann(rM), shE, shM };
+}
+function renderPebgMeasure(m) {
+  const el = document.getElementById('pebgMeasure');
+  if (!el) return;
+  const fd = t => new Date(t * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  const pc = v => v == null ? '<span class="na">—</span>' : (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(1) + '%';
+  const yt = m.yrs >= 1 ? m.yrs.toFixed(1) + ' años' : Math.round(m.yrs * 12) + ' meses';
+  const row = (cls, lbl, a, b, r, an) => `<tr class="${cls}"><td>${lbl}</td><td>${a}</td><td>${b}</td><td>${pc(r)}</td><td>${pc(an)}</td></tr>`;
+  const money = v => v == null ? '<span class="na">—</span>' : '$' + v.toFixed(2);
+  const mult = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
+  const foot = m.shE != null
+    ? `Del cambio de precio, <b>${Math.round(m.shE * 100)}%</b> vino del EPS y <b>${Math.round(m.shM * 100)}%</b> del P/E. <span>Atribución logarítmica; sin dividendos.</span>`
+    : (m.rE == null ? '<span>Sin EPS positivo en alguna de las dos fechas: no se puede separar EPS y P/E.</span>' : '<span>El precio casi no cambió: la atribución no es informativa.</span>');
+  el.innerHTML = `<div class="pebg-measure-head">${fd(m.A.date)} → ${fd(m.B.date)} <span style="color:var(--muted);font-weight:500">(${yt})</span><div class="cs"></div>`
+    + `<button type="button" class="pebg-measure-x" onclick="clearPebgMeasure()" aria-label="Cerrar medición" title="Cerrar (Esc)">×</button></div>`
+    + `<table><thead><tr><th></th><th>Inicio</th><th>Fin</th><th>Var.</th><th>Anual</th></tr></thead><tbody>`
+    + row('pebg-m-px', 'Precio', money(m.A.px), money(m.B.px), m.rP, m.aP)
+    + row('', 'EPS 12m', money(m.A.eps), money(m.B.eps), m.rE, m.aE)
+    + row('', 'P/E', mult(m.A.pe), mult(m.B.pe), m.rM, m.aM)
+    + `</tbody></table><div class="pebg-measure-foot">${foot}</div>`;
+  el.style.display = 'block';
+}
+
 // alejar más allá de toda la historia agranda el eje vertical hasta que entren todas las bandas (0 = recorte normal, 1 = todo)
 let pebgYExp = 0;
 function pebgRedraw() {
@@ -2966,6 +3035,7 @@ function bindPebgCanvas(canvas) {
     g.hover(e);
   });
   const end = e => {
+    if (e.type === 'pointerup' && pebgDrag && !pebgDrag.moved && pebgPtr.size === 1 && pebgGeom) pebgGeom.click(e);
     pebgPtr.delete(e.pointerId);
     if (pebgPtr.size < 2) pebgPinch = null;
     if (!pebgPtr.size) { pebgDrag = null; canvas.style.cursor = ''; }
@@ -2980,7 +3050,7 @@ function bindPebgCanvas(canvas) {
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { const dt = e.deltaX / g.cW * (b - a); setPebgWindow(a + dt, b + dt); return; }
     pebgZoomBy(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), g.tAt(e.clientX));
   }, { passive: false });
-  canvas.addEventListener('dblclick', resetPebgZoom);
+  canvas.addEventListener('dblclick', () => { pebgMeasure = null; const m = document.getElementById('pebgMeasure'); if (m) m.style.display = 'none'; resetPebgZoom(); });
 }
 
 function drawPebgChart(hoverT) {
@@ -3025,7 +3095,7 @@ function drawPebgChart(hoverT) {
     ctx.fillText(msg, W / 2, H / 2);
     document.getElementById('pebgLegend').style.display = 'none';
     tooltip.style.display = 'none';
-    pebgGeom = { cW: cW0, tAt: clientX => t0 + (clientX - rectOf().left - 62) / cW0 * (t1 - t0), hideTip: () => {}, leave: () => {}, hover: () => {} };
+    pebgGeom = { cW: cW0, tAt: clientX => t0 + (clientX - rectOf().left - 62) / cW0 * (t1 - t0), hideTip: () => {}, leave: () => {}, hover: () => {}, click: () => {} };
   };
   const series = inWin(full);
   const px = inWin(prices || []);
@@ -3157,6 +3227,14 @@ function drawPebgChart(hoverT) {
   }
   ctx.setLineDash([]);
 
+  // medición: franja entre las dos fechas
+  const mEnd = pebgMeasure ? (pebgMeasure.b != null ? pebgMeasure.b : pebgMeasure.hover) : null;
+  if (pebgMeasure && mEnd != null) {
+    const xa = xS(Math.min(pebgMeasure.a, mEnd)), xb = xS(Math.max(pebgMeasure.a, mEnd));
+    ctx.fillStyle = cssVar('--accent-soft'); ctx.globalAlpha = 0.6;
+    ctx.fillRect(xa, PAD.top, Math.max(1, xb - xa), cH);
+    ctx.globalAlpha = 1;
+  }
   // precio o múltiplo (el múltiplo se corta donde no hay EPS positivo)
   ctx.strokeStyle = C.price; ctx.lineWidth = 2;
   ctx.beginPath();
@@ -3164,6 +3242,20 @@ function drawPebgChart(hoverT) {
   ctx.stroke();
   ctx.restore();
 
+  if (pebgMeasure) {
+    const nearL = t => { let best = null; for (const p of priceLine) if (!best || Math.abs(p.date - t) < Math.abs(best.date - t)) best = p; return best; };
+    [pebgMeasure.a, mEnd].forEach(t => {
+      if (t == null || t < t0 || t > t1) return;
+      const p = nearL(t); if (!p) return;
+      const x = Math.round(xS(p.date)) + 0.5;
+      ctx.strokeStyle = cssVar('--accent'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + cH); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = cssVar('--accent'); ctx.strokeStyle = C.bg; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, yS(yOf(p)), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    if (mEnd != null && mEnd !== pebgMeasure.a) renderPebgMeasure(pebgMeasureStats(pebgMeasure.a, mEnd));
+    else { const el = document.getElementById('pebgMeasure'); if (el) el.style.display = 'none'; }
+  }
   // etiquetas en el borde derecho: valores en la última fecha visible
   const lastS = series.filter(visible).pop() || null, lastV = yOf(lineVis[lineVis.length - 1]);
   const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(1) + 'x') : (v => '$' + v.toFixed(1));
@@ -3207,11 +3299,28 @@ function drawPebgChart(hoverT) {
     tAt: clientX => t0 + (clientX - rectOf().left - PAD.left) / cW * (t1 - t0),
     hideTip: () => { tooltip.style.display = 'none'; },
     leave: () => { tooltip.style.display = 'none'; pebgRedraw(); },
+    click: e => {
+      const mx = e.clientX - rectOf().left;
+      if (mx < PAD.left || mx > W - PAD.right) return;
+      const pp = nearest(lineVis, t0 + (mx - PAD.left) / cW * (t1 - t0));
+      const now = Date.now();
+      if (!pebgMeasure || pebgMeasure.b != null) pebgMeasure = { a: pp.date, b: null, hover: null, at: now };
+      else if (now - pebgMeasure.at < 400 && Math.abs(pp.date - pebgMeasure.a) < 3 * 86400) return;   // doble clic
+      else pebgMeasure.b = pp.date;
+      tooltip.style.display = 'none';
+      pebgRedraw();
+    },
     hover: e => {
       const rect = rectOf();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
       if (mx < PAD.left || mx > W - PAD.right) { tooltip.style.display = 'none'; return; }
       const t = t0 + (mx - PAD.left) / cW * (t1 - t0);
+      if (pebgMeasure && pebgMeasure.b == null) {   // midiendo: la franja sigue al cursor, sin tooltip
+        tooltip.style.display = 'none';
+        pebgMeasure.hover = nearest(lineVis, t).date;
+        pebgRedraw();
+        return;
+      }
       const pp = nearest(lineVis, t);
       const sp = series.length ? nearest(series, pp.date) : null;
       const hasPE = sp != null && Math.abs(sp.date - pp.date) <= 4 * 86400;

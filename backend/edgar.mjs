@@ -7,7 +7,8 @@
 // ajustados), así que se divide por el ratio. Si la empresa lo volvió a presentar después del split, ya
 // viene reexpresado y no se toca.
 export const EDGAR_TAGS = {
-  eps: [["EarningsPerShareDiluted"], "USD/shares"],
+  // XOM publica "básico y diluido" en una sola etiqueta; algunas (V, clases de acciones) solo el básico
+  eps: [["EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted", "EarningsPerShareBasic"], "USD/shares"],
   oi: [["OperatingIncomeLoss"], "USD"],
   pt: [["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"], "USD"],

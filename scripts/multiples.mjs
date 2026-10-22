@@ -82,7 +82,10 @@ export function companySeries({ facts, chart }) {
   const norm = gaap.length ? normalizedQuarterly(raw, f, gaap, "").eps : [];
   const sh = sharesQuarterly(raw, f, gaap);
   const weeks = [...price.keys()].sort((a, b) => a - b);
-  return { price, eG: ttmByWeek(gaap, weeks), eN: ttmByWeek(norm, weeks), sh: sharesByWeek(sh, weeks), quarters: gaap.length };
+  // datos que no pueden ser ciertos (EPS de 12 meses mayor que el precio, o una pérdida de más de 3 veces el precio):
+  // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
+  const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
+  return { price, eG: clean(ttmByWeek(gaap, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, splits: splits.length };
 }
 
 // P/E de cada grupo por semana. cos: { sym: series } ; groups: { key: [syms] }
@@ -207,6 +210,18 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   // las semanas son consecutivas salvo feriados largos: se guarda la lista solo si hay huecos
   if (weeks[weeks.length - 1] - weeks[0] + 1 !== weeks.length) out.weekList = weeks;
   await writeFile(new URL("multiples.json", root), JSON.stringify(out));
+  const diag = { splits: {}, fechas: {} };
+  for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
+  for (const d of ["2019-06-24", "2021-06-28", "2024-06-24", "2025-06-23"]) {
+    const w = weekOf(Date.parse(d) / 1000);
+    const rows = Object.entries(cos).map(([s, c]) => {
+      const p = c.price.get(w), sh = c.sh.get(w), e = c.eG.get(w), en = c.eN.get(w);
+      return (p && sh) ? { s, M: p * sh / 1e9, E: e != null ? e * sh / 1e9 : null, En: en != null ? en * sh / 1e9 : null, pe: e ? p / e : null } : null;
+    }).filter(Boolean);
+    const top = k => rows.filter(r => r[k] != null).sort((a, b) => Math.abs(b[k]) - Math.abs(a[k])).slice(0, 12).map(r => `${r.s} M ${r.M.toFixed(0)} E ${r.E?.toFixed(1)} En ${r.En?.toFixed(1)} pe ${r.pe?.toFixed(1)}`);
+    diag.fechas[d] = { M: top("M"), E: top("E"), En: top("En") };
+  }
+  await writeFile(new URL("multiples_diag.json", root), JSON.stringify(diag, null, 1));
   const at = d => { const w = weekOf(Date.parse(d) / 1000); const i = weeks.indexOf(w); return i >= 0 ? series.SPX.g[i] : null; };
   log(`S&P 500 P/E contable: 2010 ${at("2010-12-27")}, 2015 ${at("2015-12-28")}, 2019 ${at("2019-12-30")}, 2021 ${at("2021-12-27")}, 2022 ${at("2022-12-26")}, hoy ${series.SPX.g.at(-1)} (normalizado ${series.SPX.n.at(-1)}, fw ${series.SPX.fw})`);
   log(`Series: ${Object.keys(series).length}, semanas: ${weeks.length}`);
