@@ -203,6 +203,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-tool:hover:not(:disabled){border-color:var(--ink2)}
 .pebg-tool:disabled{color:var(--faint);cursor:default}
 .pebg-tool[aria-pressed="false"]{color:var(--faint)}
+.pebg-tool.is-off{opacity:.45}
 .pebg-measure{position:absolute;top:54px;right:86px;z-index:6;background:color-mix(in srgb,var(--surf) 94%,transparent);border:1px solid var(--line2);border-radius:7px;padding:6px 9px 7px;font-size:12px;box-shadow:0 4px 14px rgba(20,30,50,.12);transition:left .18s ease,top .18s ease;pointer-events:auto}
 @media (prefers-reduced-motion:reduce){.pebg-measure{transition:none}}
 .pebg-measure-head{display:flex;align-items:center;gap:8px;color:var(--ink2);font-weight:650;margin-bottom:3px;white-space:nowrap}
@@ -972,6 +973,7 @@ function checkPwd(){
         <button type="button" class="pebg-tool" onclick="pebgZoomBy(1.5)" aria-label="Alejar" title="Alejar">−</button>
         <button type="button" class="pebg-tool pebg-tool-txt" id="pebgReset" onclick="resetPebgZoom()" disabled>Restablecer</button>
         <button type="button" class="pebg-tool pebg-tool-txt" id="pebgLegBtn" onclick="togglePebgLegend()" aria-pressed="true" title="Mostrar u ocultar la leyenda">Leyenda</button>
+        <button type="button" class="pebg-tool pebg-tool-txt" id="pebgFwBtn" onclick="togglePebgFw()" aria-pressed="false" title="Precio teórico dentro de un año si se cumple el EPS esperado (consenso) y el P/E vuelve a cada banda">EPS fw</button>
         <button type="button" class="pebg-tool pebg-tool-txt" id="pebgCmpBtn" onclick="togglePebgCmp()" aria-pressed="false" title="P/E del S&amp;P 500, del sector o de la subindustria debajo del gráfico">Comparar</button>
       </div>
       <div class="pebg-tooltip" id="pebgTooltip">
@@ -3113,15 +3115,23 @@ function renderPebg(data) {
   const peAnual = (lastQ && lastQ > 0) ? last.close / (lastQ * 4) : null;
   set('psStatAnual', peAnual != null ? peAnual.toFixed(1) + 'x' : '—');
   set('psStatFwd', data.forwardPE ? data.forwardPE.toFixed(1) + 'x' : '—');
+  const pxNow = data.currentPrice || last.close, fwEpsS = pebgFwEps(data, pxNow);
+  const fwStats = pebgFw && !peg && fwEpsS != null;
+  { const b = document.getElementById('pebgFwBtn'); if (b) { b.setAttribute('aria-pressed', pebgFw); b.classList.toggle('is-off', peg || fwEpsS == null);
+    b.title = peg ? 'La proyección es solo para P/E' : fwEpsS == null ? 'Sin Fw P/E de consenso para esta empresa' : 'Precio teórico dentro de un año si se cumple el EPS esperado (consenso, $' + fwEpsS.toFixed(2) + ') y el P/E vuelve a cada banda'; } }
+  { const sub = document.getElementById('psStatFwd')?.nextElementSibling; if (sub) sub.textContent = fwEpsS != null ? 'consenso, EPS $' + fwEpsS.toFixed(2) : 'consenso'; }
   ['psStatAnual', 'psStatFwd'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg ? 'none' : ''; });
 
   const cols = bandColors(), labels = peg ? PEG_BAND_LABELS : PE_BAND_LABELS;
+  // precio implícito en cada banda: múltiplo × EPS de hoy, o × EPS esperado con la proyección prendida
+  const pctTxt2 = r => (r >= 0 ? '+' : '−') + Math.abs(r * 100).toFixed(0) + '%';
   ['6', '7', '8', '9', 'A'].forEach((id, i) => {
-    const m = lb ? lb.mult[i] : null, px = last.bandPx ? last.bandPx[i] : null;
+    const m = lb ? lb.mult[i] : null;
+    const px = fwStats ? (m != null ? m * fwEpsS : null) : (last.bandPx ? last.bandPx[i] : null);
     const v = document.getElementById('psStat' + id);
-    set('psLbl' + id, 'Precio a ' + labels[i]);
+    set('psLbl' + id, (fwStats ? 'Precio fw a ' : 'Precio a ') + labels[i]);
     if (m == null || px == null) { v.textContent = 'N/A'; v.style.color = 'var(--faint)'; set('psSub' + id, ''); }
-    else { v.textContent = fmtP(px); v.style.color = cols[i]; set('psSub' + id, (peg ? 'PEG ' : 'P/E ') + fmtX(m)); }
+    else { v.textContent = fmtP(px); v.style.color = cols[i]; set('psSub' + id, (peg ? 'PEG ' : 'P/E ') + fmtX(m) + (pxNow > 0 ? ', ' + pctTxt2(px / pxNow - 1) : '')); }
   });
   document.getElementById('pebgStatsBar').style.display = 'flex';
 
@@ -3145,6 +3155,15 @@ const pebgPtr = new Map();
 let pebgScale = 'lin';
 let pebgLegendOn = true;
 try { if (localStorage.getItem('pebgLegend') === 'off') pebgLegendOn = false; } catch (e) {}
+// proyección con el EPS esperado: EPS fw = precio / Fw P/E de consenso
+let pebgFw = false;
+try { pebgFw = localStorage.getItem('pebgFw') === '1'; } catch (e) {}
+function pebgFwEps(data, price) { const f = data && data.forwardPE; return (f > 0 && price > 0) ? price / f : null; }
+function togglePebgFw() {
+  pebgFw = !pebgFw;
+  try { localStorage.setItem('pebgFw', pebgFw ? '1' : '0'); } catch (e) {}
+  if (pebgData) renderPebg(pebgData);
+}
 function togglePebgLegend() {
   pebgLegendOn = !pebgLegendOn;
   try { localStorage.setItem('pebgLegend', pebgLegendOn ? 'on' : 'off'); } catch (e) {}
@@ -3323,7 +3342,7 @@ function bindPebgCanvas(canvas) {
       const dx = e.clientX - pebgDrag.x;
       if (Math.abs(dx) > 3) pebgDrag.moved = true;
       if (pebgDrag.moved) {
-        const dt = dx / g.cW * (pebgDrag.b - pebgDrag.a);
+        const dt = dx / g.cW * (g.span || (pebgDrag.b - pebgDrag.a));
         canvas.style.cursor = 'grabbing';
         g.hideTip(); setPebgWindow(pebgDrag.a - dt, pebgDrag.b - dt);
         return;
@@ -3430,13 +3449,23 @@ function drawPebgChart(hoverT) {
       else { yMin += (fMin - yMin) * e; yMax += (fMax - yMax) * e; }
     }
   }
+  // proyección con el EPS esperado (botón EPS fw): un año hacia adelante desde el último dato, si está a la vista
+  const lastF = full[full.length - 1];
+  const fwEps = !peg ? pebgFwEps(pebgData, lastF.close) : null;
+  const fwOn = pebgFw && fwEps > 0 && !!lastF.band && t1 >= lastF.date - 5 * 86400;
+  const tFw = lastF.date + 365 * 86400;
+  // en precio, cada banda × EPS fw; en múltiplo las bandas quedan y la línea va al P/E si el precio no se mueve
+  const fwB = fwOn ? lastF.band.mult.map(m => m == null ? null : mv ? m : m * fwEps) : null;
+  const fwLine = fwOn ? (mv ? lastF.close / fwEps : lastF.pe * fwEps) : null;
+  if (fwOn) [fwB[1], fwB[2], fwB[3], fwLine].forEach(v => { if (v > 0 && isFinite(v)) { yMin = Math.min(yMin, v); yMax = Math.max(yMax, v); } });
   if (!(yMax > yMin)) { yMax = yMin * 1.05 + 1e-6; yMin *= 0.95; }
   const useLog = wantLog && yMin > 0;
   if (useLog) { yMin *= 0.9; yMax *= 1.08; } else { const r = yMax - yMin; yMin = Math.max(0, yMin - r * 0.06); yMax += r * 0.06; }
   const ty = v => useLog ? Math.log(v) : v;
   const l0 = ty(yMin), l1 = ty(yMax);
   // aire entre el último dato y el borde del gráfico: el eje de tiempo se estira 16 px más allá de t1
-  const tR = t1 + (t1 - t0) * 16 / Math.max(1, cW - 16);
+  const tEnd = fwOn ? Math.max(t1, tFw) : t1;
+  const tR = tEnd + (tEnd - t0) * 16 / Math.max(1, cW - 16);
   const xS = t => PAD.left + ((t - t0) / (tR - t0)) * cW;
   const yS = v => PAD.top + cH - ((ty(Math.min(Math.max(v, useLog ? yMin * 0.5 : yMin - (yMax - yMin)), yMax * 2)) - l0) / (l1 - l0)) * cH;
 
@@ -3482,13 +3511,13 @@ function drawPebgChart(hoverT) {
     const d = new Date(t0 * 1000);
     let t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + ((8 - d.getUTCDay()) % 7)) / 1000;   // primer lunes
     const stepD = spanY <= 0.12 ? 7 : 14;
-    for (; t <= t1; t += stepD * 86400) { const z = new Date(t * 1000); vTick(t, z.getUTCDate() + ' ' + MES_CORTO[z.getUTCMonth()].toLowerCase()); }
+    for (; t <= tEnd; t += stepD * 86400) { const z = new Date(t * 1000); vTick(t, z.getUTCDate() + ' ' + MES_CORTO[z.getUTCMonth()].toLowerCase()); }
   } else {
     const stepM = spanY <= 1.2 ? 1 : spanY <= 3.5 ? 3 : spanY <= 8 ? 12 : 24;
     const d0 = new Date(t0 * 1000);
     for (let k = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; k++) {
       const t = Date.UTC(Math.floor(k / 12), k % 12, 1) / 1000;
-      if (t > t1) break;
+      if (t > tEnd) break;
       if (k % stepM !== 0) continue;
       vTick(t, stepM >= 12 ? String(Math.floor(k / 12)) : MES_CORTO[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2));
     }
@@ -3543,6 +3572,29 @@ function drawPebgChart(hoverT) {
   ctx.beginPath();
   priceLine.forEach((p, i) => { const x = xS(p.date), y = yS(yOf(p)); (i && !(mv && gap(priceLine[i - 1], p))) ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
   ctx.stroke();
+  if (fwOn) {
+    const xa = xS(lastF.date), xb = xS(tFw);
+    ctx.fillStyle = C.fill; ctx.globalAlpha = 0.45; ctx.fillRect(xa, PAD.top, xb - xa, cH); ctx.globalAlpha = 1;
+    for (let b = 0; b < 5; b++) {
+      const v0 = bandOf(lastF, b), v1 = fwB[b];
+      if (!(v0 > 0) || !(v1 > 0)) continue;
+      ctx.strokeStyle = cols[b]; ctx.lineWidth = b === 2 ? 2 : 1.25; ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.moveTo(xa, yS(v0)); ctx.lineTo(xb, yS(v1)); ctx.stroke();
+    }
+    const v0 = yOf(lastF);
+    if (v0 > 0 && fwLine > 0) {
+      ctx.strokeStyle = C.price; ctx.lineWidth = 1.75; ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(xa, yS(v0)); ctx.lineTo(xb, yS(fwLine)); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = C.price; ctx.beginPath(); ctx.arc(xb, yS(fwLine), 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.setLineDash([]);
+    // rótulo de la zona, con fondo para que no lo crucen las bandas
+    const t1s = 'En 12 meses, EPS fw $' + fwEps.toFixed(2), t2s = mv ? 'Línea: P/E si el precio no se mueve' : 'Línea: precio si el P/E de hoy se mantiene';
+    ctx.font = `12px ${CANVAS_FONT}`; ctx.textAlign = 'left';
+    const tw = Math.max(...[t1s, t2s].map(t => { const m = ctx.measureText(t); return (m && m.width) || t.length * 6.5; })) + 12;
+    ctx.fillStyle = C.bg; ctx.globalAlpha = 0.88; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(xa + 4, PAD.top + 4, tw, 36, 5) : ctx.rect(xa + 4, PAD.top + 4, tw, 36); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.text; ctx.fillText(t1s, xa + 10, PAD.top + 19); ctx.fillText(t2s, xa + 10, PAD.top + 34);
+  }
   ctx.restore();
 
   if (pebgMeasure) {
@@ -3571,8 +3623,12 @@ function drawPebgChart(hoverT) {
   // etiquetas en el borde derecho: valores en la última fecha visible
   const lastS = series.filter(visible).pop() || null, lastV = yOf(lineVis[lineVis.length - 1]);
   const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(1) + 'x') : (v => '$' + v.toFixed(1));
-  const labelsEnd = [{ y: yS(lastV), txt: mv ? endFmt(lastV) : '$' + lastV.toFixed(2), col: C.price, bold: true }]
-    .concat([0, 1, 2, 3, 4].filter(b => lastS && has(lastS, b) && bandOf(lastS, b) <= yMax * 1.5).map(b => ({ y: yS(bandOf(lastS, b)), txt: endFmt(bandOf(lastS, b)), col: cols[b] })))
+  // con la proyección, el borde derecho es dentro de un año: van los valores proyectados
+  const labelsEnd = (fwOn
+    ? [{ y: yS(fwLine), txt: mv ? endFmt(fwLine) : '$' + fwLine.toFixed(2), col: C.price, bold: true }]
+      .concat([0, 1, 2, 3, 4].filter(b => fwB[b] >= yMin && fwB[b] <= yMax).map(b => ({ y: yS(fwB[b]), txt: endFmt(fwB[b]), col: cols[b] })))
+    : [{ y: yS(lastV), txt: mv ? endFmt(lastV) : '$' + lastV.toFixed(2), col: C.price, bold: true }]
+      .concat([0, 1, 2, 3, 4].filter(b => lastS && has(lastS, b) && bandOf(lastS, b) <= yMax * 1.5).map(b => ({ y: yS(bandOf(lastS, b)), txt: endFmt(bandOf(lastS, b)), col: cols[b] }))))
     .sort((a, b) => a.y - b.y);
   for (let i = 1; i < labelsEnd.length; i++) if (labelsEnd[i].y - labelsEnd[i - 1].y < 15) labelsEnd[i].y = labelsEnd[i - 1].y + 15;
   const over = labelsEnd.length ? labelsEnd[labelsEnd.length - 1].y - (PAD.top + cH) : 0;
@@ -3607,7 +3663,7 @@ function drawPebgChart(hoverT) {
   }
 
   pebgGeom = {
-    cW, yRange: [yMin, yMax], lineRange, fullRange, yExp: pebgYExp,
+    cW, span: tR - t0, fwOn, yRange: [yMin, yMax], lineRange, fullRange, yExp: pebgYExp,
     tAt: clientX => Math.min(t1, t0 + (clientX - rectOf().left - PAD.left) / cW * (tR - t0)),
     hideTip: () => { tooltip.style.display = 'none'; },
     leave: () => { tooltip.style.display = 'none'; pebgRedraw(); },
@@ -3964,6 +4020,9 @@ const METODO = [
         p: 'Los umbrales son una convención para leer rápido. Un P/E que pasó dos años por encima de la media puede seguir ahí, sobre todo si el crecimiento cambió.' },
       { d: 'Medición entre dos puntos: variación del precio (anualizada si el tramo es de un mes o más) y cuánto vino del EPS y cuánto del P/E.',
         p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan, y como el precio no incluye dividendos, la variación es solo de precio. El cuadro se ubica solo, dentro del gráfico, donde tapa menos línea; los valores de inicio y fin aparecen al pasar el mouse por cada fila. Clic derecho, Esc o la cruz borran la medición.' },
+      { d: 'Proyección con el EPS esperado (botón EPS fw): el EPS esperado es el precio dividido por el Fw P/E de consenso, y el precio teórico dentro de un año es el múltiplo de cada banda por ese EPS.',
+        p: 'Las tarjetas de precio pasan a ese cálculo, con la diferencia contra el precio de hoy. En la vista de precio, la línea punteada es el precio si el P/E de hoy se mantiene; en la de múltiplo, el P/E al que llega si el precio no se mueve. Sirve más en empresas con ganancias previsibles, porque supone que el consenso acierta y que el múltiplo vuelve a su historia.',
+        o: 'El consenso suele estar en la base ajustada que guía cada empresa (sin la compensación en acciones, las amortizaciones de compras ni los cargos puntuales), y las bandas salen del EPS de la SEC. Donde esos ajustes pesan, sobre todo en tecnológicas, el EPS esperado queda arriba del contable y la proyección exagera; con el EPS normalizado la distancia es menor, aunque el normalizado sí descuenta la compensación en acciones. El horizonte es aproximado: Yahoo usa en general el próximo ejercicio fiscal.' },
       { d: 'PEG: P/E dividido por el crecimiento tendencial del EPS en porcentaje.',
         p: 'El crecimiento es la pendiente de una regresión log-lineal del EPS de 12 meses de los últimos cinco años (21 puntos trimestrales), con lo que hacen falta seis años de EPS. Con crecimiento menor a 3% no se calcula, porque el cociente se dispara sin decir nada. Las bandas son percentiles (10, 25, 50, 75 y 90) y no desvíos, ya que el PEG es muy asimétrico. Arranca con EPS normalizado, porque un cargo puntual en el contable mueve a la vez el P/E y el crecimiento y el PEG lo cuenta dos veces, y en vista de múltiplo.',
         x: 'El crecimiento punta a punta: un piso o un pico en la base lo hace saltar (con META pasaba de 3% a 51% en tres años).' },
