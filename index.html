@@ -2976,7 +2976,9 @@ function renderPebg(data) {
   const status = document.getElementById('pebgStatus');
   updEpsNote(data);
   syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns();
+  status.title = data.histNote || '';
   status.textContent = (data.shortName || data.symbol) + ', ' + eps.length + ' trim. EPS'
+    + (data.histNote ? ' (los más viejos, de los 10-K)' : '')
     + (pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '');
   if (full.length < 10) { status.textContent += '. Pocos datos para el gráfico'; return; }
   const peg = pebgMetric === 'peg';

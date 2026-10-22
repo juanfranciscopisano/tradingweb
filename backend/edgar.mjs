@@ -209,7 +209,7 @@ export function sharesQuarterly(raw, splitFactor, gaap) {
 }
 
 // empresas que cambiaron de CIK (reorganización como holding): la historia está en el registro anterior
-export const PREDECESSOR_CIK = { XOM: "0000034088" };
+export const PREDECESSOR_CIK = { XOM: "0000034088", GOOGL: "0001288776", GOOG: "0001288776" };   // Alphabet: la historia está en Google Inc.
 // une los datos crudos de dos registros; manda el nuevo y el viejo completa los períodos que faltan
 export function mergeRaw(newer, older) {
   if (!older) return newer;

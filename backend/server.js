@@ -246,6 +246,25 @@ try {
 } catch (e) {
   console.log("eps_manual.json: " + e.message);
 }
+// data/eps_hist.json: EPS trimestral anterior a 2008 (antes de XBRL) cargado a mano desde los 10-K originales,
+// tal como se publicó; al usarlo se ajusta por los splits posteriores a cada presentación.
+let EPS_HIST = {};
+try {
+  EPS_HIST = JSON.parse(readFileSync(new URL("./data/eps_hist.json", import.meta.url), "utf8"));
+} catch (e) {
+  console.log("eps_hist.json: " + e.message);
+}
+// trimestres de eps_hist anteriores al primero de la serie, ajustados por splits
+function histBefore(sym, firstDate, splits) {
+  const h = EPS_HIST[sym];
+  if (!h || !firstDate) return [];
+  const f = makeSplitFactor(splits);
+  const pre = h.trimestres.filter(q => Date.parse(q.end) / 1000 < firstDate - 30 * 86400);
+  // solo si empalma: el último trimestre cargado tiene que ser el anterior al primero de EDGAR (si no, queda un hueco)
+  if (!pre.length || firstDate - Date.parse(pre[pre.length - 1].end) / 1000 > 200 * 86400) return [];
+  return pre.map(q => ({ date: Math.floor(Date.parse(q.end) / 1000), eps: +(q.eps / f(q.end, q.filed)).toFixed(4) }));
+}
+
 function manualEPS(sym) {
   const m = MANUAL_EPS[sym];
   if (!m || !Array.isArray(m.trimestres)) return null;
@@ -484,6 +503,18 @@ app.get("/api/pebg", async (req, res) => {
         epsNorm = edgarAll.norm; normMethod = epsNorm.length >= 4 ? edgarAll.normMethod : null;
         if (!normMethod && source === "finnhub") { epsNorm = fh; normMethod = "ajustado"; }
       }
+      // historia anterior a XBRL (10-K originales) para los que la tenemos cargada
+      let histNote = null;
+      if (!manual && EPS_HIST[sym] && eps.length) {
+        const pre = histBefore(sym, eps[0].date, splits);
+        if (pre.length) {
+          eps = [...pre, ...eps];
+          if (epsNorm && epsNorm.length) epsNorm = [...histBefore(sym, epsNorm[0].date, splits), ...epsNorm];
+          source += "+10k";
+          const d = new Date(pre[pre.length - 1].date * 1000);
+          histNote = `Hasta ${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}: EPS de los 10-K originales de la SEC (contable, también en el modo normalizado)`;
+        }
+      }
       const meta = chart.meta || {};
       const last4 = eps.slice(-4);
       return {
@@ -494,6 +525,7 @@ app.get("/api/pebg", async (req, res) => {
         epsNorm: normMethod ? epsNorm.map(e => ({ date: e.date, eps: e.eps })) : [],
         normMethod,
         normNote,
+        histNote,
         epsCount: eps.length,
         epsSource: source,
         splits: splits.map(x => ({ date: x.date, ratio: x.ratio })),
