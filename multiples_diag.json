@@ -22,10 +22,10 @@
     "META M 552 E 19.2 En 19.1 pe 28.7",
     "JPM M 387 E 32.1 En 30.4 pe 12.0",
     "JNJ M 376 E 14.6 En 13.6 pe 25.8",
+    "XOM M 327 E 18.5 En 19.9 pe 17.7",
+    "V M 326 E 11.1 En undefined pe 29.3",
     "WMT M 319 E 8.3 En 13.7 pe 38.2",
-    "BAC M 303 E 28.1 En 25.2 pe 10.8",
-    "PG M 289 E 11.1 En 10.0 pe 26.1",
-    "MA M 273 E 6.2 En 5.5 pe 44.2"
+    "BAC M 303 E 28.1 En 25.2 pe 10.8"
    ],
    "E": [
     "AAPL M 938 E 56.3 En 50.2 pe 16.6",
@@ -39,7 +39,7 @@
     "T M 245 E 19.6 En 13.5 pe 12.5",
     "META M 552 E 19.2 En 19.1 pe 28.7",
     "GE M 94 E -18.7 En -18.6 pe -5.0",
-    "C M 176 E 17.3 En 15.7 pe 10.2"
+    "XOM M 327 E 18.5 En 19.9 pe 17.7"
    ],
    "En": [
     "AAPL M 938 E 56.3 En 50.2 pe 16.6",
@@ -48,12 +48,12 @@
     "BAC M 303 E 28.1 En 25.2 pe 10.8",
     "GOOG M 757 E 27.9 En 23.2 pe 27.1",
     "GOOGL M 759 E 27.9 En 23.2 pe 27.2",
+    "XOM M 327 E 18.5 En 19.9 pe 17.7",
     "WFC M 231 E 22.1 En 19.4 pe 10.5",
     "META M 552 E 19.2 En 19.1 pe 28.7",
     "GE M 94 E -18.7 En -18.6 pe -5.0",
     "INTC M 219 E 20.2 En 18.1 pe 10.8",
-    "C M 176 E 17.3 En 15.7 pe 10.2",
-    "CVX M 237 E 13.8 En 14.5 pe 17.2"
+    "C M 176 E 17.3 En 15.7 pe 10.2"
    ]
   },
   "2021-06-28": {
@@ -68,8 +68,8 @@
     "NVDA M 515 E 5.3 En 5.0 pe 96.6",
     "JPM M 493 E 47.4 En 47.4 pe 10.4",
     "JNJ M 451 E 15.1 En 15.1 pe 29.9",
-    "WMT M 394 E 12.1 En 16.7 pe 32.5",
-    "UNH M 392 E 14.5 En 16.4 pe 27.0"
+    "V M 448 E 10.9 En undefined pe 41.2",
+    "WMT M 394 E 12.1 En 16.7 pe 32.5"
    ],
    "E": [
     "AAPL M 2341 E 85.5 En 84.3 pe 27.4",
@@ -125,9 +125,9 @@
     "NVDA M 3064 E 42.4 En 44.0 pe 72.3",
     "AMZN M 2057 E 38.1 En 40.6 pe 54.0",
     "JNJ M 355 E 36.9 En 16.5 pe 9.6",
+    "XOM M 459 E 32.6 En 34.8 pe 14.1",
     "BAC M 349 E 25.5 En 28.5 pe 13.7",
-    "CVX M 290 E 20.1 En 19.9 pe 14.4",
-    "WMT M 549 E 18.9 En 19.3 pe 29.1"
+    "CVX M 290 E 20.1 En 19.9 pe 14.4"
    ],
    "En": [
     "AAPL M 3254 E 99.3 En 98.8 pe 32.8",
@@ -138,10 +138,10 @@
     "NVDA M 3064 E 42.4 En 44.0 pe 72.3",
     "META M 1324 E 45.7 En 43.6 pe 29.0",
     "AMZN M 2057 E 38.1 En 40.6 pe 54.0",
+    "XOM M 459 E 32.6 En 34.8 pe 14.1",
     "BAC M 349 E 25.5 En 28.5 pe 13.7",
     "UNH M 469 E 15.1 En 25.7 pe 31.1",
-    "CVX M 290 E 20.1 En 19.9 pe 14.4",
-    "WMT M 549 E 18.9 En 19.3 pe 29.1"
+    "CVX M 290 E 20.1 En 19.9 pe 14.4"
    ]
   },
   "2025-06-23": {
@@ -168,10 +168,10 @@
     "META M 1899 E 66.3 En 60.0 pe 28.7",
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
     "JPM M 829 E 58.8 En 60.4 pe 14.1",
+    "XOM M 479 E 33.0 En 33.6 pe 14.5",
     "BAC M 390 E 27.6 En 31.7 pe 14.1",
     "UNH M 284 E 21.9 En 27.1 pe 12.9",
-    "JNJ M 369 E 21.8 En 22.4 pe 17.0",
-    "WFC M 280 E 19.6 En 18.8 pe 14.3"
+    "JNJ M 369 E 21.8 En 22.4 pe 17.0"
    ],
    "En": [
     "MSFT M 3701 E 113.9 En 115.9 pe 32.5",
@@ -182,10 +182,10 @@
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
     "JPM M 829 E 58.8 En 60.4 pe 14.1",
     "META M 1899 E 66.3 En 60.0 pe 28.7",
+    "XOM M 479 E 33.0 En 33.6 pe 14.5",
     "BAC M 390 E 27.6 En 31.7 pe 14.1",
     "UNH M 284 E 21.9 En 27.1 pe 12.9",
-    "JNJ M 369 E 21.8 En 22.4 pe 17.0",
-    "WMT M 779 E 18.8 En 21.1 pe 41.4"
+    "JNJ M 369 E 21.8 En 22.4 pe 17.0"
    ]
   }
  }
