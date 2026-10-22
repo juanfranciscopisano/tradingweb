@@ -12,12 +12,13 @@ const FIELDS = "shortName,longName,regularMarketPrice,marketCap,trailingPE,forwa
 const num = v => (typeof v === "number" && isFinite(v)) ? v : null;
 const pos = v => (num(v) != null && v > 0) ? v : null;
 
-function tickersFrom(html) {
+// tickers de la página (lista fija de respaldo, Cartera y top 50) más la composición actual del S&P 500 (spx.json)
+function tickersFrom(html, spx = []) {
   const arr = name => {
-    const m = html.match(new RegExp(`const ${name}\\s*=\\s*\\[([\\s\\S]*?)\\]`));
+    const m = html.match(new RegExp(`(?:const|let) ${name}\\s*=\\s*\\[([\\s\\S]*?)\\]`));
     return m ? [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]) : [];
   };
-  return [...new Set([...arr("TKS"), ...arr("CARTERA_TICKERS"), ...arr("TOP50_TICKERS")])];
+  return [...new Set([...spx, ...arr("TKS"), ...arr("CARTERA_TICKERS"), ...arr("TOP50_TICKERS")])];
 }
 
 async function yahooSession(f) {
@@ -79,7 +80,9 @@ async function fromFinnhub(f, symbols, key, today, sleep, delayMs) {
 export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(),
   finnhubKey = process.env.FINNHUB_KEY || "", sleep = ms => new Promise(r => setTimeout(r, ms)), delayMs = 1100, log = console.log } = {}) {
   const today = now.toISOString().slice(0, 10);
-  const symbols = tickersFrom(await readFile(new URL("index.html", root), "utf8"));
+  let spx = [];
+  try { spx = JSON.parse(await readFile(new URL("spx.json", root), "utf8")).list.map(x => x.s); } catch (e) { console.log("spx.json: " + e.message); }
+  const symbols = tickersFrom(await readFile(new URL("index.html", root), "utf8"), spx);
   if (symbols.length < 50) throw new Error(`Encontré solo ${symbols.length} tickers en index.html`);
 
   let prev = {};

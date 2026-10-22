@@ -992,21 +992,9 @@ function toggleTheme() {
   if (ggalCache[ggalRange]) drawGgal();
 }
 
-const SECTOR_MAP = {
-  AAPL:'Technology',MSFT:'Technology',NVDA:'Technology',AVGO:'Technology',ORCL:'Technology',CRM:'Technology',AMD:'Technology',QCOM:'Technology',TXN:'Technology',INTC:'Technology',IBM:'Technology',ADBE:'Technology',NOW:'Technology',CSCO:'Technology',AMAT:'Technology',MU:'Technology',LRCX:'Technology',KLAC:'Technology',ADI:'Technology',MRVL:'Technology',CDNS:'Technology',SNPS:'Technology',INTU:'Technology',HPQ:'Technology',HPE:'Technology',FTNT:'Technology',PANW:'Technology',CRWD:'Technology',KEYS:'Technology',TER:'Technology',SWKS:'Technology',QRVO:'Technology',MPWR:'Technology',ON:'Technology',NTAP:'Technology',STX:'Technology',WDC:'Technology',AKAM:'Technology',ZBRA:'Technology',GEN:'Technology',TRMB:'Technology',EPAM:'Technology',CTSH:'Technology',ACN:'Technology',IT:'Technology',GDDY:'Technology',DXC:'Technology',VRSN:'Technology',BR:'Technology',PYPL:'Technology',FSLR:'Technology',ENPH:'Technology',PLTR:'Technology',NET:'Technology',DDOG:'Technology',ZS:'Technology',WDAY:'Technology',ANET:'Technology',GLW:'Technology',TEL:'Technology',APH:'Technology',CDW:'Technology',FFIV:'Technology',
-  JPM:'Financial Services',BAC:'Financial Services',WFC:'Financial Services',GS:'Financial Services',MS:'Financial Services',BLK:'Financial Services',C:'Financial Services',AXP:'Financial Services',COF:'Financial Services',USB:'Financial Services',TFC:'Financial Services',PNC:'Financial Services',SCHW:'Financial Services',BNY:'Financial Services',STT:'Financial Services',MTB:'Financial Services',RF:'Financial Services',CFG:'Financial Services',HBAN:'Financial Services',KEY:'Financial Services',FITB:'Financial Services',ZION:'Financial Services',WRB:'Financial Services',ALL:'Financial Services',PGR:'Financial Services',MET:'Financial Services',PRU:'Financial Services',AFL:'Financial Services',AIG:'Financial Services',HIG:'Financial Services',LNC:'Financial Services',UNM:'Financial Services',GL:'Financial Services',CB:'Financial Services',TRV:'Financial Services',MRSH:'Financial Services',AON:'Financial Services',AJG:'Financial Services',CINF:'Financial Services',WTW:'Financial Services',RJF:'Financial Services',NTRS:'Financial Services',SEIC:'Financial Services',FDS:'Financial Services',ICE:'Financial Services',CME:'Financial Services',CBOE:'Financial Services',NDAQ:'Financial Services',SPGI:'Financial Services',MCO:'Financial Services',V:'Financial Services',MA:'Financial Services',SYF:'Financial Services',ALLY:'Financial Services',WEX:'Financial Services',SLM:'Financial Services',FNF:'Financial Services',FHN:'Financial Services',ERIE:'Financial Services',AIZ:'Financial Services',EG:'Financial Services',
-  JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',MRK:'Healthcare',ABBV:'Healthcare',TMO:'Healthcare',DHR:'Healthcare',ABT:'Healthcare',PFE:'Healthcare',BMY:'Healthcare',AMGN:'Healthcare',GILD:'Healthcare',MDT:'Healthcare',BSX:'Healthcare',SYK:'Healthcare',EW:'Healthcare',ISRG:'Healthcare',ZBH:'Healthcare',BAX:'Healthcare',BDX:'Healthcare',IDXX:'Healthcare',IQV:'Healthcare',LH:'Healthcare',DGX:'Healthcare',MTD:'Healthcare',ALGN:'Healthcare',HSIC:'Healthcare',VTRS:'Healthcare',MRNA:'Healthcare',BIO:'Healthcare',GEHC:'Healthcare',HCA:'Healthcare',UHS:'Healthcare',CNC:'Healthcare',CI:'Healthcare',HUM:'Healthcare',ELV:'Healthcare',CVS:'Healthcare',MOH:'Healthcare',RMD:'Healthcare',DXCM:'Healthcare',PODD:'Healthcare',INCY:'Healthcare',REGN:'Healthcare',VRTX:'Healthcare',BIIB:'Healthcare',ILMN:'Healthcare',A:'Healthcare',MCK:'Healthcare',CAH:'Healthcare',COR:'Healthcare',RVTY:'Healthcare',ZTS:'Healthcare',TECH:'Healthcare',STE:'Healthcare',
-  AMZN:'Consumer Cyclical',TSLA:'Consumer Cyclical',HD:'Consumer Cyclical',MCD:'Consumer Cyclical',NKE:'Consumer Cyclical',LOW:'Consumer Cyclical',SBUX:'Consumer Cyclical',BKNG:'Consumer Cyclical',TJX:'Consumer Cyclical',ROST:'Consumer Cyclical',CMG:'Consumer Cyclical',DHI:'Consumer Cyclical',LEN:'Consumer Cyclical',PHM:'Consumer Cyclical',PVH:'Consumer Cyclical',RL:'Consumer Cyclical',BBWI:'Consumer Cyclical',AZO:'Consumer Cyclical',ORLY:'Consumer Cyclical',GPC:'Consumer Cyclical',AN:'Consumer Cyclical',KMX:'Consumer Cyclical',APTV:'Consumer Cyclical',BWA:'Consumer Cyclical',F:'Consumer Cyclical',GM:'Consumer Cyclical',LVS:'Consumer Cyclical',MGM:'Consumer Cyclical',WYNN:'Consumer Cyclical',CZR:'Consumer Cyclical',HLT:'Consumer Cyclical',MAR:'Consumer Cyclical',H:'Consumer Cyclical',CCL:'Consumer Cyclical',RCL:'Consumer Cyclical',NCLH:'Consumer Cyclical',YUM:'Consumer Cyclical',DRI:'Consumer Cyclical',LYV:'Consumer Cyclical',ETSY:'Consumer Cyclical',EBAY:'Consumer Cyclical',W:'Consumer Cyclical',TPR:'Consumer Cyclical',CHDN:'Consumer Cyclical',QSR:'Consumer Cyclical',WING:'Consumer Cyclical',LULU:'Consumer Cyclical',POOL:'Consumer Cyclical',NVR:'Consumer Cyclical',MTH:'Consumer Cyclical',TOL:'Consumer Cyclical',HAS:'Consumer Cyclical',MAT:'Consumer Cyclical',
-  GOOGL:'Communication Services',GOOG:'Communication Services',META:'Communication Services',NFLX:'Communication Services',CMCSA:'Communication Services',T:'Communication Services',VZ:'Communication Services',TMUS:'Communication Services',WBD:'Communication Services',CHTR:'Communication Services',OMC:'Communication Services',TTWO:'Communication Services',MTCH:'Communication Services',PPLI:'Communication Services',PINS:'Communication Services',SNAP:'Communication Services',FOXA:'Communication Services',FOX:'Communication Services',NWS:'Communication Services',NWSA:'Communication Services',DIS:'Communication Services',PARA:'Communication Services',
-  PG:'Consumer Defensive',KO:'Consumer Defensive',PEP:'Consumer Defensive',COST:'Consumer Defensive',WMT:'Consumer Defensive',PM:'Consumer Defensive',MO:'Consumer Defensive',MDLZ:'Consumer Defensive',CL:'Consumer Defensive',EL:'Consumer Defensive',KMB:'Consumer Defensive',CHD:'Consumer Defensive',CLX:'Consumer Defensive',SJM:'Consumer Defensive',CAG:'Consumer Defensive',CPB:'Consumer Defensive',GIS:'Consumer Defensive',KHC:'Consumer Defensive',HSY:'Consumer Defensive',MKC:'Consumer Defensive',HRL:'Consumer Defensive',TSN:'Consumer Defensive',LW:'Consumer Defensive',INGR:'Consumer Defensive',STZ:'Consumer Defensive',TAP:'Consumer Defensive',SYY:'Consumer Defensive',KR:'Consumer Defensive',CASY:'Consumer Defensive',USFD:'Consumer Defensive',
-  XOM:'Energy',CVX:'Energy',COP:'Energy',EOG:'Energy',SLB:'Energy',MPC:'Energy',VLO:'Energy',PSX:'Energy',OXY:'Energy',DVN:'Energy',BKR:'Energy',HAL:'Energy',FANG:'Energy',APA:'Energy',EQT:'Energy',RRC:'Energy',AR:'Energy',NOV:'Energy',TRGP:'Energy',OKE:'Energy',KMI:'Energy',WMB:'Energy',LNG:'Energy',CQP:'Energy',
-  RTX:'Industrials',HON:'Industrials',UPS:'Industrials',CAT:'Industrials',DE:'Industrials',BA:'Industrials',LMT:'Industrials',NOC:'Industrials',GD:'Industrials',TXT:'Industrials',HWM:'Industrials',GE:'Industrials',EMR:'Industrials',ETN:'Industrials',ROK:'Industrials',PH:'Industrials',ITW:'Industrials',IR:'Industrials',FTV:'Industrials',AME:'Industrials',ROP:'Industrials',LDOS:'Industrials',SAIC:'Industrials',TDG:'Industrials',SWK:'Industrials',SNA:'Industrials',PNR:'Industrials',FAST:'Industrials',GWW:'Industrials',XYL:'Industrials',NDSN:'Industrials',GNRC:'Industrials',EFX:'Industrials',ADP:'Industrials',PAYX:'Industrials',CTAS:'Industrials',UNP:'Industrials',NSC:'Industrials',CSX:'Industrials',FDX:'Industrials',CHRW:'Industrials',EXPD:'Industrials',JBHT:'Industrials',R:'Industrials',AAL:'Industrials',DAL:'Industrials',UAL:'Industrials',LUV:'Industrials',ALK:'Industrials',GEV:'Industrials',AXON:'Industrials',PWR:'Industrials',VRT:'Industrials',MTZ:'Industrials',J:'Industrials',WAB:'Industrials',OTIS:'Industrials',CARR:'Industrials',TT:'Industrials',CPRT:'Industrials',VRSK:'Industrials',RSG:'Industrials',WM:'Industrials',FLR:'Industrials',JCI:'Industrials',HUBB:'Industrials',MAS:'Industrials',LHX:'Industrials',
-  LIN:'Basic Materials',APD:'Basic Materials',SHW:'Basic Materials',DD:'Basic Materials',DOW:'Basic Materials',CTVA:'Basic Materials',NUE:'Basic Materials',STLD:'Basic Materials',RS:'Basic Materials',CF:'Basic Materials',MOS:'Basic Materials',FMC:'Basic Materials',PPG:'Basic Materials',ECL:'Basic Materials',IFF:'Basic Materials',BALL:'Basic Materials',PKG:'Basic Materials',IP:'Basic Materials',SW:'Basic Materials',AVY:'Basic Materials',ALB:'Basic Materials',FCX:'Basic Materials',NEM:'Basic Materials',AA:'Basic Materials',CE:'Basic Materials',EMN:'Basic Materials',RPM:'Basic Materials',
-  NEE:'Utilities',D:'Utilities',DUK:'Utilities',SO:'Utilities',AEP:'Utilities',EXC:'Utilities',XEL:'Utilities',SRE:'Utilities',ES:'Utilities',WEC:'Utilities',ETR:'Utilities',FE:'Utilities',PPL:'Utilities',CMS:'Utilities',LNT:'Utilities',EVRG:'Utilities',AEE:'Utilities',PNW:'Utilities',NI:'Utilities',ATO:'Utilities',AWK:'Utilities',CNP:'Utilities',
-  AMT:'Real Estate',PLD:'Real Estate',CCI:'Real Estate',EQIX:'Real Estate',PSA:'Real Estate',SPG:'Real Estate',O:'Real Estate',DLR:'Real Estate',WY:'Real Estate',VMRK:'Real Estate',ESS:'Real Estate',MAA:'Real Estate',UDR:'Real Estate',CPT:'Real Estate',INVH:'Real Estate',AMH:'Real Estate',WELL:'Real Estate',VTR:'Real Estate',DOC:'Real Estate',HR:'Real Estate',OHI:'Real Estate',VICI:'Real Estate',GLPI:'Real Estate',EXR:'Real Estate',IRM:'Real Estate',ARE:'Real Estate',BXP:'Real Estate',SLG:'Real Estate',KIM:'Real Estate',REG:'Real Estate',FRT:'Real Estate',NNN:'Real Estate',CBRE:'Real Estate',SBAC:'Real Estate',HST:'Real Estate'
-};
+const SECTOR_MAP = {'A':'Healthcare','AAPL':'Technology','ABBV':'Healthcare','ABNB':'Consumer Cyclical','ABT':'Healthcare','ACGL':'Financial Services','ACN':'Technology','ADBE':'Technology','ADI':'Technology','ADM':'Consumer Defensive','ADP':'Industrials','ADSK':'Technology','AEE':'Utilities','AEP':'Utilities','AES':'Utilities','AFL':'Financial Services','AIG':'Financial Services','AIZ':'Financial Services','AJG':'Financial Services','AKAM':'Technology','ALB':'Basic Materials','ALGN':'Healthcare','ALL':'Financial Services','ALLE':'Industrials','AMAT':'Technology','AMCR':'Basic Materials','AMD':'Technology','AME':'Industrials','AMGN':'Healthcare','AMP':'Financial Services','AMT':'Real Estate','AMZN':'Consumer Cyclical','ANET':'Technology','AON':'Financial Services','AOS':'Industrials','APA':'Energy','APD':'Basic Materials','APH':'Technology','APO':'Financial Services','APP':'Communication Services','APTV':'Consumer Cyclical','ARE':'Real Estate','ARES':'Financial Services','ATO':'Utilities','AVGO':'Technology','AVY':'Basic Materials','AWK':'Utilities','AXON':'Industrials','AXP':'Financial Services','AZO':'Consumer Cyclical','BA':'Industrials','BAC':'Financial Services','BALL':'Basic Materials','BAX':'Healthcare','BBY':'Consumer Cyclical','BDX':'Healthcare','BE':'Industrials','BEN':'Financial Services','BF-B':'Consumer Defensive','BG':'Consumer Defensive','BIIB':'Healthcare','BKNG':'Consumer Cyclical','BKR':'Energy','BLK':'Financial Services','BMY':'Healthcare','BNY':'Financial Services','BR':'Industrials','BRK-B':'Financial Services','BRO':'Financial Services','BSX':'Healthcare','BX':'Financial Services','BXP':'Real Estate','C':'Financial Services','CAH':'Healthcare','CARR':'Industrials','CASY':'Consumer Defensive','CAT':'Industrials','CB':'Financial Services','CBOE':'Financial Services','CBRE':'Real Estate','CCI':'Real Estate','CCL':'Consumer Cyclical','CDNS':'Technology','CDW':'Technology','CEG':'Utilities','CF':'Basic Materials','CFG':'Financial Services','CHD':'Consumer Defensive','CHRW':'Industrials','CHTR':'Communication Services','CI':'Healthcare','CIEN':'Technology','CINF':'Financial Services','CL':'Consumer Defensive','CLX':'Consumer Defensive','CMCSA':'Communication Services','CME':'Financial Services','CMG':'Consumer Cyclical','CMI':'Industrials','CMS':'Utilities','CNC':'Healthcare','CNP':'Utilities','COF':'Financial Services','COHR':'Technology','COIN':'Financial Services','COO':'Healthcare','COP':'Energy','COR':'Healthcare','COST':'Consumer Defensive','CPAY':'Financial Services','CPRT':'Industrials','CPT':'Real Estate','CRH':'Basic Materials','CRL':'Healthcare','CRM':'Technology','CRWD':'Technology','CSCO':'Technology','CSGP':'Real Estate','CSX':'Industrials','CTAS':'Industrials','CTSH':'Technology','CVNA':'Consumer Cyclical','CVS':'Healthcare','CVX':'Energy','D':'Utilities','DAL':'Industrials','DASH':'Consumer Cyclical','DD':'Industrials','DDOG':'Technology','DE':'Industrials','DECK':'Consumer Cyclical','DELL':'Technology','DG':'Consumer Defensive','DGX':'Healthcare','DHI':'Consumer Cyclical','DHR':'Healthcare','DIS':'Communication Services','DLR':'Real Estate','DLTR':'Consumer Defensive','DOC':'Real Estate','DOV':'Industrials','DOW':'Basic Materials','DPZ':'Consumer Cyclical','DRI':'Consumer Cyclical','DTE':'Utilities','DUK':'Utilities','DVA':'Healthcare','DVN':'Energy','DXCM':'Healthcare','EBAY':'Consumer Cyclical','ECHO':'Communication Services','ECL':'Basic Materials','ED':'Utilities','EFX':'Industrials','EG':'Financial Services','EIX':'Utilities','EL':'Consumer Defensive','ELV':'Healthcare','EME':'Industrials','EMR':'Industrials','EOG':'Energy','EQIX':'Real Estate','EQT':'Energy','ERIE':'Financial Services','ES':'Utilities','ESS':'Real Estate','ETN':'Industrials','ETR':'Utilities','EVRG':'Utilities','EW':'Healthcare','EXC':'Utilities','EXE':'Energy','EXPD':'Industrials','EXPE':'Consumer Cyclical','EXR':'Real Estate','F':'Consumer Cyclical','FANG':'Energy','FAST':'Industrials','FCX':'Basic Materials','FDS':'Financial Services','FDX':'Industrials','FDXF':'Industrials','FE':'Utilities','FERG':'Industrials','FFIV':'Technology','FICO':'Technology','FIS':'Financial Services','FISV':'Financial Services','FITB':'Financial Services','FIX':'Industrials','FLEX':'Technology','FOX':'Communication Services','FOXA':'Communication Services','FRT':'Real Estate','FSLR':'Technology','FTNT':'Technology','FTV':'Industrials','GD':'Industrials','GDDY':'Technology','GE':'Industrials','GEHC':'Healthcare','GEN':'Technology','GEV':'Industrials','GILD':'Healthcare','GIS':'Consumer Defensive','GL':'Financial Services','GLW':'Technology','GM':'Consumer Cyclical','GNRC':'Industrials','GOOG':'Communication Services','GOOGL':'Communication Services','GPC':'Consumer Cyclical','GPN':'Financial Services','GRMN':'Consumer Cyclical','GS':'Financial Services','GWW':'Industrials','HAL':'Energy','HAS':'Consumer Cyclical','HBAN':'Financial Services','HCA':'Healthcare','HD':'Consumer Cyclical','HIG':'Financial Services','HII':'Industrials','HLT':'Consumer Cyclical','HON':'Industrials','HONA':'Industrials','HOOD':'Financial Services','HPE':'Technology','HPQ':'Technology','HRL':'Consumer Defensive','HSIC':'Healthcare','HST':'Real Estate','HSY':'Consumer Defensive','HUBB':'Industrials','HUM':'Healthcare','HWM':'Industrials','IBKR':'Financial Services','IBM':'Technology','ICE':'Financial Services','IDXX':'Healthcare','IEX':'Industrials','IFF':'Basic Materials','ILMN':'Healthcare','INCY':'Healthcare','INTC':'Technology','INTU':'Technology','INVH':'Real Estate','IP':'Basic Materials','IQV':'Healthcare','IR':'Industrials','IRM':'Real Estate','ISRG':'Healthcare','IT':'Technology','ITW':'Industrials','IVZ':'Financial Services','J':'Industrials','JBHT':'Industrials','JBL':'Technology','JCI':'Industrials','JKHY':'Financial Services','JNJ':'Healthcare','JPM':'Financial Services','KDP':'Consumer Defensive','KEY':'Financial Services','KEYS':'Technology','KHC':'Consumer Defensive','KIM':'Real Estate','KKR':'Financial Services','KLAC':'Technology','KMB':'Consumer Defensive','KMI':'Energy','KO':'Consumer Defensive','KR':'Consumer Defensive','KVUE':'Consumer Defensive','L':'Financial Services','LDOS':'Industrials','LEN':'Consumer Cyclical','LH':'Healthcare','LHX':'Industrials','LII':'Industrials','LIN':'Basic Materials','LITE':'Technology','LLY':'Healthcare','LMT':'Industrials','LNT':'Utilities','LOW':'Consumer Cyclical','LRCX':'Technology','LULU':'Consumer Cyclical','LUV':'Industrials','LVS':'Consumer Cyclical','LYB':'Basic Materials','LYV':'Communication Services','MA':'Financial Services','MAA':'Real Estate','MAR':'Consumer Cyclical','MAS':'Industrials','MCD':'Consumer Cyclical','MCHP':'Technology','MCK':'Healthcare','MCO':'Financial Services','MDLZ':'Consumer Defensive','MDT':'Healthcare','MET':'Financial Services','META':'Communication Services','MGM':'Consumer Cyclical','MKC':'Consumer Defensive','MLM':'Basic Materials','MMM':'Industrials','MNST':'Consumer Defensive','MO':'Consumer Defensive','MOS':'Basic Materials','MPC':'Energy','MPWR':'Technology','MRK':'Healthcare','MRNA':'Healthcare','MRSH':'Financial Services','MRVL':'Technology','MS':'Financial Services','MSCI':'Financial Services','MSFT':'Technology','MSI':'Technology','MTB':'Financial Services','MTD':'Healthcare','MU':'Technology','NCLH':'Consumer Cyclical','NDAQ':'Financial Services','NDSN':'Industrials','NEE':'Utilities','NEM':'Basic Materials','NFLX':'Communication Services','NI':'Utilities','NKE':'Consumer Cyclical','NOC':'Industrials','NOW':'Technology','NRG':'Utilities','NSC':'Industrials','NTAP':'Technology','NTRS':'Financial Services','NUE':'Basic Materials','NVDA':'Technology','NVR':'Consumer Cyclical','NWS':'Communication Services','NWSA':'Communication Services','NXPI':'Technology','O':'Real Estate','ODFL':'Industrials','OKE':'Energy','OMC':'Communication Services','ON':'Technology','ORCL':'Technology','ORLY':'Consumer Cyclical','OTIS':'Industrials','OXY':'Energy','P':'Technology','PANW':'Technology','PAYX':'Industrials','PCAR':'Industrials','PCG':'Utilities','PEG':'Utilities','PEP':'Consumer Defensive','PFE':'Healthcare','PFG':'Financial Services','PG':'Consumer Defensive','PGR':'Financial Services','PH':'Industrials','PHM':'Consumer Cyclical','PKG':'Basic Materials','PLD':'Real Estate','PLTR':'Technology','PM':'Consumer Defensive','PNC':'Financial Services','PNR':'Industrials','PNW':'Utilities','PODD':'Healthcare','PPG':'Basic Materials','PPL':'Utilities','PRU':'Financial Services','PSA':'Real Estate','PSX':'Energy','PTC':'Technology','PWR':'Industrials','PYPL':'Financial Services','Q':'Technology','QCOM':'Technology','RCL':'Consumer Cyclical','RDDT':'Communication Services','REG':'Real Estate','REGN':'Healthcare','RF':'Financial Services','RJF':'Financial Services','RL':'Consumer Cyclical','RMD':'Healthcare','ROK':'Industrials','ROL':'Industrials','ROP':'Technology','ROST':'Consumer Cyclical','RSG':'Industrials','RTX':'Industrials','RVTY':'Healthcare','SBAC':'Real Estate','SBUX':'Consumer Cyclical','SCHW':'Financial Services','SHW':'Basic Materials','SJM':'Consumer Defensive','SKYD':'Communication Services','SLB':'Energy','SMCI':'Technology','SNA':'Industrials','SNDK':'Technology','SNPS':'Technology','SO':'Utilities','SOLV':'Healthcare','SPG':'Real Estate','SPGI':'Financial Services','SRE':'Utilities','STE':'Healthcare','STLD':'Basic Materials','STT':'Financial Services','STX':'Technology','STZ':'Consumer Defensive','SW':'Basic Materials','SWK':'Industrials','SWKS':'Technology','SYF':'Financial Services','SYK':'Healthcare','SYY':'Consumer Defensive','T':'Communication Services','TDG':'Industrials','TDY':'Technology','TECH':'Healthcare','TEL':'Technology','TER':'Technology','TFC':'Financial Services','TGT':'Consumer Defensive','TJX':'Consumer Cyclical','TKO':'Communication Services','TMO':'Healthcare','TMUS':'Communication Services','TPL':'Energy','TPR':'Consumer Cyclical','TRGP':'Energy','TRMB':'Technology','TROW':'Financial Services','TRV':'Financial Services','TSCO':'Consumer Cyclical','TSLA':'Consumer Cyclical','TSN':'Consumer Defensive','TT':'Industrials','TTWO':'Communication Services','TWLO':'Technology','TXN':'Technology','TXT':'Industrials','TYL':'Technology','UAL':'Industrials','UBER':'Industrials','UDR':'Real Estate','UHS':'Healthcare','ULTA':'Consumer Cyclical','UNH':'Healthcare','UNP':'Industrials','UPS':'Industrials','URI':'Industrials','USB':'Financial Services','V':'Financial Services','VEEV':'Healthcare','VICI':'Real Estate','VLO':'Energy','VLTO':'Industrials','VMC':'Basic Materials','VMRK':'Real Estate','VRSK':'Industrials','VRSN':'Technology','VRT':'Industrials','VRTX':'Healthcare','VST':'Utilities','VTR':'Real Estate','VTRS':'Healthcare','VYLR':'Consumer Defensive','VZ':'Communication Services','WAB':'Industrials','WAT':'Healthcare','WDAY':'Technology','WDC':'Technology','WEC':'Utilities','WELL':'Real Estate','WFC':'Financial Services','WM':'Industrials','WMB':'Energy','WMT':'Consumer Defensive','WRB':'Financial Services','WSM':'Consumer Cyclical','WST':'Healthcare','WTW':'Financial Services','WY':'Real Estate','WYNN':'Consumer Cyclical','XEL':'Utilities','XOM':'Energy','XYL':'Industrials','XYZ':'Financial Services','YUM':'Consumer Cyclical','ZBH':'Healthcare','ZBRA':'Technology','ZTS':'Healthcare'};
 
-const TKS = ['AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','QCOM','TXN','INTC','IBM','ADBE','NOW','CSCO','AMAT','MU','LRCX','KLAC','ADI','MRVL','CDNS','SNPS','INTU','HPQ','HPE','FTNT','PANW','CRWD','KEYS','TER','SWKS','QRVO','MPWR','ON','NTAP','STX','WDC','AKAM','ZBRA','GEN','TRMB','EPAM','CTSH','ACN','IT','GDDY','DXC','VRSN','BR','PYPL','FSLR','ENPH','PLTR','NET','DDOG','ZS','WDAY','ANET','GLW','TEL','APH','CDW','FFIV','JPM','BAC','WFC','GS','MS','BLK','C','AXP','COF','USB','TFC','PNC','SCHW','BNY','STT','MTB','RF','CFG','HBAN','KEY','FITB','ZION','WRB','ALL','PGR','MET','PRU','AFL','AIG','HIG','LNC','UNM','GL','CB','TRV','MRSH','AON','AJG','CINF','WTW','RJF','NTRS','SEIC','FDS','ICE','CME','CBOE','NDAQ','SPGI','MCO','V','MA','SYF','ALLY','WEX','SLM','FNF','FHN','ERIE','AIZ','EG','JNJ','UNH','LLY','MRK','ABBV','TMO','DHR','ABT','PFE','BMY','AMGN','GILD','MDT','BSX','SYK','EW','ISRG','ZBH','BAX','BDX','IDXX','IQV','LH','DGX','MTD','ALGN','HSIC','VTRS','MRNA','BIO','GEHC','HCA','UHS','CNC','CI','HUM','ELV','CVS','MOH','RMD','DXCM','PODD','INCY','REGN','VRTX','BIIB','ILMN','A','MCK','CAH','COR','RVTY','ZTS','TECH','STE','AMZN','TSLA','HD','MCD','NKE','LOW','SBUX','BKNG','TJX','ROST','CMG','DHI','LEN','PHM','PVH','RL','BBWI','AZO','ORLY','GPC','AN','KMX','APTV','BWA','F','GM','LVS','MGM','WYNN','CZR','HLT','MAR','H','CCL','RCL','NCLH','YUM','DRI','LYV','ETSY','EBAY','W','TPR','CHDN','QSR','WING','LULU','POOL','NVR','MTH','TOL','HAS','MAT','GOOGL','META','NFLX','CMCSA','T','VZ','TMUS','WBD','CHTR','OMC','TTWO','MTCH','PPLI','PINS','SNAP','FOXA','FOX','NWS','NWSA','DIS','PARA','PG','KO','PEP','COST','WMT','PM','MO','MDLZ','CL','EL','KMB','CHD','CLX','SJM','CAG','CPB','GIS','KHC','HSY','MKC','HRL','TSN','LW','INGR','STZ','TAP','SYY','KR','CASY','USFD','XOM','CVX','COP','EOG','SLB','MPC','VLO','PSX','OXY','DVN','BKR','HAL','FANG','APA','EQT','RRC','AR','NOV','TRGP','OKE','KMI','WMB','LNG','CQP','RTX','HON','UPS','CAT','DE','BA','LMT','NOC','GD','TXT','HWM','GE','EMR','ETN','ROK','PH','ITW','IR','FTV','AME','ROP','LDOS','SAIC','TDG','SWK','SNA','PNR','FAST','GWW','XYL','NDSN','GNRC','EFX','ADP','PAYX','CTAS','UNP','NSC','CSX','FDX','CHRW','EXPD','JBHT','R','AAL','DAL','UAL','LUV','ALK','GEV','AXON','PWR','VRT','MTZ','J','WAB','OTIS','CARR','TT','CPRT','VRSK','RSG','WM','FLR','JCI','HUBB','MAS','LHX','LIN','APD','SHW','DD','DOW','CTVA','NUE','STLD','RS','CF','MOS','FMC','PPG','ECL','IFF','BALL','PKG','IP','SW','AVY','ALB','FCX','NEM','AA','CE','EMN','RPM','NEE','D','DUK','SO','AEP','EXC','XEL','SRE','ES','WEC','ETR','FE','PPL','CMS','LNT','EVRG','AEE','PNW','NI','ATO','AWK','CNP','AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WY','VMRK','ESS','MAA','UDR','CPT','INVH','AMH','WELL','VTR','DOC','HR','OHI','VICI','GLPI','EXR','IRM','ARE','BXP','SLG','KIM','REG','FRT','NNN','CBRE','SBAC','HST'];
+let TKS = ['A','AAPL','ABBV','ABNB','ABT','ACGL','ACN','ADBE','ADI','ADM','ADP','ADSK','AEE','AEP','AES','AFL','AIG','AIZ','AJG','AKAM','ALB','ALGN','ALL','ALLE','AMAT','AMCR','AMD','AME','AMGN','AMP','AMT','AMZN','ANET','AON','AOS','APA','APD','APH','APO','APP','APTV','ARE','ARES','ATO','AVGO','AVY','AWK','AXON','AXP','AZO','BA','BAC','BALL','BAX','BBY','BDX','BE','BEN','BF-B','BG','BIIB','BKNG','BKR','BLK','BMY','BNY','BR','BRK-B','BRO','BSX','BX','BXP','C','CAH','CARR','CASY','CAT','CB','CBOE','CBRE','CCI','CCL','CDNS','CDW','CEG','CF','CFG','CHD','CHRW','CHTR','CI','CIEN','CINF','CL','CLX','CMCSA','CME','CMG','CMI','CMS','CNC','CNP','COF','COHR','COIN','COO','COP','COR','COST','CPAY','CPRT','CPT','CRH','CRL','CRM','CRWD','CSCO','CSGP','CSX','CTAS','CTSH','CVNA','CVS','CVX','D','DAL','DASH','DD','DDOG','DE','DECK','DELL','DG','DGX','DHI','DHR','DIS','DLR','DLTR','DOC','DOV','DOW','DPZ','DRI','DTE','DUK','DVA','DVN','DXCM','EBAY','ECHO','ECL','ED','EFX','EG','EIX','EL','ELV','EME','EMR','EOG','EQIX','EQT','ERIE','ES','ESS','ETN','ETR','EVRG','EW','EXC','EXE','EXPD','EXPE','EXR','F','FANG','FAST','FCX','FDS','FDX','FDXF','FE','FERG','FFIV','FICO','FIS','FISV','FITB','FIX','FLEX','FOX','FOXA','FRT','FSLR','FTNT','FTV','GD','GDDY','GE','GEHC','GEN','GEV','GILD','GIS','GL','GLW','GM','GNRC','GOOG','GOOGL','GPC','GPN','GRMN','GS','GWW','HAL','HAS','HBAN','HCA','HD','HIG','HII','HLT','HON','HONA','HOOD','HPE','HPQ','HRL','HSIC','HST','HSY','HUBB','HUM','HWM','IBKR','IBM','ICE','IDXX','IEX','IFF','ILMN','INCY','INTC','INTU','INVH','IP','IQV','IR','IRM','ISRG','IT','ITW','IVZ','J','JBHT','JBL','JCI','JKHY','JNJ','JPM','KDP','KEY','KEYS','KHC','KIM','KKR','KLAC','KMB','KMI','KO','KR','KVUE','L','LDOS','LEN','LH','LHX','LII','LIN','LITE','LLY','LMT','LNT','LOW','LRCX','LULU','LUV','LVS','LYB','LYV','MA','MAA','MAR','MAS','MCD','MCHP','MCK','MCO','MDLZ','MDT','MET','META','MGM','MKC','MLM','MMM','MNST','MO','MOS','MPC','MPWR','MRK','MRNA','MRSH','MRVL','MS','MSCI','MSFT','MSI','MTB','MTD','MU','NCLH','NDAQ','NDSN','NEE','NEM','NFLX','NI','NKE','NOC','NOW','NRG','NSC','NTAP','NTRS','NUE','NVDA','NVR','NWS','NWSA','NXPI','O','ODFL','OKE','OMC','ON','ORCL','ORLY','OTIS','OXY','P','PANW','PAYX','PCAR','PCG','PEG','PEP','PFE','PFG','PG','PGR','PH','PHM','PKG','PLD','PLTR','PM','PNC','PNR','PNW','PODD','PPG','PPL','PRU','PSA','PSX','PTC','PWR','PYPL','Q','QCOM','RCL','RDDT','REG','REGN','RF','RJF','RL','RMD','ROK','ROL','ROP','ROST','RSG','RTX','RVTY','SBAC','SBUX','SCHW','SHW','SJM','SKYD','SLB','SMCI','SNA','SNDK','SNPS','SO','SOLV','SPG','SPGI','SRE','STE','STLD','STT','STX','STZ','SW','SWK','SWKS','SYF','SYK','SYY','T','TDG','TDY','TECH','TEL','TER','TFC','TGT','TJX','TKO','TMO','TMUS','TPL','TPR','TRGP','TRMB','TROW','TRV','TSCO','TSLA','TSN','TT','TTWO','TWLO','TXN','TXT','TYL','UAL','UBER','UDR','UHS','ULTA','UNH','UNP','UPS','URI','USB','V','VEEV','VICI','VLO','VLTO','VMC','VMRK','VRSK','VRSN','VRT','VRTX','VST','VTR','VTRS','VYLR','VZ','WAB','WAT','WDAY','WDC','WEC','WELL','WFC','WM','WMB','WMT','WRB','WSM','WST','WTW','WY','WYNN','XEL','XOM','XYL','XYZ','YUM','ZBH','ZBRA','ZTS'];   // respaldo: al cargar se reemplaza con spx.json (composición actual)
 
 const SI = {'Technology':['IT','s-IT'],'Healthcare':['HC','s-HC'],'Financial Services':['FIN','s-FI'],'Consumer Cyclical':['C.DIS','s-CD'],'Consumer Defensive':['C.STP','s-CS'],'Energy':['ENRG','s-EN'],'Industrials':['IND','s-IN'],'Basic Materials':['MAT','s-MA'],'Utilities':['UTIL','s-UT'],'Real Estate':['RE','s-RE'],'Communication Services':['COMM','s-CO']};
 
@@ -1321,6 +1309,17 @@ function fundAsOfLabel() {
   return 'Fundamentals al ' + new Date(FUND_AS_OF).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'});
 }
 
+// composición del S&P 500: spx.json (lo actualiza el proceso semanal de múltiplos); si falla, queda la lista fija
+let SPX_INFO = {}, spxLoading = null;
+function loadSpx() {
+  if (!spxLoading) spxLoading = fetch('spx.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => {
+    if (!j || !Array.isArray(j.list) || j.list.length < 400) return;
+    TKS = j.list.map(x => x.s);
+    j.list.forEach(x => { SECTOR_MAP[x.s] = x.sec; SPX_INFO[x.s] = x; });
+  }).catch(() => {});
+  return spxLoading;
+}
+
 async function loadData() {
   const btn=document.getElementById('rfBtn'); btn.disabled=true;
   document.getElementById('pWrap').style.display='block';
@@ -1339,6 +1338,7 @@ async function loadData() {
     if(a<2){ pp(4+a*4,'Reintentando...'); await sl(4000); }
   }
   if(!connOk){ showErr('Sin datos de precios', connMsg); btn.disabled=false; return; }
+  await loadSpx();
   rows=[];
   const tks=[...new Set(TKS)];
   const bats=[]; for(let i=0;i<tks.length;i+=20) bats.push(tks.slice(i,i+20));
@@ -2852,7 +2852,7 @@ function renderPebg(data) {
   // el gráfico muestra más años que la ventana del promedio
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
   const zKey = data.symbol + '|' + pebgYears + '|' + pebgBand;
-  if (zKey !== pebgZoomKey) { pebgZoom = null; pebgZoomKey = zKey; }
+  if (zKey !== pebgZoomKey) { pebgZoom = null; pebgYExp = 0; pebgZoomKey = zKey; }
   pebgView = { full, metric: pebgMetric, labels, years: pebgYears, fija, trim, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
     prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
@@ -2883,14 +2883,26 @@ function setPebgScale(sc) {
   syncPebgScaleBtns();
   drawPebgChart();
 }
+// límites del desplazamiento: en Precio, desde el primer precio (aunque todavía no haya EPS); en Múltiplo, desde el primer P/E
 function pebgBounds() {
-  const { full, chartYears } = pebgView;
-  const lo = full[0].date, hi = full[full.length - 1].date;
-  return { lo, hi, def: [Math.max(lo, hi - chartYears * YR_S), hi] };
+  const { full, chartYears, prices } = pebgView;
+  const p0 = prices && prices.length ? prices[0].date : full[0].date;
+  const lo = pebgAxis === 'mult' ? full[0].date : Math.min(full[0].date, p0), hi = full[full.length - 1].date;
+  return { lo, hi, def: [Math.max(full[0].date, hi - chartYears * YR_S), hi] };
 }
-const pebgCurWindow = () => pebgZoom || pebgBounds().def;
+function pebgCurWindow() {
+  const B = pebgBounds();
+  if (!pebgZoom) return B.def;
+  let [a, b] = pebgZoom;
+  const span = Math.min(b - a, B.hi - B.lo);
+  if (a < B.lo) { a = B.lo; b = a + span; }
+  if (b > B.hi) { b = B.hi; a = b - span; }
+  return [Math.max(B.lo, a), b];
+}
+// alejar más allá de toda la historia agranda el eje vertical hasta que entren todas las bandas (0 = recorte normal, 1 = todo)
+let pebgYExp = 0;
 function pebgRedraw() {
-  const r = document.getElementById('pebgReset'); if (r) r.disabled = !pebgZoom;
+  const r = document.getElementById('pebgReset'); if (r) r.disabled = !pebgZoom && !pebgYExp;
   cancelAnimationFrame(pebgRaf); pebgRaf = requestAnimationFrame(() => drawPebgChart());
 }
 function setPebgWindow(a, b) {
@@ -2905,11 +2917,15 @@ function setPebgWindow(a, b) {
 }
 function pebgZoomBy(f, tc) {
   if (!pebgView) return;
+  const { lo, hi } = pebgBounds();
   const [a, b] = pebgCurWindow();
+  const k = Math.log(f) / Math.log(3);
+  if (f > 1 && b - a >= hi - lo - 86400) { pebgYExp = Math.min(1, pebgYExp + k); pebgRedraw(); return; }   // ya se ve toda la historia
+  if (f < 1 && pebgYExp > 0) { pebgYExp = Math.max(0, pebgYExp + k); pebgRedraw(); return; }               // primero se achica el eje vertical
   if (tc == null) tc = (a + b) / 2;
   setPebgWindow(tc - (tc - a) * f, tc + (b - tc) * f);
 }
-function resetPebgZoom() { pebgZoom = null; pebgRedraw(); }
+function resetPebgZoom() { pebgZoom = null; pebgYExp = 0; pebgRedraw(); }
 
 // arrastrar mueve la ventana; rueda, pellizco o los botones la agrandan o achican; doble clic vuelve al período
 function bindPebgCanvas(canvas) {
@@ -2925,16 +2941,16 @@ function bindPebgCanvas(canvas) {
     else if (pebgPtr.size === 2) {
       const xs = [...pebgPtr.values()];
       pebgDrag = null;
-      pebgPinch = { d: Math.max(10, Math.abs(xs[0] - xs[1])), a, b, tc: g.tAt((xs[0] + xs[1]) / 2) };
+      pebgPinch = { d: Math.max(10, Math.abs(xs[0] - xs[1])), tc: g.tAt((xs[0] + xs[1]) / 2) };
     }
   });
   canvas.addEventListener('pointermove', e => {
     const g = pebgGeom; if (!g) return;
     if (pebgPtr.has(e.pointerId)) pebgPtr.set(e.pointerId, e.clientX);
     if (pebgPinch && pebgPtr.size >= 2) {
-      const xs = [...pebgPtr.values()], f = pebgPinch.d / Math.max(10, Math.abs(xs[0] - xs[1]));
-      const { a, b, tc } = pebgPinch;
-      g.hideTip(); setPebgWindow(tc - (tc - a) * f, tc + (b - tc) * f);
+      const xs = [...pebgPtr.values()], d = Math.max(10, Math.abs(xs[0] - xs[1])), f = pebgPinch.d / d;
+      pebgPinch.d = d;
+      g.hideTip(); pebgZoomBy(f, pebgPinch.tc);
       return;
     }
     if (pebgDrag) {
@@ -3012,19 +3028,18 @@ function drawPebgChart(hoverT) {
     pebgGeom = { cW: cW0, tAt: clientX => t0 + (clientX - rectOf().left - 62) / cW0 * (t1 - t0), hideTip: () => {}, leave: () => {}, hover: () => {} };
   };
   const series = inWin(full);
-  if (series.filter(visible).length < 2) return empty('Sin datos en este tramo');
-  const px = inWin((prices || []).filter(p => p.date >= full[0].date));
+  const px = inWin(prices || []);
   const priceLine = mv ? series.filter(p => { const v = yOf(p); return v != null && v > 0 && isFinite(v); }) : (px.filter(visible).length > 1 ? px : series);
   const lineVis = priceLine.filter(visible);
-  if (lineVis.length < 2) return empty(peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : 'Sin P/E positivo en este tramo');
+  if (lineVis.length < 2) return empty(!mv ? 'Sin datos en este tramo' : peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : 'Sin P/E positivo en este tramo');
 
   const cols = bandColors();
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
   const PAD = { top: 46, right: 78, bottom: 30, left: 62 };
   const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom;
   // eje vertical: manda la línea principal, que se ve entera (en lineal se ignora el 0,5% más alto, picos de
-  // EPS casi cero). Las bandas pueden ampliar el eje hasta un 60% del rango de la línea (en log, el doble o la
-  // mitad); lo que pasa de ahí se corta, para que una banda que se dispara no aplaste el gráfico.
+  // EPS casi cero). Las bandas pueden ampliar el eje hasta otro rango completo de la línea (en log, el triple o
+  // un tercio); lo que pasa de ahí se corta, salvo que se aleje más allá de toda la historia (pebgYExp).
   const wantLog = pebgScale === 'log';
   const lineVals = lineVis.map(yOf);
   const sortedL = lineVals.slice().sort((a, b) => a - b);
@@ -3032,9 +3047,17 @@ function drawPebgChart(hoverT) {
   const lineRange = [yMin, yMax];
   let bMin = Infinity, bMax = -Infinity;
   series.forEach(p => { if (!visible(p)) return; for (let b = 0; b < 5; b++) { const v = bandOf(p, b); if (v != null && v > 0) { if (v < bMin) bMin = v; if (v > bMax) bMax = v; } } });
+  let fullRange = lineRange.slice();
   if (isFinite(bMin)) {
-    if (wantLog) { yMin = Math.max(Math.min(yMin, bMin), lineRange[0] / 2); yMax = Math.min(Math.max(yMax, bMax), lineRange[1] * 2); }
-    else { const r = lineRange[1] - lineRange[0]; yMin = Math.max(Math.min(yMin, bMin), lineRange[0] - 0.6 * r); yMax = Math.min(Math.max(yMax, bMax), lineRange[1] + 0.6 * r); }
+    const fMin = Math.min(yMin, bMin), fMax = Math.max(yMax, bMax);   // todo adentro
+    fullRange = [fMin, fMax];
+    if (wantLog) { yMin = Math.max(fMin, lineRange[0] / 3); yMax = Math.min(fMax, lineRange[1] * 3); }
+    else { const r = lineRange[1] - lineRange[0]; yMin = Math.max(fMin, lineRange[0] - r); yMax = Math.min(fMax, lineRange[1] + r); }
+    const e = pebgYExp;
+    if (e > 0) {
+      if (wantLog) { yMin = Math.exp(Math.log(yMin) + (Math.log(fMin) - Math.log(yMin)) * e); yMax = Math.exp(Math.log(yMax) + (Math.log(fMax) - Math.log(yMax)) * e); }
+      else { yMin += (fMin - yMin) * e; yMax += (fMax - yMax) * e; }
+    }
   }
   if (!(yMax > yMin)) { yMax = yMin * 1.05 + 1e-6; yMin *= 0.95; }
   const useLog = wantLog && yMin > 0;
@@ -3142,10 +3165,10 @@ function drawPebgChart(hoverT) {
   ctx.restore();
 
   // etiquetas en el borde derecho: valores en la última fecha visible
-  const lastS = series.filter(visible).pop(), lastV = yOf(lineVis[lineVis.length - 1]);
+  const lastS = series.filter(visible).pop() || null, lastV = yOf(lineVis[lineVis.length - 1]);
   const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(1) + 'x') : (v => '$' + v.toFixed(1));
   const labelsEnd = [{ y: yS(lastV), txt: mv ? endFmt(lastV) : '$' + lastV.toFixed(2), col: C.price, bold: true }]
-    .concat([0, 1, 2, 3, 4].filter(b => has(lastS, b) && bandOf(lastS, b) <= yMax * 1.5).map(b => ({ y: yS(bandOf(lastS, b)), txt: endFmt(bandOf(lastS, b)), col: cols[b] })))
+    .concat([0, 1, 2, 3, 4].filter(b => lastS && has(lastS, b) && bandOf(lastS, b) <= yMax * 1.5).map(b => ({ y: yS(bandOf(lastS, b)), txt: endFmt(bandOf(lastS, b)), col: cols[b] })))
     .sort((a, b) => a.y - b.y);
   for (let i = 1; i < labelsEnd.length; i++) if (labelsEnd[i].y - labelsEnd[i - 1].y < 15) labelsEnd[i].y = labelsEnd[i - 1].y + 15;
   const over = labelsEnd.length ? labelsEnd[labelsEnd.length - 1].y - (PAD.top + cH) : 0;
@@ -3180,7 +3203,7 @@ function drawPebgChart(hoverT) {
   }
 
   pebgGeom = {
-    cW, yRange: [yMin, yMax], lineRange,
+    cW, yRange: [yMin, yMax], lineRange, fullRange, yExp: pebgYExp,
     tAt: clientX => t0 + (clientX - rectOf().left - PAD.left) / cW * (t1 - t0),
     hideTip: () => { tooltip.style.display = 'none'; },
     leave: () => { tooltip.style.display = 'none'; pebgRedraw(); },
@@ -3190,8 +3213,8 @@ function drawPebgChart(hoverT) {
       if (mx < PAD.left || mx > W - PAD.right) { tooltip.style.display = 'none'; return; }
       const t = t0 + (mx - PAD.left) / cW * (t1 - t0);
       const pp = nearest(lineVis, t);
-      const sp = nearest(series, pp.date);
-      const hasPE = Math.abs(sp.date - pp.date) <= 4 * 86400;
+      const sp = series.length ? nearest(series, pp.date) : null;
+      const hasPE = sp != null && Math.abs(sp.date - pp.date) <= 4 * 86400;
       document.getElementById('pebgTipDate').textContent =
         new Date(pp.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
       const rows = [{ color: C.price, label: 'Precio', val: '$' + pp.close.toFixed(2) }];
@@ -3203,7 +3226,7 @@ function drawPebgChart(hoverT) {
         } else rows.push({ color: '', label: 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) });
         if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(1) + 'x') + ')', val: '$' + sp.bandPx[b].toFixed(2) }); });
         else rows.push({ color: '', label: 'Bandas', val: 'sin historia suficiente' });
-      } else rows.push({ color: '', label: 'P/E TTM', val: 'sin dato (EPS ≤ 0)' });
+      } else rows.push({ color: '', label: 'P/E TTM', val: pp.date < full[0].date ? 'sin EPS de esa fecha' : 'sin dato (EPS ≤ 0)' });
       document.getElementById('pebgTipRows').innerHTML = rows.map(r =>
         `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:${r.color || 'transparent'};${r.color ? '' : 'border:1px solid var(--line2)'}"></span>${r.label}</span><span class="pebg-tooltip-val">${r.val}</span></div>`).join('');
       tooltip.style.display = 'block';
