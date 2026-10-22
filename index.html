@@ -651,8 +651,8 @@ function checkPwd(){
 <div class="view active" id="view-screener">
   <div class="stats-bar">
     <div class="stat"><div class="stat-val" id="sN">&mdash;</div><div class="stat-lbl">Empresas</div></div>
-    <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" title="Market cap total sobre ganancias contables de 12 meses (Yahoo), una vez por empresa. Las empresas con pérdidas no tienen P/E y quedan afuera; por eso da algo menos que el P/E del índice de la pestaña Sectores, que las resta.">P/E agregado</div></div>
-    <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Market cap total sobre ganancias totales. No incluye empresas con pérdidas.">Fw P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" id="sPELbl" title="Capitalización total sobre ganancias contables de 12 meses de la SEC, con precios de ahora. Las pérdidas restan y cada empresa cuenta una vez. Es la misma cuenta que el S&amp;P 500 de la pestaña Sectores y del panel de comparación: al cierre dan igual; durante la rueda este se mueve con los precios.">P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas: el EPS de consenso que usa Yahoo para su Fw P/E (en general, el del próximo ejercicio fiscal). Yahoo no publica Fw P/E si la ganancia esperada es negativa: esas empresas quedan afuera.">Fw P/E agregado</div></div>
     <div class="stat"><div class="stat-val up" id="sG">&mdash;</div><div class="stat-lbl">Suben hoy</div></div>
     <div class="stat"><div class="stat-val dn" id="sL">&mdash;</div><div class="stat-lbl">Bajan hoy</div></div>
     <div class="stat"><div class="stat-val" id="s1D">&mdash;</div><div class="stat-lbl" title="Retorno de la canasta ponderada por market cap.">1D ponderado</div></div>
@@ -1414,7 +1414,18 @@ function fundAsOfLabel() {
   return 'Fundamentals al ' + new Date(FUND_AS_OF).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'});
 }
 
-// composición del S&P 500: spx.json (lo actualiza el proceso semanal de múltiplos); si falla, queda la lista fija
+// EPS de 12 meses de la SEC por empresa (eps_ttm.json, lo arma el proceso diario de múltiplos):
+// data[sym] = [eps contable, eps normalizado, acciones diluidas, cierre del último trimestre, precio usado]
+let SEC_EPS = null, SEC_EPS_AS_OF = null, secEpsPromise = null;
+function loadSecEps() {
+  if (!secEpsPromise) secEpsPromise = fetch('eps_ttm.json?d=' + new Date().toISOString().slice(0, 10), { cache: 'no-cache' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { SEC_EPS = (j && j.data) || null; SEC_EPS_AS_OF = (j && j.asOf) || null; if (!SEC_EPS) secEpsPromise = null; return SEC_EPS; })
+    .catch(() => { secEpsPromise = null; return null; });
+  return secEpsPromise;
+}
+
+// composición del S&P 500: spx.json (lo actualiza el proceso diario de múltiplos); si falla, queda la lista fija
 let SPX_INFO = {}, spxLoading = null;
 function loadSpx() {
   if (!spxLoading) spxLoading = fetch('spx.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => {
@@ -1431,7 +1442,7 @@ async function loadData() {
   document.getElementById('pFill').style.width='0%';
   document.getElementById('tWrap').innerHTML='<div class="sc"><div class="spin"></div><div class="sm" id="loadMsg">Conectando...</div></div>';
   pp(2,'Conectando con backend...');
-  const fundP = loadFund();
+  const fundP = loadFund(), secP = loadSecEps();
   let connOk=false, connMsg='';
   for(let a=0;a<3;a++) {
     try{
@@ -1462,13 +1473,19 @@ async function loadData() {
   }
   if(!Object.keys(qM).length){ showErr('Sin datos','El backend respondió vacío. Intentá en unos minutos.'); btn.disabled=false; return; }
   pp(97,'Fundamentals...');
-  await fundP;
+  await fundP; await secP;
   for(const sym of tks) {
     const q=qM[sym]; if(!q) continue;
     const sp=spM[sym], c=sp?.closes||[], ts=sp?.timestamps||[];
     const f=fundFor(sym, q.regularMarketPrice);
-    rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:q.regularMarketPrice,
-      marketCap:f.mc??null, pe:f.pe??null, fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
+    // P/E: precio de ahora / EPS de 12 meses de la SEC (lo mismo que P/E histórico y los múltiplos del índice).
+    // Sin dato de la SEC queda el de Yahoo, marcado.
+    const se=SEC_EPS&&SEC_EPS[sym], px=q.regularMarketPrice;
+    let pe=f.pe??null, peSrc=pe!=null?'yahoo':null;
+    if(se&&px>0){ peSrc='sec'; pe=se[0]>0?px/se[0]:null; }
+    rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:px,
+      marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, shSec:se?se[2]:null, qSec:se?se[3]:null,
+      fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
       ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252)});
   }
   document.getElementById('pWrap').style.display='none';
@@ -1480,12 +1497,19 @@ function updateStats() {
   const n=rows.length; sv('sN',n);
   const fmx=v=>v!=null?v.toFixed(1)+'x':'—';
   // Múltiplo agregado = market cap total / ganancias totales = Σmc / Σ(mc/ratio).
-  // Las empresas con pérdidas no tienen P/E publicado y quedan afuera.
-  // una vez por empresa: GOOG/GOOGL, FOX/FOXA y NWS/NWSA son la misma empresa y Yahoo da la capitalización total en cada una
+  // una vez por empresa: GOOG/GOOGL, FOX/FOXA y NWS/NWSA son la misma empresa (mismo CIK); queda la primera
+  // en orden alfabético, igual que en multiples.json
   const seenCo = new Set();
   const uRows = rows.filter(r => { const k = (SPX_INFO[r.symbol] && SPX_INFO[r.symbol].cik) || r.symbol; if (seenCo.has(k)) return false; seenCo.add(k); return true; });
   const agg=key=>{ let m=0,e=0; uRows.forEach(r=>{ const mc=r.marketCap, x=r[key]; if(mc>0&&x>0&&isFinite(x)){ m+=mc; e+=mc/x; } }); return e>0?m/e:null; };
-  sv('sPE', fmx(agg('pe')));
+  // P/E del índice: Σ(precio de ahora × acciones) / Σ(EPS 12m SEC × acciones), pérdidas incluidas. Es la fórmula
+  // del último punto de multiples.json con el precio en vivo: al cierre coinciden.
+  let M=0, E=0, nSec=0;
+  uRows.forEach(r=>{ if(r.eSec!=null&&r.shSec>0&&r.price>0){ M+=r.price*r.shSec; E+=r.eSec*r.shSec; nSec++; } });
+  const peSec = (E>0 && nSec>=300) ? M/E : null;
+  sv('sPE', fmx(peSec ?? agg('pe')));
+  const lbl = document.getElementById('sPELbl');
+  if (lbl && peSec == null) lbl.title = 'Sin el archivo de EPS de la SEC: capitalización sobre ganancias de 12 meses de Yahoo, sin las empresas con pérdidas (no es comparable con el S&P 500 de la pestaña Sectores).';
   sv('sFwd', fmx(agg('fwdPE')));
   sv('sPB', fmx(agg('pb')));
 
@@ -1498,7 +1522,8 @@ function updateStats() {
   showRet('s1D', basket('ret1d'));
   showRet('sYTD', basket('retYTD'));
 
-  sv('fCnt', n+' empresas. '+fundAsOfLabel());
+  const secLbl = SEC_EPS_AS_OF ? '. EPS de la SEC al ' + SEC_EPS_AS_OF.split('-').reverse().slice(0, 2).join('/') : '';
+  sv('fCnt', n+' empresas. '+fundAsOfLabel()+secLbl);
 }
 
 const NA='<span class="na">—</span>';
@@ -1522,6 +1547,15 @@ function getF() {
   });
 }
 
+function peCell(r) {
+  if (r.peSrc === 'sec') {
+    const q = r.qSec ? ', último trimestre al ' + r.qSec.split('-').reverse().join('/') : '';
+    if (r.eSec <= 0) return '<td title="EPS de 12 meses (SEC): ' + r.eSec.toFixed(2) + q + '"><span class="na">pérd.</span></td>';
+    return '<td title="Precio / EPS de 12 meses de la SEC (' + r.eSec.toFixed(2) + q + ')">' + fMx(r.pe, 1000) + '</td>';
+  }
+  if (r.peSrc === 'yahoo') return '<td title="Yahoo: la SEC no tiene el EPS trimestral de esta empresa">' + fMx(r.pe, 1000) + '<span class="na">*</span></td>';
+  return '<td>' + NA + '</td>';
+}
 function render() {
   const filt=getF();
   const sorted=[...filt].sort((a,b)=>{ if(sKey==='_r')return 0; const va=a[sKey],vb=b[sKey]; if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return-1; if(typeof va==='string')return sDir*va.localeCompare(vb); return sDir*(va-vb); });
@@ -1529,7 +1563,7 @@ function render() {
   if(!sorted.length){ document.getElementById('tWrap').innerHTML=rows.length===0?'<div class="sc"><div class="sm">Sin datos</div></div>':'<div class="sc"><div class="sm">Sin resultados para el filtro</div></div>'; return; }
   const th=COLS.map(c=>{ const act=sKey===c.k?' active':''; const arr=c.s?'<span class="sa">'+(sKey===c.k?(sDir===-1?'&#9660;':'&#9650;'):'&#8645;')+'</span>':''; const clk=c.s?' onclick="ss(\''+c.k+'\')"':''; return '<th class="'+act+'"'+clk+'>'+c.l+arr+'</th>'; }).join('');
   const trs=sorted.map((row,i)=>{
-    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
+    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
     const sym=row.symbol, nm=row.name.replace(/\\/g,'').replace(/'/g,'&#39;');
     return '<tr onclick="openChart(\''+sym+'\',\''+nm+'\')">'+cells+'</tr>';
   }).join('');
@@ -3533,7 +3567,7 @@ function drawPebgChart(hoverT) {
   drawPebgCmp({ t0, t1, tR, PAD, hoverT });
 }
 
-// ── MÚLTIPLOS DEL ÍNDICE Y SECTORES (multiples.json, lo arma scripts/multiples.mjs una vez por semana) ──
+// ── MÚLTIPLOS DEL ÍNDICE Y SECTORES (multiples.json, lo arma scripts/multiples.mjs cada día hábil; puntos semanales) ──
 let MULT = null, multLoading = null;
 function loadMultiples() {
   if (!multLoading) multLoading = fetch('multiples.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
@@ -3670,7 +3704,8 @@ function drawPebgCmp(geo) {
   if (lastI >= 0) {
     const b = bands[lastI], z = b && b.sd > 0 ? (pts[lastI].v - b.mu) / b.sd : null;
     const modo = benchNorm ? 'normalizado' : 'contable';
-    sum.innerHTML = (rel ? `${sym} / ${multName(key)} (${modo}): <b>${fx(pts[lastI].v)}</b>` : `${multName(key)}, P/E ${modo}: <b>${fx(pts[lastI].v)}</b>`)
+    const al = MULT.asOf ? ' al ' + MULT.asOf.split('-').reverse().slice(0, 2).join('/') : '';
+    sum.innerHTML = (rel ? `${sym} / ${multName(key)} (${modo}): <b>${fx(pts[lastI].v)}</b>` : `${multName(key)}, P/E ${modo}${al}: <b>${fx(pts[lastI].v)}</b>`)
       + (b ? `, media ${fija ? '' : 'móvil '}${years}A ${fx(b.mu)}, z ${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(2)}σ; zona sombreada: media ± 1σ` : '')
       + (norm && !benchNorm ? ' <span class="na">(referencia contable)</span>' : '');
   } else sum.textContent = '';
@@ -3765,9 +3800,9 @@ async function loadSect() {
 function renderSect() {
   const st = document.getElementById('sectStatus'), tb = document.getElementById('sectTable');
   syncEpsButtons();
-  if (!MULT) { st.textContent = 'Todavía no hay múltiplos calculados (se arman una vez por semana).'; tb.innerHTML = ''; return; }
+  if (!MULT) { st.textContent = 'Todavía no hay múltiplos calculados (se arman cada día hábil al cierre).'; tb.innerHTML = ''; return; }
   const norm = epsMode === 'norm';
-  st.textContent = `Semanal, al ${MULT.asOf.split('-').reverse().join('/')}. Empresas que hoy están en el índice; EPS de la SEC.`;
+  st.textContent = `Al cierre del ${MULT.asOf.split('-').reverse().join('/')}; historia semanal. Empresas que hoy están en el índice, EPS de la SEC. Cómo se calcula: pestaña Metodología.`;
   const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
   const row = (key, cls, toggle) => {
     const s = MULT.series[key], x = sectStats(key, norm); if (!x) return '';

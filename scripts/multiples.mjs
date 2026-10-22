@@ -1,6 +1,8 @@
 // Arma multiples.json: P/E histórico semanal del S&P 500, de sus 11 sectores GICS y de cada subindustria con al
 // menos 3 empresas, contable y normalizado. También actualiza spx.json (composición actual del índice).
-// Corre en GitHub Actions una vez por semana (.github/workflows/multiples.yml).
+// También escribe eps_ttm.json: el último EPS de 12 meses y las acciones de cada empresa, para que el screener calcule
+// el P/E de cada una y el del índice con precios en vivo y la misma fórmula (al cierre, los dos números coinciden).
+// Corre en GitHub Actions cada día hábil después del cierre de Nueva York (.github/workflows/multiples.yml).
 //
 // Cómo se calcula: P/E del grupo = suma de capitalizaciones / suma de ganancias de 12 meses, semana a semana.
 //   capitalización = precio semanal (Yahoo, ajustado por splits) x acciones diluidas del último trimestre (EDGAR)
@@ -89,14 +91,14 @@ export function companySeries({ facts, chart, olderFacts = null, fundRow = null 
     const epsLike = ni.map(q => ({ date: q.date, eps: q.ni / shNow }));
     const shMap = new Map(weeks.map(w => [w, shNow]));
     const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
-    return { price, eG: clean(ttmByWeek(epsLike, weeks)), eN: new Map(), sh: shMap, quarters: ni.length, splits: splits.length, viaNI: true };
+    return { price, eG: clean(ttmByWeek(epsLike, weeks)), eN: new Map(), sh: shMap, quarters: ni.length, splits: splits.length, viaNI: true, lastQ: ni[ni.length - 1].date };
   }
   const norm = normalizedQuarterly(raw, f, gaap, "").eps;
   const sh = sharesQuarterly(raw, f, gaap);
   // datos que no pueden ser ciertos (EPS de 12 meses mayor que el precio, o una pérdida de más de 3 veces el precio):
   // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
   const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
-  return { price, eG: clean(ttmByWeek(gaap, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, splits: splits.length };
+  return { price, eG: clean(ttmByWeek(gaap, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, splits: splits.length, lastQ: gaap[gaap.length - 1].date };
 }
 
 // P/E de cada grupo por semana. cos: { sym: series } ; groups: { key: [syms] }
@@ -226,6 +228,25 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   // las semanas son consecutivas salvo feriados largos: se guarda la lista solo si hay huecos
   if (weeks[weeks.length - 1] - weeks[0] + 1 !== weeks.length) out.weekList = weeks;
   await writeFile(new URL("multiples.json", root), JSON.stringify(out));
+
+  // 5) último dato de cada empresa (la semana en curso): con esto el screener rehace el P/E del índice con precios en
+  //    vivo. Se exporta exactamente lo que entró en el último punto de la serie, así la cuenta es la misma.
+  const lastW = weeks[weeks.length - 1], iso = t => new Date(t * 1000).toISOString().slice(0, 10);
+  const ultimos = {};
+  for (const c of list) {
+    const s = cos[c.s]; if (!s) continue;
+    const e = s.eG.get(lastW), en = s.eN.get(lastW), sh = s.sh.get(lastW), p = s.price.get(lastW);
+    if (e == null || !sh) continue;
+    ultimos[c.s] = [+e.toFixed(4), en != null ? +en.toFixed(4) : null, Math.round(sh), s.lastQ ? iso(s.lastQ) : null, p ? +p.toFixed(2) : null];
+  }
+  await writeFile(new URL("eps_ttm.json", root), JSON.stringify({
+    asOf: out.asOf,
+    nota: "Último EPS de 12 meses de la SEC por empresa (contable y normalizado), acciones diluidas, cierre del último trimestre presentado y precio usado en multiples.json",
+    campos: ["eps12m", "eps12mNormalizado", "acciones", "ultimoTrimestre", "precio"],
+    spx: series.SPX.g.at(-1), spxN: series.SPX.n.at(-1),
+    data: ultimos,
+  }));
+  log(`eps_ttm.json: ${Object.keys(ultimos).length} empresas`);
   const diag = { splits: {}, fechas: {} };
   for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
   for (const d of ["2019-06-24", "2021-06-28", "2024-06-24", "2025-06-23"]) {

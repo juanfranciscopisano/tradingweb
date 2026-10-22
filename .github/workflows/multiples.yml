@@ -2,7 +2,7 @@ name: Múltiplos del S&P 500 y sectores
 
 on:
   schedule:
-    - cron: "17 12 * * 6"     # sábados 9:17 de Buenos Aires
+    - cron: "17 22 * * 1-5"   # días hábiles 19:17 de Buenos Aires, después del cierre de Nueva York y de los fundamentals
   workflow_dispatch: {}       # botón "Run workflow" para correrlo a mano
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Armar multiples.json y spx.json
+      - name: Armar multiples.json, eps_ttm.json y spx.json
         run: node scripts/multiples.mjs
         env:
           SEC_UA: ${{ secrets.SEC_UA }}
@@ -29,8 +29,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add multiples.json spx.json multiples_diag.json
+          git add multiples.json eps_ttm.json spx.json multiples_diag.json
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
-          git commit -m "múltiplos: actualización semanal"
+          git commit -m "múltiplos: actualización diaria"
           git pull --rebase -q
           git push
