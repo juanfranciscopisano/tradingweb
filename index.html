@@ -2129,10 +2129,10 @@ function renderOvFed(qmap, zqTickers, effr, fedTarget) {
         + '</tbody></table>';
       html += '<div class="ov-impl">EFFR implícita después de la reunión: ' + st.after.toFixed(2) + '% (<span style="color:' + colH + '">' + bpTxt(vsHoy) + ' vs hoy</span>)</div></div>';
     } else {
-      const chg = pa.map((x, i) => x ? FED_HZ[i][0].replace('Hace ', '') + ' ' + bpTxt((st.after - x.after) * 100) : null).filter(Boolean);
+      const chg = pa.map((x, i) => x ? FED_HZ[i][0].replace('Hace ', '') + ': ' + bpTxt((st.after - x.after) * 100) : null).filter(Boolean);
       html += '<div class="ov-impl">EFFR implícita después de la reunión: ' + st.after.toFixed(2) + '% '
         + '(<span style="color:' + colH + '">' + bpTxt(vsHoy) + ' vs hoy</span>)'
-        + (chg.length ? '<br><span class="ov-impl-chg">Cambio de la expectativa: ' + chg.join(', ') + '</span>' : '') + '</div></div>';
+        + (chg.length ? '<br><span class="ov-impl-chg">Cambio de la tasa esperada desde hace ' + chg.join('; ') + '</span>' : '') + '</div></div>';
     }
     shown++;
   });
