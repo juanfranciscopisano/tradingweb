@@ -538,7 +538,12 @@ export function cashDebt(raw, normRows, asOf = Date.now()) {
     const fvLast = fvTags.flatMap(t => inst(t)).sort((a, b) => a.end.localeCompare(b.end) || (a.filed || "").localeCompare(b.filed || "")).pop();
     if (d != null) { debt = debtAt(d); debtDate = d; }
     else if (fvLast && lastBal - Date.parse(fvLast.end) <= 200 * DAY_MS) { debt = fvLast.val; debtDate = Date.parse(fvLast.end); debtFV = true; }
-    else if (dates.length && lastBal - dates[0] > 2 * YEAR && !(fvLast && lastBal - Date.parse(fvLast.end) <= 2 * YEAR)) { debt = 0; debtDate = null; }
+    else {
+      // sin deuda solo si además no paga intereses (AKAM tiene convertibles con etiquetas propias y paga intereses)
+      const ieQ = quartersOf(raw.ie || [], one).sort((a, b) => a.t - b.t).filter(x => x.t <= asOf).slice(-4);
+      const ieTTM = ieQ.length === 4 && asOf - ieQ[3].t <= 290 * DAY_MS ? ieQ.reduce((a, x) => a + x.eps, 0) : 0;
+      if (dates.length && lastBal - dates[0] > 2 * YEAR && !(fvLast && lastBal - Date.parse(fvLast.end) <= 2 * YEAR) && !(ieTTM > 0.005 * Math.abs(ocf.v))) { debt = 0; debtDate = null; }
+    }
   }
   const nci = bal("MinorityInterest") || 0, pref = bal("PreferredStockValue") || 0;
   // EBIT ajustado de 12 meses, de los mismos trimestres del normalizado
