@@ -1622,12 +1622,16 @@ function qMetrics(sym, own) {
   if (!d || !(d.rev0 > 0)) return null;
   const r = (x, y) => x != null && y > 0 ? x / y : null;
   const m = r(d.ebit0, d.rev0), m1 = r(d.ebit1, d.rev1), roic = r(d.nopat0, d.ic0), roic1 = r(d.nopat1, d.ic1);
-  return { d, g1: d.rev1 > 0 ? d.rev0 / d.rev1 - 1 : null, g3: d.rev3 > 0 ? Math.pow(d.rev0 / d.rev3, 1 / 3) - 1 : null,
-    m, m1, dm: m != null && m1 != null ? m - m1 : null, roic, roic1, droic: roic != null && roic1 != null ? roic - roic1 : null,
+  // ROIC de más de 100%: el capital invertido es chico (capital de trabajo negativo, como AAPL); el nivel se muestra
+  // como ">100%" y el cambio no se calcula, porque con un denominador chico cualquier movimiento parece enorme
+  const big = (roic != null && roic > 1) || (roic1 != null && roic1 > 1);
+  const stale = d.fin ? Date.now() - Date.parse(d.fin + 'T00:00:00Z') > 200 * 86400000 : false;
+  return { d, stale, g1: d.rev1 > 0 ? d.rev0 / d.rev1 - 1 : null, g3: d.rev3 > 0 ? Math.pow(d.rev0 / d.rev3, 1 / 3) - 1 : null,
+    m, m1, dm: m != null && m1 != null ? m - m1 : null, roic, roic1, roicBig: big, droic: !big && roic != null && roic1 != null ? roic - roic1 : null,
     shChg: d.sh0 > 0 && d.sh1 > 0 ? d.sh0 / d.sh1 - 1 : null };
 }
 const fGrow = v => v == null || !isFinite(v) ? NA : '<span class="' + (v > 0.0005 ? 'pp' : v < -0.0005 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(1) + '%</span>';
-const fLvl = v => v == null || !isFinite(v) ? NA : (v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(Math.abs(v) >= 1 ? 0 : 1) + '%';
+const fLvl = v => v == null || !isFinite(v) ? NA : v > 1 ? '>100%' : (v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(1) + '%';
 const fBps = v => v == null || !isFinite(v) ? NA : '<span class="' + (v > 0.00005 ? 'pp' : v < -0.00005 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.round(Math.abs(v) * 10000) + ' bps</span>';
 // acciones: subir es diluir (rojo), bajar es recomprar (verde)
 const fSh = v => v == null || !isFinite(v) ? NA : '<span class="' + (v < -0.0005 ? 'pp' : v > 0.0005 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(1) + '%</span>';
@@ -1656,7 +1660,7 @@ const Q_COLS = [
 ];
 function qRow(sym) { const m = qMetrics(sym); if (!m) return {}; if (m.fin) return { qFin: true };
   return { qg1: m.g1, qg3: m.g3, qm: m.m, qdm: m.dm, qroic: m.roic, qdroic: m.droic, qsh: m.shChg,
-    qTip: 'Al ' + m.d.fin.split('-').reverse().join('/') + ' (US$ M): ventas ' + Math.round(m.d.rev0) + (m.d.rev1 ? ' (hace un año ' + Math.round(m.d.rev1) + ')' : '') + (m.d.ebit0 != null ? ', EBIT ajustado ' + Math.round(m.d.ebit0) : '') + (m.d.nopat0 != null ? ', NOPAT ' + Math.round(m.d.nopat0) : '') + (m.d.ic0 != null ? ', capital invertido ' + Math.round(m.d.ic0) : '') }; }
+    qStale: m.stale, qTip: (m.stale ? 'Datos viejos: la SEC no tiene el último 10-Q. ' : '') + (m.roicBig ? 'ROIC de más de 100%: el capital invertido es chico (capital de trabajo negativo); el cambio no se calcula. ' : '') + 'Al ' + m.d.fin.split('-').reverse().join('/') + ' (US$ M): ventas ' + Math.round(m.d.rev0) + (m.d.rev1 ? ' (hace un año ' + Math.round(m.d.rev1) + ')' : '') + (m.d.ebit0 != null ? ', EBIT ajustado ' + Math.round(m.d.ebit0) : '') + (m.d.nopat0 != null ? ', NOPAT ' + Math.round(m.d.nopat0) : '') + (m.d.ic0 != null ? ', capital invertido ' + Math.round(m.d.ic0) : '') }; }
 // deterioro que conviene mirar antes de comprar algo barato
 function qAlerts(m, rev3m) {
   if (!m || m.fin) return [];
@@ -1871,7 +1875,7 @@ function render() {
   if(!sorted.length){ document.getElementById('tWrap').innerHTML=rows.length===0?'<div class="sc"><div class="sm">Sin datos</div></div>':'<div class="sc"><div class="sm">Sin resultados para el filtro</div></div>'; return; }
   const th=COLS.map(c=>{ const act=sKey===c.k?' active':''; const arr=c.s?'<span class="sa">'+(sKey===c.k?(sDir===-1?'&#9660;':'&#9650;'):'&#8645;')+'</span>':''; const clk=c.s?' onclick="ss(\''+c.k+'\')"':''; return '<th class="'+act+'"'+clk+(c.t?' title="'+c.t+'"':'')+'>'+c.l+arr+'</th>'; }).join('');
   const trs=sorted.map((row,i)=>{
-    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'qg1':case'qg3':case'qm':case'qdm':case'qroic':case'qdroic':case'qsh':{ return '<td title="'+(row.qFin?Q_TIP_FIN:(row.qTip||'Sin ventas de 12 meses en la SEC'))+'">'+(row.qFin?'<span class="na">n/a</span>':c.f(row[c.k]))+'</td>'; } case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
+    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'qg1':case'qg3':case'qm':case'qdm':case'qroic':case'qdroic':case'qsh':{ return '<td title="'+(row.qFin?Q_TIP_FIN:(row.qTip||'Sin ventas de 12 meses en la SEC'))+'">'+(row.qFin?'<span class="na">n/a</span>':c.f(row[c.k])+(row.qStale&&row[c.k]!=null?'<span class="na">*</span>':''))+'</td>'; } case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
     const sym=row.symbol, nm=row.name.replace(/\\/g,'').replace(/'/g,'&#39;');
     return '<tr onclick="openChart(\''+sym+'\',\''+nm+'\')">'+cells+'</tr>';
   }).join('');
@@ -4623,6 +4627,8 @@ const METODO = [
         p: 'Medido desde los activos no depende de cuánto recompró la empresa: MCD, HD o SBUX tienen patrimonio negativo por las recompras, y con deuda + patrimonio el ROIC daría absurdo. Incluye la llave de negocio, así que el ROIC de una empresa que creció comprando se mide sobre lo que pagó.',
         x: 'Sin la llave de negocio: da ROIC más altos y premia comprar empresas caras.',
         o: 'Los arrendamientos operativos no entran en el capital: en minoristas y restaurantes el ROIC queda algo más alto que con ellos.' },
+      { d: 'ROIC de más de 100% se muestra como ">100%" y su cambio en un año no se calcula.',
+        p: 'Pasa cuando el capital de trabajo es muy negativo (AAPL cobra antes de pagar) o el negocio casi no necesita activos (NVDA): el capital invertido es chico y cualquier movimiento parece enorme. El dato que importa ahí es que el ROIC es altísimo, no cuánto cambió.' },
       { d: 'Acciones: el cambio de las acciones diluidas en un año. Negativo es recompra; positivo, dilución.',
         p: 'Separa el crecimiento del EPS que viene del negocio del que viene de comprar acciones, y muestra cuánto diluye la compensación en acciones.' },
       { d: 'Alertas (en Cartera): ventas que caen, margen −200 bps o más, ROIC −300 bps o más, dilución de 2% o más, o EPS esperado −5% o más en 3 meses.',
