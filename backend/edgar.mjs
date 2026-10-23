@@ -26,6 +26,8 @@ export const EDGAR_TAGS = {
   nic: [["NetIncomeLossAvailableToCommonStockholdersBasic"], "USD"],          // resultado para los comunes (sin preferidos)
   pl: [["ProfitLoss"], "USD"],                                               // resultado con los minoritarios
   nci: [["NetIncomeLossAttributableToNoncontrollingInterest"], "USD"],
+  ncir: [["NetIncomeLossAttributableToRedeemableNoncontrollingInterest"], "USD"],          // algunas lo parten en dos
+  ncin: [["NetIncomeLossAttributableToNonredeemableNoncontrollingInterest"], "USD"],
   pref: [["PreferredStockDividendsIncomeStatementImpact", "DividendsPreferredStock"], "USD"],
   afudc: [["PublicUtilitiesAllowanceForFundsUsedDuringConstructionCapitalizedCostOfEquity"], "USD"],
 };
@@ -33,7 +35,7 @@ export const EDGAR_TAGS = {
 export const ADJ_TAGS = [
   "RestructuringCharges", "RestructuringSettlementAndImpairmentProvisions", "RestructuringCostsAndAssetImpairmentCharges",
   "GoodwillImpairmentLoss", "GoodwillAndIntangibleAssetImpairment", "ImpairmentOfIntangibleAssetsExcludingGoodwill",
-  "ImpairmentOfLongLivedAssetsHeldForUse", "ImpairmentOfLongLivedAssetsToBeDisposedOf", "AssetImpairmentCharges",
+  "ImpairmentOfLongLivedAssetsHeldForUse", "ImpairmentOfLongLivedAssetsToBeDisposedOf", "AssetImpairmentCharges", "ImpairmentOfOilAndGasProperties",
   "LitigationSettlementExpense", "LossContingencyLossInPeriod", "BusinessCombinationAcquisitionRelatedCosts",
   "GainLossOnSaleOfPropertyPlantEquipment", "GainLossOnDispositionOfAssets", "GainLossOnDispositionOfAssets1",
   "GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal", "EquitySecuritiesFvNiGainLoss",
@@ -189,7 +191,9 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   const at = (sr, t) => { const x = sr.find(q => Math.abs(q.t - t) <= TEN); return x ? x.eps : undefined; };
   const OI = ser(raw.oi), PT = ser(raw.pt), TX = ser(raw.tx), NI = ser(raw.ni), REV = ser(raw.rev);
   const IE = ser(raw.ie), II = ser(raw.ii), EQ = ser(raw.eq), AF = ser(raw.afudc);
-  const NIC = ser(raw.nic), PL = ser(raw.pl), NCI = ser(raw.nci), PREF = ser(raw.pref);
+  const NIC = ser(raw.nic), PL = ser(raw.pl), PREF = ser(raw.pref);
+  const NCI0 = ser(raw.nci), NCIR = ser(raw.ncir), NCIN = ser(raw.ncin);
+  const nciVal = t => { const a = at(NCI0, t); if (a !== undefined) return a; const r = at(NCIR, t), n = at(NCIN, t); return r === undefined && n === undefined ? undefined : (r || 0) + (n || 0); };
   // si a un trimestre le falta el dato de intereses, el del trimestre anterior más cercano (es una serie estable)
   const steady = (sr, t) => { if (!sr.length) return 0; const v = at(sr, t); if (v !== undefined) return v; const prev = sr.filter(q => q.t <= t).pop() || sr[0]; return prev.eps; };
   const totalEps = gaap.filter(e => !isContinuingTag(e.tag)).map(e => ({ t: e.date * 1000, eps: e.eps }));
@@ -225,32 +229,38 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     ? q.eps - (inOI.ie ? 0 : steady(IE, q.t)) + (inOI.ii ? 0 : steady(II, q.t)) + (inOI.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0)
     : q.eps;
 
-  // acciones: implícitas = resultado para los comunes / EPS total; las informadas si coinciden con las implícitas
+  // acciones: implícitas = resultado para los comunes / EPS (el total; si no está, el de operaciones continuas);
+  // las informadas, en la escala que más se acerque a las implícitas de ese trimestre, si en general coinciden (±15%)
+  const anyEps = gaap.map(e => ({ t: e.date * 1000, eps: e.eps }));
   const implied = new Map();
   for (const q of BASE) {
-    const ni = at(NIC, q.t) ?? at(NI, q.t), e = at(totalEps, q.t);
+    const ni = at(NIC, q.t) ?? at(NI, q.t), e = at(totalEps, q.t) ?? at(anyEps, q.t);
     if (ni !== undefined && e !== undefined && Math.abs(e) >= 0.05 && ni / e > 0) implied.set(q.t, ni / e);
   }
-  const medImplied = median([...implied.values()]);
+  const impList = [...implied.entries()].map(([t, v]) => ({ t, v })).sort((a, b) => a.t - b.t);
+  const nearImp = t => { let best = null; for (const x of impList) if (!best || Math.abs(x.t - t) < Math.abs(best.t - t)) best = x; return best; };
   const reported = [];
   for (const e of raw.sh || []) {
     if (!e.start || !(e.val > 0)) continue;
     const d = (Date.parse(e.end) - Date.parse(e.start)) / DAY_MS; if (d < 70 || d > 125) continue;
+    const t = Date.parse(e.end), ref = nearImp(t);
     let v = e.val * splitFactor(e.end, e.filed);
-    if (medImplied) v = [1, 1e3, 1e6].map(sc => v * sc).reduce((best, x) => Math.abs(Math.log(x / medImplied)) < Math.abs(Math.log(best / medImplied)) ? x : best);
-    reported.push({ t: Date.parse(e.end), eps: v });
+    if (ref) v = [1, 1e3, 1e6].map(sc => v * sc).reduce((best, x) => Math.abs(Math.log(x / ref.v)) < Math.abs(Math.log(best / ref.v)) ? x : best);
+    if (!reported.some(r => Math.abs(r.t - t) <= TEN)) reported.push({ t, eps: v });
   }
-  const repOk = medImplied && reported.length ? Math.abs(median(reported.map(r => r.eps)) / medImplied - 1) <= 0.15 : !medImplied;
+  const pairs = reported.map(r => { const i = implied.get([...implied.keys()].find(k => Math.abs(k - r.t) <= TEN)); return i ? Math.abs(r.eps / i - 1) : null; }).filter(x => x != null);
+  const repOk = reported.length > 0 && (pairs.length ? median(pairs) <= 0.15 : !impList.length);
   const sharesFor = t => {
     const r = repOk ? at(reported, t) : undefined; if (r !== undefined) return r;
-    if (implied.has(t)) return implied.get(t);
-    const near = [...[...implied.entries()].map(([k, v]) => ({ t: k, v })), ...(repOk ? reported.map(x => ({ t: x.t, v: x.eps })) : [])].sort((a, b) => a.t - b.t);
-    const prev = near.filter(x => x.t <= t).pop() || near.find(x => x.t > t);
-    return prev ? prev.v : null;
+    const i = [...implied.keys()].find(k => Math.abs(k - t) <= TEN); if (i !== undefined) return implied.get(i);
+    // sin dato ese trimestre: el más cercano, solo si está a menos de 200 días
+    const cands = [...impList.map(x => ({ t: x.t, v: x.v })), ...(repOk ? reported.map(x => ({ t: x.t, v: x.eps })) : [])];
+    let best = null; for (const x of cands) if (!best || Math.abs(x.t - t) < Math.abs(best.t - t)) best = x;
+    return best && Math.abs(best.t - t) <= 200 * DAY_MS ? best.v : null;
   };
   // parte de los minoritarios en la ganancia
   const nciAt = t => {
-    const n = at(NCI, t); if (n === undefined) return null;
+    const n = nciVal(t); if (n === undefined) return null;
     const pl = at(PL, t) ?? ((at(NI, t) ?? undefined) !== undefined ? at(NI, t) + n : undefined);
     if (!(pl > 0)) return null; const r = n / pl; return r >= 0 && r < 0.95 ? r : null;
   };
@@ -266,12 +276,12 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     if (restr) { c.restr = restr.v; T.restr = restr.t; }
     if (!restr || restr.t === "RestructuringCharges") {
       const gw = get("GoodwillAndIntangibleAssetImpairment", tt) ?? ((get("GoodwillImpairmentLoss", tt) || 0) + (get("ImpairmentOfIntangibleAssetsExcludingGoodwill", tt) || 0));
-      const ll = (get("ImpairmentOfLongLivedAssetsHeldForUse", tt) || 0) + (get("ImpairmentOfLongLivedAssetsToBeDisposedOf", tt) || 0);
+      const ll = (get("ImpairmentOfLongLivedAssetsHeldForUse", tt) || 0) + (get("ImpairmentOfLongLivedAssetsToBeDisposedOf", tt) || 0) + (get("ImpairmentOfOilAndGasProperties", tt) || 0);
       const aic = get("AssetImpairmentCharges", tt) || 0, tot = Math.max(aic, (gw || 0) + ll);
       if (tot) {
         c.imp = tot;
         T.imp = aic >= (gw || 0) + ll ? "AssetImpairmentCharges" : ["GoodwillAndIntangibleAssetImpairment", "GoodwillImpairmentLoss", "ImpairmentOfIntangibleAssetsExcludingGoodwill",
-          "ImpairmentOfLongLivedAssetsHeldForUse", "ImpairmentOfLongLivedAssetsToBeDisposedOf"].filter(t => get(t, tt)).join(" + ");
+          "ImpairmentOfLongLivedAssetsHeldForUse", "ImpairmentOfLongLivedAssetsToBeDisposedOf", "ImpairmentOfOilAndGasProperties"].filter(t => get(t, tt)).join(" + ");
       }
     }
     const lit = firstOf(["LitigationSettlementExpense", "LossContingencyLossInPeriod"], tt); if (lit) { c.lit = lit.v; T.lit = lit.t; }

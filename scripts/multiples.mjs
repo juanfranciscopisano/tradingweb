@@ -141,7 +141,9 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   const hole = rec.some((q, i) => i > 0 && q.date - rec[i - 1].date > 120 * DAY);
   // para revisar el normalizado: los ajustes y la cuenta de los últimos trimestres
   const normDiag = { metodo: normFull.method, armado: normFull.armado, accionesInformadas: normFull.accionesInformadas,
-    ajustes: (normFull.adj || []).slice(-6), margenes: (normFull.flags || []).slice(-3), trimestres: (normFull.rows || []).slice(-4) };
+    ajustes: (normFull.adj || []).slice(-6), margenes: (normFull.flags || []).slice(-3), trimestres: (normFull.rows || []).slice(-4),
+    crudo: Object.fromEntries(["oi", "pt", "ni"].map(k => [k, (raw[k] || []).filter(e => e.end >= "2024-06-30").sort((a, b) => a.end.localeCompare(b.end) || a.start.localeCompare(b.start))
+      .map(e => [e.start, e.end, e.val, e.form, e.filed])])) };
   return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
