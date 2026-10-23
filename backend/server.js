@@ -7,7 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -236,7 +236,9 @@ async function edgarEPS(sym, splits = []) {
   const gaap = gaapQuarterly(raw, f, sym);
   const n = normalizedQuarterly(raw, f, gaap, sym);
   console.log(`pebg ${sym}: normalizado (${n.method}) ${n.eps.length} trimestres, ${(n.adj || []).length} con ajustes, ${(n.flags || []).length} márgenes raros`);
-  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [] };
+  let cd = null;
+  try { cd = cashDebt(raw, n.rows); } catch (e) { console.log(`pebg ${sym}: caja y deuda ${e.message}`); }
+  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], cd };
 }
 
 // ---------------------------------------------------------------- EPS cargado a mano
@@ -605,6 +607,8 @@ app.get("/api/pebg", async (req, res) => {
         // extraordinarios sacados del normalizado (trimestre, partida, millones de US$ antes de impuestos, efecto por acción)
         normAdj: normMethod && !manual ? (edgarAll.normAdj || []) : [],
         normFlags: normMethod && !manual ? (edgarAll.normFlags || []) : [],
+        // flujo de caja de 12 meses y último balance (millones de US$), para P/FCF, EV/EBIT y deuda neta / EBITDA
+        cajaDeuda: manual ? null : (edgarAll.cd || null),
         histNote,
         epsCount: eps.length,
         epsSource: source,
