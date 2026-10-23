@@ -121,7 +121,19 @@ function quartersOf(facts, splitFactor) {
   const ps = [...per.values()], days = (a, b) => (b - a) / DAY_MS;
   const out = [];
   const near = t => out.some(q => Math.abs(q.t - t) <= 10 * DAY_MS);
-  for (const p of ps.filter(p => days(p.s, p.t) >= 70 && days(p.s, p.t) <= 125).sort((a, b) => a.t - b.t)) if (!near(p.t)) out.push({ t: p.t, end: p.end, eps: p.val });
+  // un trimestre cargado con el valor del año entero (LHX en su 10-K de 2025): si coincide con el anual que cierra el mismo
+  // día y están los nueve meses, el trimestre es el anual menos los nueve meses
+  const fixQ = p => {
+    const L = ps.find(x => x.end === p.end && days(x.s, x.t) > 300 && Math.abs(x.val) > 0 && Math.abs(p.val - x.val) <= 0.005 * Math.abs(x.val));
+    if (!L) return null;
+    const S = ps.find(x => x.start === L.start && Math.abs(days(x.t, p.s)) <= 5 && x.t < p.t);
+    return S ? L.val - asOf(S, L.filed).val : null;
+  };
+  for (const p of ps.filter(p => days(p.s, p.t) >= 70 && days(p.s, p.t) <= 125).sort((a, b) => a.t - b.t)) {
+    if (near(p.t)) continue;
+    const f = fixQ(p);
+    out.push(f != null ? { t: p.t, end: p.end, eps: f, derived: true } : { t: p.t, end: p.end, eps: p.val });
+  }
   const byStart = new Map();
   for (const p of ps) { if (!byStart.has(p.start)) byStart.set(p.start, []); byStart.get(p.start).push(p); }
   for (const g of byStart.values()) {
