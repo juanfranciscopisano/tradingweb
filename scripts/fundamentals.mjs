@@ -68,7 +68,7 @@ export function parseTrend(j) {
   if (!y0 && !y1) return null;
   // trimestre en curso y siguiente (cierre, EPS esperado) y los últimos EPS informados: para el EPS de 12 meses por trimestres
   const qq = t => { if (!t || !t.endDate) return null; const v = raw(t.epsTrend?.current) ?? raw(t.earningsEstimate?.avg); return v == null ? null : [t.endDate, +v.toFixed(4)]; };
-  const hist = (j?.quoteSummary?.result?.[0]?.earningsHistory?.history || []).map(h => [h.quarter?.fmt || null, raw(h.epsActual)]).filter(h => h[0] && h[1] != null);
+  const hist = (j?.quoteSummary?.result?.[0]?.earningsHistory?.history || []).map(h => [h.quarter?.fmt || null, raw(h.epsActual), raw(h.epsEstimate)]).filter(h => h[0] && h[1] != null);
   const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1),
     up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts),
     q0: qq(per("0q")), q1: qq(per("+1q")), h: hist };
@@ -77,11 +77,16 @@ export function parseTrend(j) {
 
 // EPS de consenso de los próximos 12 meses, por trimestres: cada trimestre del ejercicio en curso y del siguiente pesa
 // por la parte que cae entre hoy y dentro de un año. Los dos trimestres que estima Yahoo (en curso y siguiente) van
-// con su estimación; los demás se reparten parejo lo que queda del ejercicio (consenso del año − trimestres estimados −
-// trimestres ya informados). Así entra la estacionalidad de lo que se sabe y no se mezclan trimestres ya informados.
-// Lo que pasa del ejercicio siguiente (pocas semanas) va con el mismo trimestre un año antes por el crecimiento del año.
-// Si falta algo (sin trimestres, sin el informado de un trimestre pasado) o el resto repartido no se parece a los otros
-// trimestres, se ponderan los dos ejercicios por tiempo. La misma función está en index.html (ntmFrom).
+// con su estimación. Lo que queda de cada ejercicio (consenso del año − trimestres estimados − trimestres ya informados)
+// se reparte entre los trimestres que faltan con la estacionalidad del mismo trimestre un año antes: proporcional si
+// todos son positivos, y si no (trimestres con pérdida) se le suma a cada uno la misma diferencia. La estacionalidad
+// sale del EPS que esperaba el consenso antes de cada resultado, no del informado, para que no entren extraordinarios.
+// Repartir parejo sería peor que no usar trimestres: tomaría la estacionalidad de los dos trimestres estimados y no la
+// de los demás. Lo que pasa del ejercicio siguiente (pocas semanas) va con el mismo trimestre un año antes por el
+// crecimiento del año (acotado a 0,8–1,25 veces). Un trimestre con un extraordinario en el consenso del año anterior se
+// cambia por el de dos años antes (ver abajo). Si falta algo (sin trimestres, sin el informado o la estacionalidad de un
+// trimestre) o un informado que se resta no está en la base del consenso (sorpresa de más de 50%: suele ser contable
+// con un extraordinario), se ponderan los dos ejercicios por tiempo. La misma función está en index.html (ntmFrom).
 export function ntmFrom(r, now) {
   if (!r) return null;
   const DAYMS = 86400000, T = now, T1 = now + 365 * DAYMS, P = s => Date.parse(s + "T00:00:00Z");
@@ -93,43 +98,66 @@ export function ntmFrom(r, now) {
   };
   if (!r.f1 || t1[0] == null || !(r.q0 || r.q1)) return blend();
   const endOfMonth = (t, m) => { const d = new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + m + 1, 0); };
-  const near = (a, b) => Math.abs(a - b) <= 20 * DAYMS;
+  const near = (a, b) => Math.abs(a - b) <= 20 * DAYMS, find = (L, t) => L.find(x => near(x.t, t));
   const known = [r.q0, r.q1].filter(q => q && q[1] != null).map(q => ({ t: P(q[0]), v: q[1] }));
-  const hist = (r.h || []).map(h => ({ t: P(h[0]), v: h[1] }));
+  const hist = (r.h || []).map(h => ({ t: P(h[0]), v: h[1], e: h[2] ?? null }));
+  const done = [];   // trimestres ya resueltos, para la estacionalidad del ejercicio siguiente
+  const shape = t => { const k = find(known, t); if (k) return k.v; const h = find(hist, t); if (h) return h.e ?? h.v; const c = find(done, t); return c ? c.v : null; };
+  const spread = (rest, s) => {
+    const S = s.reduce((a, b) => a + b, 0);
+    return s.every(x => x > 0) && rest > 0 ? s.map(x => rest * x / S) : s.map(x => x + (rest - S) / s.length);
+  };
   const years = [];
   if (r.f0 && t0[0] != null) years.push({ f: P(r.f0), E: t0[0] });
   years.push({ f: P(r.f1), E: t1[0] });
-  let sum = 0, covered = 0;
-  const all = [];
   for (const y of years) {
-    const qs = [-9, -6, -3, 0].map(m => ({ end: endOfMonth(y.f, m), start: endOfMonth(y.f, m - 3) }));
-    let rest = y.E, missingPast = false; const unk = [];
+    const qs = [-9, -6, -3, 0].map(m => ({ t: endOfMonth(y.f, m), start: endOfMonth(y.f, m - 3) }));
+    let rest = y.E, missingPast = false, suspect = false; const unk = [];
     for (const q of qs) {
-      const k = known.find(x => near(x.t, q.end));
+      const k = find(known, q.t);
       if (k) { q.v = k.v; rest -= k.v; continue; }
-      if (q.end <= T) { const h = hist.find(x => near(x.t, q.end)); if (h) { q.v = h.v; rest -= h.v; } else missingPast = true; continue; }
+      if (q.t <= T) {
+        const h = find(hist, q.t);
+        if (!h) { missingPast = true; continue; }
+        q.v = h.v; rest -= h.v;
+        if (h.e != null && Math.abs(h.v - h.e) > Math.max(0.5 * Math.abs(h.e), 0.1)) suspect = true;
+        continue;
+      }
       unk.push(q);
     }
-    // para repartir lo que queda del ejercicio hacen falta los trimestres ya informados; si falta uno, por ejercicios
-    if (unk.length && missingPast) return blend();
     if (unk.length) {
-      // el resto del ejercicio repartido tiene que parecerse a los otros trimestres (entre 0,4 y 2,5 veces su promedio);
-      // si no, el EPS informado y el del consenso no están en la misma base (uno contable con un extraordinario) y se
-      // vuelve al promedio por ejercicios
-      const per = rest / unk.length, oth = qs.filter(q => q.v != null), m = oth.reduce((a, q) => a + q.v, 0) / (oth.length || 1);
-      if (oth.length && (!(m > 0) || per < 0.4 * m || per > 2.5 * m)) return blend();
-      for (const q of unk) q.v = per;
+      if (missingPast || suspect) return blend();
+      const s = unk.map(q => shape(endOfMonth(q.t, -12)));
+      if (s.some(x => x == null)) return blend();
+      // un trimestre del año anterior con un extraordinario dentro del consenso (VRTX: I+D comprada en el de septiembre)
+      // no es estacionalidad: si contra el mismo trimestre dos años antes se movió más de 0,4–2,5 veces y otro trimestre
+      // se movió poco (0,67–1,5), va el de dos años antes por el crecimiento de los que se movieron poco
+      const pr = unk.map(q => shape(endOfMonth(q.t, -24))), ra = s.map((x, i) => pr[i] > 0 ? x / pr[i] : null);
+      const ok = ra.filter(x => x != null && x >= 2 / 3 && x <= 1.5).sort((a, b) => a - b);
+      if (ok.length) { const m = ok[ok.length >> 1]; ra.forEach((x, i) => { if (x != null && (x < 0.4 || x > 2.5)) s[i] = pr[i] * m; }); }
+      // sin el de dos años antes: una pérdida entre tres trimestres positivos y parejos (±35%) del mismo año es un
+      // extraordinario (GILD: I+D comprada en el segundo trimestre de 2026); va el promedio de los otros tres
+      unk.forEach((q, i) => {
+        if (!(s[i] <= 0) || pr[i] != null && pr[i] <= 0) return;
+        const o = [-9, -6, -3, 0].map(m => shape(endOfMonth(y.f, m - 12))).filter((v, k) => !near(endOfMonth(y.f, [-9, -6, -3, 0][k] - 12), endOfMonth(q.t, -12)));
+        if (o.length !== 3 || o.some(v => v == null || v <= 0)) return;
+        const m = (o[0] + o[1] + o[2]) / 3;
+        if (o.every(v => Math.abs(v / m - 1) <= 0.35)) s[i] = m;
+      });
+      spread(rest, s).forEach((v, i) => { unk[i].v = v; });
     }
-    all.push(...qs);
+    done.push(...qs);
   }
-  // lo que cae después del ejercicio siguiente: el mismo trimestre un año antes, con el crecimiento del ejercicio
-  const last = years[years.length - 1], g = years.length === 2 && years[0].E > 0 && last.E > 0 ? last.E / years[0].E : 1;
-  if (T1 > last.f) for (const q of all.filter(q => q.end > last.f - 365 * DAYMS && q.end <= last.f + 10 * DAYMS))
-    if (q.v != null) all.push({ start: endOfMonth(q.start, 12), end: endOfMonth(q.end, 12), v: q.v * g });
-  for (const q of all) {
-    const a = Math.max(q.start, T), b = Math.min(q.end, T1);
+  // las semanas después del ejercicio siguiente: el mismo trimestre un año antes por el crecimiento del año
+  const last = years[years.length - 1], first = years[0];
+  const g = years.length === 2 && first.E > 0 && last.E > 0 ? Math.min(1.25, Math.max(0.8, last.E / first.E)) : 1;
+  if (T1 > last.f) for (const q of done.filter(q => q.t > last.f - 365 * DAYMS && q.t <= last.f + 10 * DAYMS))
+    if (q.v != null) done.push({ t: endOfMonth(q.t, 12), start: endOfMonth(q.start, 12), v: q.v * (q.v > 0 ? g : 1) });
+  let sum = 0, covered = 0;
+  for (const q of done) {
+    const a = Math.max(q.start, T), b = Math.min(q.t, T1);
     if (b <= a || q.v == null) continue;
-    sum += q.v * (b - a) / (q.end - q.start); covered += b - a;
+    sum += q.v * (b - a) / (q.t - q.start); covered += b - a;
   }
   if (covered < 0.85 * (T1 - T)) return blend();
   return { eps: sum * (T1 - T) / covered, metodo: "trimestres" };
