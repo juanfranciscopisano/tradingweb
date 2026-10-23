@@ -3167,7 +3167,7 @@ function renderPebgNorm(d) {
   const box = document.getElementById('pebgNorm'), al = document.getElementById('pebgNormAlert');
   const det = document.getElementById('pebgNormDet'), sum = document.getElementById('pebgNormSum'), body = document.getElementById('pebgNormBody');
   if (!box) return;
-  const adj = Array.isArray(d.normAdj) ? d.normAdj : [], flags = Array.isArray(d.normFlags) ? d.normFlags : [];
+  const adj = Array.isArray(d.normAdj) ? d.normAdj : [], flagsAll = Array.isArray(d.normFlags) ? d.normFlags : [];
   const own = d.normMethod === 'operativo' || d.normMethod === 'impuestos';
   const t = ttmPair(d), gap = t ? normGap(t.g, t.n) : null;
   const px = d.currentPrice;
@@ -3178,19 +3178,20 @@ function renderPebgNorm(d) {
     const inWin = adj.filter(a => { const ts = Date.parse(a.fin + 'T00:00:00Z') / 1000; return ts >= t.from - 10 * 86400 && ts <= t.to + 10 * 86400; });
     const byCat = new Map();
     inWin.forEach(a => a.items.forEach(x => { if (x.eps != null) byCat.set(x.cat, (byCat.get(x.cat) || 0) + x.eps); }));
-    const expl = [...byCat.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    const expl = [...byCat.entries()].filter(([, v]) => Math.abs(v) >= 0.005).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
     const sumExpl = expl.reduce((a, [, v]) => a + v, 0), rest = (t.n - t.g) - sumExpl;
     const gapTxt = gap === Infinity ? 'uno da ganancia y el otro pérdida' : 'el normalizado da ' + Math.abs(gap * 100).toFixed(0) + '% ' + (gap > 0 ? 'más' : 'menos');
+    const restTxt = 'impuestos fuera de la tasa habitual y resultados de abajo de la línea operativa (tenencias, diferencias de cambio, ventas de negocios)';
+    const hasRest = own && Math.abs(rest) >= 0.05 * Math.abs(t.n - t.g) && Math.abs(rest) >= 0.01;
     let why = '';
-    if (expl.length) why = ' La diferencia sale de ' + expl.map(([c, v]) => c + ' (' + fSgn(v) + ' por acción)').join(', ');
-    if (own && Math.abs(rest) >= 0.05 * Math.abs(t.n - t.g) && Math.abs(rest) >= 0.01)
-      why += (why ? '; el resto, ' : ' La diferencia sale de ') + fSgn(rest) + ' por acción, de impuestos fuera de la tasa habitual y de resultados debajo de la línea operativa (tenencias, diferencias de cambio)';
     if (!own) why = ' El normalizado es el ajustado que publica la empresa' + (d.normMethod === 'ajustado' ? ' (vía Finnhub)' : '') + ': el detalle de los ajustes está en su reporte.';
-    else if (why) why += '.';
+    else if (expl.length) why = ' Por acción, la diferencia sale de ' + expl.map(([c, v]) => c + ' (' + fSgn(v) + ')').join(', ') + (hasRest ? '; el resto (' + fSgn(rest) + '), de ' + restTxt : '') + '.';
+    else if (hasRest) why = ' No hay extraordinarios etiquetados en esos trimestres: la diferencia (' + fSgn(rest) + ' por acción) sale de ' + restTxt + '.';
     alertHtml = '<b>Contable y normalizado difieren:</b> ' + gapTxt + '. EPS de 12 meses ' + fUsd(t.g) + ' contable (P/E ' + pe(t.g) + ') y ' + fUsd(t.n) + ' normalizado (P/E ' + pe(t.n) + ').' + why;
   }
   al.innerHTML = alertHtml; al.style.display = alertHtml ? '' : 'none';
-  if (!own || (!adj.length && !flags.length)) {
+  const cut5 = Date.now() / 1000 - 5 * YR_S, flags = pebgNormAll ? flagsAll : flagsAll.filter(f => Date.parse(f.fin + 'T00:00:00Z') / 1000 >= cut5);
+  if (!own || (!adj.length && !flagsAll.length)) {
     det.style.display = 'none';
     box.style.display = alertHtml ? '' : 'none';
     return;
@@ -3200,7 +3201,7 @@ function renderPebgNorm(d) {
   const recent = adj.filter(a => Date.parse(a.fin + 'T00:00:00Z') / 1000 >= cut && a.items.some(x => !x.descartado));
   const shown = (pebgNormAll ? adj : adj.filter(a => Date.parse(a.fin + 'T00:00:00Z') / 1000 >= cut)).slice().reverse();
   sum.textContent = 'Ajustes del normalizado: ' + (recent.length ? recent.length + (recent.length === 1 ? ' trimestre' : ' trimestres') + ' con extraordinarios en los últimos 5 años' : 'sin extraordinarios en los últimos 5 años')
-    + (flags.length ? ', ' + flags.length + (flags.length === 1 ? ' margen' : ' márgenes') + ' para revisar' : '');
+    + (flags.length ? ', ' + flags.length + (flags.length === 1 ? ' margen' : ' márgenes') + ' para revisar' + (pebgNormAll ? '' : ' en ese lapso') : '');
   let h = '';
   if (shown.length) {
     h += '<table><thead><tr><th>Trimestre</th><th>Partida</th><th>Antes de impuestos, US$ M</th><th>Efecto en el EPS contable</th><th>De dónde sale</th></tr></thead><tbody>';
@@ -3216,7 +3217,7 @@ function renderPebgNorm(d) {
     }));
     h += '</tbody></table>';
   } else h += '<p class="pebg-norm-p">Sin extraordinarios en los últimos 5 años.</p>';
-  if (adj.length > recent.length) h += '<button class="pebg-norm-more" onclick="pebgNormAll=!pebgNormAll;renderPebgNorm(pebgData)">' + (pebgNormAll ? 'Ver solo los últimos 5 años' : 'Ver toda la historia (' + adj.length + ' trimestres)') + '</button>';
+  if (adj.length > shown.length || flagsAll.length > flags.length || pebgNormAll) h += '<button class="pebg-norm-more" onclick="pebgNormAll=!pebgNormAll;renderPebgNorm(pebgData)">' + (pebgNormAll ? 'Ver solo los últimos 5 años' : 'Ver toda la historia (' + adj.length + ' trimestres con ajustes, ' + flagsAll.length + (flagsAll.length === 1 ? ' margen raro' : ' márgenes raros') + ')') + '</button>';
   if (flags.length) h += '<p class="pebg-norm-p">Margen operativo fuera de lo habitual sin un extraordinario etiquetado: '
     + flags.slice().reverse().map(f => fQd(f.fin) + ' (' + f.margen.toFixed(1) + '% contra ' + f.media.toFixed(1) + '% de los 8 trimestres previos)').join(', ')
     + '. Puede haber un cargo o una ganancia que la empresa no etiqueta en la SEC: conviene leer ese 10-Q.</p>';
