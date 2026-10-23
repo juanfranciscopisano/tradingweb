@@ -23,6 +23,11 @@ export const EDGAR_TAGS = {
   ii: [["InvestmentIncomeInterest", "InterestIncomeOther", "InvestmentIncomeInterestAndDividend"], "USD"],
   eq: [["IncomeLossFromEquityMethodInvestments"], "USD"],
   rev: [["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet", "RevenueFromContractWithCustomerIncludingAssessedTax"], "USD"],
+  nic: [["NetIncomeLossAvailableToCommonStockholdersBasic"], "USD"],          // resultado para los comunes (sin preferidos)
+  pl: [["ProfitLoss"], "USD"],                                               // resultado con los minoritarios
+  nci: [["NetIncomeLossAttributableToNoncontrollingInterest"], "USD"],
+  pref: [["PreferredStockDividendsIncomeStatementImpact", "DividendsPreferredStock"], "USD"],
+  afudc: [["PublicUtilitiesAllowanceForFundsUsedDuringConstructionCapitalizedCostOfEquity"], "USD"],
 };
 // partidas puntuales para el EPS normalizado: cada etiqueta por separado (se combinan con reglas propias)
 export const ADJ_TAGS = [
@@ -128,36 +133,44 @@ export function gaapQuarterly(raw, splitFactor, symbol) {
 }
 
 // ---- EPS normalizado ----
-// Base: resultado operativo − intereses pagados + intereses ganados + resultado de asociadas (lo que queda debajo de
-// la línea operativa, como ganancias por tenencias de acciones o diferencias de cambio, no entra). Bancos, aseguradoras
-// y quienes no informan resultado operativo: resultado antes de impuestos.
+// Es la ganancia de un trimestre normal, con el mismo criterio para todas las empresas y toda la historia.
+// Base (método operativo): resultado operativo + los resultados recurrentes de abajo de la línea operativa: intereses
+// (pagados y ganados), resultado de asociadas y, en las eléctricas, el AFUDC (retorno sobre obras en curso). Lo demás que
+// está abajo de la línea (tenencias de acciones, diferencias de cambio, ventas de negocios) queda afuera.
+//   Algunas empresas tienen los intereses o las asociadas dentro del resultado operativo (las aseguradoras de salud
+//   cobran intereses como ingreso; las automotrices pagan los de su financiera como costo). Para no contarlos dos veces se
+//   prueba qué armado reproduce mejor el resultado antes de impuestos de la empresa, y solo se cambia el de siempre si el
+//   otro explica la diferencia mucho mejor.
+// Bancos, aseguradoras y quienes no informan resultado operativo: resultado antes de impuestos (método impuestos).
 // Extraordinarios: a la base se le suman los cargos puntuales y se le restan las ganancias puntuales, en toda la serie.
 //   · Etiquetados en la SEC: reestructuraciones, deterioros (llave de negocio, intangibles, activos fijos), juicios,
-//     costos de adquisiciones y resultado por venta de activos fijos. Por US GAAP (ASC 350, 360, 420) estos están dentro
-//     del resultado operativo cuando la empresa lo presenta. Con base antes de impuestos se sacan además las ventas de
-//     negocios, las tenencias de acciones a valor de mercado, la cancelación de deuda y las ganancias realizadas de
-//     inversiones de las aseguradoras.
-//   · Solo cuenta como extraordinario lo que excede el nivel habitual: el cargo menos la mediana de esa partida en los
-//     12 trimestres anteriores (una reestructuración que aparece todos los trimestres es un costo del negocio), y solo
-//     si mueve la base en 3% o más.
-//   · I+D adquirida (compras de proyectos en desarrollo que se cargan a resultados de una vez, típico de farmacéuticas):
-//     no se saca, se prorratea. Cada trimestre carga el promedio de los últimos 12 (el pico se reparte en 3 años), porque
-//     comprar proyectos es un costo recurrente del negocio, aunque llegue a saltos.
-//   · Si una reestructuración viene en una etiqueta que también incluye deterioros, no se suman los deterioros aparte
-//     (mejor quedarse corto que contar dos veces).
-//   · Lo que no está etiquetado (el juicio de META, por ejemplo) va a mano en data/norm_adj.json, con su fuente; si está
-//     a mano, reemplaza a la etiqueta de la misma categoría en ese trimestre.
-// Impuesto: la base ajustada se grava a la tasa típica (mediana de la tasa efectiva de los 12 trimestres previos, entre
-// 5 y 35%). Como se vuelve a gravar el resultado limpio, que el cargo deduzca o no da igual para el normalizado (una
-// multa que no deduce infla la tasa de ese trimestre, y la mediana la descarta); solo cambia cuánto le restó al
-// EPS contable, que es el efecto por acción que se muestra.
-// Acciones: resultado neto / EPS contable total (consistente con splits); si no, las de la SEC con control de escala.
+//     costos de adquisiciones, I+D adquirida y resultado por venta de activos fijos. Por US GAAP (ASC 350, 360, 420)
+//     están dentro del resultado operativo cuando la empresa lo presenta. Con base antes de impuestos se sacan además
+//     las ventas de negocios, las tenencias de acciones, la cancelación de deuda y las ganancias realizadas de inversiones.
+//   · Solo cuenta lo que excede el nivel habitual: la partida menos su mediana de los 12 trimestres anteriores (una
+//     reestructuración de todos los trimestres es un costo del negocio), y solo si mueve la base 3% o más.
+//   · Control de que el monto esté en la base: muchas de estas etiquetas salen del flujo de caja, que suma también lo
+//     de operaciones discontinuadas o de abajo de la línea. Si al ajustar la base se aleja de su nivel típico (mediana
+//     de los 8 trimestres previos) en vez de acercarse, el ajuste no se hace y queda anotado como descartado.
+//   · I+D adquirida: en una compra de activos se carga a resultados; en la compra de una empresa el mismo proyecto se
+//     activa. Se saca lo que excede lo habitual para que las dos formas den igual.
+//   · Si la reestructuración viene en una etiqueta que ya incluye deterioros, no se suman los deterioros aparte.
+//   · Lo que no está etiquetado (los juicios de META, por ejemplo) va a mano en data/norm_adj.json, con su fuente; si
+//     está a mano, reemplaza a la etiqueta de la misma categoría en ese trimestre.
+// Impuesto: la base ajustada se grava a la tasa típica: mediana de la tasa efectiva de los 12 trimestres previos (se
+// toman las de −25% a 45%, así entran las eléctricas con créditos fiscales), acotada entre 0 y 35%. Que un cargo deduzca
+// o no da igual para el normalizado; solo cambia cuánto le restó al EPS contable, que es el efecto que se muestra.
+// Minoritarios: se descuenta la parte de los socios minoritarios (mediana de los últimos 8 trimestres de su parte en la
+// ganancia), clave en las empresas con estructura de sociedad (IBKR, BX, TKO). Dividendos preferidos: se restan.
+// Acciones: las diluidas que informa la empresa, si coinciden (±15%) con las implícitas (resultado / EPS); si no, las
+// implícitas.
 // Además marca los trimestres con un margen operativo ajustado muy fuera de lo normal, para revisar si quedó algo puntual.
 let NORM_ADJ = {};
 try { NORM_ADJ = JSON.parse(readFileSync(new URL("./data/norm_adj.json", import.meta.url), "utf8")); } catch (e) { NORM_ADJ = {}; }
 export const normAdjManual = () => NORM_ADJ;
-const CAT_ES = { ipr: "I+D adquirida (prorrateada)", restr: "reestructuración", imp: "deterioro de activos", lit: "juicios y contingencias", acq: "costos de adquisición",
+const CAT_ES = { ipr: "I+D adquirida", restr: "reestructuración", imp: "deterioro de activos", lit: "juicios y contingencias", acq: "costos de adquisición",
   ppe: "venta de activos fijos", biz: "venta de negocios", mtm: "tenencias de acciones", debt: "cancelación de deuda", inv: "ganancias realizadas de inversiones" };
+const median = a => { const x = [...a].sort((p, q) => p - q); return x.length ? (x.length % 2 ? x[(x.length - 1) / 2] : (x[x.length / 2 - 1] + x[x.length / 2]) / 2) : null; };
 export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   if (!gaap.length) return { eps: [], method: null };
   const one = () => 1, TEN = 10 * DAY_MS;
@@ -175,7 +188,8 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   };
   const at = (sr, t) => { const x = sr.find(q => Math.abs(q.t - t) <= TEN); return x ? x.eps : undefined; };
   const OI = ser(raw.oi), PT = ser(raw.pt), TX = ser(raw.tx), NI = ser(raw.ni), REV = ser(raw.rev);
-  const IE = ser(raw.ie), II = ser(raw.ii), EQ = ser(raw.eq);
+  const IE = ser(raw.ie), II = ser(raw.ii), EQ = ser(raw.eq), AF = ser(raw.afudc);
+  const NIC = ser(raw.nic), PL = ser(raw.pl), NCI = ser(raw.nci), PREF = ser(raw.pref);
   // si a un trimestre le falta el dato de intereses, el del trimestre anterior más cercano (es una serie estable)
   const steady = (sr, t) => { if (!sr.length) return 0; const v = at(sr, t); if (v !== undefined) return v; const prev = sr.filter(q => q.t <= t).pop() || sr[0]; return prev.eps; };
   const totalEps = gaap.filter(e => !isContinuingTag(e.tag)).map(e => ({ t: e.date * 1000, eps: e.eps }));
@@ -191,11 +205,30 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   if (!method) return { eps: [], method: null };
   const BASE = method === "operativo" ? OI : PRE;
 
-  // acciones implícitas = resultado neto / EPS total (ya ajustado por splits)
-  const median = a => { const x = [...a].sort((p, q) => p - q); return x.length ? (x.length % 2 ? x[(x.length - 1) / 2] : (x[x.length / 2 - 1] + x[x.length / 2]) / 2) : null; };
+  // armado de la base: qué partidas de abajo de la línea operativa suman (fuera = la empresa las tiene abajo de la línea).
+  // Hipótesis: cada una de intereses pagados, ganados y asociadas, adentro o afuera del operativo; se elige la que mejor
+  // reproduce PT − OI, pero solo se deja la de siempre (todo afuera) si otra baja el error a menos de 40% y a menos de
+  // la cuarta parte del interés.
+  let inOI = { ie: false, ii: false, eq: false };
+  if (method === "operativo") {
+    const qs = OI.filter(q => at(PT, q.t) !== undefined).slice(-16);
+    if (qs.length >= 6) {
+      const res = h => median(qs.map(q => Math.abs((at(PT, q.t) - q.eps) - (-(h.ie ? 0 : steady(IE, q.t)) + (h.ii ? 0 : steady(II, q.t)) + (h.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0)))));
+      const H = [];
+      for (const ie of [false, true]) for (const ii of [false, true]) for (const eq of [false, true]) H.push({ ie, ii, eq, r: res({ ie, ii, eq }) });
+      const def = H[0], best = H.slice(1).sort((a, b) => a.r - b.r)[0];
+      const scale = Math.max(median(qs.map(q => Math.abs(steady(IE, q.t)))), median(qs.map(q => Math.abs(steady(II, q.t)))), 1);
+      if (best && best.r < 0.4 * def.r && best.r < 0.25 * scale) inOI = { ie: best.ie, ii: best.ii, eq: best.eq };
+    }
+  }
+  const baseOf = q => method === "operativo"
+    ? q.eps - (inOI.ie ? 0 : steady(IE, q.t)) + (inOI.ii ? 0 : steady(II, q.t)) + (inOI.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0)
+    : q.eps;
+
+  // acciones: implícitas = resultado para los comunes / EPS total; las informadas si coinciden con las implícitas
   const implied = new Map();
   for (const q of BASE) {
-    const ni = at(NI, q.t), e = at(totalEps, q.t);
+    const ni = at(NIC, q.t) ?? at(NI, q.t), e = at(totalEps, q.t);
     if (ni !== undefined && e !== undefined && Math.abs(e) >= 0.05 && ni / e > 0) implied.set(q.t, ni / e);
   }
   const medImplied = median([...implied.values()]);
@@ -207,12 +240,19 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     if (medImplied) v = [1, 1e3, 1e6].map(sc => v * sc).reduce((best, x) => Math.abs(Math.log(x / medImplied)) < Math.abs(Math.log(best / medImplied)) ? x : best);
     reported.push({ t: Date.parse(e.end), eps: v });
   }
+  const repOk = medImplied && reported.length ? Math.abs(median(reported.map(r => r.eps)) / medImplied - 1) <= 0.15 : !medImplied;
   const sharesFor = t => {
+    const r = repOk ? at(reported, t) : undefined; if (r !== undefined) return r;
     if (implied.has(t)) return implied.get(t);
-    const r = at(reported, t); if (r !== undefined) return r;
-    const near = [...[...implied.entries()].map(([k, v]) => ({ t: k, v })), ...reported.map(x => ({ t: x.t, v: x.eps }))].sort((a, b) => a.t - b.t);
+    const near = [...[...implied.entries()].map(([k, v]) => ({ t: k, v })), ...(repOk ? reported.map(x => ({ t: x.t, v: x.eps })) : [])].sort((a, b) => a.t - b.t);
     const prev = near.filter(x => x.t <= t).pop() || near.find(x => x.t > t);
     return prev ? prev.v : null;
+  };
+  // parte de los minoritarios en la ganancia
+  const nciAt = t => {
+    const n = at(NCI, t); if (n === undefined) return null;
+    const pl = at(PL, t) ?? ((at(NI, t) ?? undefined) !== undefined ? at(NI, t) + n : undefined);
+    if (!(pl > 0)) return null; const r = n / pl; return r >= 0 && r < 0.95 ? r : null;
   };
 
   // partidas puntuales por categoría y trimestre (US$, signo: + cargo que se suma de vuelta, − ganancia que se resta)
@@ -249,44 +289,52 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   const cats = BASE.map(q => catAt(q.t)), raws = cats.map(x => x.c);
   const manual = (NORM_ADJ[symbol] || []).map(m => ({ ...m, t: Date.parse(m.fin + "T00:00:00Z") }));
   const typical = (i, cat) => median(raws.slice(Math.max(0, i - 12), i).map(c => c[cat] || 0));
-  const mean12 = (i, cat) => raws.slice(Math.max(0, i - 11), i + 1).reduce((a, c) => a + (c[cat] || 0), 0) / Math.min(12, i + 1);
 
   // tasa efectiva = impuesto / resultado antes de impuestos (si no está, resultado neto + impuesto)
   const etrAt = t => {
     const tx = at(TX, t); if (tx === undefined) return null;
     const pt = at(PT, t), ni = at(NI, t);
     const p = pt !== undefined ? pt : (ni !== undefined ? ni + tx : undefined);
-    if (!(p > 0)) return null; const r = tx / p; return (r >= 0 && r <= 0.45) ? r : null;
+    if (!(p > 0)) return null; const r = tx / p; return (r >= -0.25 && r <= 0.45) ? r : null;
   };
   const allRates = BASE.map(q => etrAt(q.t)).filter(r => r != null);
   const globalRate = allRates.length >= 4 ? median(allRates) : 0.21;
-  const out = [], adj = [], margins = [], rows = [];
+  const out = [], adj = [], margins = [], rows = [], adjBases = [];
   BASE.forEach((q, i) => {
     const win = BASE.slice(Math.max(0, i - 11), i + 1).map(x => etrAt(x.t)).filter(r => r != null);
-    const tax = Math.min(0.35, Math.max(0.05, win.length >= 4 ? median(win) : globalRate));
+    const tax = Math.min(0.35, Math.max(0, win.length >= 4 ? median(win) : globalRate));
     const sh = sharesFor(q.t);
-    const base = method === "operativo" ? q.eps - steady(IE, q.t) + steady(II, q.t) + (at(EQ, q.t) || 0) : q.eps;
-    // etiquetados: solo lo que excede el nivel habitual y mueve la base 3% o más
+    const base = baseOf(q);
     const man = manual.filter(m => Math.abs(m.t - q.t) <= 20 * DAY_MS);
-    const items = [];
-    const iprLive = raws.slice(Math.max(0, i - 11), i + 1).some(c => c.ipr);
-    for (const cat of new Set([...Object.keys(raws[i]), ...(iprLive ? ["ipr"] : [])])) {
+    // a mano primero (verificados); después los etiquetados, de mayor a menor, con el control de que estén en la base
+    const items = man.map(m => ({ cat: m.cat || "lit", pre: m.pre * 1e6, src: "manual", desc: m.desc, fuente: m.fuente, noDeduce: m.deducible === false }));
+    const cand = [];
+    for (const [cat, v] of Object.entries(raws[i])) {
       if (man.some(m => m.cat === cat)) continue;
-      const v = raws[i][cat] || 0, smooth = cat === "ipr", typ = smooth ? mean12(i, cat) : typical(i, cat), ex = v - typ;
-      if (Math.abs(ex) >= Math.max(5e6, 0.03 * Math.abs(base)))
-        items.push({ cat, pre: ex, src: "SEC", tag: cats[i].T[cat] || cats.slice(Math.max(0, i - 11), i).map(x => x.T[cat]).filter(Boolean).pop(), informado: v, habitual: typ, ...(smooth ? { regla: "promedio12" } : {}) });
+      const typ = typical(i, cat), ex = v - typ;
+      if (Math.abs(ex) >= Math.max(5e6, 0.03 * Math.abs(base))) cand.push({ cat, pre: ex, src: "SEC", tag: cats[i].T[cat], informado: v, habitual: typ });
     }
-    for (const m of man) items.push({ cat: m.cat || "lit", pre: m.pre * 1e6, src: "manual", desc: m.desc, fuente: m.fuente, noDeduce: m.deducible === false });
-    const addBack = items.reduce((a, x) => a + x.pre, 0);
+    const prevB = adjBases.slice(-8), typB = prevB.length >= 4 ? median(prevB) : null;
+    let cur = base + items.reduce((a, x) => a + x.pre, 0);
+    for (const x of cand.sort((a, b) => Math.abs(b.pre) - Math.abs(a.pre))) {
+      if (typB != null && Math.abs(cur + x.pre - typB) > Math.abs(cur - typB) + 0.35 * Math.abs(typB)) { items.push({ ...x, descartado: true }); continue; }
+      cur += x.pre; items.push(x);
+    }
+    const addBack = items.filter(x => !x.descartado).reduce((a, x) => a + x.pre, 0);
+    adjBases.push(base + addBack);
     if (method === "operativo") { const rv = at(REV, q.t); if (rv > 0) margins.push({ i, t: q.t, end: q.end, m: (q.eps + addBack) / rv }); }
+    const nciW = BASE.slice(Math.max(0, i - 7), i + 1).map(x => nciAt(x.t)).filter(r => r != null);
+    const nci = nciW.length ? median(nciW) : 0, pref = at(PREF, q.t) || 0;
     // importes en millones de US$; eps = lo que le restó (o sumó) al EPS contable: neto de impuestos, o entero si no deduce
     if (items.length) adj.push({ fin: q.end, base: +(base / 1e6).toFixed(1), tasa: +tax.toFixed(3),
-      items: items.map(x => ({ ...x, cat: CAT_ES[x.cat] || x.cat, pre: +(x.pre / 1e6).toFixed(1), eps: sh ? +((x.noDeduce ? x.pre : x.pre * (1 - tax)) / sh).toFixed(3) : null,
+      items: items.map(x => ({ ...x, cat: CAT_ES[x.cat] || x.cat, pre: +(x.pre / 1e6).toFixed(1),
+        eps: sh && !x.descartado ? +((x.noDeduce ? x.pre : x.pre * (1 - tax)) * (1 - nci) / sh).toFixed(3) : null,
         ...(x.src === "SEC" ? { informado: +(x.informado / 1e6).toFixed(1), habitual: +(x.habitual / 1e6).toFixed(1) } : {}) })) });
     const M = v => v == null ? null : +(v / 1e6).toFixed(1);
-    rows.push({ fin: q.end, base: M(base), ajuste: M(addBack), tasa: +tax.toFixed(3), acciones: sh ? M(sh) : null, antesImp: M(at(PT, q.t)), impuesto: M(at(TX, q.t)), neto: M(at(NI, q.t)) });
+    rows.push({ fin: q.end, base: M(base), ajuste: M(addBack), tasa: +tax.toFixed(3), minoritarios: +nci.toFixed(3), preferidos: M(pref), acciones: sh ? M(sh) : null,
+      antesImp: M(at(PT, q.t)), impuesto: M(at(TX, q.t)), neto: M(at(NI, q.t)) });
     if (!sh) return;
-    const eps = (base + addBack) * (1 - tax) / sh;
+    const eps = ((base + addBack) * (1 - tax) * (1 - nci) - pref) / sh;
     if (isFinite(eps)) out.push({ date: Math.floor(q.t / 1000), eps: +eps.toFixed(4), frame: "CY" + qkeyOf(q.end) });
   });
   // margen operativo ajustado fuera de lo normal: más de 2,5 desvíos y más de 4 puntos contra los 8 trimestres previos
@@ -297,7 +345,8 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     const mu = prev.reduce((a, b) => a + b, 0) / prev.length, sd = Math.sqrt(prev.reduce((a, b) => a + (b - mu) ** 2, 0) / prev.length);
     if (Math.abs(x.m - mu) > Math.max(2.5 * sd, 0.04)) flags.push({ fin: x.end, margen: +(x.m * 100).toFixed(1), media: +(mu * 100).toFixed(1) });
   });
-  return { eps: out, method, adj, flags, rows };
+  const armado = method === "operativo" ? { interesesPagadosEnOperativo: inOI.ie, interesesGanadosEnOperativo: inOI.ii, asociadasEnOperativo: inOI.eq, afudc: AF.length > 0 } : null;
+  return { eps: out, method, adj, flags, rows, armado, accionesInformadas: !!repOk };
 }
 
 // acciones diluidas por trimestre, ajustadas por splits (para ponderar en los agregados de índice y sector):

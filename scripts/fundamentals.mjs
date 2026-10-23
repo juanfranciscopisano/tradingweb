@@ -55,6 +55,37 @@ async function fromYahoo(f, symbols, today, sleep) {
   return out;
 }
 
+// Revisiones del EPS esperado (Yahoo quoteSummary, módulo earningsTrend): para el ejercicio en curso (0y) y el
+// siguiente (+1y), el consenso de hoy y el de hace 7, 30, 60 y 90 días, más cuántos analistas lo subieron o bajaron
+// en los últimos 30 días. Va en revisions.json; si falla, fundamentals.json sale igual.
+const TREND_LAGS = ["current", "7daysAgo", "30daysAgo", "60daysAgo", "90daysAgo"];
+export function parseTrend(j) {
+  const tr = j?.quoteSummary?.result?.[0]?.earningsTrend?.trend || [];
+  const raw = v => (v && typeof v === "object" ? num(v.raw) : num(v));
+  const per = k => tr.find(t => t.period === k);
+  const pack = t => t ? TREND_LAGS.map(l => { const v = raw(t.epsTrend?.[l]); return v == null ? null : +v.toFixed(4); }) : null;
+  const y0 = per("0y"), y1 = per("+1y");
+  if (!y0 && !y1) return null;
+  const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1),
+    up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts) };
+  return (e.t0?.[0] != null || e.t1?.[0] != null) ? e : null;
+}
+async function trendsFromYahoo(f, symbols, sleep, gapMs = 120) {
+  const s = await yahooSession(f), out = {};
+  let fails = 0;
+  for (const sym of symbols) {
+    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=earningsTrend&crumb=${encodeURIComponent(s.crumb)}`;
+    try {
+      let r = await f(url, { headers: { "User-Agent": UA, Cookie: s.cookie, Accept: "application/json" } });
+      if (r.status === 429) { await sleep(5000); r = await f(url, { headers: { "User-Agent": UA, Cookie: s.cookie, Accept: "application/json" } }); }
+      if (r.ok) { const e = parseTrend(await r.json()); if (e) out[sym] = e; } else fails++;
+    } catch (e) { fails++; }
+    if (fails > 60 && !Object.keys(out).length) throw new Error("Yahoo earningsTrend no responde");
+    await sleep(gapMs);
+  }
+  return out;
+}
+
 async function fromFinnhub(f, symbols, key, today, sleep, delayMs) {
   const out = {};
   const pick = (o, ks) => { for (const k of ks) { const v = num(o?.[k]); if (v != null) return v; } return null; };
@@ -78,7 +109,8 @@ async function fromFinnhub(f, symbols, key, today, sleep, delayMs) {
 }
 
 export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(),
-  finnhubKey = process.env.FINNHUB_KEY || "", sleep = ms => new Promise(r => setTimeout(r, ms)), delayMs = 1100, log = console.log } = {}) {
+  finnhubKey = process.env.FINNHUB_KEY || "", sleep = ms => new Promise(r => setTimeout(r, ms)), delayMs = 1100, log = console.log,
+  withTrends = true, trendGapMs = 120 } = {}) {
   const today = now.toISOString().slice(0, 10);
   let spx = [];
   try { spx = JSON.parse(await readFile(new URL("spx.json", root), "utf8")).list.map(x => x.s); } catch (e) { console.log("spx.json: " + e.message); }
@@ -113,6 +145,18 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const counts = { yahoo: Object.keys(yahoo).length, finnhub: Object.keys(fh).length, arrastrados: carried, sinDatos: symbols.length - Object.keys(data).length };
   await writeFile(new URL("fundamentals.json", root), JSON.stringify({ asOf: now.toISOString(), counts, data }) + "\n");
   log(`OK: ${JSON.stringify(counts)}`);
+
+  if (withTrends) {
+    try {
+      const tr = await trendsFromYahoo(fetchImpl, symbols, sleep, trendGapMs);
+      if (Object.keys(tr).length) {
+        await writeFile(new URL("revisions.json", root), JSON.stringify({ asOf: now.toISOString(),
+          nota: "Consenso de EPS (Yahoo) del ejercicio en curso (t0, cierre f0) y del siguiente (t1, cierre f1): hoy y hace 7, 30, 60 y 90 días; up/dn: analistas que lo subieron o bajaron en 30 días (ejercicio siguiente); n: analistas",
+          data: tr }) + "\n");
+      }
+      log(`Revisiones: ${Object.keys(tr).length}/${symbols.length}`);
+    } catch (e) { log(`Revisiones fallaron: ${e.message}`); }
+  }
   return counts;
 }
 

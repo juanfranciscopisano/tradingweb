@@ -242,6 +242,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-norm-body td:last-child{white-space:normal;color:var(--muted);max-width:52ch}
 .pebg-norm-body td.q{color:var(--ink)}
 .pebg-norm-body tr.sep td{border-top:1px solid var(--line2)}
+.pebg-norm-body tr.off td{color:var(--faint)}
 .pebg-norm-body .tag{font-size:11.5px;color:var(--faint);word-break:break-all}
 .pebg-norm-body a{color:var(--accent)}
 .pebg-norm-p{margin:8px 0 0;color:var(--muted);max-width:120ch;line-height:1.45}
@@ -2682,7 +2683,7 @@ async function loadCompare() {
 let epsMode = 'gaap';
 try { if (localStorage.getItem('epsMode') === 'norm') epsMode = 'norm'; } catch (e) {}
 const NORM_NOTE = {
-  operativo: ['operativo sin extraordinarios', 'Resultado operativo menos intereses netos, más resultado de asociadas, sin los extraordinarios (reestructuraciones, deterioros, juicios, costos de adquisiciones y ventas de activos fijos, en lo que exceden su nivel habitual), a la tasa efectiva típica de los últimos 12 trimestres. El detalle está en Ajustes del normalizado, abajo de los números.'],
+  operativo: ['operativo sin extraordinarios', 'Resultado operativo más los resultados recurrentes de abajo de la línea (intereses, asociadas), sin los extraordinarios (reestructuraciones, deterioros, juicios, costos de adquisiciones, I+D adquirida y ventas de activos fijos, en lo que exceden su nivel habitual), a la tasa efectiva típica, sin la parte de los minoritarios y los preferidos. El detalle está en Ajustes del normalizado, abajo de los números.'],
   impuestos: ['antes de impuestos sin extraordinarios', 'La empresa no informa resultado operativo (bancos, aseguradoras, algunos conglomerados): resultado antes de impuestos sin los extraordinarios (los mismos más ventas de negocios, tenencias de acciones, cancelación de deuda y ganancias realizadas de inversiones), a la tasa efectiva típica.'],
   ajustado: ['ajustado (Finnhub)', 'EPS ajustado que informa la empresa, vía Finnhub. Solo los últimos 4 trimestres.'],
   ajustado_empresa: ['ajustado por la empresa', 'Resultado ajustado que publica la empresa, cargado a mano desde sus reportes trimestrales.'],
@@ -3140,8 +3141,8 @@ function renderPebgNorm(d) {
   }
   det.style.display = '';
   const now = Date.now() / 1000, cut = now - 5 * YR_S;
-  const recent = adj.filter(a => Date.parse(a.fin + 'T00:00:00Z') / 1000 >= cut);
-  const shown = (pebgNormAll ? adj : recent).slice().reverse();
+  const recent = adj.filter(a => Date.parse(a.fin + 'T00:00:00Z') / 1000 >= cut && a.items.some(x => !x.descartado));
+  const shown = (pebgNormAll ? adj : adj.filter(a => Date.parse(a.fin + 'T00:00:00Z') / 1000 >= cut)).slice().reverse();
   sum.textContent = 'Ajustes del normalizado: ' + (recent.length ? recent.length + (recent.length === 1 ? ' trimestre' : ' trimestres') + ' con extraordinarios en los últimos 5 años' : 'sin extraordinarios en los últimos 5 años')
     + (flags.length ? ', ' + flags.length + (flags.length === 1 ? ' margen' : ' márgenes') + ' para revisar' : '');
   let h = '';
@@ -3150,10 +3151,11 @@ function renderPebgNorm(d) {
     shown.forEach(a => a.items.forEach((x, j) => {
       const src = x.src === 'manual'
         ? (x.desc ? x.desc.replace(/</g, '&lt;') + '. ' : '') + (x.fuente ? '<a href="' + x.fuente + '" target="_blank" rel="noopener">10-Q en la SEC</a>' : 'Cargado a mano') + (x.noDeduce ? '. No deduce impuestos' : '')
-        : x.regla === 'promedio12'
-          ? 'Informado ' + fMill(x.informado) + '; se carga el promedio de los últimos 12 trimestres, ' + fMill(x.habitual) + '. <span class="tag">' + (x.tag || '') + '</span>'
+        : x.descartado
+          ? 'No se ajusta: al sacarlo, el resultado se aleja de su nivel típico en vez de acercarse. Suele ser un monto de operaciones discontinuadas o de abajo de la línea operativa que la empresa suma en el flujo de caja. <span class="tag">' + (x.tag || '') + '</span>'
           : 'Informado ' + fMill(x.informado) + ', habitual ' + fMill(x.habitual) + ' (mediana de los 12 trimestres previos): se ajusta la diferencia. <span class="tag">' + (x.tag || '') + '</span>';
-      h += '<tr' + (j === 0 ? ' class="sep"' : '') + '><td class="q">' + (j === 0 ? fQd(a.fin) : '') + '</td><td>' + x.cat + '</td><td>' + (x.pre > 0 ? '+' : '') + fMill(x.pre) + '</td><td>'
+      const cls = [j === 0 ? 'sep' : '', x.descartado ? 'off' : ''].filter(Boolean).join(' ');
+      h += '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td class="q">' + (j === 0 ? fQd(a.fin) : '') + '</td><td>' + x.cat + (x.descartado ? ' (descartado)' : '') + '</td><td>' + (x.pre > 0 ? '+' : '') + fMill(x.pre) + '</td><td>'
         + (x.eps != null ? fSgn(x.eps) : '—') + '</td><td>' + src + '</td></tr>';
     }));
     h += '</tbody></table>';
@@ -4256,22 +4258,32 @@ const METODO = [
       { d: 'Si el último trimestre cerró hace más de 200 días, el EPS se considera viejo y no se usa.',
         p: 'En 200 días entra el plazo de presentación del 10-K con margen. Pasado eso, casi siempre se trata de una empresa que cambió de etiqueta o de una presentación que la SEC no cargó, y seguir con el último dato daba P/E absurdos, como el de MNST con el EPS de 2011.' },
       { d: 'EPS normalizado: resultado operativo, menos intereses pagados, más intereses ganados y resultado de asociadas, sin los extraordinarios, a la tasa de impuesto típica de la empresa, dividido por las acciones diluidas.',
-        p: 'Es la ganancia que el negocio genera en un trimestre normal. Quedan afuera los cargos o beneficios impositivos puntuales, las ganancias por tenencias de acciones, las diferencias de cambio y los extraordinarios que se detallan abajo. La tasa típica es la mediana de la tasa efectiva de los últimos 12 trimestres, descartando los que quedan fuera de 0 a 45%, y acotada entre 5 y 35%.',
+        p: 'Es la ganancia que el negocio genera en un trimestre normal. Quedan afuera los cargos o beneficios impositivos puntuales, las ganancias por tenencias de acciones, las diferencias de cambio y los extraordinarios que se detallan abajo.',
         x: 'El EPS ajustado que publica cada empresa: cada una lo define a su manera (muchas sacan también la compensación en acciones), no está en la SEC y Finnhub solo da cuatro trimestres.' },
-      { d: 'Extraordinarios que se sacan: reestructuraciones, deterioros de llave de negocio, intangibles y activos fijos, juicios y contingencias, costos de adquisiciones y resultado por venta de activos fijos. Los cargos se suman de vuelta y las ganancias se restan, en toda la historia.',
+      { d: 'Extraordinarios que se sacan: reestructuraciones, deterioros de llave de negocio, intangibles y activos fijos, juicios y contingencias, costos de adquisiciones, I+D adquirida y resultado por venta de activos fijos. Los cargos se suman de vuelta y las ganancias se restan, en toda la historia.',
         p: 'Salen de las etiquetas de la SEC (RestructuringCharges, GoodwillImpairmentLoss, AssetImpairmentCharges, LitigationSettlementExpense y otras). Por US GAAP (ASC 350, 360 y 420) estas partidas van dentro del resultado operativo cuando la empresa lo presenta, así que sumarlas de vuelta no cuenta nada dos veces. Las que solo aparecen en el flujo de caja vienen acumuladas en el año y se pasan a trimestres como el EPS.',
         x: 'Sacar también la amortización de intangibles comprados y la compensación en acciones, como hacen los ajustados de las empresas: la compensación en acciones es un costo de verdad y se deja; la amortización de intangibles se deja para no premiar a quien crece comprando.' },
       { d: 'Solo se ajusta lo que excede el nivel habitual: el cargo del trimestre menos la mediana de esa partida en los 12 trimestres anteriores, y solo si mueve la base 3% o más.',
         p: 'Una empresa que reestructura todos los trimestres tiene un costo del negocio, no un extraordinario: si informa 30 M por trimestre y un trimestre 300 M, se suman de vuelta 270 M. El umbral de 3% evita mover el número por partidas que no cambian la lectura.',
         x: 'Sumar de vuelta todo lo que la empresa etiqueta: premia a las que viven reestructurando.' },
-      { d: 'I+D adquirida (proyectos en desarrollo comprados y cargados a resultados de una vez, típico de las farmacéuticas): no se saca, se prorratea. Cada trimestre carga el promedio de los últimos 12, así un pico se reparte en tres años.',
-        p: 'Comprar proyectos es un costo recurrente del negocio farmacéutico aunque llegue a saltos: sacarlo inflaría la ganancia, y dejarlo entero en el trimestre en que se pagó hunde el EPS de 12 meses de ese año. Desde 2022, tras observaciones de la SEC, varias farmacéuticas grandes dejaron de excluirlo de su EPS ajustado.',
-        x: 'Sacarlo como extraordinario: es lo que hacían los ajustados de las farmacéuticas antes de 2022, y deja la ganancia sin el costo de reponer el pipeline.' },
+      { d: 'I+D adquirida (proyectos en desarrollo comprados y cargados a resultados, típico de las farmacéuticas): se saca lo que excede lo habitual, como el resto.',
+        p: 'Si la farmacéutica compra el proyecto como activo, lo carga a resultados de una vez; si compra la empresa que lo tiene, el mismo proyecto se activa y no pasa por resultados. Sacarlo hace que las dos formas den igual. Lo que se paga todos los trimestres en licencias queda como costo, por la regla de lo habitual.',
+        x: 'Prorratearlo en tres años: castiga durante tres años a una empresa que hizo una compra grande una vez (VRTX con Alpine en 2024).' },
+      { d: 'Control de que el monto esté en la base: si al ajustar una partida el resultado se aleja de su nivel típico (mediana de los 8 trimestres previos ya ajustados) en vez de acercarse, el ajuste se descarta y queda anotado.',
+        p: 'Muchas etiquetas salen del flujo de caja, que suma también lo de operaciones discontinuadas o de abajo de la línea. MLM vendió un negocio en 2026 y la ganancia (casi US$ 2.000 M) fue a discontinuadas: restarla del operativo lo dejaba en pérdida.' },
       { d: 'Si la reestructuración viene en una etiqueta que ya incluye deterioros, los deterioros no se suman aparte.',
         p: 'Algunas (INTC, por ejemplo) informan los dos juntos en RestructuringSettlementAndImpairmentProvisions y también por separado. Mejor quedarse corto que contar dos veces.' },
       { d: 'Lo que la SEC no trae etiquetado se carga a mano, con el 10-Q de donde sale: hoy, los juicios de META (FTC en 2019, US$ 3.000 y 2.000 M; cargos por juicios de US$ 2.400 M en el segundo trimestre de 2026 y el acuerdo con los fiscales de los estados, US$ 9.890 M, en el tercero).',
         p: 'META no usa ninguna etiqueta estándar para esos cargos: sin cargarlos, el normalizado los trataba como gasto operativo y en los últimos 12 meses quedaba alrededor de US$ 4 por acción abajo. Lo cargado a mano reemplaza a la etiqueta de la misma categoría en ese trimestre. Está en backend/data/norm_adj.json.',
         o: 'La lista a mano cubre los casos revisados; una empresa con un cargo grande sin etiqueta y sin revisar queda con el normalizado bajo. Para eso está la marca de margen raro.' },
+      { d: 'Qué partidas de abajo de la línea operativa entran: intereses pagados y ganados, resultado de asociadas y, en las eléctricas, el AFUDC (el retorno que el regulador reconoce sobre las obras en curso). Si la empresa ya tiene alguna dentro del operativo, no se cuenta dos veces.',
+        p: 'Para saberlo se prueba qué armado reproduce mejor la diferencia entre el resultado antes de impuestos y el operativo de la empresa en los últimos 16 trimestres. Solo se deja el armado de siempre (todo afuera) si otro explica la diferencia mucho mejor: las aseguradoras de salud (UNH) cobran los intereses como ingreso operativo, y sumarlos de nuevo inflaba el normalizado.' },
+      { d: 'Minoritarios y preferidos: se descuenta la parte de la ganancia de los socios minoritarios (mediana de los últimos 8 trimestres) y se restan los dividendos preferidos.',
+        p: 'En las empresas con estructura de sociedad la mayor parte de la ganancia es de los socios: en IBKR, cerca de 75%. Sin descontarla, el normalizado salía cuatro veces más alto que el contable. Los preferidos pesan en bancos y aseguradoras.' },
+      { d: 'Acciones: las diluidas que informa la empresa, si coinciden (±15%) con las implícitas (resultado para los comunes / EPS); si no, las implícitas.',
+        p: 'Las implícitas fallan en el cuarto trimestre, que sale de restar el año menos nueve meses y no se puede restar en EPS (MET daba 515 millones de acciones contra 680). Las informadas fallan cuando vienen en otra unidad o por otra clase de acción (BRK), y ahí el control de 15% las descarta.' },
+      { d: 'Tasa de impuesto típica: mediana de los 12 trimestres previos, tomando tasas de −25% a 45%, acotada entre 0 y 35%.',
+        p: 'Las eléctricas con créditos fiscales por energía renovable (XEL) tienen tasas cerca de cero o negativas todos los años: es recurrente, y con un piso de 5% o descartando las negativas el normalizado les cobraba 34%.' },
       { d: 'Si el cargo deduce impuestos o no (una multa no deduce) no cambia el normalizado; solo cambia cuánto le restó al EPS contable.',
         p: 'El normalizado vuelve a gravar el resultado limpio a la tasa típica, así que el cargo entra entero antes de impuestos. Una multa que no deduce sube la tasa efectiva de ese trimestre, y la mediana la descarta.' },
       { d: 'Margen raro: se marcan los trimestres con un margen operativo, ya ajustado, a más de 2,5 desvíos y más de 4 puntos de la media de los 8 trimestres previos.',

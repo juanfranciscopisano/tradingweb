@@ -140,7 +140,8 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   const rec = gaap.filter(q => q.date > gaap[gaap.length - 1].date - 730 * DAY);
   const hole = rec.some((q, i) => i > 0 && q.date - rec[i - 1].date > 120 * DAY);
   // para revisar el normalizado: los ajustes y la cuenta de los últimos trimestres
-  const normDiag = { metodo: normFull.method, ajustes: (normFull.adj || []).slice(-6), margenes: (normFull.flags || []).slice(-3), trimestres: (normFull.rows || []).slice(-4) };
+  const normDiag = { metodo: normFull.method, armado: normFull.armado, accionesInformadas: normFull.accionesInformadas,
+    ajustes: (normFull.adj || []).slice(-6), margenes: (normFull.flags || []).slice(-3), trimestres: (normFull.rows || []).slice(-4) };
   return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
@@ -164,20 +165,44 @@ async function yahooQuarterlyEPS(fetchImpl, sym, session, nowS) {
 // tasa real a 10 años (bono del Tesoro indexado, TIPS; FRED DFII10) por semana: el último dato de cada semana, y en las
 // semanas sin dato (feriados) el anterior. Sirve para comparar el rendimiento de las ganancias (1 / P/E) con la tasa real.
 export const FRED_REAL10 = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10";
-export async function realYieldByWeek(fetchImpl, weeks) {
-  const r = await fetchImpl(FRED_REAL10, { headers: { "User-Agent": UA } });
-  if (!r.ok) throw new Error("FRED " + r.status);
-  const last = new Map(); let asOf = null;
-  for (const line of (await r.text()).split(/\r?\n/).slice(1)) {
-    const [d, v] = line.split(","), x = parseFloat(v);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d || "") || !isFinite(x)) continue;
-    last.set(weekOf(Date.parse(d + "T00:00:00Z") / 1000), x);
-    if (!asOf || d > asOf) asOf = d;
+// Respaldo: la curva real oficial del Tesoro (un CSV por año, columna "10 YR"); es la misma tasa que publica la Fed (H.15).
+const TREAS_REAL = y => `https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${y}/all?type=daily_treasury_real_yield_curve&field_tdr_date_value=${y}&page&_format=csv`;
+async function realObs(fetchImpl, fromYear, toYear) {
+  const obs = [];   // [fecha ISO, tasa]
+  try {
+    const r = await fetchImpl(FRED_REAL10, { headers: { "User-Agent": UA } });
+    if (!r.ok) throw new Error("FRED " + r.status);
+    for (const line of (await r.text()).split(/\r?\n/).slice(1)) {
+      const [d, v] = line.split(","), x = parseFloat(v);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d || "") && isFinite(x)) obs.push([d, x]);
+    }
+    if (obs.length) return { obs, fuente: "FRED DFII10" };
+  } catch (e) { /* al respaldo */ }
+  for (let y = fromYear; y <= toYear; y++) {
+    const r = await fetchImpl(TREAS_REAL(y), { headers: { "User-Agent": UA } });
+    if (!r.ok) throw new Error(`Tesoro ${y}: ${r.status}`);
+    const lines = (await r.text()).trim().split(/\r?\n/), head = lines[0].split(",").map(h => h.replace(/"/g, "").trim());
+    const iD = head.indexOf("Date"), i10 = head.indexOf("10 YR");
+    if (iD < 0 || i10 < 0) throw new Error(`Tesoro ${y}: columnas ${head.join("|")}`);
+    for (const line of lines.slice(1)) {
+      const c = line.split(",").map(x => x.replace(/"/g, "").trim()), m = (c[iD] || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/), x = parseFloat(c[i10]);
+      if (m && isFinite(x)) obs.push([`${m[3]}-${m[1]}-${m[2]}`, x]);
+    }
   }
-  if (!last.size) return null;
+  return obs.length ? { obs, fuente: "Tesoro de EE.UU., curva real (10 años)" } : null;
+}
+export async function realYieldByWeek(fetchImpl, weeks) {
+  const yr = w => new Date((MONDAY0 + w * WEEK) * 1000).getUTCFullYear();
+  const got = await realObs(fetchImpl, yr(weeks[0]), yr(weeks[weeks.length - 1]));
+  if (!got) return null;
+  const last = new Map(); let asOf = null;
+  for (const [d, x] of got.obs.sort((a, b) => a[0].localeCompare(b[0]))) {
+    last.set(weekOf(Date.parse(d + "T00:00:00Z") / 1000), x);
+    asOf = d;
+  }
   let prev = null;
   const out = weeks.map(w => { if (last.has(w)) prev = last.get(w); return prev == null ? null : +prev.toFixed(2); });
-  return { r: out, asOf };
+  return { r: out, asOf, fuente: got.fuente };
 }
 
 export function aggregate(cos, groups, weeks, minCov) {
@@ -327,10 +352,11 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   };
   // las semanas son consecutivas salvo feriados largos: se guarda la lista solo si hay huecos
   if (weeks[weeks.length - 1] - weeks[0] + 1 !== weeks.length) out.weekList = weeks;
+  let realErr = null;
   try {
     const ry = await realYieldByWeek(fetchImpl, weeks);
-    if (ry) { out.real10 = ry.r; out.real10AsOf = ry.asOf; out.real10Fuente = "FRED DFII10: bono del Tesoro indexado por inflación (TIPS) a 10 años"; }
-  } catch (e) { log("tasa real: " + e.message); }
+    if (ry) { out.real10 = ry.r; out.real10AsOf = ry.asOf; out.real10Fuente = ry.fuente + ": bono del Tesoro indexado por inflación (TIPS) a 10 años"; }
+  } catch (e) { log("tasa real: " + e.message); realErr = e.message; }
   await writeFile(new URL("multiples.json", root), JSON.stringify(out));
 
   // 5) último dato de cada empresa (la semana en curso): con esto el screener rehace el P/E del índice con precios en
@@ -355,7 +381,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     fill,
   }));
   log(`eps_ttm.json: ${Object.keys(ultimos).length} empresas`);
-  const diag = { splits: {}, fechas: {}, yahoo: yDiag,
+  const diag = { splits: {}, fechas: {}, yahoo: yDiag, tasaReal: out.real10 ? (out.real10Fuente + ", al " + out.real10AsOf) : ("sin datos: " + realErr),
     sinUltimoDato: list.filter(c => !ultimos[c.s]).map(c => c.s + (cos[c.s] ? ` (último trimestre ${cos[c.s].lastQ ? iso(cos[c.s].lastQ) : "?"}${cos[c.s].fillRejected ? ", Yahoo no coincide" : ""}${yDiag[c.s] ? ", Yahoo: " + yDiag[c.s] : ""})` : " (sin datos)")) };
   for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
   // contable y normalizado que difieren más de 20% (o con distinto signo): qué se ajustó y la cuenta trimestre a trimestre
