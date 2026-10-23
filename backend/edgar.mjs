@@ -33,6 +33,7 @@ export const ADJ_TAGS = [
   "GainLossOnSaleOfPropertyPlantEquipment", "GainLossOnDispositionOfAssets", "GainLossOnDispositionOfAssets1",
   "GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal", "EquitySecuritiesFvNiGainLoss",
   "GainsLossesOnExtinguishmentOfDebt", "RealizedInvestmentGainsLosses",
+  "ResearchAndDevelopmentAssetAcquiredOtherThanThroughBusinessCombinationWrittenOff", "ResearchAndDevelopmentInProcess",
 ];
 export function rawFromFacts(facts) {
   const g = facts?.facts?.["us-gaap"] || {};
@@ -139,6 +140,9 @@ export function gaapQuarterly(raw, splitFactor, symbol) {
 //   · Solo cuenta como extraordinario lo que excede el nivel habitual: el cargo menos la mediana de esa partida en los
 //     12 trimestres anteriores (una reestructuración que aparece todos los trimestres es un costo del negocio), y solo
 //     si mueve la base en 3% o más.
+//   · I+D adquirida (compras de proyectos en desarrollo que se cargan a resultados de una vez, típico de farmacéuticas):
+//     no se saca, se prorratea. Cada trimestre carga el promedio de los últimos 12 (el pico se reparte en 3 años), porque
+//     comprar proyectos es un costo recurrente del negocio, aunque llegue a saltos.
 //   · Si una reestructuración viene en una etiqueta que también incluye deterioros, no se suman los deterioros aparte
 //     (mejor quedarse corto que contar dos veces).
 //   · Lo que no está etiquetado (el juicio de META, por ejemplo) va a mano en data/norm_adj.json, con su fuente; si está
@@ -152,7 +156,7 @@ export function gaapQuarterly(raw, splitFactor, symbol) {
 let NORM_ADJ = {};
 try { NORM_ADJ = JSON.parse(readFileSync(new URL("./data/norm_adj.json", import.meta.url), "utf8")); } catch (e) { NORM_ADJ = {}; }
 export const normAdjManual = () => NORM_ADJ;
-const CAT_ES = { restr: "reestructuración", imp: "deterioro de activos", lit: "juicios y contingencias", acq: "costos de adquisición",
+const CAT_ES = { ipr: "I+D adquirida (prorrateada)", restr: "reestructuración", imp: "deterioro de activos", lit: "juicios y contingencias", acq: "costos de adquisición",
   ppe: "venta de activos fijos", biz: "venta de negocios", mtm: "tenencias de acciones", debt: "cancelación de deuda", inv: "ganancias realizadas de inversiones" };
 export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   if (!gaap.length) return { eps: [], method: null };
@@ -232,6 +236,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     }
     const lit = firstOf(["LitigationSettlementExpense", "LossContingencyLossInPeriod"], tt); if (lit) { c.lit = lit.v; T.lit = lit.t; }
     const acq = get("BusinessCombinationAcquisitionRelatedCosts", tt); if (acq) { c.acq = acq; T.acq = "BusinessCombinationAcquisitionRelatedCosts"; }
+    const ipr = firstOf(["ResearchAndDevelopmentAssetAcquiredOtherThanThroughBusinessCombinationWrittenOff", "ResearchAndDevelopmentInProcess"], tt); if (ipr) { c.ipr = ipr.v; T.ipr = ipr.t; }
     const ppe = firstOf(["GainLossOnSaleOfPropertyPlantEquipment", "GainLossOnDispositionOfAssets", "GainLossOnDispositionOfAssets1"], tt); if (ppe) { c.ppe = -ppe.v; T.ppe = ppe.t; }
     if (method === "impuestos") {
       const biz = firstOf(["GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal"], tt); if (biz) { c.biz = -biz.v; T.biz = biz.t; }
@@ -244,6 +249,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   const cats = BASE.map(q => catAt(q.t)), raws = cats.map(x => x.c);
   const manual = (NORM_ADJ[symbol] || []).map(m => ({ ...m, t: Date.parse(m.fin + "T00:00:00Z") }));
   const typical = (i, cat) => median(raws.slice(Math.max(0, i - 12), i).map(c => c[cat] || 0));
+  const mean12 = (i, cat) => raws.slice(Math.max(0, i - 11), i + 1).reduce((a, c) => a + (c[cat] || 0), 0) / Math.min(12, i + 1);
 
   // tasa efectiva = impuesto / resultado antes de impuestos (si no está, resultado neto + impuesto)
   const etrAt = t => {
@@ -254,7 +260,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   };
   const allRates = BASE.map(q => etrAt(q.t)).filter(r => r != null);
   const globalRate = allRates.length >= 4 ? median(allRates) : 0.21;
-  const out = [], adj = [], margins = [];
+  const out = [], adj = [], margins = [], rows = [];
   BASE.forEach((q, i) => {
     const win = BASE.slice(Math.max(0, i - 11), i + 1).map(x => etrAt(x.t)).filter(r => r != null);
     const tax = Math.min(0.35, Math.max(0.05, win.length >= 4 ? median(win) : globalRate));
@@ -263,10 +269,12 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     // etiquetados: solo lo que excede el nivel habitual y mueve la base 3% o más
     const man = manual.filter(m => Math.abs(m.t - q.t) <= 20 * DAY_MS);
     const items = [];
-    for (const [cat, v] of Object.entries(raws[i])) {
+    const iprLive = raws.slice(Math.max(0, i - 11), i + 1).some(c => c.ipr);
+    for (const cat of new Set([...Object.keys(raws[i]), ...(iprLive ? ["ipr"] : [])])) {
       if (man.some(m => m.cat === cat)) continue;
-      const typ = typical(i, cat), ex = v - typ;
-      if (Math.abs(ex) >= Math.max(5e6, 0.03 * Math.abs(base))) items.push({ cat, pre: ex, src: "SEC", tag: cats[i].T[cat], informado: v, habitual: typ });
+      const v = raws[i][cat] || 0, smooth = cat === "ipr", typ = smooth ? mean12(i, cat) : typical(i, cat), ex = v - typ;
+      if (Math.abs(ex) >= Math.max(5e6, 0.03 * Math.abs(base)))
+        items.push({ cat, pre: ex, src: "SEC", tag: cats[i].T[cat] || cats.slice(Math.max(0, i - 11), i).map(x => x.T[cat]).filter(Boolean).pop(), informado: v, habitual: typ, ...(smooth ? { regla: "promedio12" } : {}) });
     }
     for (const m of man) items.push({ cat: m.cat || "lit", pre: m.pre * 1e6, src: "manual", desc: m.desc, fuente: m.fuente, noDeduce: m.deducible === false });
     const addBack = items.reduce((a, x) => a + x.pre, 0);
@@ -275,6 +283,8 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     if (items.length) adj.push({ fin: q.end, base: +(base / 1e6).toFixed(1), tasa: +tax.toFixed(3),
       items: items.map(x => ({ ...x, cat: CAT_ES[x.cat] || x.cat, pre: +(x.pre / 1e6).toFixed(1), eps: sh ? +((x.noDeduce ? x.pre : x.pre * (1 - tax)) / sh).toFixed(3) : null,
         ...(x.src === "SEC" ? { informado: +(x.informado / 1e6).toFixed(1), habitual: +(x.habitual / 1e6).toFixed(1) } : {}) })) });
+    const M = v => v == null ? null : +(v / 1e6).toFixed(1);
+    rows.push({ fin: q.end, base: M(base), ajuste: M(addBack), tasa: +tax.toFixed(3), acciones: sh ? M(sh) : null, antesImp: M(at(PT, q.t)), impuesto: M(at(TX, q.t)), neto: M(at(NI, q.t)) });
     if (!sh) return;
     const eps = (base + addBack) * (1 - tax) / sh;
     if (isFinite(eps)) out.push({ date: Math.floor(q.t / 1000), eps: +eps.toFixed(4), frame: "CY" + qkeyOf(q.end) });
@@ -287,7 +297,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     const mu = prev.reduce((a, b) => a + b, 0) / prev.length, sd = Math.sqrt(prev.reduce((a, b) => a + (b - mu) ** 2, 0) / prev.length);
     if (Math.abs(x.m - mu) > Math.max(2.5 * sd, 0.04)) flags.push({ fin: x.end, margen: +(x.m * 100).toFixed(1), media: +(mu * 100).toFixed(1) });
   });
-  return { eps: out, method, adj, flags };
+  return { eps: out, method, adj, flags, rows };
 }
 
 // acciones diluidas por trimestre, ajustadas por splits (para ponderar en los agregados de índice y sector):

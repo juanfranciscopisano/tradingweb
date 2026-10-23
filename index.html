@@ -1072,6 +1072,10 @@ function checkPwd(){
       <span class="pebg-period" data-m="gaap" onclick="setEpsMode('gaap')">Contable</span>
       <span class="pebg-period" data-m="norm" onclick="setEpsMode('norm')">Normalizado</span>
     </div>
+    <div class="pebg-period-btns" id="sectMetricBtns" role="group" aria-label="Métrica">
+      <span class="pebg-period active" data-k="pe" onclick="setSectMetric('pe')" title="P/E de 12 meses">P/E</span>
+      <span class="pebg-period" data-k="prima" onclick="setSectMetric('prima')" title="Rendimiento de las ganancias (1 / P/E) menos la tasa real del bono del Tesoro a 10 años indexado por inflación (TIPS). Más alta, más baratas las acciones contra los bonos.">Prima vs tasa real</span>
+    </div>
     <div class="pebg-period-btns" id="sectViewBtns" role="group" aria-label="Vista">
       <span class="pebg-period active" data-v="sec" onclick="setSectView('sec')" title="Sectores, con sus subindustrias al desplegar">Sectores</span>
       <span class="pebg-period" data-v="sub" onclick="setSectView('sub')" title="Las subindustrias de todos los sectores en una sola lista">Subindustrias</span>
@@ -1084,7 +1088,7 @@ function checkPwd(){
   <div class="sect-body">
     <div class="ov-card">
       <div id="sectTable"><div class="ov-loading">Cargando...</div></div>
-      <div class="arg-note">P/E = suma de capitalizaciones / suma de ganancias de 12 meses de las empresas del grupo; las pérdidas restan. Son las empresas que hoy están en el índice, así que hacia atrás hay sesgo de supervivencia. Z y percentil contra los últimos 10 años; Fw P/E con el consenso de hoy. Tocá un grupo para ver su historia; la flecha abre las subindustrias.</div>
+      <div class="arg-note" id="sectTblNote">P/E = suma de capitalizaciones / suma de ganancias de 12 meses de las empresas del grupo; las pérdidas restan. Son las empresas que hoy están en el índice, así que hacia atrás hay sesgo de supervivencia. Z y percentil contra los últimos 10 años; Fw P/E con el consenso de hoy. Tocá un grupo para ver su historia; la flecha abre las subindustrias.</div>
     </div>
     <div class="ov-card">
       <div class="arg-chart-top">
@@ -3146,7 +3150,9 @@ function renderPebgNorm(d) {
     shown.forEach(a => a.items.forEach((x, j) => {
       const src = x.src === 'manual'
         ? (x.desc ? x.desc.replace(/</g, '&lt;') + '. ' : '') + (x.fuente ? '<a href="' + x.fuente + '" target="_blank" rel="noopener">10-Q en la SEC</a>' : 'Cargado a mano') + (x.noDeduce ? '. No deduce impuestos' : '')
-        : 'Informado ' + fMill(x.informado) + ', habitual ' + fMill(x.habitual) + ' (mediana de los 12 trimestres previos): se ajusta la diferencia. <span class="tag">' + (x.tag || '') + '</span>';
+        : x.regla === 'promedio12'
+          ? 'Informado ' + fMill(x.informado) + '; se carga el promedio de los últimos 12 trimestres, ' + fMill(x.habitual) + '. <span class="tag">' + (x.tag || '') + '</span>'
+          : 'Informado ' + fMill(x.informado) + ', habitual ' + fMill(x.habitual) + ' (mediana de los 12 trimestres previos): se ajusta la diferencia. <span class="tag">' + (x.tag || '') + '</span>';
       h += '<tr' + (j === 0 ? ' class="sep"' : '') + '><td class="q">' + (j === 0 ? fQd(a.fin) : '') + '</td><td>' + x.cat + '</td><td>' + (x.pre > 0 ? '+' : '') + fMill(x.pre) + '</td><td>'
         + (x.eps != null ? fSgn(x.eps) : '—') + '</td><td>' + src + '</td></tr>';
     }));
@@ -4258,6 +4264,9 @@ const METODO = [
       { d: 'Solo se ajusta lo que excede el nivel habitual: el cargo del trimestre menos la mediana de esa partida en los 12 trimestres anteriores, y solo si mueve la base 3% o más.',
         p: 'Una empresa que reestructura todos los trimestres tiene un costo del negocio, no un extraordinario: si informa 30 M por trimestre y un trimestre 300 M, se suman de vuelta 270 M. El umbral de 3% evita mover el número por partidas que no cambian la lectura.',
         x: 'Sumar de vuelta todo lo que la empresa etiqueta: premia a las que viven reestructurando.' },
+      { d: 'I+D adquirida (proyectos en desarrollo comprados y cargados a resultados de una vez, típico de las farmacéuticas): no se saca, se prorratea. Cada trimestre carga el promedio de los últimos 12, así un pico se reparte en tres años.',
+        p: 'Comprar proyectos es un costo recurrente del negocio farmacéutico aunque llegue a saltos: sacarlo inflaría la ganancia, y dejarlo entero en el trimestre en que se pagó hunde el EPS de 12 meses de ese año. Desde 2022, tras observaciones de la SEC, varias farmacéuticas grandes dejaron de excluirlo de su EPS ajustado.',
+        x: 'Sacarlo como extraordinario: es lo que hacían los ajustados de las farmacéuticas antes de 2022, y deja la ganancia sin el costo de reponer el pipeline.' },
       { d: 'Si la reestructuración viene en una etiqueta que ya incluye deterioros, los deterioros no se suman aparte.',
         p: 'Algunas (INTC, por ejemplo) informan los dos juntos en RestructuringSettlementAndImpairmentProvisions y también por separado. Mejor quedarse corto que contar dos veces.' },
       { d: 'Lo que la SEC no trae etiquetado se carga a mano, con el 10-Q de donde sale: hoy, los juicios de META (FTC en 2019, US$ 3.000 y 2.000 M; cargos por juicios de US$ 2.400 M en el segundo trimestre de 2026 y el acuerdo con los fiscales de los estados, US$ 9.890 M, en el tercero).',
@@ -4342,7 +4351,11 @@ const METODO = [
         p: 'Diez años incluyen más de un ciclo, y con menos de cinco el desvío dice poco.' },
       { d: 'A una fecha: el punto semanal más cercano anterior a la fecha elegida.' },
       { d: 'Contable o Normalizado: el mismo selector que P/E histórico y Cartera.' },
-      { d: 'Ordenar: clic en cualquier columna. El primer clic ordena de menor a mayor, así en P/E, z y percentil queda lo más barato arriba; el segundo, al revés.',
+      { d: 'Prima vs tasa real (opcional): rendimiento de las ganancias (100 / P/E) menos la tasa real del bono del Tesoro a 10 años indexado por inflación (TIPS) de esa misma semana. Medias, z, percentil y gráfico se calculan sobre la prima; la prima fw usa el Fw P/E y la tasa real de hoy.',
+        p: 'Las ganancias de una empresa acompañan la inflación, así que su rendimiento es una tasa real y se compara con la tasa real, no con la nominal. Es la versión correcta del "modelo de la Fed", que comparaba con el bono nominal y mezclaba una tasa real con una nominal. Sirve para ver si un P/E alto está justificado por tasas reales bajas: el mismo 25x es caro con la tasa real en 2% y razonable con la tasa real en 0%. La tasa es la serie DFII10 de FRED (Reserva Federal de St. Louis), el último dato de cada semana.',
+        x: 'Comparar con el bono nominal a 10 años: la diferencia con el real es la inflación esperada, que no tiene nada que ver con lo que rinden las ganancias.',
+        o: 'No descuenta el crecimiento: un sector que crece más tiene siempre la prima más baja. Por eso la lectura útil es contra su propia historia (z y percentil), no entre sectores. En esta métrica un z positivo es más barato.' },
+      { d: 'Ordenar: clic en cualquier columna. El primer clic ordena de menor a mayor, así en P/E, z y percentil queda lo más barato arriba; el segundo, al revés. Con la prima, el primer clic va de mayor a menor, que es lo barato arriba.',
         p: 'El S&P 500 queda siempre primero como referencia. En la vista de sectores, las subindustrias se ordenan dentro de cada sector; la vista Subindustrias las pone todas en una sola lista para compararlas entre sectores.' },
       { d: 'Empresas del grupo elegido: peso por capitalización, P/E contable y normalizado, Fw P/E y la parte de la ganancia del grupo que pone cada una.',
         p: 'Usa el mismo precio y el mismo EPS que arman el P/E del grupo, así que se puede ver qué lo explica: una empresa que pesa mucho en capitalización y poco en ganancias lo sube (hoy, en Application Software, PLTR es 29% de la capitalización y 6% de las ganancias). Clic en una empresa abre su P/E histórico.' },
@@ -4471,9 +4484,31 @@ let sectSort = { k: null, dir: 1 }, sectView = 'sec', sectCoSort = { k: 'w', dir
 try { const v = JSON.parse(localStorage.getItem('sectSort') || 'null'); if (v) { sectSort = v.sort || sectSort; sectView = v.view === 'sub' ? 'sub' : 'sec'; } } catch (e) {}
 const saveSect = () => { try { localStorage.setItem('sectSort', JSON.stringify({ sort: sectSort, view: sectView })); } catch (e) {} };
 const SECT_COLS = [['name', 'Grupo'], ['count', 'Empresas'], ['now', 'P/E hoy'], ['fw', 'Fw P/E'], ['a1', 'Media 1A'], ['a3', '3A'], ['a5', '5A'], ['a10', '10A'], ['z', 'Z vs 10A'], ['pct', 'Percentil 10A'], ['atD', 'A una fecha']];
+// métrica: P/E, o prima = rendimiento de las ganancias (100 / P/E) menos la tasa real a 10 años de esa semana
+let sectMetric = 'pe';
+try { if (localStorage.getItem('sectMetric') === 'prima') sectMetric = 'prima'; } catch (e) {}
+const sectPrima = () => sectMetric === 'prima' && !!(MULT && Array.isArray(MULT.real10));
+// en prima, más alto es más barato: el primer clic ordena de mayor a menor para que lo barato quede arriba
+const sectFirstDir = k => (sectPrima() && k !== 'name' && k !== 'count') ? -1 : 1;
+function setSectMetric(m) {
+  const was = sectPrima();
+  sectMetric = m === 'prima' ? 'prima' : 'pe';
+  try { localStorage.setItem('sectMetric', sectMetric); } catch (e) {}
+  if (sectSort.k && sectSort.k !== 'name' && sectSort.k !== 'count' && was !== sectPrima()) { sectSort.dir = -sectSort.dir; saveSect(); }
+  renderSect();
+}
+function realNow() { const r = MULT && MULT.real10; if (!r) return null; for (let i = r.length - 1; i >= 0; i--) if (r[i] != null) return r[i]; return null; }
+const primaOf = (pe, r) => (pe > 0 && r != null) ? 100 / pe - r : null;
+function sectSeries(key, norm) {
+  if (!sectPrima()) return multSeries(key, norm);
+  const s = MULT.series[key]; if (!s) return [];
+  const arr = (norm && s.n.some(v => v != null)) ? s.n : s.g, d = multDates(), r = MULT.real10, out = [];
+  arr.forEach((v, i) => { const p = primaOf(v, r[i]); if (p != null) out.push({ date: d[i], v: p }); });
+  return out;
+}
 function setSectSort(k) {
   if (sectSort.k === k) sectSort.dir = -sectSort.dir;
-  else sectSort = { k, dir: 1 };
+  else sectSort = { k, dir: sectFirstDir(k) };
   if (k === 'name' && sectSort.dir === 1) sectSort = { k: null, dir: 1 };   // nombre ascendente = orden de siempre
   saveSect(); renderSect();
 }
@@ -4483,7 +4518,7 @@ function sectKeyVal(key, x) {
   switch (sectSort.k) {
     case 'name': return multName(key);
     case 'count': return s.count;
-    case 'fw': return s.fw;
+    case 'fw': return sectPrima() ? primaOf(s.fw, realNow()) : s.fw;
     case 'atD': return x && x.atD ? x.atD.v : null;
     default: return x ? x[sectSort.k] : null;
   }
@@ -4548,7 +4583,7 @@ function renderSectCo() {
     + ', los mismos que arman el P/E del grupo; "% de las ganancias" es la parte de la ganancia ' + (norm ? 'normalizada' : 'contable') + ' del grupo que pone cada una (las pérdidas restan). Clic en una empresa abre su P/E histórico.';
 }
 function sectStats(key, norm) {
-  const pts = multSeries(key, norm); if (!pts.length) return null;
+  const pts = sectSeries(key, norm); if (!pts.length) return null;
   const last = pts[pts.length - 1], now = last.date;
   const avg = y => { const w = pts.filter(p => p.date > now - y * YR_S).map(p => p.v); return w.length >= y * 52 * 0.6 ? w.reduce((a, b) => a + b, 0) / w.length : null; };
   const w10 = pts.filter(p => p.date > now - 10 * YR_S).map(p => p.v);
@@ -4568,13 +4603,19 @@ function renderSect() {
   syncEpsButtons();
   if (!MULT) { st.textContent = 'Todavía no hay múltiplos calculados (se arman cada día hábil al cierre).'; tb.innerHTML = ''; return; }
   const norm = epsMode === 'norm';
-  st.innerHTML = `Al cierre del ${MULT.asOf.split('-').reverse().join('/')}; historia semanal. Empresas que hoy están en el índice, EPS de la SEC. <a class="sect-link" onclick="openMetodo('mult')">Cómo se calcula</a>`;
-  const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
+  const prima = sectPrima(), rNow = realNow();
+  document.querySelectorAll('#sectMetricBtns .pebg-period').forEach(e => { e.classList.toggle('active', e.dataset.k === (prima ? 'prima' : 'pe')); });
+  { const b = document.querySelector('#sectMetricBtns [data-k="prima"]'); if (b) b.classList.toggle('is-off', !(MULT && MULT.real10)); }
+  st.innerHTML = `Al cierre del ${MULT.asOf.split('-').reverse().join('/')}; historia semanal. Empresas que hoy están en el índice, EPS de la SEC.`
+    + (prima && rNow != null ? ` Tasa real a 10 años (TIPS): ${rNow.toFixed(2)}% al ${(MULT.real10AsOf || MULT.asOf).split('-').reverse().join('/')}.` : '')
+    + (sectMetric === 'prima' && !(MULT && MULT.real10) ? ' Todavía no está la serie de la tasa real: va el P/E.' : '')
+    + ` <a class="sect-link" onclick="openMetodo('mult')">Cómo se calcula</a>`;
+  const f1 = prima ? (v => v == null ? '<span class="na">—</span>' : (v < 0 ? '−' : '') + Math.abs(v).toFixed(2) + '%') : (v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x');
   const row = (key, cls, toggle, parent) => {
     const s = MULT.series[key], x = sectStats(key, norm); if (!x) return '';
     const z = x.z == null ? '<span class="na">—</span>' : Math.abs(x.z) < 0.05 ? '0.0σ' : (x.z > 0 ? '+' : '−') + Math.abs(x.z).toFixed(1) + 'σ';
     return `<tr class="${cls}${key === sectSel ? ' sel' : ''}" onclick="selectSect('${key.replace(/'/g, "\\'")}')">`
-      + `<td>${toggle}${multName(key)}${parent ? `<div class="sect-par">${parent}</div>` : ''}</td><td>${s.count}</td><td class="sect-now">${f1(x.now)}</td><td>${f1(s.fw)}</td>`
+      + `<td>${toggle}${multName(key)}${parent ? `<div class="sect-par">${parent}</div>` : ''}</td><td>${s.count}</td><td class="sect-now">${f1(x.now)}</td><td>${f1(prima ? primaOf(s.fw, rNow) : s.fw)}</td>`
       + `<td>${f1(x.a1)}</td><td>${f1(x.a3)}</td><td>${f1(x.a5)}</td><td>${f1(x.a10)}</td><td>${z}</td>`
       + `<td>${x.pct == null ? '<span class="na">—</span>' : Math.round(x.pct * 100) + '%'}</td>`
       + `<td>${sectDate ? f1(x.atD && x.atD.v) : '<span class="na">—</span>'}</td></tr>`;
@@ -4583,7 +4624,8 @@ function renderSect() {
   // encabezados que ordenan: primer clic de menor a mayor (lo más barato arriba), el segundo al revés
   const th = SECT_COLS.map(([c, l]) => {
     const on = sectSort.k === c || (c === 'name' && !sectSort.k), arrow = sectSort.k === c ? (sectSort.dir > 0 ? ' ▲' : ' ▼') : '';
-    const lbl = c === 'atD' ? (sectDate ? 'Al ' + sectDate.split('-').reverse().join('/') : 'A una fecha') : c === 'name' && sectView === 'sub' ? 'Subindustria' : l;
+    const lbl = c === 'atD' ? (sectDate ? 'Al ' + sectDate.split('-').reverse().join('/') : 'A una fecha') : c === 'name' && sectView === 'sub' ? 'Subindustria'
+      : prima && c === 'now' ? 'Prima hoy' : prima && c === 'fw' ? 'Prima fw' : l;
     return `<th class="srt${sectSort.k === c ? ' on' : ''}" tabindex="0" onclick="setSectSort('${c}')" onkeydown="if(event.key==='Enter')setSectSort('${c}')"${on && sectSort.k ? ` aria-sort="${sectSort.dir > 0 ? 'ascending' : 'descending'}"` : ''} title="Ordenar">${lbl}${arrow}</th>`;
   }).join('');
   let html = `<table class="ov-tbl sect-tbl"><thead><tr>${th}</tr></thead><tbody>` + row('SPX', 'sect-idx', '');
@@ -4599,6 +4641,10 @@ function renderSect() {
     });
   }
   tb.innerHTML = html + '</tbody></table>';
+  { const n = document.getElementById('sectTblNote');
+    if (n) n.textContent = prima
+      ? 'Prima = 100 / P/E del grupo − tasa real a 10 años de esa semana (bono del Tesoro indexado por inflación, FRED DFII10). Es lo que rinden las ganancias por encima del bono sin riesgo en términos reales: más alta, más baratas las acciones contra los bonos. Z y percentil contra los últimos 10 años: acá un z positivo es más barato que su historia. Prima fw con el Fw P/E de hoy y la tasa real de hoy. No descuenta el crecimiento: un sector que crece más tiene la prima más baja siempre, por eso se compara contra su propia historia.'
+      : 'P/E = suma de capitalizaciones / suma de ganancias de 12 meses de las empresas del grupo; las pérdidas restan. Son las empresas que hoy están en el índice, así que hacia atrás hay sesgo de supervivencia. Z y percentil contra los últimos 10 años; Fw P/E con el consenso de hoy. Tocá un grupo para ver su historia; la flecha abre las subindustrias.'; }
   drawSectChart();
   renderSectCo();
 }
@@ -4610,13 +4656,16 @@ function drawSectChart() {
   if (!MULT) return;
   const norm = epsMode === 'norm', key = MULT.series[sectSel] ? sectSel : 'SPX';
   const x = sectStats(key, norm);
-  document.getElementById('sectChartTitle').innerHTML = multName(key) + ' <span>P/E de 12 meses' + (multUsesNorm(key, norm) ? ', normalizado' : ', contable') + '</span>';
+  const prima = sectPrima();
+  document.getElementById('sectChartTitle').innerHTML = multName(key) + ' <span>' + (prima ? 'rendimiento de las ganancias menos tasa real a 10 años' : 'P/E de 12 meses') + (multUsesNorm(key, norm) ? ', normalizado' : ', contable') + '</span>';
   const since = sectRange ? Date.now() / 1000 - sectRange * YR_S : 0;
   const toPts = arr => arr.filter(p => p.date >= since).map(p => ({ t: p.date, v: p.v }));
-  const series = [{ name: multName(key), color: cssVar('--accent'), pts: toPts(multSeries(key, norm)) }];
-  if (key !== 'SPX') series.push({ name: 'S&P 500', color: cssVar('--ink2'), pts: toPts(multSeries('SPX', norm)) });
+  const series = [{ name: multName(key), color: cssVar('--accent'), pts: toPts(sectSeries(key, norm)) }];
+  if (key !== 'SPX') series.push({ name: 'S&P 500', color: cssVar('--ink2'), pts: toPts(sectSeries('SPX', norm)) });
   if (x && x.a10 != null && series[0].pts.length) series.push({ name: 'Media 10A', color: cssVar('--b1p'), pts: [{ t: series[0].pts[0].t, v: x.a10 }, { t: series[0].pts[series[0].pts.length - 1].t, v: x.a10 }] });
-  drawLines('sectCanvas', series.filter(s => s.pts.length > 1), (v, tip) => (tip ? v.toFixed(1) : String(+v.toFixed(1))) + 'x');
+  if (prima) { const d = multDates(), r = MULT.real10; series.push({ name: 'Tasa real 10A (TIPS)', color: cssVar('--b1m'), pts: toPts(r.map((v, i) => ({ date: d[i], v })).filter(p => p.v != null)) }); }
+  const fmt = prima ? ((v, tip) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(tip ? 2 : 1) + '%') : ((v, tip) => (tip ? v.toFixed(1) : String(+v.toFixed(1))) + 'x');
+  drawLines('sectCanvas', series.filter(s => s.pts.length > 1), fmt);
   document.getElementById('sectLegend').innerHTML = series.map(s => `<span class="arg-chip on" style="cursor:default"><span class="arg-chip-dot" style="background:${s.color}"></span>${s.name}</span>`).join('');
 }
 

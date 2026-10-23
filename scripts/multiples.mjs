@@ -139,7 +139,9 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   // hueco en los últimos dos años (un trimestre que no se pudo derivar): se busca en Yahoo
   const rec = gaap.filter(q => q.date > gaap[gaap.length - 1].date - 730 * DAY);
   const hole = rec.some((q, i) => i > 0 && q.date - rec[i - 1].date > 120 * DAY);
-  return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length,
+  // para revisar el normalizado: los ajustes y la cuenta de los últimos trimestres
+  const normDiag = { metodo: normFull.method, ajustes: (normFull.adj || []).slice(-6), margenes: (normFull.flags || []).slice(-3), trimestres: (normFull.rows || []).slice(-4) };
+  return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
 
@@ -159,6 +161,25 @@ async function yahooQuarterlyEPS(fetchImpl, sym, session, nowS) {
 }
 
 // P/E de cada grupo por semana. cos: { sym: series } ; groups: { key: [syms] }
+// tasa real a 10 años (bono del Tesoro indexado, TIPS; FRED DFII10) por semana: el último dato de cada semana, y en las
+// semanas sin dato (feriados) el anterior. Sirve para comparar el rendimiento de las ganancias (1 / P/E) con la tasa real.
+export const FRED_REAL10 = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10";
+export async function realYieldByWeek(fetchImpl, weeks) {
+  const r = await fetchImpl(FRED_REAL10, { headers: { "User-Agent": UA } });
+  if (!r.ok) throw new Error("FRED " + r.status);
+  const last = new Map(); let asOf = null;
+  for (const line of (await r.text()).split(/\r?\n/).slice(1)) {
+    const [d, v] = line.split(","), x = parseFloat(v);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d || "") || !isFinite(x)) continue;
+    last.set(weekOf(Date.parse(d + "T00:00:00Z") / 1000), x);
+    if (!asOf || d > asOf) asOf = d;
+  }
+  if (!last.size) return null;
+  let prev = null;
+  const out = weeks.map(w => { if (last.has(w)) prev = last.get(w); return prev == null ? null : +prev.toFixed(2); });
+  return { r: out, asOf };
+}
+
 export function aggregate(cos, groups, weeks, minCov) {
   // peso de cobertura: capitalización de la última semana con dato de cada empresa
   const capNow = {};
@@ -306,6 +327,10 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   };
   // las semanas son consecutivas salvo feriados largos: se guarda la lista solo si hay huecos
   if (weeks[weeks.length - 1] - weeks[0] + 1 !== weeks.length) out.weekList = weeks;
+  try {
+    const ry = await realYieldByWeek(fetchImpl, weeks);
+    if (ry) { out.real10 = ry.r; out.real10AsOf = ry.asOf; out.real10Fuente = "FRED DFII10: bono del Tesoro indexado por inflación (TIPS) a 10 años"; }
+  } catch (e) { log("tasa real: " + e.message); }
   await writeFile(new URL("multiples.json", root), JSON.stringify(out));
 
   // 5) último dato de cada empresa (la semana en curso): con esto el screener rehace el P/E del índice con precios en
@@ -333,6 +358,14 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const diag = { splits: {}, fechas: {}, yahoo: yDiag,
     sinUltimoDato: list.filter(c => !ultimos[c.s]).map(c => c.s + (cos[c.s] ? ` (último trimestre ${cos[c.s].lastQ ? iso(cos[c.s].lastQ) : "?"}${cos[c.s].fillRejected ? ", Yahoo no coincide" : ""}${yDiag[c.s] ? ", Yahoo: " + yDiag[c.s] : ""})` : " (sin datos)")) };
   for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
+  // contable y normalizado que difieren más de 20% (o con distinto signo): qué se ajustó y la cuenta trimestre a trimestre
+  diag.normalizado = {};
+  for (const [sym, r] of Object.entries(ultimos)) {
+    const [e, en] = r; if (en == null || !cos[sym]?.normDiag) continue;
+    const gap = e > 0 && en > 0 ? en / e - 1 : (e > 0) !== (en > 0) ? null : 0;
+    if (gap === 0 || (gap != null && Math.abs(gap) <= 0.2)) continue;
+    diag.normalizado[sym] = { contable: e, normalizado: en, diferencia: gap == null ? "distinto signo" : +(gap * 100).toFixed(0) + "%", ...cos[sym].normDiag };
+  }
   for (const d of ["2019-06-24", "2021-06-28", "2024-06-24", "2025-06-23"]) {
     const w = weekOf(Date.parse(d) / 1000);
     const rows = Object.entries(cos).map(([s, c]) => {
