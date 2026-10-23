@@ -3414,7 +3414,8 @@ function renderPebgEst(d) {
       + (p.eps[3] > 0 && p.eps[0] != null ? ' <span class="na">(' + revTxt(p.eps[0] / p.eps[3] - 1) + ')</span>' : '') + '</td><td>' + (p.n ? p.n + ' analistas' : '—') + '</td></tr>'; };
   h += futRow('0q', 'Trimestre en curso') + futRow('+1q', 'Trimestre siguiente') + futRow('0y', 'Ejercicio en curso') + futRow('+1y', 'Ejercicio siguiente');
   h += '</tbody></table>';
-  h += '<p class="pebg-norm-p">EPS informado y esperado: los de Yahoo, en la base ajustada de la empresa (el que miran los analistas); el contable es el de la SEC. Sorpresa: informado contra esperado. En las filas de estimaciones, pasando el mouse se ve el rango entre analistas.</p>';
+  h += '<p class="pebg-norm-p">EPS informado y esperado: los de Yahoo, en la base ajustada de la empresa (el que miran los analistas); el contable es el de la SEC. Sorpresa: informado contra esperado. En las filas de estimaciones, pasando el mouse se ve el rango entre analistas.'
+    + (!ventas.length ? ' Esta empresa no presenta 10-K: las ventas pasadas no están y las esperadas pueden venir en su moneda de presentación.' : '') + '</p>';
   // cómo cambió el consenso de cada ejercicio (una línea por cierre)
   const serie = e.serie || [];
   const byFin = (field, idx) => { const m = new Map(); for (const r of serie) for (const k of ['y0', 'y1']) { const x = r[k]; if (!x || x[idx] == null) continue; if (!m.has(x[0])) m.set(x[0], []); m.get(x[0]).push({ t: T(r.d), v: x[idx] }); } return m; };
