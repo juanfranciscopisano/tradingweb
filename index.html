@@ -278,6 +278,12 @@ td:nth-child(-n+4){text-align:left}
 .ov-prob-pct{font-size:12.5px;font-weight:650;color:var(--ink);width:40px;text-align:right;flex-shrink:0}
 .ov-no-fed{font-size:13px;color:var(--muted);padding:8px 0}
 .ov-impl{font-size:12px;color:var(--muted);margin-top:4px}
+.ov-impl-chg{color:var(--ink2)}
+.ov-fed-chg{border-collapse:collapse;font-size:12px;margin-top:8px;width:100%;max-width:420px}
+.ov-fed-chg th{font-weight:600;color:var(--muted);text-align:right;padding:2px 0 3px 10px;font-size:11.5px;white-space:nowrap}
+.ov-fed-chg td{text-align:right;padding:2px 0 2px 10px;color:var(--ink2);white-space:nowrap}
+.ov-fed-chg th:first-child,.ov-fed-chg td:first-child{text-align:left;padding-left:0;color:var(--ink)}
+.ov-fed-chg tr.ov-fed-effr td{border-top:1px solid var(--line);padding-top:4px}
 .ov-tbl tbody tr.ov-click{cursor:pointer}
 .ov-tbl tbody tr.ov-click:hover td{background:var(--accent-soft)}
 .ov-tbl tbody tr.ov-click td:first-child,.ov-link{color:var(--accent)}
@@ -1747,12 +1753,15 @@ async function loadOverview(silent) {
     loadGgal(silent ? ggalRange : undefined);
     loadMini('spy');
 
-    const [ovRes, sparkRes, ustRes, mervRes] = await Promise.allSettled([
+    const needHist = !ovFedHist || Date.now() - ovFedHistAt > 30 * 60 * 1000;
+    const [ovRes, sparkRes, ustRes, mervRes, fedHRes] = await Promise.allSettled([
       fetch(BASE_URL+'/api/overview').then(r=>r.json()),
       fetch(BASE_URL+'/api/spark?symbols='+OV_SPARK_SYMS.join(',')).then(r=>r.json()),
       fetch(BASE_URL+'/api/ust').then(r=>r.json()),
       bymaMerval(),
+      needHist ? fetch(BASE_URL+'/api/fedhist').then(r=>r.json()) : Promise.resolve(null),
     ]);
+    if (fedHRes.status==='fulfilled' && fedHRes.value && fedHRes.value.zq) { ovFedHist = fedHRes.value; ovFedHistAt = Date.now(); }
 
     const d = ovRes.status==='fulfilled' ? ovRes.value : {quotes:[],zqTickers:[]};
     const qmap = {};
@@ -1965,65 +1974,100 @@ function renderOvComm(q) {
 }
 
 function renderOvTreas(q) {
-  // 13 sem, 5, 10 y 30 años: Yahoo (dato intradiario, 15 min) con su propia historia diaria para los cambios.
-  // 1 y 2 años: curva oficial del Tesoro (cierre del último día hábil publicado), que Yahoo no tiene.
-  const U = ovUst || { cmt: [], yahoo: {} };
+  // Toda la curva sale de CNBC (Tradeweb, tiempo real), con su propia historia diaria para los cambios: una sola fuente,
+  // así el día y los plazos se comparan sobre lo mismo. Si CNBC no trae un plazo, ese renglón vuelve a la fuente
+  // anterior (Yahoo con 15 min de demora para 13 sem, 5, 10 y 30 años; curva oficial del Tesoro para 1 y 2 años).
+  const U = ovUst || { cmt: [], yahoo: {}, live: {} };
+  const L = U.live || {};
   const ROWS = [
-    { label: '13 sem', sym: '^IRX' }, { label: '1 año', cmt: '1Y', tv: 'FRED:DGS1' }, { label: '2 años', cmt: '2Y', tv: 'FRED:DGS2' },
-    { label: '5 años', sym: '^FVX' }, { label: '10 años', sym: '^TNX' }, { label: '30 años', sym: '^TYX' },
+    { label: '3 meses', live: '3M', sym: '^IRX', tv: 'FRED:DGS3MO' }, { label: '1 año', live: '1Y', cmt: '1Y', tv: 'FRED:DGS1' }, { label: '2 años', live: '2Y', cmt: '2Y', tv: 'FRED:DGS2' },
+    { label: '5 años', live: '5Y', sym: '^FVX', tv: 'FRED:DGS5' }, { label: '10 años', live: '10Y', sym: '^TNX', tv: 'FRED:DGS10' }, { label: '30 años', live: '30Y', sym: '^TYX', tv: 'FRED:DGS30' },
   ];
   const HZ = [['1S', 7], ['1M', 30], ['3M', 91], ['6M', 182]];
   const DAY = 86400;
   const at = (hist, t) => { let v = null; for (const [ti, c] of hist) { if (ti <= t + 3600) v = c; else break; } return v; };
   const lvl = {};
   const bp = v => v == null || !isFinite(v) ? '<span class="na">—</span>' : '<span class="' + (v > 0.5 ? 'pp' : v < -0.5 ? 'pn' : '') + '">' + (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + Math.abs(Math.round(v)) + ' bps</span>';
-  let cmtDate = null;
+  const hhmm = t => new Date(t * 1000).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  let cmtDate = null, fallback = 0, liveT = null;
   const body = ROWS.map(r => {
-    let y = null, d1 = null, hist = [], now = Date.now() / 1000, open = '';
-    if (r.sym) {
+    let y = null, d1 = null, hist = [], now = Date.now() / 1000, mark = '', title = '';
+    const lv = L[r.live];
+    if (lv && lv.last > 0) {
+      y = lv.last; d1 = lv.prev > 0 ? (lv.last - lv.prev) * 100 : null; hist = lv.hist || [];
+      if (lv.time) { now = Math.min(now, lv.time + 3600); liveT = Math.max(liveT || 0, lv.time); title = 'Último dato ' + hhmm(lv.time) + ' (Tradeweb vía CNBC)'; }
+    } else if (r.sym) {
+      fallback++; mark = '<sup class="ov-sup">*</sup>';
       const d = q[r.sym];
       if (d) { y = d.regularMarketPrice; d1 = d.regularMarketChange != null ? d.regularMarketChange * 100 : null; }
       hist = (U.yahoo[r.sym] || []).map(([t, c]) => [t, c]);
-      open = OV_TV[r.sym] ? ' class="ov-click"' + ovOpen(r.sym, 'Treasury ' + r.label) : '';
+      title = 'Yahoo, 15 min de demora';
     } else {
+      fallback++; mark = '<sup class="ov-sup">*</sup>';
       hist = U.cmt.filter(x => x[r.cmt] != null).map(x => [Date.parse(x.date + 'T20:00:00Z') / 1000, x[r.cmt]]);
       if (hist.length) {
-        const L = hist[hist.length - 1]; y = L[1]; now = L[0]; cmtDate = L[0];
-        if (hist.length > 1) d1 = (L[1] - hist[hist.length - 2][1]) * 100;
+        const Lc = hist[hist.length - 1]; y = Lc[1]; now = Lc[0]; cmtDate = Lc[0];
+        if (hist.length > 1) d1 = (Lc[1] - hist[hist.length - 2][1]) * 100;
       }
-      open = ' class="ov-click" onclick="openChart(\'' + r.tv + '\',\'Treasury ' + r.label + '\')" title="Ver gráfico. Cierre oficial del Tesoro"';
+      title = 'Cierre oficial del Tesoro';
     }
+    const open = ' class="ov-click" onclick="openChart(\'' + r.tv + '\',\'Treasury ' + r.label + '\')" title="Ver gráfico. ' + title + '"';
     if (y == null) return '<tr><td>' + r.label + '</td><td class="na">—</td>' + '<td></td>'.repeat(5) + '</tr>';
-    lvl[r.label] = y;
+    lvl[r.live] = y;
     const ch = HZ.map(([, dd]) => { const p = at(hist, now - dd * DAY); return p == null ? null : (y - p) * 100; });
-    return '<tr' + open + '><td>' + r.label + (r.cmt ? '<sup class="ov-sup">*</sup>' : '') + '</td><td>' + y.toFixed(2) + '%</td><td class="ov-td-1d">' + bp(d1) + '</td>'
+    return '<tr' + open + '><td>' + r.label + mark + '</td><td>' + y.toFixed(2) + '%</td><td class="ov-td-1d">' + bp(d1) + '</td>'
       + ch.map(v => '<td>' + bp(v) + '</td>').join('') + '</tr>';
   }).join('');
   const sp = (a, b) => (lvl[a] != null && lvl[b] != null) ? Math.round((lvl[a] - lvl[b]) * 100) : null;
-  // 10A−2A con la curva oficial (mismo día para las dos tasas); 10A−13S con Yahoo (las dos intradiarias)
-  const lc = U.cmt.length ? U.cmt[U.cmt.length - 1] : null;
-  const s2 = lc && lc['10Y'] != null && lc['2Y'] != null ? Math.round((lc['10Y'] - lc['2Y']) * 100) : null, s3 = sp('10 años', '13 sem');
   const fmtS = v => v == null ? '—' : '<span class="' + (v >= 0 ? 'up' : 'dn') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' bps</span>';
+  const note = (liveT ? 'Tradeweb vía CNBC, en tiempo real (último dato ' + hhmm(liveT) + '). ' : '')
+    + (fallback ? '* CNBC no respondió para ese plazo: ' + (cmtDate ? 'cierre oficial del Tesoro del ' + new Date(cmtDate * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' o ' : '') + 'Yahoo con 15 min de demora. ' : '')
+    + 'Los cambios comparan contra el cierre de esa fecha de la misma fuente.';
   document.getElementById('ovTreas').innerHTML = '<table class="ov-tbl ov-treas-tbl"><thead><tr><th>Plazo</th><th>Tasa</th><th class="ov-th-1d">1D</th><th>1S</th><th>1M</th><th>3M</th><th>6M</th></tr></thead><tbody>'
     + body + '</tbody></table>'
-    + '<div class="ov-tcurve">Curva 10A−2A*: ' + fmtS(s2) + '; 10A−13S: ' + fmtS(s3) + '</div>'
-    + '<div class="ov-dolar-note">* Cierre oficial del Tesoro' + (cmtDate ? ' del ' + new Date(cmtDate * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : '') + '; el resto, Yahoo con 15 min de demora. Los cambios comparan contra el cierre de esa fecha.</div>';
+    + '<div class="ov-tcurve">Curva 10A−2A: ' + fmtS(sp('10Y', '2Y')) + '; 10A−3M: ' + fmtS(sp('10Y', '3M')) + '</div>'
+    + '<div class="ov-dolar-note">' + note + '</div>';
 }
 
+// Camino de la tasa con el método de CME FedWatch (futuros ZQ, que liquidan contra el promedio mensual de la EFFR).
+// Tasa implícita de cada reunión: si cae tarde en el mes y el mes siguiente no tiene reunión, se usa ese contrato
+// (despejar pocos días del contrato del mes multiplica el ruido). Probabilidades: en cada reunión el movimiento
+// esperado se reparte entre los dos escalones de 25 bp vecinos y se acumula sobre las reuniones anteriores; queda la
+// distribución del rango al cierre de cada reunión contra el rango actual. zqAt(año, mes) da el precio del contrato.
+function fedPath(zqAt, cur, upcoming, meetingMonths) {
+  const out = [];
+  let before = cur, dist = new Map([[0, 1]]);
+  for (const day of upcoming) {
+    const [y, m1, dd] = day.split('-').map(Number);
+    const mo = m1 - 1, N = new Date(y, mo + 1, 0).getDate(), D = dd + 1;   // D: primer día con la tasa nueva
+    const ny = mo === 11 ? y + 1 : y, nm = (mo + 1) % 12;
+    const zThis = zqAt(y, mo);
+    const zNext = meetingMonths.has(ny + '-' + calPad(nm + 1)) ? null : zqAt(ny, nm);
+    const daysNew = N - D + 1;
+    let after = null;
+    if (zNext != null && daysNew / N < 0.5) after = 100 - zNext;
+    else if (zThis != null && daysNew > 0) after = ((100 - zThis) * N - (D - 1) * before) / daysNew;
+    else if (zNext != null) after = 100 - zNext;
+    if (after == null || Math.abs(after - before) > 1) { out.push({ day, after, bad: true }); break; }   // sin esta reunión no se encadena la siguiente
+    const delta = (after - before) * 100, k = Math.floor(delta / 25 + 1e-9), pHi = Math.min(1, Math.max(0, (delta - k * 25) / 25));
+    const next = new Map(), add = (c, p) => { if (p > 0) next.set(c, (next.get(c) || 0) + p); };
+    dist.forEach((p, c) => { add(c + k * 25, p * (1 - pHi)); add(c + (k + 1) * 25, p * pHi); });
+    dist = next;
+    out.push({ day, after, dist: new Map(dist) });
+    before = after;
+  }
+  return out;
+}
+const ZQ_MC = 'FGHJKMNQUVXZ';
+const zqSym = (y, m) => 'ZQ' + ZQ_MC[m] + String(y).slice(-2) + '.CBT';
+const zqOk = p => (p != null && p > 90 && p < 99.9) ? p : null;
+let ovFedHist = null, ovFedHistAt = 0;
+// horizontes para ver cómo cambiaron las expectativas (los mismos que los Treasuries)
+const FED_HZ = [['Hace 1 sem', 7], ['1 mes', 30], ['3 meses', 91]];
+
 function renderOvFed(qmap, zqTickers, effr, fedTarget) {
-  // Método CME FedWatch con futuros ZQ (liquidan contra el promedio mensual de la EFFR).
-  // Tasa implícita de cada reunión: si cae tarde en el mes y el mes siguiente no tiene reunión, se usa
-  // ese contrato (despejar pocos días del contrato del mes multiplica el ruido).
-  // Probabilidades: árbol de FedWatch. En cada reunión el movimiento esperado se reparte entre los dos
-  // escalones de 25 bp vecinos y se acumula sobre las reuniones anteriores; lo que se muestra es la
-  // distribución del rango al cierre de cada reunión contra el rango actual.
   const el = document.getElementById('ovFed');
-  const MC = 'FGHJKMNQUVXZ';
-  const zq = (y, m) => {
-    const t = 'ZQ' + MC[m] + String(y).slice(-2) + '.CBT';
-    const p = qmap[t] ? qmap[t].regularMarketPrice : null;
-    return (p != null && p > 90 && p < 99.9) ? p : null;
-  };
+  const zq = (y, m) => zqOk(qmap[zqSym(y, m)] ? qmap[zqSym(y, m)].regularMarketPrice : null);
   const lo = (fedTarget && isFinite(fedTarget.lo)) ? fedTarget.lo : 3.75;
   const hi = (fedTarget && isFinite(fedTarget.hi)) ? fedTarget.hi : 4.00;
   const effrOk = effr != null && effr > 0 && effr < 15;
@@ -2040,55 +2084,58 @@ function renderOvFed(qmap, zqTickers, effr, fedTarget) {
     el.innerHTML = html + '<div class="ov-no-fed">Falta cargar el calendario FOMC del año próximo (FOMC_DECISIONS).</div>';
     return;
   }
+  const path = fedPath(zq, cur, upcoming, meetingMonths);
+  // mismas reuniones con los precios de hace 1 semana, 1 y 3 meses (cierre más cercano anterior a esa fecha). Las
+  // probabilidades quedan contra el rango de hoy: es lo que el mercado esperaba entonces para la tasa después de cada reunión.
+  const nowS = Date.now() / 1000;
+  const past = FED_HZ.map(([lbl, dd]) => {
+    const t = nowS - dd * 86400;
+    const at = (y, m) => { const h = ovFedHist && ovFedHist.zq && ovFedHist.zq[zqSym(y, m)]; if (!h) return null; let v = null; for (const [ts, c] of h) { if (ts <= t + 3600) v = c; else break; } return zqOk(v); };
+    return { lbl, path: ovFedHist ? fedPath(at, cur, upcoming, meetingMonths) : [] };
+  });
+  const pastAt = (i, day) => past.map(p => p.path.find(x => x.day === day && !x.bad) || null);
 
   const fmtBp = c => c === 0 ? 'Sin cambio' : (c > 0 ? '+' : '−') + Math.abs(c) + ' bp';
   const rng = c => (lo + c / 100).toFixed(2) + '–' + (hi + c / 100).toFixed(2);
   const barCol = c => c === 0 ? 'var(--faint)' : c < 0 ? (c <= -50 ? 'var(--up)' : 'color-mix(in srgb, var(--up) 62%, var(--surf))') : (c >= 50 ? 'var(--down)' : 'color-mix(in srgb, var(--down) 62%, var(--surf))');
-  let before = cur, shown = 0;
-  let dist = new Map([[0, 1]]); // cambio acumulado (bp) contra el rango actual -> probabilidad
-  for (let idx = 0; idx < upcoming.length; idx++) {
-    const [y, m1, dd] = upcoming[idx].split('-').map(Number);
-    const mo = m1 - 1, N = new Date(y, mo + 1, 0).getDate(), D = dd + 1; // D: primer día con la tasa nueva
-    const ny = mo === 11 ? y + 1 : y, nm = (mo + 1) % 12;
-    const zThis = zq(y, mo);
-    const zNext = meetingMonths.has(ny + '-' + calPad(nm + 1)) ? null : zq(ny, nm);
-    const daysNew = N - D + 1;
-    let after = null;
-    if (zNext != null && daysNew / N < 0.5) after = 100 - zNext;
-    else if (zThis != null && daysNew > 0) after = ((100 - zThis) * N - (D - 1) * before) / daysNew;
-    else if (zNext != null) after = 100 - zNext;
-
-    // fecha de la decisión (segundo día de la reunión)
+  const bpTxt = v => (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + Math.abs(Math.round(v)) + ' bp';
+  let shown = 0;
+  path.forEach((st, idx) => {
+    const [y, m1, dd] = st.day.split('-').map(Number), mo = m1 - 1;
     const fecha = dd + ' ' + MES_CORTO[mo].toLowerCase() + (y !== now.getFullYear() ? ' ' + y : '');
     html += '<div class="ov-meeting"><div class="ov-meeting-date">'
       + (idx === 0 ? '<span style="color:var(--accent);font-weight:700">Próxima reunión: </span>' : '')
       + fecha + '</div>';
-    if (after == null || Math.abs(after - before) > 1) {
-      html += '<div style="color:var(--muted)">' + (after == null ? 'Sin datos de futuros ZQ' : 'Dato de futuros ZQ no confiable') + '</div></div>';
-      break; // sin esta reunión no se puede encadenar la siguiente
-    }
-    const delta = (after - before) * 100;
-    const k = Math.floor(delta / 25 + 1e-9);
-    const pHi = Math.min(1, Math.max(0, (delta - k * 25) / 25));
-    const next = new Map();
-    const add = (c, p) => { if (p > 0) next.set(c, (next.get(c) || 0) + p); };
-    dist.forEach((p, c) => { add(c + k * 25, p * (1 - pHi)); add(c + (k + 1) * 25, p * pHi); });
-    dist = next;
+    if (st.bad) { html += '<div style="color:var(--muted)">' + (st.after == null ? 'Sin datos de futuros ZQ' : 'Dato de futuros ZQ no confiable') + '</div></div>'; return; }
     // siempre baja de 25, sin cambio y suba de 25; además cualquier otro escenario con 1% o más
     const keys = new Set([-25, 0, 25]);
-    dist.forEach((p, c) => { if (p >= 0.01) keys.add(c); });
-    [...keys].sort((a, b) => a - b).forEach(c => {
-      const pct = Math.round((dist.get(c) || 0) * 100);
+    st.dist.forEach((p, c) => { if (p >= 0.01) keys.add(c); });
+    const ks = [...keys].sort((a, b) => a - b);
+    ks.forEach(c => {
+      const pct = Math.round((st.dist.get(c) || 0) * 100);
       html += '<div class="ov-prob-row"><span class="ov-prob-label">' + fmtBp(c) + ' <span class="ov-prob-rng">' + rng(c) + '</span></span>'
         + '<div class="ov-prob-bar-wrap"><div class="ov-prob-bar" style="width:' + pct + '%;background:' + barCol(c) + '"></div></div>'
         + '<span class="ov-prob-pct' + (pct ? '' : ' ov-prob-zero') + '">' + pct + '%</span></div>';
     });
-    const vsHoy = (after - cur) * 100;
+    const vsHoy = (st.after - cur) * 100;
     const colH = vsHoy < -5 ? 'var(--up)' : vsHoy > 5 ? 'var(--down)' : 'var(--muted)';
-    html += '<div class="ov-impl">EFFR implícita después de la reunión: ' + after.toFixed(2) + '% '
-      + '(<span style="color:' + colH + '">' + (vsHoy >= 0 ? '+' : '−') + Math.abs(vsHoy).toFixed(0) + ' bp vs hoy</span>)</div></div>';
-    before = after; shown++;
-  }
+    const pa = pastAt(idx, st.day);
+    if (idx === 0 && pa.some(Boolean)) {
+      // próxima reunión: cómo cambió cada escenario
+      const pc = (x, c) => x ? Math.round((x.dist.get(c) || 0) * 100) + '%' : '<span class="na">—</span>';
+      html += '<table class="ov-fed-chg"><thead><tr><th></th><th>Hoy</th>' + past.map(p => '<th>' + p.lbl + '</th>').join('') + '</tr></thead><tbody>'
+        + ks.map(c => '<tr><td>' + fmtBp(c) + '</td><td>' + pc(st, c) + '</td>' + pa.map(x => '<td>' + pc(x, c) + '</td>').join('') + '</tr>').join('')
+        + '<tr class="ov-fed-effr"><td>EFFR implícita</td><td>' + st.after.toFixed(2) + '%</td>' + pa.map(x => '<td>' + (x ? x.after.toFixed(2) + '%' : '<span class="na">—</span>') + '</td>').join('') + '</tr>'
+        + '</tbody></table>';
+      html += '<div class="ov-impl">EFFR implícita después de la reunión: ' + st.after.toFixed(2) + '% (<span style="color:' + colH + '">' + bpTxt(vsHoy) + ' vs hoy</span>)</div></div>';
+    } else {
+      const chg = pa.map((x, i) => x ? FED_HZ[i][0].replace('Hace ', '') + ' ' + bpTxt((st.after - x.after) * 100) : null).filter(Boolean);
+      html += '<div class="ov-impl">EFFR implícita después de la reunión: ' + st.after.toFixed(2) + '% '
+        + '(<span style="color:' + colH + '">' + bpTxt(vsHoy) + ' vs hoy</span>)'
+        + (chg.length ? '<br><span class="ov-impl-chg">Cambio de la expectativa: ' + chg.join(', ') + '</span>' : '') + '</div></div>';
+    }
+    shown++;
+  });
   if (!shown) {
     html += '<div style="line-height:1.7;padding:6px 0;color:var(--muted)">'
       + '<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener" '
@@ -4130,12 +4177,15 @@ const METODO = [
       { d: 'Precios de Yahoo, con la hora del último dato de cada fila al pasar el mouse. La pestaña se refresca cada minuto mientras está a la vista.' },
       { d: 'Merval: el MSCI MERVAL de BYMA, con 20 minutos de demora.',
         p: 'Yahoo dejó de actualizar ^MERV y su historia es la del índice viejo, por eso esa fila no tiene retornos a plazo.' },
-      { d: 'Treasuries: 13 semanas, 5, 10 y 30 años de Yahoo (intradiario, 15 minutos de demora); 1 y 2 años de la curva oficial del Tesoro (cierre del último día publicado), con asterisco.',
-        p: 'Yahoo no tiene 1 y 2 años. Cada serie se compara contra su propia historia, así los cambios no mezclan fuentes.' },
+      { d: 'Treasuries: toda la curva (3 meses, 1, 2, 5, 10 y 30 años) en tiempo real de Tradeweb, vía CNBC, con la historia diaria de la misma fuente para los cambios.',
+        p: 'Antes 1 y 2 años salían de la curva oficial del Tesoro, que se publica al cierre, así que durante la rueda mostraban el movimiento de ayer al lado del de hoy de los otros plazos. Con una sola fuente, el día y los plazos se comparan sobre lo mismo. Si CNBC no responde, ese plazo vuelve a su fuente anterior (Yahoo con 15 minutos de demora, o la curva oficial) y se marca con asterisco.',
+        x: 'Mezclar la curva oficial con Yahoo, que era lo que hacía antes.' },
       { d: 'Cambios en bps contra el cierre más cercano anterior a 7, 30, 91 y 182 días corridos.' },
-      { d: 'Curva: 10A−2A con la curva oficial, con las dos tasas del mismo día; 10A−13S con Yahoo.' },
+      { d: 'Curva: 10A−2A y 10A−3M, con las tasas en tiempo real de la misma fuente.' },
       { d: 'Probabilidades de la Fed: el método de CME FedWatch con los futuros de fed funds (ZQ).',
         p: 'Cada contrato liquida contra el promedio de la EFFR del mes. Si la reunión cae tarde en el mes y el mes siguiente no tiene reunión, se usa ese contrato, porque despejar pocos días del mes multiplica el ruido. Las probabilidades se encadenan reunión a reunión contra el rango actual.' },
+      { d: 'Cómo cambiaron las expectativas: para la próxima reunión, las probabilidades de hoy, de hace una semana, un mes y tres meses; para las siguientes, cuánto se movió la tasa esperada.',
+        p: 'Se repite la cuenta con los mismos contratos al cierre más cercano anterior a cada fecha. Las probabilidades pasadas quedan contra el rango de hoy, así que dicen qué tasa esperaba el mercado entonces para después de cada reunión, aunque en el medio haya habido otra.' },
       { d: 'Retornos a plazo: 5, 21 y 252 ruedas; YTD contra el último cierre del año anterior.',
         p: 'Hasta octubre de 2026 el YTD del Resumen medía desde el primer cierre del año y dejaba afuera el movimiento del primer día; ahora es la misma cuenta que el screener.' },
     ] },

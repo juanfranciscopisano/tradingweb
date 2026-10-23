@@ -417,6 +417,28 @@ app.get("/api/overview", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------- futuros de fed funds: historia diaria
+// Para ver cómo cambiaron las probabilidades de cada reunión (hace 1 semana, 1 y 3 meses): los mismos contratos ZQ
+// del Resumen, 6 meses de cierres diarios.
+app.get("/api/fedhist", async (req, res) => {
+  try {
+    const payload = await cached("fedhist", 30 * 60 * 1000, async () => {
+      const zq = zqTickers();
+      const m = await series(zq, "6mo", "1d");
+      const out = {};
+      for (const [sym, r] of Object.entries(m || {})) {
+        const ts = r.timestamp || [], cl = r.indicators?.quote?.[0]?.close || [];
+        out[sym] = ts.map((t, i) => [t, cl[i]]).filter(x => x[1] != null && x[1] > 90 && x[1] < 100).map(([t, c]) => [t, +c.toFixed(4)]);
+      }
+      return { zq: out };
+    }, d => Object.values(d.zq).some(a => a.length > 20));
+    res.json(payload);
+  } catch (e) {
+    console.error("fedhist:", e.message);
+    res.status(502).json({ error: e.message });
+  }
+});
+
 // ---------------------------------------------------------------- Treasuries: curva oficial y cambios
 // Curva par del Tesoro (cierre oficial de cada día hábil, se publica a la tarde): da 1 y 2 años, que Yahoo no tiene.
 // Para 13 semanas, 5, 10 y 30 años se usan las series diarias de Yahoo (^IRX, ^FVX, ^TNX, ^TYX), las mismas del
@@ -440,25 +462,43 @@ async function treasuryYear(year) {
     } finally { clearTimeout(t); }
   }, rows => rows.length > 0).catch(() => []);
 }
-// prueba de la fuente intradiaria de CNBC para 1 y 2 años: devuelve el comienzo de cada respuesta (URLs fijas)
-app.get("/debug-ust-live", async (req, res) => {
-  const urls = {
-    quote: "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=US1Y%7CUS2Y&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1",
-    chart: "https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=US2Y",
-  };
+// Curva en tiempo real: CNBC (Tradeweb), la misma fuente para todos los plazos, con su historia diaria para los cambios.
+// Si CNBC no responde, la página vuelve a Yahoo y a la curva oficial.
+const CNBC_UST = { "3M": "US3M", "1Y": "US1Y", "2Y": "US2Y", "5Y": "US5Y", "10Y": "US10Y", "30Y": "US30Y" };
+const CNBC_HDR = { "User-Agent": UA, "Accept": "application/json" };
+async function cnbcUstQuotes() {
+  return cached("cnbc:ust", 45 * 1000, async () => {
+    const syms = Object.values(CNBC_UST).join("%7C");
+    const j = await getJSON(`https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${syms}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1`, { headers: CNBC_HDR, timeout: 8000 });
+    const num = v => parseFloat(String(v ?? "").replace("%", ""));
+    const out = {};
+    for (const r of j?.FormattedQuoteResult?.FormattedQuote || []) {
+      const k = Object.keys(CNBC_UST).find(x => CNBC_UST[x] === r.symbol);
+      const last = num(r.last), prev = num(r.previous_day_closing), t = Date.parse(r.last_time);
+      if (k && isFinite(last) && last > 0 && last < 25) out[k] = { last, prev: isFinite(prev) ? prev : null, time: isFinite(t) ? Math.floor(t / 1000) : null };
+    }
+    return out;
+  }, d => Object.keys(d).length > 0).catch(() => ({}));
+}
+async function cnbcUstHist(sym) {
+  return cached(`cnbc:hist:${sym}`, 3 * 3600 * 1000, async () => {
+    const j = await getJSON(`https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=${sym}`, { headers: CNBC_HDR, timeout: 9000 });
+    return (j?.barData?.priceBars || []).map(b => [Math.floor(+b.tradeTimeinMills / 1000), +parseFloat(b.close).toFixed(3)])
+      .filter(x => isFinite(x[0]) && isFinite(x[1]) && x[1] > 0).sort((a, b) => a[0] - b[0]);
+  }, a => a.length > 20).catch(() => []);
+}
+async function cnbcUst() {
+  const q = await cnbcUstQuotes();
+  const keys = Object.keys(q);
+  const hist = await Promise.all(keys.map(k => cnbcUstHist(CNBC_UST[k])));
   const out = {};
-  await Promise.all(Object.entries(urls).map(async ([k, u]) => {
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 9000);
-    try {
-      const r = await fetch(u, { headers: { "User-Agent": UA, "Accept": "application/json" }, signal: ctrl.signal });
-      out[k] = { status: r.status, body: (await r.text()).slice(0, 1800) };
-    } catch (e) { out[k] = { error: e.message }; } finally { clearTimeout(t); }
-  }));
-  res.json(out);
-});
+  keys.forEach((k, i) => { out[k] = { ...q[k], hist: hist[i] }; });
+  return out;
+}
 
 app.get("/api/ust", async (req, res) => {
   try {
+    const live = cnbcUst();
     const payload = await cached("ust", 5 * 60 * 1000, async () => {
       const y = new Date().getUTCFullYear();
       const [a, b, hist] = await Promise.all([treasuryYear(y - 1), treasuryYear(y), series(["^IRX", "^FVX", "^TNX", "^TYX"], "1y", "1d")]);
@@ -470,7 +510,7 @@ app.get("/api/ust", async (req, res) => {
       }
       return { cmt, yahoo };
     }, d => d.cmt.length > 0 || Object.keys(d.yahoo).length > 0);
-    res.json(payload);
+    res.json({ ...payload, live: await live, liveSrc: "CNBC (Tradeweb)" });
   } catch (e) {
     console.error("ust:", e.message);
     res.status(502).json({ error: e.message });
