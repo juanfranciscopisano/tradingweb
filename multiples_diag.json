@@ -32,8 +32,8 @@
     "MSFT M 1035 E 34.8 En 32.2 pe 29.8",
     "JPM M 387 E 32.1 En 30.6 pe 12.0",
     "BAC M 303 E 28.1 En 25.1 pe 10.8",
-    "GOOGL M 759 E 27.9 En 28.7 pe 27.2",
     "GOOG M 757 E 27.9 En 28.7 pe 27.1",
+    "GOOGL M 759 E 27.9 En 28.7 pe 27.2",
     "BRK-B M 456 E 26.8 En undefined pe 17.0",
     "WFC M 231 E 22.1 En 20.6 pe 10.5",
     "GE M 92 E -20.9 En 0.4 pe -4.4",
@@ -46,8 +46,8 @@
     "AAPL M 938 E 56.3 En 50.2 pe 16.6",
     "MSFT M 1035 E 34.8 En 32.2 pe 29.8",
     "JPM M 387 E 32.1 En 30.6 pe 12.0",
-    "GOOGL M 759 E 27.9 En 28.7 pe 27.2",
     "GOOG M 757 E 27.9 En 28.7 pe 27.1",
+    "GOOGL M 759 E 27.9 En 28.7 pe 27.2",
     "BAC M 303 E 28.1 En 25.1 pe 10.8",
     "META M 552 E 19.2 En 21.7 pe 28.7",
     "WFC M 231 E 22.1 En 20.6 pe 10.5",
@@ -74,8 +74,8 @@
    "E": [
     "BRK-B M 598 E 105.8 En undefined pe 5.6",
     "AAPL M 2341 E 85.5 En 84.2 pe 27.4",
-    "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
     "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
+    "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
     "MSFT M 2114 E 61.3 En 57.6 pe 34.5",
     "JPM M 493 E 47.4 En 48.1 pe 10.4",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
@@ -88,8 +88,8 @@
    "En": [
     "AAPL M 2341 E 85.5 En 84.2 pe 27.4",
     "MSFT M 2114 E 61.3 En 57.6 pe 34.5",
-    "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
     "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
+    "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
     "JPM M 493 E 47.4 En 48.1 pe 10.4",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
     "AMZN M 1797 E 29.4 En 24.1 pe 61.1",
@@ -118,8 +118,8 @@
    "E": [
     "AAPL M 3254 E 99.3 En 98.7 pe 32.8",
     "MSFT M 3335 E 86.2 En 85.4 pe 38.7",
-    "GOOGL M 2280 E 81.6 En 81.2 pe 27.9",
     "GOOG M 2296 E 81.6 En 81.2 pe 28.1",
+    "GOOGL M 2280 E 81.6 En 81.2 pe 27.9",
     "BRK-B M 871 E 73.4 En undefined pe 11.9",
     "JPM M 611 E 50.1 En 52.2 pe 12.2",
     "META M 1324 E 45.7 En 44.5 pe 29.0",
@@ -132,8 +132,8 @@
    "En": [
     "AAPL M 3254 E 99.3 En 98.7 pe 32.8",
     "MSFT M 3335 E 86.2 En 85.4 pe 38.7",
-    "GOOGL M 2280 E 81.6 En 81.2 pe 27.9",
     "GOOG M 2296 E 81.6 En 81.2 pe 28.1",
+    "GOOGL M 2280 E 81.6 En 81.2 pe 27.9",
     "JPM M 611 E 50.1 En 52.2 pe 12.2",
     "NVDA M 3064 E 42.4 En 45.3 pe 72.2",
     "META M 1324 E 45.7 En 44.5 pe 29.0",
@@ -160,8 +160,8 @@
     "WMT M 783 E 18.9 En 20.3 pe 41.4"
    ],
    "E": [
-    "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
     "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
+    "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
     "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
     "AAPL M 3020 E 96.4 En 106.1 pe 31.3",
     "BRK-B M 1040 E 80.9 En undefined pe 12.9",
@@ -175,8 +175,8 @@
    ],
    "En": [
     "AAPL M 3020 E 96.4 En 106.1 pe 31.3",
-    "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
     "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
+    "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
     "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
     "NVDA M 3897 E 76.8 En 77.7 pe 50.7",
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
@@ -190,397 +190,397 @@
   }
  },
  "yahoo": {
-  "AAPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ABBV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AAPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ABNB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ABT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ACGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ADM": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "ACGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ADP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AEP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "AEE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AEP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "AFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AIG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "AES": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "AJG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AIG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "AKAM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AIZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ALB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ALGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMCR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AIZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ALB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AMCR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AMT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AMP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMZN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ANET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "APD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "APO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "APH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "APTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ARE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ARES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ATO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "ARE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AXON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AVY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AXON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AZO": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
   "BAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BAX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BEN": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "BDX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "BIIB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BEN": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "BG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BIIB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BKNG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "BLK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BMY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BNY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BLK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BRK-B": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
-  "BX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BRO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "C": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BXP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CAT": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "BSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "C": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CAH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CARR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CBOE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "CCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CAH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CBOE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "CDNS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CDW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CFG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CHRW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CFG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CHD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CHRW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CHTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CHD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CINF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CMI": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "CMG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CMS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CNC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CNP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "COIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "COHR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CLX": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "COR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CPAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "COP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CRH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CPT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CRL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CSGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CMG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CMS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CNP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "COHR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "COIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CNC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "COP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CPAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "COR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CPT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CRH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CSGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CTSH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CRL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CVNA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CVS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CVX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CVS": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "DASH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DDOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DASH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "D": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DECK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DHI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DGX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "D": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DLR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DOW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DOC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DUK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DXCM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DTE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "DOW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DVN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ECHO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "ECL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DVA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EBAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DUK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ECHO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "DXCM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ED": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ECL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EIX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "EQIX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EMR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ERIE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ESS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ETN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EVRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "EW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EQIX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EQT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EMR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ESS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ERIE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ETR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXPE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXPD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ETN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EXC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EVRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "EXE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EXPD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EXPE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "F": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "FCX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FANG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FDXF": "continuas 0, total 1 (2025-11-30 a 2025-11-30)",
+  "FCX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EXR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FDX": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
-  "FERG": "continuas 0, total 5 (2025-07-31 a 2026-06-30)",
   "FE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "FIS": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "FDXF": "continuas 0, total 1 (2025-11-30 a 2025-11-30)",
+  "FERG": "continuas 0, total 5 (2025-07-31 a 2026-06-30)",
+  "FIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FFIV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FICO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FISV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FOX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FLEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FOXA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FOX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FOXA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FSLR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "FTNT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GEHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FTNT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GDDY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FITB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GEV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GEN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GEHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GILD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GEV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GLW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GOOGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GNRC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GOOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GPN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GWW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HAL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GOOGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GRMN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GNRC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GPN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HAL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HBAN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HIG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HCA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GWW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HLT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HIG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HOOD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HONA": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
-  "HLT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HSIC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HSY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IBKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HUM": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "HWM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IDXX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ICE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "HUBB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HUM": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "IBKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ICE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "HST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HWM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IFF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IDXX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ILMN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "INTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "INCY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IQV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "INVH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IRM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "INTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IQV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IRM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "J": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ITW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IVZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "JBL": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
-  "J": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "JPM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "JCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "JKHY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KDP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KEY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KIM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KLAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "JPM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KIM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KEY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KVUE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "L": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "KMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LDOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LHX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "L": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "LII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LITE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LNT": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "LLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LYB": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
-  "LYV": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "MA": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "MAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MAA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LVS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MA": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "LYV": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "LYB": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
+  "MAA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MCD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MCHP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MCK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MDLZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MCK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MLM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MNST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MGM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "MPC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MPWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MLM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MNST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MRNA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MSI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MTD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "NCLH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MTB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MSFT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MTD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MSI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MTB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NEE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "NCLH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NI": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "NRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "NTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NOW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NUE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "NTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NWS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NWSA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "NXPI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NVR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "NXPI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "O": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "OKE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ODFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ORLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "OTIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "OKE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "OXY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ORLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "OTIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PCAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PCG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PFG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PGR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "PCG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "PLD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PFE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PLTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PKG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PLTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PLD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "PNR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PNW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PNR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PNC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PODD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PRU": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PSA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "Q": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PYPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PODD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PRU": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "QCOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RDDT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "Q": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RCL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PYPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "REG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RDDT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "REGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "REGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ROK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RJF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ROK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ROP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SBAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RSG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RVTY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SBUX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SBAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SCHW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RVTY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SHW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SKYD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "SLB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SMCI": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "SBUX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SNDK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SMCI": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "SOLV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SLB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SPGI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SRE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "STT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "STX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "STE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "STLD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SRE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "STX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "STT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SWKS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "STLD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SYK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SYY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TDG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TDY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TECH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TEL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TECH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TER": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TMUS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TKO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TPR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TRGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TMO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TRMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TPR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TMO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TROW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TRGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TSCO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TSN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TTWO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TXT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TYL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "UHS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "UDR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TWLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TSN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TYL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TXT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UBER": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "UNH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "UDR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "UHS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UPS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "URI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VICI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "V": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VICI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "USB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "UNH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VLTO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VMC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VMRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VRSK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VST": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "VRTX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VMRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VST": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "VRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VYLR": "continuas 0, total 0",
-  "VZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WEC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WEC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WELL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WRB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WTW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WMB": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "WY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WRB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WYNN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "XEL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "XYZ": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "WY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WTW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "XOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "XYL": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
-  "ZBH": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "XYZ": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "YUM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ZBRA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ZTS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "YUM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)"
+  "ZBH": "continuas 0, total 5 (2025-03-31 a 2026-06-30)"
  },
  "tasaReal": "Tesoro de EE.UU., curva real (10 años): bono del Tesoro indexado por inflación (TIPS) a 10 años, al 2026-10-22",
  "sinUltimoDato": [
@@ -742,7 +742,8 @@
      "acciones": 1772,
      "antesImp": 714,
      "impuesto": 526,
-     "neto": 186
+     "neto": 186,
+     "ebit": 4338.5
     },
     {
      "fin": "2025-12-31",
@@ -754,7 +755,8 @@
      "acciones": 1770.6,
      "antesImp": 2668,
      "impuesto": 853,
-     "neto": 1816
+     "neto": 1816,
+     "ebit": 5545
     },
     {
      "fin": "2026-03-31",
@@ -766,7 +768,8 @@
      "acciones": 1774,
      "antesImp": 1039,
      "impuesto": 342,
-     "neto": 695
+     "neto": 695,
+     "ebit": 4453
     },
     {
      "fin": "2026-06-30",
@@ -778,7 +781,8 @@
      "acciones": 1771,
      "antesImp": 4278,
      "impuesto": 662,
-     "neto": 3613
+     "neto": 3613,
+     "ebit": 6210
     }
    ],
    "crudo": {
@@ -1449,7 +1453,8 @@
      "acciones": 714,
      "antesImp": 327,
      "impuesto": -226,
-     "neto": 639
+     "neto": 639,
+     "ebit": 569
     },
     {
      "fin": "2025-12-31",
@@ -1461,7 +1466,8 @@
      "acciones": 722.2,
      "antesImp": -269,
      "impuesto": -139,
-     "neto": 320
+     "neto": 320,
+     "ebit": 321.5
     },
     {
      "fin": "2026-03-31",
@@ -1473,7 +1479,8 @@
      "acciones": 715,
      "antesImp": 242,
      "impuesto": -41,
-     "neto": 487
+     "neto": 487,
+     "ebit": 451
     },
     {
      "fin": "2026-06-30",
@@ -1485,7 +1492,8 @@
      "acciones": 715,
      "antesImp": 449,
      "impuesto": 28,
-     "neto": 426
+     "neto": 426,
+     "ebit": 482.5
     }
    ],
    "crudo": {
@@ -1998,7 +2006,8 @@
      "acciones": 558.5,
      "antesImp": 714,
      "impuesto": 190,
-     "neto": 519
+     "neto": 519,
+     "ebit": 1773
     },
     {
      "fin": "2025-12-31",
@@ -2010,7 +2019,8 @@
      "acciones": 544.4,
      "antesImp": 661,
      "impuesto": -70,
-     "neto": 735
+     "neto": 735,
+     "ebit": 1189.5
     },
     {
      "fin": "2026-03-31",
@@ -2022,7 +2032,8 @@
      "acciones": 542.2,
      "antesImp": 987,
      "impuesto": 224,
-     "neto": null
+     "neto": null,
+     "ebit": 1483
     },
     {
      "fin": "2026-06-30",
@@ -2034,7 +2045,8 @@
      "acciones": 533.6,
      "antesImp": 1264,
      "impuesto": 316,
-     "neto": null
+     "neto": null,
+     "ebit": 1402.5
     }
    ],
    "crudo": {
@@ -2470,7 +2482,8 @@
      "acciones": 117.7,
      "antesImp": -239.1,
      "impuesto": -30.6,
-     "neto": -160.7
+     "neto": -160.7,
+     "ebit": -201.1
     },
     {
      "fin": "2025-12-31",
@@ -2482,7 +2495,8 @@
      "acciones": 117.5,
      "antesImp": -285,
      "impuesto": 157.3,
-     "neto": -414.2
+     "neto": -414.2,
+     "ebit": -240.1
     },
     {
      "fin": "2026-03-31",
@@ -2494,7 +2508,8 @@
      "acciones": 118.6,
      "antesImp": 254.2,
      "impuesto": 21.5,
-     "neto": 319.1
+     "neto": 319.1,
+     "ebit": 298.4
     },
     {
      "fin": "2026-06-30",
@@ -2506,7 +2521,8 @@
      "acciones": 136.2,
      "antesImp": 441.6,
      "impuesto": 94,
-     "neto": 480
+     "neto": 480,
+     "ebit": 472.6
     }
    ],
    "crudo": {
@@ -2990,7 +3006,8 @@
      "acciones": 10845,
      "antesImp": 28170,
      "impuesto": 6910,
-     "neto": 21187
+     "neto": 21187,
+     "ebit": 17422
     },
     {
      "fin": "2025-12-31",
@@ -3002,7 +3019,8 @@
      "acciones": 10867.7,
      "antesImp": 26605,
      "impuesto": 4946,
-     "neto": 21192
+     "neto": 21192,
+     "ebit": 24977
     },
     {
      "fin": "2026-03-31",
@@ -3014,7 +3032,8 @@
      "acciones": 10874,
      "antesImp": 39834,
      "impuesto": 9560,
-     "neto": 30255
+     "neto": 30255,
+     "ebit": 23852
     },
     {
      "fin": "2026-06-30",
@@ -3026,7 +3045,8 @@
      "acciones": 10903,
      "antesImp": 80857,
      "impuesto": 18199,
-     "neto": 62647
+     "neto": 62647,
+     "ebit": 27461
     }
    ],
    "crudo": {
@@ -3729,7 +3749,8 @@
      "acciones": 216.7,
      "antesImp": 597,
      "impuesto": 127,
-     "neto": 458
+     "neto": 458,
+     "ebit": 779
     },
     {
      "fin": "2025-12-31",
@@ -3741,7 +3762,8 @@
      "acciones": 216.8,
      "antesImp": 2209,
      "impuesto": 505,
-     "neto": 1693
+     "neto": 1693,
+     "ebit": 1268
     },
     {
      "fin": "2026-03-31",
@@ -3753,7 +3775,8 @@
      "acciones": 215.4,
      "antesImp": 1553,
      "impuesto": 314,
-     "neto": 1212
+     "neto": 1212,
+     "ebit": 1715
     },
     {
      "fin": "2026-06-30",
@@ -3765,7 +3788,8 @@
      "acciones": 213.9,
      "antesImp": 724,
      "impuesto": 159,
-     "neto": 551
+     "neto": 551,
+     "ebit": 915
     }
    ],
    "crudo": {
@@ -4385,7 +4409,8 @@
      "acciones": 358,
      "antesImp": 511,
      "impuesto": null,
-     "neto": 205
+     "neto": 205,
+     "ebit": 583
     },
     {
      "fin": "2025-12-31",
@@ -4397,7 +4422,8 @@
      "acciones": 353.2,
      "antesImp": 489,
      "impuesto": null,
-     "neto": 279
+     "neto": 279,
+     "ebit": 631.5
     },
     {
      "fin": "2026-03-31",
@@ -4409,7 +4435,8 @@
      "acciones": 354,
      "antesImp": 830,
      "impuesto": null,
-     "neto": 446
+     "neto": 446,
+     "ebit": 900
     },
     {
      "fin": "2026-06-30",
@@ -4421,7 +4448,8 @@
      "acciones": 354,
      "antesImp": 1277,
      "impuesto": null,
-     "neto": 747
+     "neto": 747,
+     "ebit": 1346
     }
    ],
    "crudo": {
@@ -5005,7 +5033,8 @@
      "acciones": 220.3,
      "antesImp": 121.3,
      "impuesto": 111.2,
-     "neto": 4.9
+     "neto": 4.9,
+     "ebit": 799.8
     },
     {
      "fin": "2025-12-31",
@@ -5017,7 +5046,8 @@
      "acciones": 222.9,
      "antesImp": 850.8,
      "impuesto": 159.4,
-     "neto": 678.2
+     "neto": 678.2,
+     "ebit": 734.5
     },
     {
      "fin": "2026-03-31",
@@ -5029,7 +5059,8 @@
      "acciones": 222.9,
      "antesImp": 883.5,
      "impuesto": 158.7,
-     "neto": 710.4
+     "neto": 710.4,
+     "ebit": 752.7
     },
     {
      "fin": "2026-06-30",
@@ -5041,7 +5072,8 @@
      "acciones": 222.8,
      "antesImp": -1937.7,
      "impuesto": -515.4,
-     "neto": -1440.8
+     "neto": -1440.8,
+     "ebit": 799.3
     }
    ],
    "crudo": {
@@ -5634,7 +5666,8 @@
      "acciones": 607.8,
      "antesImp": 2899,
      "impuesto": 438,
-     "neto": 1736
+     "neto": 1736,
+     "ebit": 861
     },
     {
      "fin": "2025-12-31",
@@ -5646,7 +5679,8 @@
      "acciones": 616.8,
      "antesImp": 1752,
      "impuesto": 592,
-     "neto": 684
+     "neto": 684,
+     "ebit": 2038.5
     },
     {
      "fin": "2026-03-31",
@@ -5658,7 +5692,8 @@
      "acciones": 594.9,
      "antesImp": 283,
      "impuesto": 1694,
-     "neto": -1906
+     "neto": -1906,
+     "ebit": 2784.5
     },
     {
      "fin": "2026-06-30",
@@ -5670,7 +5705,8 @@
      "acciones": 610.2,
      "antesImp": 2485,
      "impuesto": 396,
-     "neto": 1361
+     "neto": 1361,
+     "ebit": 2675
     }
    ],
    "crudo": {
@@ -6149,7 +6185,8 @@
      "acciones": 217.4,
      "antesImp": -243,
      "impuesto": 103,
-     "neto": -355
+     "neto": -355,
+     "ebit": 497.5
     },
     {
      "fin": "2025-12-31",
@@ -6161,7 +6198,8 @@
      "acciones": 216.1,
      "antesImp": 513,
      "impuesto": 196,
-     "neto": 138
+     "neto": 138,
+     "ebit": 425
     },
     {
      "fin": "2026-03-31",
@@ -6173,7 +6211,8 @@
      "acciones": 213.8,
      "antesImp": 285,
      "impuesto": 81,
-     "neto": 189
+     "neto": 189,
+     "ebit": 402
     },
     {
      "fin": "2026-06-30",
@@ -6185,7 +6224,8 @@
      "acciones": 212.1,
      "antesImp": 366,
      "impuesto": 52,
-     "neto": 248
+     "neto": 248,
+     "ebit": 350.5
     }
    ],
    "crudo": {
@@ -6651,7 +6691,8 @@
      "acciones": 78.4,
      "antesImp": 15.7,
      "impuesto": 17.9,
-     "neto": -2.2
+     "neto": -2.2,
+     "ebit": -2.1
     },
     {
      "fin": "2025-12-31",
@@ -6663,7 +6704,8 @@
      "acciones": 82.6,
      "antesImp": -66.2,
      "impuesto": -69,
-     "neto": 2.7
+     "neto": 2.7,
+     "ebit": -50.1
     },
     {
      "fin": "2026-03-31",
@@ -6675,7 +6717,8 @@
      "acciones": 82.5,
      "antesImp": 200.2,
      "impuesto": 30.9,
-     "neto": 169.3
+     "neto": 169.3,
+     "ebit": 29.2
     },
     {
      "fin": "2026-06-30",
@@ -6687,7 +6730,8 @@
      "acciones": 82.5,
      "antesImp": 32.7,
      "impuesto": 3.3,
-     "neto": 29.4
+     "neto": 29.4,
+     "ebit": 46.8
     }
    ],
    "crudo": {
@@ -7460,7 +7504,8 @@
      "acciones": 759.9,
      "antesImp": -5199,
      "impuesto": 140,
-     "neto": -5337
+     "neto": -5337,
+     "ebit": -4781
     },
     {
      "fin": "2025-12-31",
@@ -7472,7 +7517,8 @@
      "acciones": 758.1,
      "antesImp": 8319,
      "impuesto": 99,
-     "neto": 8220
+     "neto": 8220,
+     "ebit": -831.5
     },
     {
      "fin": "2026-03-31",
@@ -7484,7 +7530,8 @@
      "acciones": 788,
      "antesImp": 26,
      "impuesto": 33,
-     "neto": -4
+     "neto": -4,
+     "ebit": 436.5
     },
     {
      "fin": "2026-06-30",
@@ -7496,7 +7543,8 @@
      "acciones": 790.6,
      "antesImp": -365,
      "impuesto": 63,
-     "neto": -444
+     "neto": -444,
+     "ebit": 90
     }
    ],
    "crudo": {
@@ -8146,7 +8194,8 @@
      "acciones": 252.1,
      "antesImp": 510,
      "impuesto": 17,
-     "neto": 493
+     "neto": 493,
+     "ebit": 720.5
     },
     {
      "fin": "2025-12-31",
@@ -8158,7 +8207,8 @@
      "acciones": 363.6,
      "antesImp": 393,
      "impuesto": 11,
-     "neto": 382
+     "neto": 382,
+     "ebit": 552
     },
     {
      "fin": "2026-03-31",
@@ -8170,7 +8220,8 @@
      "acciones": 280.6,
      "antesImp": 39,
      "impuesto": 76,
-     "neto": -311
+     "neto": -311,
+     "ebit": 1005
     },
     {
      "fin": "2026-06-30",
@@ -8182,7 +8233,8 @@
      "acciones": 275.2,
      "antesImp": 554,
      "impuesto": 102,
-     "neto": 377
+     "neto": 377,
+     "ebit": 629.5
     }
    ],
    "crudo": {
@@ -8714,7 +8766,8 @@
      "acciones": 511,
      "antesImp": 254.3,
      "impuesto": 65.8,
-     "neto": 117.6
+     "neto": 117.6,
+     "ebit": 85.4
     },
     {
      "fin": "2025-12-31",
@@ -8726,7 +8779,8 @@
      "acciones": 518.3,
      "antesImp": 451.8,
      "impuesto": 105,
-     "neto": 255.5
+     "neto": 255.5,
+     "ebit": 281
     },
     {
      "fin": "2026-03-31",
@@ -8738,7 +8792,8 @@
      "acciones": 518.2,
      "antesImp": 445.7,
      "impuesto": 99.1,
-     "neto": 268.2
+     "neto": 268.2,
+     "ebit": 323.3
     },
     {
      "fin": "2026-06-30",
@@ -8750,7 +8805,8 @@
      "acciones": 516,
      "antesImp": 370.9,
      "impuesto": 115.6,
-     "neto": 171.5
+     "neto": 171.5,
+     "ebit": 215.8
     }
    ],
    "crudo": {
@@ -9265,7 +9321,8 @@
      "acciones": 300.4,
      "antesImp": 340,
      "impuesto": 68,
-     "neto": 277
+     "neto": 277,
+     "ebit": 481
     },
     {
      "fin": "2025-12-31",
@@ -9277,7 +9334,8 @@
      "acciones": 304.3,
      "antesImp": 295,
      "impuesto": 53,
-     "neto": 289
+     "neto": 289,
+     "ebit": 435
     },
     {
      "fin": "2026-03-31",
@@ -9289,7 +9347,8 @@
      "acciones": 307.1,
      "antesImp": 362,
      "impuesto": 85,
-     "neto": 340
+     "neto": 340,
+     "ebit": 490
     },
     {
      "fin": "2026-06-30",
@@ -9301,7 +9360,8 @@
      "acciones": 310.8,
      "antesImp": 129,
      "impuesto": 33,
-     "neto": 120
+     "neto": 120,
+     "ebit": 264
     }
    ],
    "crudo": {
@@ -9908,7 +9968,8 @@
      "acciones": 491.1,
      "antesImp": -6674,
      "impuesto": -42,
-     "neto": -6631
+     "neto": -6631,
+     "ebit": -230
     },
     {
      "fin": "2025-12-31",
@@ -9920,7 +9981,8 @@
      "acciones": 491.5,
      "antesImp": -1543,
      "impuesto": -443,
-     "neto": -1101
+     "neto": -1101,
+     "ebit": -1251
     },
     {
      "fin": "2026-03-31",
@@ -9932,7 +9994,8 @@
      "acciones": 495.6,
      "antesImp": 2099,
      "impuesto": 560,
-     "neto": 1541
+     "neto": 1541,
+     "ebit": 1861
     },
     {
      "fin": "2026-06-30",
@@ -9944,7 +10007,8 @@
      "acciones": 497.6,
      "antesImp": 1486,
      "impuesto": 399,
-     "neto": 1091
+     "neto": 1091,
+     "ebit": 1198
     }
    ],
    "crudo": {
@@ -10596,7 +10660,8 @@
      "acciones": 190.7,
      "antesImp": 216.9,
      "impuesto": -8.3,
-     "neto": 226.3
+     "neto": 226.3,
+     "ebit": 174.4
     },
     {
      "fin": "2025-12-31",
@@ -10608,7 +10673,8 @@
      "acciones": 192.8,
      "antesImp": 168,
      "impuesto": 24.2,
-     "neto": 146.7
+     "neto": 146.7,
+     "ebit": 231.5
     },
     {
      "fin": "2026-03-31",
@@ -10620,7 +10686,8 @@
      "acciones": 196.4,
      "antesImp": 184.3,
      "impuesto": 2.7,
-     "neto": 191.4
+     "neto": 191.4,
+     "ebit": 248.2
     },
     {
      "fin": "2026-06-30",
@@ -10632,7 +10699,8 @@
      "acciones": 200.4,
      "antesImp": 278.5,
      "impuesto": 42.3,
-     "neto": 240.5
+     "neto": 240.5,
+     "ebit": 340.7
     }
    ],
    "crudo": {
@@ -11138,7 +11206,8 @@
      "acciones": 292,
      "antesImp": 502.1,
      "impuesto": 69.6,
-     "neto": 432.6
+     "neto": 432.6,
+     "ebit": 480.5
     },
     {
      "fin": "2025-12-31",
@@ -11150,7 +11219,8 @@
      "acciones": 277.8,
      "antesImp": -886.3,
      "impuesto": -219.6,
-     "neto": -666.7
+     "neto": -666.7,
+     "ebit": 273.8
     },
     {
      "fin": "2026-03-31",
@@ -11162,7 +11232,8 @@
      "acciones": 264.8,
      "antesImp": -464.7,
      "impuesto": -70.6,
-     "neto": -394.1
+     "neto": -394.1,
+     "ebit": -21.4
     },
     {
      "fin": "2026-06-30",
@@ -11174,7 +11245,8 @@
      "acciones": 263.4,
      "antesImp": -395.4,
      "impuesto": -35.9,
-     "neto": -359.5
+     "neto": -359.5,
+     "ebit": -61.1
     }
    ],
    "crudo": {
@@ -11753,7 +11825,8 @@
      "acciones": 201.4,
      "antesImp": 116.8,
      "impuesto": 32.2,
-     "neto": 84.6
+     "neto": 84.6,
+     "ebit": 140.4
     },
     {
      "fin": "2026-01-31",
@@ -11765,7 +11838,8 @@
      "acciones": 196.7,
      "antesImp": 192.2,
      "impuesto": 61.4,
-     "neto": 130.8
+     "neto": 130.8,
+     "ebit": 212.8
     },
     {
      "fin": "2026-04-30",
@@ -11777,7 +11851,8 @@
      "acciones": 195,
      "antesImp": -48.4,
      "impuesto": 29.5,
-     "neto": -77.9
+     "neto": -77.9,
+     "ebit": -31
     },
     {
      "fin": "2026-07-31",
@@ -11789,7 +11864,8 @@
      "acciones": 193.4,
      "antesImp": 201.8,
      "impuesto": -231,
-     "neto": 432.8
+     "neto": 432.8,
+     "ebit": 222
     }
    ],
    "crudo": {
@@ -12529,7 +12605,8 @@
      "acciones": 195.2,
      "antesImp": -187,
      "impuesto": 146,
-     "neto": -339.7
+     "neto": -339.7,
+     "ebit": 959.9
     },
     {
      "fin": "2025-12-31",
@@ -12541,7 +12618,8 @@
      "acciones": 195.3,
      "antesImp": 708.6,
      "impuesto": 142.5,
-     "neto": 559.6
+     "neto": 559.6,
+     "ebit": 913.2
     },
     {
      "fin": "2026-03-31",
@@ -12553,7 +12631,8 @@
      "acciones": 195.4,
      "antesImp": 2088.6,
      "impuesto": 459,
-     "neto": 1641.3
+     "neto": 1641.3,
+     "ebit": 1267.3
     },
     {
      "fin": "2026-06-30",
@@ -12565,7 +12644,8 @@
      "acciones": 193.9,
      "antesImp": 996.4,
      "impuesto": 219.7,
-     "neto": 763.5
+     "neto": 763.5,
+     "ebit": 1091
     }
    ],
    "crudo": {
@@ -13260,7 +13340,8 @@
      "acciones": 49.4,
      "antesImp": null,
      "impuesto": 31.6,
-     "neto": 54.4
+     "neto": 54.4,
+     "ebit": 133.8
     },
     {
      "fin": "2025-12-27",
@@ -13272,7 +13353,8 @@
      "acciones": 49.7,
      "antesImp": null,
      "impuesto": -17.8,
-     "neto": -276.6
+     "neto": -276.6,
+     "ebit": -60.8
     },
     {
      "fin": "2026-03-28",
@@ -13284,7 +13366,8 @@
      "acciones": 49,
      "antesImp": null,
      "impuesto": -15.1,
-     "neto": -14.8
+     "neto": -14.8,
+     "ebit": 139.2
     },
     {
      "fin": "2026-06-27",
@@ -13296,7 +13379,8 @@
      "acciones": 48,
      "antesImp": null,
      "impuesto": 53.9,
-     "neto": -1.5
+     "neto": -1.5,
+     "ebit": 119.9
     }
    ],
    "crudo": {
@@ -13720,7 +13804,8 @@
      "acciones": 952,
      "antesImp": 2512,
      "impuesto": 426,
-     "neto": 2086
+     "neto": 2086,
+     "ebit": 2392.5
     },
     {
      "fin": "2026-01-31",
@@ -13732,7 +13817,8 @@
      "acciones": 938.6,
      "antesImp": 2628,
      "impuesto": 685,
-     "neto": 1943
+     "neto": 1943,
+     "ebit": 2077.5
     },
     {
      "fin": "2026-04-30",
@@ -13744,7 +13830,8 @@
      "acciones": 871,
      "antesImp": 2721,
      "impuesto": 614,
-     "neto": 2107
+     "neto": 2107,
+     "ebit": 2347
     },
     {
      "fin": "2026-07-31",
@@ -13756,7 +13843,8 @@
      "acciones": 821,
      "antesImp": 4552,
      "impuesto": 1026,
-     "neto": 3526
+     "neto": 3526,
+     "ebit": 2331
     }
    ],
    "crudo": {
@@ -14341,7 +14429,8 @@
      "acciones": 1005.3,
      "antesImp": -23.3,
      "impuesto": 10.7,
-     "neto": -34
+     "neto": -34,
+     "ebit": -69.4
     },
     {
      "fin": "2026-01-31",
@@ -14353,7 +14442,8 @@
      "acciones": 989.6,
      "antesImp": 57.8,
      "impuesto": -3.6,
-     "neto": 59.4
+     "neto": 59.4,
+     "ebit": 13.8
     },
     {
      "fin": "2026-04-30",
@@ -14365,7 +14455,8 @@
      "acciones": 1031.5,
      "antesImp": 39.1,
      "impuesto": -6.9,
-     "neto": 27.8
+     "neto": 27.8,
+     "ebit": -30.6
     },
     {
      "fin": "2026-07-31",
@@ -14377,7 +14468,8 @@
      "acciones": 1044.5,
      "antesImp": 3.9,
      "impuesto": -1.4,
-     "neto": 5.3
+     "neto": 5.3,
+     "ebit": -33.2
     }
    ],
    "crudo": {
@@ -14953,7 +15045,8 @@
      "acciones": 419.9,
      "antesImp": -45.8,
      "impuesto": -14.9,
-     "neto": -30.9
+     "neto": -30.9,
+     "ebit": -51.1
     },
     {
      "fin": "2025-12-31",
@@ -14965,7 +15058,8 @@
      "acciones": 422.7,
      "antesImp": 60.9,
      "impuesto": 14.4,
-     "neto": 46.5
+     "neto": 46.5,
+     "ebit": 49.1
     },
     {
      "fin": "2026-03-31",
@@ -14977,7 +15071,8 @@
      "acciones": 414,
      "antesImp": 12,
      "impuesto": 9,
-     "neto": 3
+     "neto": 3,
+     "ebit": 3
     },
     {
      "fin": "2026-06-30",
@@ -14989,7 +15084,8 @@
      "acciones": 404.4,
      "antesImp": 74,
      "impuesto": 19,
-     "neto": 55
+     "neto": 55,
+     "ebit": 58
     }
    ],
    "crudo": {
@@ -15631,7 +15727,8 @@
      "acciones": 1269,
      "antesImp": -3482,
      "impuesto": 508,
-     "neto": -3975
+     "neto": -3975,
+     "ebit": -3207
     },
     {
      "fin": "2025-12-31",
@@ -15643,7 +15740,8 @@
      "acciones": 1268.5,
      "antesImp": 1354,
      "impuesto": -1569,
-     "neto": 2943
+     "neto": 2943,
+     "ebit": 2112
     },
     {
      "fin": "2026-03-31",
@@ -15655,7 +15753,8 @@
      "acciones": 1279,
      "antesImp": 3938,
      "impuesto": 981,
-     "neto": 2943
+     "neto": 2943,
+     "ebit": 4680
     },
     {
      "fin": "2026-06-30",
@@ -15667,7 +15766,8 @@
      "acciones": 1287,
      "antesImp": 3977,
      "impuesto": 982,
-     "neto": 2979
+     "neto": 2979,
+     "ebit": 4703
     }
    ],
    "crudo": {
@@ -16277,7 +16377,8 @@
      "acciones": 140,
      "antesImp": 91,
      "impuesto": 19,
-     "neto": -123
+     "neto": -123,
+     "ebit": 190
     },
     {
      "fin": "2025-12-31",
@@ -16289,7 +16390,8 @@
      "acciones": 155.6,
      "antesImp": -66,
      "impuesto": -89,
-     "neto": -126
+     "neto": -126,
+     "ebit": 145.5
     },
     {
      "fin": "2026-03-31",
@@ -16301,7 +16403,8 @@
      "acciones": 137.6,
      "antesImp": 181,
      "impuesto": 31,
-     "neto": 161
+     "neto": 161,
+     "ebit": 248.5
     },
     {
      "fin": "2026-06-30",
@@ -16313,7 +16416,8 @@
      "acciones": 136.8,
      "antesImp": 266,
      "impuesto": 75,
-     "neto": 143
+     "neto": 143,
+     "ebit": 283.5
     }
    ],
    "crudo": {
@@ -16894,7 +16998,8 @@
      "acciones": 694.9,
      "antesImp": 65.2,
      "impuesto": -1.2,
-     "neto": -117.1
+     "neto": -117.1,
+     "ebit": 142
     },
     {
      "fin": "2025-12-31",
@@ -16906,7 +17011,8 @@
      "acciones": 711.5,
      "antesImp": 125.1,
      "impuesto": 6,
-     "neto": 114
+     "neto": 114,
+     "ebit": 205.8
     },
     {
      "fin": "2026-03-31",
@@ -16918,7 +17024,8 @@
      "acciones": 695.2,
      "antesImp": 195.6,
      "impuesto": 0.3,
-     "neto": 193.6
+     "neto": 193.6,
+     "ebit": 299.8
     },
     {
      "fin": "2026-06-30",
@@ -16930,7 +17037,8 @@
      "acciones": 689.9,
      "antesImp": 59.3,
      "impuesto": -1.4,
-     "neto": 52.8
+     "neto": 52.8,
+     "ebit": 151.6
     }
    ],
    "crudo": {
@@ -17304,7 +17412,8 @@
      "acciones": 363.3,
      "antesImp": 109,
      "impuesto": 62,
-     "neto": 47
+     "neto": 47,
+     "ebit": 169
     },
     {
      "fin": "2025-12-31",
@@ -17316,7 +17425,8 @@
      "acciones": 364.8,
      "antesImp": 333,
      "impuesto": 171,
-     "neto": 162
+     "neto": 162,
+     "ebit": 401
     },
     {
      "fin": "2026-03-31",
@@ -17328,7 +17438,8 @@
      "acciones": 365.4,
      "antesImp": 179,
      "impuesto": 90,
-     "neto": 89
+     "neto": 89,
+     "ebit": 249
     },
     {
      "fin": "2026-06-30",
@@ -17340,7 +17451,8 @@
      "acciones": 362.5,
      "antesImp": -104,
      "impuesto": 12,
-     "neto": -116
+     "neto": -116,
+     "ebit": -25.5
     }
    ],
    "crudo": {
@@ -17865,7 +17977,8 @@
      "acciones": 215.4,
      "antesImp": 215,
      "impuesto": -331,
-     "neto": 547
+     "neto": 547,
+     "ebit": 347
     },
     {
      "fin": "2026-03-31",
@@ -17877,7 +17990,8 @@
      "acciones": 220.4,
      "antesImp": 2304,
      "impuesto": 544,
-     "neto": 1764
+     "neto": 1764,
+     "ebit": 2086
     },
     {
      "fin": "2026-06-30",
@@ -17889,7 +18003,8 @@
      "acciones": 217.9,
      "antesImp": 1937,
      "impuesto": 483,
-     "neto": 1463
+     "neto": 1463,
+     "ebit": 1763
     },
     {
      "fin": "2026-09-30",
@@ -17901,7 +18016,8 @@
      "acciones": 217.6,
      "antesImp": 1794,
      "impuesto": 451,
-     "neto": 1365
+     "neto": 1365,
+     "ebit": 1269
     }
    ],
    "crudo": {
@@ -18500,7 +18616,8 @@
      "acciones": 372.3,
      "antesImp": null,
      "impuesto": -197,
-     "neto": null
+     "neto": null,
+     "ebit": 688.7
     },
     {
      "fin": "2025-12-31",
@@ -18512,7 +18629,8 @@
      "acciones": 376.2,
      "antesImp": null,
      "impuesto": 61.4,
-     "neto": null
+     "neto": null,
+     "ebit": 710.5
     },
     {
      "fin": "2026-03-31",
@@ -18524,7 +18642,8 @@
      "acciones": 376.6,
      "antesImp": null,
      "impuesto": 203.3,
-     "neto": null
+     "neto": null,
+     "ebit": 1076.1
     },
     {
      "fin": "2026-06-30",
@@ -18536,7 +18655,8 @@
      "acciones": 377,
      "antesImp": null,
      "impuesto": 79.9,
-     "neto": null
+     "neto": null,
+     "ebit": 540.9
     }
    ],
    "crudo": {
@@ -18758,7 +18878,8 @@
      "acciones": 64.4,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 210.4
     },
     {
      "fin": "2025-12-31",
@@ -18770,7 +18891,8 @@
      "acciones": 64.5,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 152.1
     },
     {
      "fin": "2026-03-31",
@@ -18782,7 +18904,8 @@
      "acciones": 64.5,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 155.2
     },
     {
      "fin": "2026-06-30",
@@ -18794,7 +18917,8 @@
      "acciones": 64.3,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 109.4
     }
    ],
    "crudo": {
@@ -19096,7 +19220,8 @@
      "acciones": 585.7,
      "antesImp": 348.4,
      "impuesto": 56.1,
-     "neto": 291.1
+     "neto": 291.1,
+     "ebit": 387.1
     },
     {
      "fin": "2025-12-31",
@@ -19108,7 +19233,8 @@
      "acciones": 829.1,
      "antesImp": 90.4,
      "impuesto": 26.2,
-     "neto": 91.2
+     "neto": 91.2,
+     "ebit": 348.9
     },
     {
      "fin": "2026-03-31",
@@ -19120,7 +19246,8 @@
      "acciones": 580.7,
      "antesImp": 459,
      "impuesto": 78.3,
-     "neto": 380.7
+     "neto": 380.7,
+     "ebit": 502.9
     },
     {
      "fin": "2026-06-30",
@@ -19132,7 +19259,8 @@
      "acciones": 577.6,
      "antesImp": 519.8,
      "impuesto": 278.4,
-     "neto": 241.9
+     "neto": 241.9,
+     "ebit": 513.2
     }
    ],
    "crudo": {
@@ -19765,7 +19893,8 @@
      "acciones": 288.8,
      "antesImp": 1370,
      "impuesto": 287,
-     "neto": 1018
+     "neto": 1018,
+     "ebit": 1236
     },
     {
      "fin": "2025-12-31",
@@ -19777,7 +19906,8 @@
      "acciones": 291.6,
      "antesImp": -2333,
      "impuesto": -567,
-     "neto": -1458
+     "neto": -1458,
+     "ebit": 870
     },
     {
      "fin": "2026-03-31",
@@ -19789,7 +19919,8 @@
      "acciones": 282.8,
      "antesImp": 176,
      "impuesto": 32,
-     "neto": 25
+     "neto": 25,
+     "ebit": 1516
     },
     {
      "fin": "2026-06-30",
@@ -19801,7 +19932,8 @@
      "acciones": 281.2,
      "antesImp": 2635,
      "impuesto": 580,
-     "neto": 1882
+     "neto": 1882,
+     "ebit": 2512
     }
    ],
    "crudo": {
@@ -20428,7 +20560,8 @@
      "acciones": 1443,
      "antesImp": 1924,
      "impuesto": 669,
-     "neto": null
+     "neto": null,
+     "ebit": 1972
     },
     {
      "fin": "2025-12-31",
@@ -20440,7 +20573,8 @@
      "acciones": 1444.3,
      "antesImp": 766,
      "impuesto": 202,
-     "neto": null
+     "neto": null,
+     "ebit": 811
     },
     {
      "fin": "2026-03-31",
@@ -20452,7 +20586,8 @@
      "acciones": 1444,
      "antesImp": 2034,
      "impuesto": 653,
-     "neto": null
+     "neto": null,
+     "ebit": 2137
     },
     {
      "fin": "2026-06-30",
@@ -20464,7 +20599,8 @@
      "acciones": 1443,
      "antesImp": 1930,
      "impuesto": 544,
-     "neto": 984
+     "neto": 984,
+     "ebit": 2003
     }
    ],
    "crudo": {
@@ -20979,7 +21115,8 @@
      "acciones": 455,
      "antesImp": 799,
      "impuesto": 190,
-     "neto": null
+     "neto": null,
+     "ebit": 1104
     },
     {
      "fin": "2025-12-31",
@@ -20991,7 +21128,8 @@
      "acciones": 441,
      "antesImp": 322,
      "impuesto": 75,
-     "neto": null
+     "neto": null,
+     "ebit": 683
     },
     {
      "fin": "2026-03-31",
@@ -21003,7 +21141,8 @@
      "acciones": 432,
      "antesImp": 236,
      "impuesto": 61,
-     "neto": null
+     "neto": null,
+     "ebit": 862.5
     },
     {
      "fin": "2026-06-30",
@@ -21015,7 +21154,8 @@
      "acciones": 431.9,
      "antesImp": 921,
      "impuesto": 225,
-     "neto": null
+     "neto": null,
+     "ebit": 983
     }
    ],
    "crudo": {
@@ -21347,7 +21487,8 @@
      "acciones": 455,
      "antesImp": 799,
      "impuesto": 190,
-     "neto": null
+     "neto": null,
+     "ebit": 1104
     },
     {
      "fin": "2025-12-31",
@@ -21359,7 +21500,8 @@
      "acciones": 441,
      "antesImp": 322,
      "impuesto": 75,
-     "neto": null
+     "neto": null,
+     "ebit": 683
     },
     {
      "fin": "2026-03-31",
@@ -21371,7 +21513,8 @@
      "acciones": 432,
      "antesImp": 236,
      "impuesto": 61,
-     "neto": null
+     "neto": null,
+     "ebit": 862.5
     },
     {
      "fin": "2026-06-30",
@@ -21383,7 +21526,8 @@
      "acciones": 431.9,
      "antesImp": 921,
      "impuesto": 225,
-     "neto": null
+     "neto": null,
+     "ebit": 983
     }
    ],
    "crudo": {
@@ -21684,7 +21828,8 @@
      "acciones": 275,
      "antesImp": 746,
      "impuesto": 293,
-     "neto": 452
+     "neto": 452,
+     "ebit": 394.5
     },
     {
      "fin": "2025-12-31",
@@ -21696,7 +21841,8 @@
      "acciones": 275.9,
      "antesImp": 1105,
      "impuesto": -2565,
-     "neto": 3664
+     "neto": 3664,
+     "ebit": 601
     },
     {
      "fin": "2026-03-31",
@@ -21708,7 +21854,8 @@
      "acciones": 272,
      "antesImp": 5103,
      "impuesto": 354,
-     "neto": 4745
+     "neto": 4745,
+     "ebit": 158.5
     },
     {
      "fin": "2026-06-30",
@@ -21720,7 +21867,8 @@
      "acciones": 270,
      "antesImp": 925,
      "impuesto": 276,
-     "neto": 668
+     "neto": 668,
+     "ebit": 596.5
     }
    ],
    "crudo": {
@@ -22341,7 +22489,8 @@
      "acciones": 1254,
      "antesImp": 3641,
      "impuesto": 589,
-     "neto": 3052
+     "neto": 3052,
+     "ebit": 3327
     },
     {
      "fin": "2025-12-31",
@@ -22353,7 +22502,8 @@
      "acciones": 1254.6,
      "antesImp": 2078,
      "impuesto": -105,
-     "neto": 2183
+     "neto": 2183,
+     "ebit": 2320
     },
     {
      "fin": "2026-03-31",
@@ -22365,7 +22515,8 @@
      "acciones": 1254,
      "antesImp": 2580,
      "impuesto": 559,
-     "neto": 2021
+     "neto": 2021,
+     "ebit": 2448.5
     },
     {
      "fin": "2026-06-30",
@@ -22377,7 +22528,8 @@
      "acciones": 1243,
      "antesImp": -10254,
      "impuesto": 242,
-     "neto": -10496
+     "neto": -10496,
+     "ebit": 1446
     }
    ],
    "crudo": {
@@ -22989,7 +23141,8 @@
      "acciones": 537.3,
      "antesImp": 617.8,
      "impuesto": 143.9,
-     "neto": 413
+     "neto": 413,
+     "ebit": 841.6
     },
     {
      "fin": "2026-02-22",
@@ -23001,7 +23154,8 @@
      "acciones": 537.3,
      "antesImp": 411.5,
      "impuesto": 99.9,
-     "neto": 303.1
+     "neto": 303.1,
+     "ebit": 538
     },
     {
      "fin": "2026-05-31",
@@ -23013,7 +23167,8 @@
      "acciones": 536.9,
      "antesImp": -2231.9,
      "impuesto": -240.4,
-     "neto": -2007.9
+     "neto": -2007.9,
+     "ebit": 695
     },
     {
      "fin": "2026-08-30",
@@ -23025,7 +23180,8 @@
      "acciones": 537.9,
      "antesImp": 502,
      "impuesto": 122.8,
-     "neto": 397
+     "neto": 397,
+     "ebit": 633.6
     }
    ],
    "crudo": {
@@ -23716,7 +23872,8 @@
      "acciones": 988.1,
      "antesImp": -4249,
      "impuesto": -988,
-     "neto": -3310
+     "neto": -3310,
+     "ebit": 1603
     },
     {
      "fin": "2026-03-31",
@@ -23728,7 +23885,8 @@
      "acciones": 926,
      "antesImp": 3347,
      "impuesto": 642,
-     "neto": 2627
+     "neto": 2627,
+     "ebit": 3628.5
     },
     {
      "fin": "2026-06-30",
@@ -23740,7 +23898,8 @@
      "acciones": 910,
      "antesImp": 1568,
      "impuesto": 214,
-     "neto": 1305
+     "neto": 1305,
+     "ebit": 2246.5
     },
     {
      "fin": "2026-09-30",
@@ -23752,7 +23911,8 @@
      "acciones": 887,
      "antesImp": 3943,
      "impuesto": 565,
-     "neto": 3335
+     "neto": 3335,
+     "ebit": 3598
     }
    ],
    "crudo": {
@@ -24462,7 +24622,8 @@
      "acciones": 12203,
      "antesImp": 43987,
      "impuesto": 9008,
-     "neto": 34979
+     "neto": 34979,
+     "ebit": 31228
     },
     {
      "fin": "2025-12-31",
@@ -24474,7 +24635,8 @@
      "acciones": 12218.1,
      "antesImp": 39117,
      "impuesto": 4662,
-     "neto": 34455
+     "neto": 34455,
+     "ebit": 35934
     },
     {
      "fin": "2026-03-31",
@@ -24486,7 +24648,8 @@
      "acciones": 12238,
      "antesImp": 77412,
      "impuesto": 14834,
-     "neto": 62578
+     "neto": 62578,
+     "ebit": 39696
     },
     {
      "fin": "2026-06-30",
@@ -24498,7 +24661,8 @@
      "acciones": 12309,
      "antesImp": 138753,
      "impuesto": 26560,
-     "neto": 112193
+     "neto": 112193,
+     "ebit": 40770
     }
    ],
    "crudo": {
@@ -25124,7 +25288,8 @@
      "acciones": 12203,
      "antesImp": 43987,
      "impuesto": 9008,
-     "neto": 34979
+     "neto": 34979,
+     "ebit": 31228
     },
     {
      "fin": "2025-12-31",
@@ -25136,7 +25301,8 @@
      "acciones": 12218.1,
      "antesImp": 39117,
      "impuesto": 4662,
-     "neto": 34455
+     "neto": 34455,
+     "ebit": 35934
     },
     {
      "fin": "2026-03-31",
@@ -25148,7 +25314,8 @@
      "acciones": 12238,
      "antesImp": 77412,
      "impuesto": 14834,
-     "neto": 62578
+     "neto": 62578,
+     "ebit": 39696
     },
     {
      "fin": "2026-06-30",
@@ -25160,7 +25327,8 @@
      "acciones": 12309,
      "antesImp": 138753,
      "impuesto": 26560,
-     "neto": 112193
+     "neto": 112193,
+     "ebit": 40770
     }
    ],
    "crudo": {
@@ -25765,7 +25933,8 @@
      "acciones": 139.2,
      "antesImp": -829.7,
      "impuesto": -220.2,
-     "neto": -609.5
+     "neto": -609.5,
+     "ebit": -732.7
     },
     {
      "fin": "2026-03-31",
@@ -25777,7 +25946,8 @@
      "acciones": 138,
      "antesImp": 245.4,
      "impuesto": 56.9,
-     "neto": 188.5
+     "neto": 188.5,
+     "ebit": 303.7
     },
     {
      "fin": "2026-06-30",
@@ -25789,7 +25959,8 @@
      "acciones": 138,
      "antesImp": 293.8,
      "impuesto": 66.3,
-     "neto": 227.6
+     "neto": 227.6,
+     "ebit": 358.7
     },
     {
      "fin": "2026-09-30",
@@ -25801,7 +25972,8 @@
      "acciones": 138.3,
      "antesImp": 278.6,
      "impuesto": 54.2,
-     "neto": 224.4
+     "neto": 224.4,
+     "ebit": 322.6
     }
    ],
    "crudo": {
@@ -26333,7 +26505,8 @@
      "acciones": 240.2,
      "antesImp": 655.7,
      "impuesto": 199.3,
-     "neto": 635.2
+     "neto": 635.2,
+     "ebit": 778
     },
     {
      "fin": "2025-12-31",
@@ -26345,7 +26518,8 @@
      "acciones": 286.2,
      "antesImp": 66.6,
      "impuesto": -111,
-     "neto": 217.5
+     "neto": 217.5,
+     "ebit": 169.3
     },
     {
      "fin": "2026-03-31",
@@ -26357,7 +26531,8 @@
      "acciones": 273.2,
      "antesImp": -224.5,
      "impuesto": -11.8,
-     "neto": -1799.9
+     "neto": -1799.9,
+     "ebit": 344.9
     },
     {
      "fin": "2026-06-30",
@@ -26369,7 +26544,8 @@
      "acciones": 270.1,
      "antesImp": 104.3,
      "impuesto": -4.9,
-     "neto": 13
+     "neto": 13,
+     "ebit": 479.9
     }
    ],
    "crudo": {
@@ -26871,7 +27047,8 @@
      "acciones": 39.4,
      "antesImp": 204,
      "impuesto": 59,
-     "neto": 145
+     "neto": 145,
+     "ebit": 161
     },
     {
      "fin": "2025-12-31",
@@ -26883,7 +27060,8 @@
      "acciones": 39.4,
      "antesImp": 198,
      "impuesto": 39,
-     "neto": 159
+     "neto": 159,
+     "ebit": 172
     },
     {
      "fin": "2026-03-31",
@@ -26895,7 +27073,8 @@
      "acciones": 39.3,
      "antesImp": 188,
      "impuesto": 39,
-     "neto": 149
+     "neto": 149,
+     "ebit": 155
     },
     {
      "fin": "2026-06-30",
@@ -26907,7 +27086,8 @@
      "acciones": 39.5,
      "antesImp": 254,
      "impuesto": 46,
-     "neto": 208
+     "neto": 208,
+     "ebit": 210
     }
    ],
    "crudo": {
@@ -27532,7 +27712,8 @@
      "acciones": 731.1,
      "antesImp": -501,
      "impuesto": -74,
-     "neto": -115
+     "neto": -115,
+     "ebit": 1384
     },
     {
      "fin": "2026-03-31",
@@ -27544,7 +27725,8 @@
      "acciones": 608.7,
      "antesImp": 886,
      "impuesto": 91,
-     "neto": 821
+     "neto": 821,
+     "ebit": 2392
     },
     {
      "fin": "2026-06-30",
@@ -27556,7 +27738,8 @@
      "acciones": 318.6,
      "antesImp": 7264,
      "impuesto": 1578,
-     "neto": 5682
+     "neto": 5682,
+     "ebit": 2240
     },
     {
      "fin": "2026-09-30",
@@ -27568,7 +27751,8 @@
      "acciones": 319.2,
      "antesImp": 839,
      "impuesto": 60,
-     "neto": 664
+     "neto": 664,
+     "ebit": 1048
     }
    ],
    "crudo": {
@@ -28316,7 +28500,8 @@
      "acciones": 689.5,
      "antesImp": 172,
      "impuesto": 9,
-     "neto": 161
+     "neto": 161,
+     "ebit": 101
     },
     {
      "fin": "2025-12-31",
@@ -28328,7 +28513,8 @@
      "acciones": 710.5,
      "antesImp": 144,
      "impuesto": 7,
-     "neto": 135
+     "neto": 135,
+     "ebit": 192
     },
     {
      "fin": "2026-03-31",
@@ -28340,7 +28526,8 @@
      "acciones": 689.3,
      "antesImp": 518,
      "impuesto": 17,
-     "neto": 494
+     "neto": 494,
+     "ebit": 319
     },
     {
      "fin": "2026-06-30",
@@ -28352,7 +28539,8 @@
      "acciones": 687,
      "antesImp": 259,
      "impuesto": 18,
-     "neto": 237
+     "neto": 237,
+     "ebit": 293
     }
    ],
    "crudo": {
@@ -28988,7 +29176,8 @@
      "acciones": 257,
      "antesImp": 56,
      "impuesto": 15,
-     "neto": 40
+     "neto": 40,
+     "ebit": 235
     },
     {
      "fin": "2025-12-31",
@@ -29000,7 +29189,8 @@
      "acciones": 256.1,
      "antesImp": 22,
      "impuesto": -9,
-     "neto": null
+     "neto": null,
+     "ebit": 97
     },
     {
      "fin": "2026-03-31",
@@ -29012,7 +29202,8 @@
      "acciones": 257,
      "antesImp": 209,
      "impuesto": 39,
-     "neto": 169
+     "neto": 169,
+     "ebit": 273
     },
     {
      "fin": "2026-06-30",
@@ -29024,7 +29215,8 @@
      "acciones": 257,
      "antesImp": 64,
      "impuesto": 31,
-     "neto": 50
+     "neto": 50,
+     "ebit": 165.5
     }
    ],
    "crudo": {
@@ -29662,7 +29854,8 @@
      "acciones": 4531,
      "antesImp": 4574,
      "impuesto": 304,
-     "neto": 4063
+     "neto": 4063,
+     "ebit": 399
     },
     {
      "fin": "2025-12-27",
@@ -29674,7 +29867,8 @@
      "acciones": 4546.2,
      "antesImp": 338,
      "impuesto": 671,
-     "neto": -591
+     "neto": -591,
+     "ebit": 619.5
     },
     {
      "fin": "2026-03-28",
@@ -29686,7 +29880,8 @@
      "acciones": 5083,
      "antesImp": -3946,
      "impuesto": 335,
-     "neto": -3728
+     "neto": -3728,
+     "ebit": 762.5
     },
     {
      "fin": "2026-06-27",
@@ -29698,7 +29893,8 @@
      "acciones": 5104,
      "antesImp": -10819,
      "impuesto": 29,
-     "neto": -11033
+     "neto": -11033,
+     "ebit": 1483.5
     }
    ],
    "crudo": {
@@ -30253,7 +30449,8 @@
      "acciones": 1362.9,
      "antesImp": 852,
      "impuesto": 190,
-     "neto": 662
+     "neto": 662,
+     "ebit": 995
     },
     {
      "fin": "2025-12-31",
@@ -30265,7 +30462,8 @@
      "acciones": 1357.7,
      "antesImp": 457,
      "impuesto": 104,
-     "neto": 353
+     "neto": 353,
+     "ebit": 881
     },
     {
      "fin": "2026-03-31",
@@ -30277,7 +30475,8 @@
      "acciones": 1363.7,
      "antesImp": 357,
      "impuesto": 87,
-     "neto": 270
+     "neto": 270,
+     "ebit": 756
     },
     {
      "fin": "2026-06-30",
@@ -30289,7 +30488,8 @@
      "acciones": 1364.5,
      "antesImp": 305,
      "impuesto": 95,
-     "neto": 142
+     "neto": 142,
+     "ebit": 628
     }
    ],
    "crudo": {
@@ -30959,7 +31159,8 @@
      "acciones": 1186,
      "antesImp": 807,
      "impuesto": 194,
-     "neto": 615
+     "neto": 615,
+     "ebit": 903
     },
     {
      "fin": "2025-12-27",
@@ -30971,7 +31172,8 @@
      "acciones": 1205.6,
      "antesImp": 897,
      "impuesto": 249,
-     "neto": 651
+     "neto": 651,
+     "ebit": 1084
     },
     {
      "fin": "2026-03-28",
@@ -30983,7 +31185,8 @@
      "acciones": 1188,
      "antesImp": 1010,
      "impuesto": 211,
-     "neto": 798
+     "neto": 798,
+     "ebit": 1145
     },
     {
      "fin": "2026-06-27",
@@ -30995,7 +31198,8 @@
      "acciones": 1186,
      "antesImp": -6376,
      "impuesto": -916,
-     "neto": -5460
+     "neto": -5460,
+     "ebit": 897
     }
    ],
    "crudo": {
@@ -31522,7 +31726,8 @@
      "acciones": 655,
      "antesImp": -1790,
      "impuesto": -475,
-     "neto": -1320
+     "neto": -1320,
+     "ebit": 980
     },
     {
      "fin": "2026-01-31",
@@ -31534,7 +31739,8 @@
      "acciones": 655,
      "antesImp": 1116,
      "impuesto": 255,
-     "neto": 861
+     "neto": 861,
+     "ebit": 1200
     },
     {
      "fin": "2026-05-23",
@@ -31546,7 +31752,8 @@
      "acciones": 615,
      "antesImp": 1177,
      "impuesto": 273,
-     "neto": 903
+     "neto": 903,
+     "ebit": 1261
     },
     {
      "fin": "2026-08-15",
@@ -31558,7 +31765,8 @@
      "acciones": 608,
      "antesImp": 840,
      "impuesto": 198,
-     "neto": 641
+     "neto": 641,
+     "ebit": 873.5
     }
    ],
    "crudo": {
@@ -32211,7 +32419,8 @@
      "acciones": 78.3,
      "antesImp": null,
      "impuesto": 1,
-     "neto": 4.2
+     "neto": 4.2,
+     "ebit": 6.7
     },
     {
      "fin": "2025-12-27",
@@ -32223,7 +32432,8 @@
      "acciones": 87.8,
      "antesImp": null,
      "impuesto": 18.3,
-     "neto": 78.2
+     "neto": 78.2,
+     "ebit": 67.8
     },
     {
      "fin": "2026-03-28",
@@ -32235,7 +32445,8 @@
      "acciones": 96.2,
      "antesImp": null,
      "impuesto": 39.6,
-     "neto": 144.2
+     "neto": 144.2,
+     "ebit": 169.1
     },
     {
      "fin": "2026-06-27",
@@ -32247,7 +32458,8 @@
      "acciones": 75,
      "antesImp": null,
      "impuesto": -296.6,
-     "neto": -7161.7
+     "neto": -7161.7,
+     "ebit": 279.3
     }
    ],
    "crudo": {
@@ -32734,7 +32946,8 @@
      "acciones": 234.8,
      "antesImp": 729.8,
      "impuesto": 251.8,
-     "neto": 431.5
+     "neto": 431.5,
+     "ebit": 792.5
     },
     {
      "fin": "2025-12-31",
@@ -32746,7 +32959,8 @@
      "acciones": 233.2,
      "antesImp": -185.7,
      "impuesto": -49.4,
-     "neto": -202.1
+     "neto": -202.1,
+     "ebit": -56.7
     },
     {
      "fin": "2026-03-31",
@@ -32758,7 +32972,8 @@
      "acciones": 232.4,
      "antesImp": -412.1,
      "impuesto": -32.1,
-     "neto": -389.1
+     "neto": -389.1,
+     "ebit": -332.9
     },
     {
      "fin": "2026-06-30",
@@ -32770,7 +32985,8 @@
      "acciones": 244,
      "antesImp": 518.6,
      "impuesto": 115.7,
-     "neto": 294.4
+     "neto": 294.4,
+     "ebit": 521.9
     }
    ],
    "crudo": {
@@ -33439,7 +33655,8 @@
      "acciones": 272.5,
      "antesImp": -219.6,
      "impuesto": -12.9,
-     "neto": -285.3
+     "neto": -285.3,
+     "ebit": 236.3
     },
     {
      "fin": "2025-12-31",
@@ -33451,7 +33668,8 @@
      "acciones": 277.1,
      "antesImp": 99.8,
      "impuesto": -282.9,
-     "neto": 293.6
+     "neto": 293.6,
+     "ebit": 347.8
     },
     {
      "fin": "2026-03-31",
@@ -33463,7 +33681,8 @@
      "acciones": 258.9,
      "antesImp": 202.2,
      "impuesto": 27.5,
-     "neto": 125.1
+     "neto": 125.1,
+     "ebit": 301.2
     },
     {
      "fin": "2026-06-30",
@@ -33475,7 +33694,8 @@
      "acciones": 257.8,
      "antesImp": 413.5,
      "impuesto": 90.7,
-     "neto": 292.4
+     "neto": 292.4,
+     "ebit": 503.6
     }
    ],
    "crudo": {
@@ -34077,7 +34297,8 @@
      "acciones": 269.8,
      "antesImp": 274,
      "impuesto": 65.6,
-     "neto": 226.6
+     "neto": 226.6,
+     "ebit": 311.1
     },
     {
      "fin": "2026-02-28",
@@ -34089,7 +34310,8 @@
      "acciones": 269.4,
      "antesImp": 185,
      "impuesto": 48.7,
-     "neto": 1016.2
+     "neto": 1016.2,
+     "ebit": 227.5
     },
     {
      "fin": "2026-05-31",
@@ -34101,7 +34323,8 @@
      "acciones": 269.2,
      "antesImp": 220.2,
      "impuesto": 63.5,
-     "neto": 150.1
+     "neto": 150.1,
+     "ebit": 276.4
     },
     {
      "fin": "2026-08-31",
@@ -34113,7 +34336,8 @@
      "acciones": 269.4,
      "antesImp": 154.5,
      "impuesto": 49.9,
-     "neto": 97.6
+     "neto": 97.6,
+     "ebit": 260.1
     }
    ],
    "crudo": {
@@ -34717,7 +34941,8 @@
      "acciones": 319.4,
      "antesImp": 599.3,
      "impuesto": 175.5,
-     "neto": 411.4
+     "neto": 411.4,
+     "ebit": 599.3
     },
     {
      "fin": "2025-12-31",
@@ -34729,7 +34954,8 @@
      "acciones": 318.7,
      "antesImp": -263.5,
      "impuesto": 255,
-     "neto": -519.5
+     "neto": -519.5,
+     "ebit": -151.5
     },
     {
      "fin": "2026-03-31",
@@ -34741,7 +34967,8 @@
      "acciones": 317.5,
      "antesImp": -285.9,
      "impuesto": -31,
-     "neto": -257.6
+     "neto": -257.6,
+     "ebit": 179.3
     },
     {
      "fin": "2026-06-30",
@@ -34753,7 +34980,8 @@
      "acciones": 317.9,
      "antesImp": -300.9,
      "impuesto": -33.8,
-     "neto": -272.8
+     "neto": -272.8,
+     "ebit": -300.9
     }
    ],
    "crudo": {
@@ -35301,7 +35529,8 @@
      "acciones": 2498,
      "antesImp": 6745,
      "impuesto": 958,
-     "neto": 5785
+     "neto": 5785,
+     "ebit": 6711.5
     },
     {
      "fin": "2025-12-31",
@@ -35313,7 +35542,8 @@
      "acciones": 2469.2,
      "antesImp": 3420,
      "impuesto": 458,
-     "neto": 2963
+     "neto": 2963,
+     "ebit": 4238.5
     },
     {
      "fin": "2026-03-31",
@@ -35325,7 +35555,8 @@
      "acciones": 2472,
      "antesImp": -3534,
      "impuesto": 709,
-     "neto": -4240
+     "neto": -4240,
+     "ebit": 5485
     },
     {
      "fin": "2026-06-30",
@@ -35337,7 +35568,8 @@
      "acciones": 2470,
      "antesImp": -683,
      "impuesto": 654,
-     "neto": -1335
+     "neto": -1335,
+     "ebit": 4970.5
     }
    ],
    "crudo": {
@@ -35799,7 +36031,8 @@
      "acciones": 863.7,
      "antesImp": null,
      "impuesto": 314.1,
-     "neto": 1901.3
+     "neto": 1901.3,
+     "ebit": 357.8
     },
     {
      "fin": "2026-01-31",
@@ -35811,7 +36044,8 @@
      "acciones": 861.1,
      "antesImp": null,
      "impuesto": -14.5,
-     "neto": 396.1
+     "neto": 396.1,
+     "ebit": 404.4
     },
     {
      "fin": "2026-05-02",
@@ -35823,7 +36057,8 @@
      "acciones": 893.3,
      "antesImp": null,
      "impuesto": 48.8,
-     "neto": 34.5
+     "neto": 34.5,
+     "ebit": 339.4
     },
     {
      "fin": "2026-08-01",
@@ -35835,7 +36070,8 @@
      "acciones": 921.2,
      "antesImp": null,
      "impuesto": 70.3,
-     "neto": 308
+     "neto": 308,
+     "ebit": 459.7
     }
    ],
    "crudo": {
@@ -36308,7 +36544,8 @@
      "acciones": 143.3,
      "antesImp": 1740,
      "impuesto": 313,
-     "neto": 1427
+     "neto": 1427,
+     "ebit": 1271
     },
     {
      "fin": "2026-03-31",
@@ -36320,7 +36557,8 @@
      "acciones": 142.5,
      "antesImp": 1030,
      "impuesto": 155,
-     "neto": 875
+     "neto": 875,
+     "ebit": 989
     },
     {
      "fin": "2026-06-30",
@@ -36332,7 +36570,8 @@
      "acciones": 142.4,
      "antesImp": 1168,
      "impuesto": 74,
-     "neto": 1094
+     "neto": 1094,
+     "ebit": 1096
     },
     {
      "fin": "2026-09-30",
@@ -36344,7 +36583,8 @@
      "acciones": 142.4,
      "antesImp": 1298,
      "impuesto": 174,
-     "neto": 1124
+     "neto": 1124,
+     "ebit": 1269
     }
    ],
    "crudo": {
@@ -36960,7 +37200,8 @@
      "acciones": 1047.5,
      "antesImp": 694,
      "impuesto": 192,
-     "neto": 502
+     "neto": 502,
+     "ebit": 572
     },
     {
      "fin": "2025-12-31",
@@ -36972,7 +37213,8 @@
      "acciones": 1044.3,
      "antesImp": 541,
      "impuesto": 140,
-     "neto": 401
+     "neto": 401,
+     "ebit": 443
     },
     {
      "fin": "2026-03-31",
@@ -36984,7 +37226,8 @@
      "acciones": 1039.9,
      "antesImp": 673,
      "impuesto": 204,
-     "neto": 469
+     "neto": 469,
+     "ebit": 503
     },
     {
      "fin": "2026-06-30",
@@ -36996,7 +37239,8 @@
      "acciones": 1034.3,
      "antesImp": 438,
      "impuesto": 140,
-     "neto": 298
+     "neto": 298,
+     "ebit": 162
     }
    ],
    "crudo": {
@@ -37658,7 +37902,8 @@
      "acciones": 196.9,
      "antesImp": -1030.4,
      "impuesto": -131.3,
-     "neto": -941.1
+     "neto": -941.1,
+     "ebit": 329.1
     },
     {
      "fin": "2026-03-31",
@@ -37670,7 +37915,8 @@
      "acciones": 299.2,
      "antesImp": 574.2,
      "impuesto": 154.6,
-     "neto": 405.2
+     "neto": 405.2,
+     "ebit": 705.6
     },
     {
      "fin": "2026-06-30",
@@ -37682,7 +37928,8 @@
      "acciones": 281,
      "antesImp": 829.2,
      "impuesto": 224.8,
-     "neto": 584.8
+     "neto": 584.8,
+     "ebit": 1007.5
     },
     {
      "fin": "2026-09-30",
@@ -37694,7 +37941,8 @@
      "acciones": 275.4,
      "antesImp": 887.5,
      "impuesto": 215.4,
-     "neto": 656
+     "neto": 656,
+     "ebit": 1074.3
     }
    ],
    "crudo": {
@@ -38435,7 +38683,8 @@
      "acciones": 408,
      "antesImp": null,
      "impuesto": 17.7,
-     "neto": 255
+     "neto": 255,
+     "ebit": 271
     },
     {
      "fin": "2025-12-31",
@@ -38447,7 +38696,8 @@
      "acciones": 413.2,
      "antesImp": null,
      "impuesto": 35.3,
-     "neto": 181.8
+     "neto": 181.8,
+     "ebit": 255.7
     },
     {
      "fin": "2026-04-03",
@@ -38459,7 +38709,8 @@
      "acciones": 394.1,
      "antesImp": null,
      "impuesto": -11.7,
-     "neto": -33.4
+     "neto": -33.4,
+     "ebit": 93.6
     },
     {
      "fin": "2026-07-03",
@@ -38471,7 +38722,8 @@
      "acciones": 404.4,
      "antesImp": null,
      "impuesto": 43.4,
-     "neto": 226.8
+     "neto": 226.8,
+     "ebit": 274.9
     }
    ],
    "crudo": {
@@ -38882,7 +39134,8 @@
      "acciones": 1003.1,
      "antesImp": 1166,
      "impuesto": 324,
-     "neto": null
+     "neto": null,
+     "ebit": 1436
     },
     {
      "fin": "2025-12-31",
@@ -38894,7 +39147,8 @@
      "acciones": 203,
      "antesImp": -108,
      "impuesto": 40,
-     "neto": null
+     "neto": null,
+     "ebit": -140.5
     },
     {
      "fin": "2026-03-31",
@@ -38906,7 +39160,8 @@
      "acciones": 1006900,
      "antesImp": 390,
      "impuesto": 154,
-     "neto": null
+     "neto": null,
+     "ebit": 1263.5
     },
     {
      "fin": "2026-06-30",
@@ -38918,7 +39173,8 @@
      "acciones": 1012.2,
      "antesImp": 3915,
      "impuesto": 915,
-     "neto": null
+     "neto": null,
+     "ebit": 3843
     }
    ],
    "crudo": {
@@ -39156,7 +39412,8 @@
      "acciones": 709,
      "antesImp": 412,
      "impuesto": 78,
-     "neto": 334
+     "neto": 334,
+     "ebit": 309
     },
     {
      "fin": "2026-01-31",
@@ -39168,7 +39425,8 @@
      "acciones": 711,
      "antesImp": 549,
      "impuesto": 117,
-     "neto": 432
+     "neto": 432,
+     "ebit": 397
     },
     {
      "fin": "2026-04-30",
@@ -39180,7 +39438,8 @@
      "acciones": 801,
      "antesImp": -156,
      "impuesto": 21,
-     "neto": -177
+     "neto": -177,
+     "ebit": -183
     },
     {
      "fin": "2026-07-31",
@@ -39192,7 +39451,8 @@
      "acciones": 723.1,
      "antesImp": -269,
      "impuesto": 13,
-     "neto": -282
+     "neto": -282,
+     "ebit": 172
     }
    ],
    "crudo": {
@@ -39783,7 +40043,8 @@
      "acciones": 2281,
      "antesImp": 630,
      "impuesto": -220,
-     "neto": null
+     "neto": null,
+     "ebit": 1179.5
     },
     {
      "fin": "2025-12-31",
@@ -39795,7 +40056,8 @@
      "acciones": 2213.8,
      "antesImp": 551,
      "impuesto": -119,
-     "neto": null
+     "neto": null,
+     "ebit": 1193.5
     },
     {
      "fin": "2026-03-31",
@@ -39807,7 +40069,8 @@
      "acciones": 2281,
      "antesImp": 905,
      "impuesto": 20,
-     "neto": null
+     "neto": null,
+     "ebit": 1470
     },
     {
      "fin": "2026-06-30",
@@ -39819,7 +40082,8 @@
      "acciones": 2285,
      "antesImp": 674,
      "impuesto": -87,
-     "neto": null
+     "neto": null,
+     "ebit": 1294
     }
    ],
    "crudo": {
@@ -40370,7 +40634,8 @@
      "acciones": 5714,
      "antesImp": 3334,
      "impuesto": -216,
-     "neto": 3541
+     "neto": 3541,
+     "ebit": 3835
     },
     {
      "fin": "2025-12-31",
@@ -40382,7 +40647,8 @@
      "acciones": 5682.8,
      "antesImp": -1642,
      "impuesto": -2,
-     "neto": -1648
+     "neto": -1648,
+     "ebit": 3526
     },
     {
      "fin": "2026-03-29",
@@ -40394,7 +40660,8 @@
      "acciones": 5731,
      "antesImp": 3170,
      "impuesto": 461,
-     "neto": 2687
+     "neto": 2687,
+     "ebit": 3770
     },
     {
      "fin": "2026-06-28",
@@ -40406,7 +40673,8 @@
      "acciones": 5699,
      "antesImp": -653,
      "impuesto": -407,
-     "neto": -248
+     "neto": -248,
+     "ebit": 4418.5
     }
    ],
    "crudo": {
@@ -40750,7 +41018,8 @@
      "acciones": 122,
      "antesImp": null,
      "impuesto": 77.9,
-     "neto": null
+     "neto": null,
+     "ebit": 581.8
     },
     {
      "fin": "2025-12-31",
@@ -40762,7 +41031,8 @@
      "acciones": 128.4,
      "antesImp": null,
      "impuesto": 0,
-     "neto": null
+     "neto": null,
+     "ebit": 121
     },
     {
      "fin": "2026-03-31",
@@ -40774,7 +41044,8 @@
      "acciones": 123.8,
      "antesImp": null,
      "impuesto": 1.2,
-     "neto": null
+     "neto": null,
+     "ebit": 131.2
     },
     {
      "fin": "2026-06-30",
@@ -40786,7 +41057,8 @@
      "acciones": 124.5,
      "antesImp": null,
      "impuesto": 31.3,
-     "neto": null
+     "neto": null,
+     "ebit": 305.7
     }
    ],
    "crudo": {
@@ -41104,7 +41376,8 @@
      "acciones": 120.8,
      "antesImp": 428.1,
      "impuesto": 80.3,
-     "neto": 347.8
+     "neto": 347.8,
+     "ebit": 433.6
     },
     {
      "fin": "2025-12-31",
@@ -41116,7 +41389,8 @@
      "acciones": 120,
      "antesImp": 203,
      "impuesto": 36.5,
-     "neto": 166.5
+     "neto": 166.5,
+     "ebit": 231.1
     },
     {
      "fin": "2026-03-31",
@@ -41128,7 +41402,8 @@
      "acciones": 118.6,
      "antesImp": 746.8,
      "impuesto": 156.1,
-     "neto": 590.7
+     "neto": 590.7,
+     "ebit": 321.6
     },
     {
      "fin": "2026-06-30",
@@ -41140,7 +41415,8 @@
      "acciones": 115,
      "antesImp": 152.4,
      "impuesto": 33.7,
-     "neto": 118.8
+     "neto": 118.8,
+     "ebit": 166.5
     }
    ],
    "crudo": {
@@ -41655,7 +41931,8 @@
      "acciones": 107.2,
      "antesImp": 1763.3,
      "impuesto": 303.3,
-     "neto": 1460
+     "neto": 1460,
+     "ebit": 1026.8
     },
     {
      "fin": "2025-12-31",
@@ -41667,7 +41944,8 @@
      "acciones": 107.3,
      "antesImp": 1043.7,
      "impuesto": 199.1,
-     "neto": 844.6
+     "neto": 844.6,
+     "ebit": 879.9
     },
     {
      "fin": "2026-03-31",
@@ -41679,7 +41957,8 @@
      "acciones": 107.7,
      "antesImp": 831.2,
      "impuesto": 104,
-     "neto": 727.2
+     "neto": 727.2,
+     "ebit": 642.9
     },
     {
      "fin": "2026-06-30",
@@ -41691,7 +41970,8 @@
      "acciones": 106,
      "antesImp": 1527.8,
      "impuesto": 230.9,
-     "neto": 1296.9
+     "neto": 1296.9,
+     "ebit": 1293.5
     }
    ],
    "crudo": {
@@ -42375,7 +42655,8 @@
      "acciones": 1110,
      "antesImp": 163.9,
      "impuesto": 30.7,
-     "neto": 133.2
+     "neto": 133.2,
+     "ebit": 1030.3
     },
     {
      "fin": "2025-12-28",
@@ -42387,7 +42668,8 @@
      "acciones": 1141.9,
      "antesImp": 764.8,
      "impuesto": 471.6,
-     "neto": 293.3
+     "neto": 293.3,
+     "ebit": 976
     },
     {
      "fin": "2026-03-29",
@@ -42399,7 +42681,8 @@
      "acciones": 1143.2,
      "antesImp": 728.1,
      "impuesto": 217.3,
-     "neto": 510.9
+     "neto": 510.9,
+     "ebit": 828.1
     },
     {
      "fin": "2026-06-28",
@@ -42411,7 +42694,8 @@
      "acciones": 1143.8,
      "antesImp": 1419.3,
      "impuesto": 374.4,
-     "neto": 1045.3
+     "neto": 1045.3,
+     "ebit": 1279.5
     }
    ],
    "crudo": {
@@ -43022,7 +43306,8 @@
      "acciones": 106.8,
      "antesImp": 318.4,
      "impuesto": 77.1,
-     "neto": 241.3
+     "neto": 241.3,
+     "ebit": 342.6
     },
     {
      "fin": "2026-01-31",
@@ -43034,7 +43319,8 @@
      "acciones": 106.7,
      "antesImp": -651.9,
      "impuesto": 72.3,
-     "neto": -724.2
+     "neto": -724.2,
+     "ebit": 334
     },
     {
      "fin": "2026-04-30",
@@ -43046,7 +43332,8 @@
      "acciones": 106.6,
      "antesImp": 327.6,
      "impuesto": -60.5,
-     "neto": 388.1
+     "neto": 388.1,
+     "ebit": 351.8
     },
     {
      "fin": "2026-07-31",
@@ -43058,7 +43345,8 @@
      "acciones": 107,
      "antesImp": 427.9,
      "impuesto": 103.6,
-     "neto": 324.3
+     "neto": 324.3,
+     "ebit": 452.1
     }
    ],
    "crudo": {
@@ -43732,7 +44020,8 @@
      "acciones": 182.4,
      "antesImp": 516.5,
      "impuesto": 68.1,
-     "neto": 448.7
+     "neto": 448.7,
+     "ebit": 121.4
     },
     {
      "fin": "2026-01-31",
@@ -43744,7 +44033,8 @@
      "acciones": 190.8,
      "antesImp": 79.1,
      "impuesto": 14.3,
-     "neto": 65
+     "neto": 65,
+     "ebit": 300.7
     },
     {
      "fin": "2026-04-30",
@@ -43756,7 +44046,8 @@
      "acciones": 192.1,
      "antesImp": 19.3,
      "impuesto": 2.4,
-     "neto": 17.1
+     "neto": 17.1,
+     "ebit": 212.8
     },
     {
      "fin": "2026-07-31",
@@ -43768,7 +44059,8 @@
      "acciones": 192.3,
      "antesImp": 683.9,
      "impuesto": 138.2,
-     "neto": 545.8
+     "neto": 545.8,
+     "ebit": 329.7
     }
    ],
    "crudo": {
@@ -44389,7 +44681,8 @@
      "acciones": 175.4,
      "antesImp": 1514,
      "impuesto": 248,
-     "neto": 1266
+     "neto": 1266,
+     "ebit": 78
     },
     {
      "fin": "2025-12-31",
@@ -44401,7 +44694,8 @@
      "acciones": 180,
      "antesImp": 58,
      "impuesto": -5,
-     "neto": 63
+     "neto": 63,
+     "ebit": 37
     },
     {
      "fin": "2026-03-31",
@@ -44413,7 +44707,8 @@
      "acciones": 175.5,
      "antesImp": 16,
      "impuesto": 3,
-     "neto": 13
+     "neto": 13,
+     "ebit": 16
     },
     {
      "fin": "2026-06-30",
@@ -44425,7 +44720,8 @@
      "acciones": 173.3,
      "antesImp": 108,
      "impuesto": 15,
-     "neto": 92
+     "neto": 92,
+     "ebit": 108
     }
    ],
    "crudo": {
@@ -44957,7 +45253,8 @@
      "acciones": 326.5,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 812.9
     },
     {
      "fin": "2025-12-31",
@@ -44969,7 +45266,8 @@
      "acciones": 326.2,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 890.7
     },
     {
      "fin": "2026-03-31",
@@ -44981,7 +45279,8 @@
      "acciones": 325,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 762.2
     },
     {
      "fin": "2026-06-30",
@@ -44993,7 +45292,8 @@
      "acciones": 324,
      "antesImp": null,
      "impuesto": null,
-     "neto": null
+     "neto": null,
+     "ebit": 824.1
     }
    ],
    "crudo": {
@@ -45376,7 +45676,8 @@
      "acciones": 526,
      "antesImp": 336,
      "impuesto": 91,
-     "neto": 246
+     "neto": 246,
+     "ebit": 561.5
     },
     {
      "fin": "2025-12-31",
@@ -45388,7 +45689,8 @@
      "acciones": 510.5,
      "antesImp": 175,
      "impuesto": 77,
-     "neto": 97
+     "neto": 97,
+     "ebit": 399
     },
     {
      "fin": "2026-03-31",
@@ -45400,7 +45702,8 @@
      "acciones": 526,
      "antesImp": 84,
      "impuesto": 21,
-     "neto": 65
+     "neto": 65,
+     "ebit": 289
     },
     {
      "fin": "2026-06-30",
@@ -45412,7 +45715,8 @@
      "acciones": 526,
      "antesImp": 128,
      "impuesto": 40,
-     "neto": 89
+     "neto": 89,
+     "ebit": 407
     }
    ],
    "crudo": {
@@ -45977,7 +46281,8 @@
      "acciones": 87.2,
      "antesImp": 117.9,
      "impuesto": 12.8,
-     "neto": 41
+     "neto": 41,
+     "ebit": 172
     },
     {
      "fin": "2025-12-31",
@@ -45989,7 +46294,8 @@
      "acciones": 29.7,
      "antesImp": -7.8,
      "impuesto": -6.7,
-     "neto": -2.4
+     "neto": -2.4,
+     "ebit": 57.4
     },
     {
      "fin": "2026-03-31",
@@ -46001,7 +46307,8 @@
      "acciones": 79.8,
      "antesImp": 282.1,
      "impuesto": 34,
-     "neto": 89.4
+     "neto": 89.4,
+     "ebit": 338.5
     },
     {
      "fin": "2026-06-30",
@@ -46013,7 +46320,8 @@
      "acciones": 75.8,
      "antesImp": 361.6,
      "impuesto": 53.2,
-     "neto": 101.6
+     "neto": 101.6,
+     "ebit": 429.8
     }
    ],
    "crudo": {
@@ -46670,7 +46978,8 @@
      "acciones": 240.4,
      "antesImp": 125.1,
      "impuesto": 13.6,
-     "neto": 111.5
+     "neto": 111.5,
+     "ebit": 158.1
     },
     {
      "fin": "2026-01-02",
@@ -46682,7 +46991,8 @@
      "acciones": 237.3,
      "antesImp": 184.6,
      "impuesto": 28,
-     "neto": 156.6
+     "neto": 156.6,
+     "ebit": 206.2
     },
     {
      "fin": "2026-04-03",
@@ -46694,7 +47004,8 @@
      "acciones": 236.9,
      "antesImp": 131.3,
      "impuesto": 32.4,
-     "neto": 98.9
+     "neto": 98.9,
+     "ebit": 144
     },
     {
      "fin": "2026-07-03",
@@ -46706,7 +47017,8 @@
      "acciones": 233,
      "antesImp": -444.8,
      "impuesto": 26.9,
-     "neto": -471.7
+     "neto": -471.7,
+     "ebit": 139.8
     }
    ],
    "crudo": {
@@ -47285,7 +47597,8 @@
      "acciones": 159.2,
      "antesImp": 32.7,
      "impuesto": -4.6,
-     "neto": 37.2
+     "neto": 37.2,
+     "ebit": 40.9
     },
     {
      "fin": "2025-12-31",
@@ -47297,7 +47610,8 @@
      "acciones": 158.1,
      "antesImp": -37.8,
      "impuesto": 8.1,
-     "neto": -45.9
+     "neto": -45.9,
+     "ebit": 56.8
     },
     {
      "fin": "2026-03-31",
@@ -47309,7 +47623,8 @@
      "acciones": 157.8,
      "antesImp": 102.2,
      "impuesto": 12.1,
-     "neto": 90.1
+     "neto": 90.1,
+     "ebit": 107.7
     },
     {
      "fin": "2026-06-30",
@@ -47321,7 +47636,8 @@
      "acciones": 159.7,
      "antesImp": 75.5,
      "impuesto": -991.7,
-     "neto": 1067.2
+     "neto": 1067.2,
+     "ebit": 84.5
     }
    ],
    "crudo": {
@@ -47947,7 +48263,8 @@
      "acciones": 328.3,
      "antesImp": 1325,
      "impuesto": 281,
-     "neto": 1044
+     "neto": 1044,
+     "ebit": 1385
     },
     {
      "fin": "2026-03-31",
@@ -47959,7 +48276,8 @@
      "acciones": 326.8,
      "antesImp": 870,
      "impuesto": 172,
-     "neto": 699
+     "neto": 699,
+     "ebit": 586.5
     },
     {
      "fin": "2026-06-30",
@@ -47971,7 +48289,8 @@
      "acciones": 326.6,
      "antesImp": 1026,
      "impuesto": 221,
-     "neto": 805
+     "neto": 805,
+     "ebit": 930
     },
     {
      "fin": "2026-09-30",
@@ -47983,7 +48302,8 @@
      "acciones": 327.4,
      "antesImp": 1311,
      "impuesto": 282,
-     "neto": 1029
+     "neto": 1029,
+     "ebit": 1227
     }
    ],
    "crudo": {
@@ -48686,7 +49006,8 @@
      "acciones": 2124.4,
      "antesImp": 2620,
      "impuesto": -4046,
-     "neto": 6626
+     "neto": 6626,
+     "ebit": 1113
     },
     {
      "fin": "2025-12-31",
@@ -48698,7 +49019,8 @@
      "acciones": 1850,
      "antesImp": 291,
      "impuesto": -40,
-     "neto": 296
+     "neto": 296,
+     "ebit": 1774
     },
     {
      "fin": "2026-03-31",
@@ -48710,7 +49032,8 @@
      "acciones": 2071.4,
      "antesImp": 496,
      "impuesto": 194,
-     "neto": 263
+     "neto": 263,
+     "ebit": 1923
     },
     {
      "fin": "2026-06-30",
@@ -48722,7 +49045,8 @@
      "acciones": 2050.2,
      "antesImp": 3277,
      "impuesto": 840,
-     "neto": 2394
+     "neto": 2394,
+     "ebit": 1890
     }
    ],
    "crudo": {
@@ -49377,7 +49701,8 @@
      "acciones": 168.9,
      "antesImp": 312.8,
      "impuesto": 76.6,
-     "neto": 236.2
+     "neto": 236.2,
+     "ebit": 240.9
     },
     {
      "fin": "2026-01-31",
@@ -49389,7 +49714,8 @@
      "acciones": 165,
      "antesImp": 317.5,
      "impuesto": 73.3,
-     "neto": 244.2
+     "neto": 244.2,
+     "ebit": 245.9
     },
     {
      "fin": "2026-04-30",
@@ -49401,7 +49727,8 @@
      "acciones": 166,
      "antesImp": 347.5,
      "impuesto": 86.6,
-     "neto": 260.9
+     "neto": 260.9,
+     "ebit": 273.1
     },
     {
      "fin": "2026-07-31",
@@ -49413,7 +49740,8 @@
      "acciones": 165.1,
      "antesImp": 349.5,
      "impuesto": 76.1,
-     "neto": 273.4
+     "neto": 273.4,
+     "ebit": 275
     }
    ],
    "crudo": {
@@ -50038,7 +50366,8 @@
      "acciones": 463.4,
      "antesImp": 44.4,
      "impuesto": -6.3,
-     "neto": null
+     "neto": null,
+     "ebit": 202.6
     },
     {
      "fin": "2025-12-31",
@@ -50050,7 +50379,8 @@
      "acciones": 438.8,
      "antesImp": 76.3,
      "impuesto": -1.1,
-     "neto": null
+     "neto": null,
+     "ebit": 220.3
     },
     {
      "fin": "2026-03-31",
@@ -50062,7 +50392,8 @@
      "acciones": 486.7,
      "antesImp": 35.4,
      "impuesto": -15.9,
-     "neto": null
+     "neto": null,
+     "ebit": 191.6
     },
     {
      "fin": "2026-06-30",
@@ -50074,7 +50405,8 @@
      "acciones": 497.7,
      "antesImp": 54.2,
      "impuesto": -25.6,
-     "neto": null
+     "neto": null,
+     "ebit": 223.1
     }
    ],
    "crudo": {
@@ -50337,7 +50669,8 @@
      "acciones": 59.6,
      "antesImp": 170.1,
      "impuesto": 21.2,
-     "neto": 148.9
+     "neto": 148.9,
+     "ebit": 192.1
     },
     {
      "fin": "2025-12-31",
@@ -50349,7 +50682,8 @@
      "acciones": 59.8,
      "antesImp": 264.2,
      "impuesto": 39,
-     "neto": 225.2
+     "neto": 225.2,
+     "ebit": 270.5
     },
     {
      "fin": "2026-04-04",
@@ -50361,7 +50695,8 @@
      "acciones": 82139,
      "antesImp": -88,
      "impuesto": -16,
-     "neto": -72
+     "neto": -72,
+     "ebit": -47
     },
     {
      "fin": "2026-07-04",
@@ -50373,7 +50708,8 @@
      "acciones": 98204,
      "antesImp": -141,
      "impuesto": -5,
-     "neto": -136
+     "neto": -136,
+     "ebit": -37
     }
    ],
    "crudo": {
@@ -51022,7 +51358,8 @@
      "acciones": 268.6,
      "antesImp": 338,
      "impuesto": 86,
-     "neto": 252
+     "neto": 252,
+     "ebit": 259
     },
     {
      "fin": "2026-01-31",
@@ -51034,7 +51371,8 @@
      "acciones": 258.9,
      "antesImp": 264,
      "impuesto": 119,
-     "neto": 145
+     "neto": 145,
+     "ebit": 174
     },
     {
      "fin": "2026-04-30",
@@ -51046,7 +51384,8 @@
      "acciones": 254.3,
      "antesImp": 355,
      "impuesto": 133,
-     "neto": 222
+     "neto": 222,
+     "ebit": 338
     },
     {
      "fin": "2026-07-31",
@@ -51058,7 +51397,8 @@
      "acciones": 246.3,
      "antesImp": 327,
      "impuesto": -305,
-     "neto": 632
+     "neto": 632,
+     "ebit": 313
     }
    ],
    "crudo": {
@@ -51685,7 +52025,8 @@
      "acciones": 381,
      "antesImp": 1962,
      "impuesto": 120,
-     "neto": 1842
+     "neto": 1842,
+     "ebit": 908
     },
     {
      "fin": "2026-04-03",
@@ -51697,7 +52038,8 @@
      "acciones": 387,
      "antesImp": 3359,
      "impuesto": 154,
-     "neto": 3205
+     "neto": 3205,
+     "ebit": 1190
     },
     {
      "fin": "2026-07-03",
@@ -51709,7 +52051,8 @@
      "acciones": 386.4,
      "antesImp": 3247,
      "impuesto": 52,
-     "neto": 3195
+     "neto": 3195,
+     "ebit": 1563
     },
     {
      "fin": "2026-10-02",
@@ -51721,7 +52064,8 @@
      "acciones": 384,
      "antesImp": 2038,
      "impuesto": 259,
-     "neto": 1779
+     "neto": 1779,
+     "ebit": 2046
     }
    ],
    "crudo": {
@@ -52350,7 +52694,8 @@
      "acciones": 621.7,
      "antesImp": 601.5,
      "impuesto": 139.9,
-     "neto": 461.5
+     "neto": 461.5,
+     "ebit": 409.4
     },
     {
      "fin": "2025-12-31",
@@ -52362,7 +52707,8 @@
      "acciones": 609.3,
      "antesImp": 202,
      "impuesto": 86.4,
-     "neto": 115.8
+     "neto": 115.8,
+     "ebit": 485.4
     },
     {
      "fin": "2026-03-31",
@@ -52374,7 +52720,8 @@
      "acciones": 597.6,
      "antesImp": -392.6,
      "impuesto": -84,
-     "neto": -308.7
+     "neto": -308.7,
+     "ebit": 323.3
     },
     {
      "fin": "2026-06-30",
@@ -52386,7 +52733,8 @@
      "acciones": 608.8,
      "antesImp": 301.5,
      "impuesto": 214.4,
-     "neto": 88.5
+     "neto": 88.5,
+     "ebit": 446.9
     }
    ],
    "crudo": {
@@ -53029,7 +53377,8 @@
      "acciones": 281,
      "antesImp": 541,
      "impuesto": 144,
-     "neto": 397
+     "neto": 397,
+     "ebit": 553
     },
     {
      "fin": "2025-12-31",
@@ -53041,7 +53390,8 @@
      "acciones": 280.1,
      "antesImp": 607,
      "impuesto": 72,
-     "neto": 535
+     "neto": 535,
+     "ebit": 619
     },
     {
      "fin": "2026-03-31",
@@ -53053,7 +53403,8 @@
      "acciones": 279,
      "antesImp": 516,
      "impuesto": 84,
-     "neto": 432
+     "neto": 432,
+     "ebit": 528
     },
     {
      "fin": "2026-06-30",
@@ -53065,7 +53416,8 @@
      "acciones": 277,
      "antesImp": 533,
      "impuesto": -320,
-     "neto": 853
+     "neto": 853,
+     "ebit": 545
     }
    ],
    "crudo": {
