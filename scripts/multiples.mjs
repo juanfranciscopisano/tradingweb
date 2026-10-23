@@ -11,7 +11,7 @@
 // (no la composición de cada fecha): hacia atrás hay sesgo de supervivencia.
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, cashDebt, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
 import { yahooSession } from "./fundamentals.mjs";
 
 const CSV_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv";
@@ -130,7 +130,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     const fl = shNow ? fillGaps(epsLike, extra) : { q: [], filled: [] };
     if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
     const shMap = new Map(weeks.map(w => [w, shNow]));
-    return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0,
+    return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null),
       lastQ: fl.q[fl.q.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
   }
   const normFull = normalizedQuarterly(raw, f, gaap, sym), norm = normFull.eps;
@@ -145,6 +145,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     crudo: Object.fromEntries(["oi", "pt", "ni"].map(k => [k, (raw[k] || []).filter(e => e.end >= "2024-06-30").sort((a, b) => a.end.localeCompare(b.end) || a.start.localeCompare(b.start))
       .map(e => [e.start, e.end, e.val, e.form, e.filed])])) };
   return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
+    cd: cashDebt(raw, normFull.rows),
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
 
@@ -383,6 +384,14 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     fill,
   }));
   log(`eps_ttm.json: ${Object.keys(ultimos).length} empresas`);
+  // 6) flujo de caja y deuda (12 meses y último balance) para P/FCF, EV/EBIT y deuda neta / EBITDA
+  const cdOut = {};
+  for (const c of list) { const d = cos[c.s]?.cd; if (d && ultimos[c.s]) cdOut[c.s] = [d.ocf, d.capex, d.sbc, d.da, d.ebit, d.debt, d.cash, d.nci, d.pref, d.fin, d.bal]; }
+  await writeFile(new URL("caja_deuda.json", root), JSON.stringify({ asOf: out.asOf,
+    nota: "Millones de US$, de la SEC. Flujos de 12 meses (últimos cuatro trimestres): flujo operativo, inversión en activo fijo (con software activado), compensación en acciones, amortizaciones, EBIT ajustado (sin extraordinarios). Último balance: deuda financiera, caja e inversiones de corto plazo, minoritarios y preferidos.",
+    campos: ["flujoOperativo", "inversion", "compensacionAcciones", "amortizaciones", "ebitAjustado", "deuda", "caja", "minoritarios", "preferidos", "finFlujos", "fechaBalance"],
+    data: cdOut }));
+  log(`caja_deuda.json: ${Object.keys(cdOut).length} empresas`);
   const diag = { splits: {}, fechas: {}, yahoo: yDiag, tasaReal: out.real10 ? (out.real10Fuente + ", al " + out.real10AsOf) : ("sin datos: " + realErr),
     sinUltimoDato: list.filter(c => !ultimos[c.s]).map(c => c.s + (cos[c.s] ? ` (último trimestre ${cos[c.s].lastQ ? iso(cos[c.s].lastQ) : "?"}${cos[c.s].fillRejected ? ", Yahoo no coincide" : ""}${yDiag[c.s] ? ", Yahoo: " + yDiag[c.s] : ""})` : " (sin datos)")) };
   for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
