@@ -66,9 +66,73 @@ export function parseTrend(j) {
   const pack = t => t ? TREND_LAGS.map(l => { const v = raw(t.epsTrend?.[l]); return v == null ? null : +v.toFixed(4); }) : null;
   const y0 = per("0y"), y1 = per("+1y");
   if (!y0 && !y1) return null;
+  // trimestre en curso y siguiente (cierre, EPS esperado) y los últimos EPS informados: para el EPS de 12 meses por trimestres
+  const qq = t => { if (!t || !t.endDate) return null; const v = raw(t.epsTrend?.current) ?? raw(t.earningsEstimate?.avg); return v == null ? null : [t.endDate, +v.toFixed(4)]; };
+  const hist = (j?.quoteSummary?.result?.[0]?.earningsHistory?.history || []).map(h => [h.quarter?.fmt || null, raw(h.epsActual)]).filter(h => h[0] && h[1] != null);
   const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1),
-    up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts) };
+    up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts),
+    q0: qq(per("0q")), q1: qq(per("+1q")), h: hist };
   return (e.t0?.[0] != null || e.t1?.[0] != null) ? e : null;
+}
+
+// EPS de consenso de los próximos 12 meses, por trimestres: cada trimestre del ejercicio en curso y del siguiente pesa
+// por la parte que cae entre hoy y dentro de un año. Los dos trimestres que estima Yahoo (en curso y siguiente) van
+// con su estimación; los demás se reparten parejo lo que queda del ejercicio (consenso del año − trimestres estimados −
+// trimestres ya informados). Así entra la estacionalidad de lo que se sabe y no se mezclan trimestres ya informados.
+// Lo que pasa del ejercicio siguiente (pocas semanas) va con el mismo trimestre un año antes por el crecimiento del año.
+// Si falta algo (sin trimestres, sin el informado de un trimestre pasado) o el resto repartido no se parece a los otros
+// trimestres, se ponderan los dos ejercicios por tiempo. La misma función está en index.html (ntmFrom).
+export function ntmFrom(r, now) {
+  if (!r) return null;
+  const DAYMS = 86400000, T = now, T1 = now + 365 * DAYMS, P = s => Date.parse(s + "T00:00:00Z");
+  const t0 = r.t0 || [], t1 = r.t1 || [];
+  const blend = () => {
+    const f0 = r.f0 ? P(r.f0) : null, w = f0 ? Math.min(1, Math.max(0, (f0 - T) / (365.25 * DAYMS))) : 0;
+    if (t0[0] != null && t1[0] != null) return { eps: w * t0[0] + (1 - w) * t1[0], metodo: "ejercicios" };
+    const v = t1[0] ?? t0[0]; return v == null ? null : { eps: v, metodo: "ejercicios" };
+  };
+  if (!r.f1 || t1[0] == null || !(r.q0 || r.q1)) return blend();
+  const endOfMonth = (t, m) => { const d = new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + m + 1, 0); };
+  const near = (a, b) => Math.abs(a - b) <= 20 * DAYMS;
+  const known = [r.q0, r.q1].filter(q => q && q[1] != null).map(q => ({ t: P(q[0]), v: q[1] }));
+  const hist = (r.h || []).map(h => ({ t: P(h[0]), v: h[1] }));
+  const years = [];
+  if (r.f0 && t0[0] != null) years.push({ f: P(r.f0), E: t0[0] });
+  years.push({ f: P(r.f1), E: t1[0] });
+  let sum = 0, covered = 0;
+  const all = [];
+  for (const y of years) {
+    const qs = [-9, -6, -3, 0].map(m => ({ end: endOfMonth(y.f, m), start: endOfMonth(y.f, m - 3) }));
+    let rest = y.E, missingPast = false; const unk = [];
+    for (const q of qs) {
+      const k = known.find(x => near(x.t, q.end));
+      if (k) { q.v = k.v; rest -= k.v; continue; }
+      if (q.end <= T) { const h = hist.find(x => near(x.t, q.end)); if (h) { q.v = h.v; rest -= h.v; } else missingPast = true; continue; }
+      unk.push(q);
+    }
+    // para repartir lo que queda del ejercicio hacen falta los trimestres ya informados; si falta uno, por ejercicios
+    if (unk.length && missingPast) return blend();
+    if (unk.length) {
+      // el resto del ejercicio repartido tiene que parecerse a los otros trimestres (entre 0,4 y 2,5 veces su promedio);
+      // si no, el EPS informado y el del consenso no están en la misma base (uno contable con un extraordinario) y se
+      // vuelve al promedio por ejercicios
+      const per = rest / unk.length, oth = qs.filter(q => q.v != null), m = oth.reduce((a, q) => a + q.v, 0) / (oth.length || 1);
+      if (oth.length && (!(m > 0) || per < 0.4 * m || per > 2.5 * m)) return blend();
+      for (const q of unk) q.v = per;
+    }
+    all.push(...qs);
+  }
+  // lo que cae después del ejercicio siguiente: el mismo trimestre un año antes, con el crecimiento del ejercicio
+  const last = years[years.length - 1], g = years.length === 2 && years[0].E > 0 && last.E > 0 ? last.E / years[0].E : 1;
+  if (T1 > last.f) for (const q of all.filter(q => q.end > last.f - 365 * DAYMS && q.end <= last.f + 10 * DAYMS))
+    if (q.v != null) all.push({ start: endOfMonth(q.start, 12), end: endOfMonth(q.end, 12), v: q.v * g });
+  for (const q of all) {
+    const a = Math.max(q.start, T), b = Math.min(q.end, T1);
+    if (b <= a || q.v == null) continue;
+    sum += q.v * (b - a) / (q.end - q.start); covered += b - a;
+  }
+  if (covered < 0.85 * (T1 - T)) return blend();
+  return { eps: sum * (T1 - T) / covered, metodo: "trimestres" };
 }
 // Estimaciones completas (base de datos propia de consenso): para el trimestre en curso y el siguiente (0q, +1q) y el
 // ejercicio en curso y el siguiente (0y, +1y), EPS y ventas esperados (promedio, mínimo, máximo, el del año anterior,
