@@ -29,7 +29,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add multiples.json eps_ttm.json spx.json multiples_diag.json caja_deuda.json
+          git add multiples.json eps_ttm.json spx.json multiples_diag.json caja_deuda.json calidad.json
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
           git commit -m "múltiplos: actualización diaria"
           git pull --rebase -q

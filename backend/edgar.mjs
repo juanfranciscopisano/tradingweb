@@ -112,6 +112,9 @@ export const CD_TAGS = [
   "SeniorNotes", "SeniorLongTermNotes", "UnsecuredDebt", "SecuredDebt", "NotesPayable", "DebtInstrumentCarryingAmount",
   "LongTermDebtFairValue", "ConvertibleDebtFairValueDisclosures", "DebtInstrumentFairValue",
   "MinorityInterest", "PreferredStockValue",
+  // calidad: capital invertido
+  "StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "AssetsCurrent", "LiabilitiesCurrent",
+  "PropertyPlantAndEquipmentNet", "Goodwill", "IntangibleAssetsNetExcludingGoodwill",
 ];
 const CAPEX_TAGS = ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements",
   "PaymentsToAcquireOtherProductiveAssets", "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToExploreAndDevelopOilAndGasProperties",
@@ -450,6 +453,44 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
 //   EBIT = el ajustado del normalizado (sin extraordinarios); EBITDA = EBIT + amortizaciones del flujo de caja.
 // Todo en millones de US$. Devuelve null si los flujos no llegan a cuatro trimestres seguidos o el último tiene más de
 // 290 días (cuando la SEC no cargó un 10-Q se usa el anterior y se marca como viejo).
+// saldos de balance a una fecha (cada partida, del mismo cierre; vale la última presentación) y deuda financiera
+function balanceHelpers(C, asOf) {
+  const TEN = 10 * DAY_MS;
+  const inst = t => (C[t] || []).filter(e => !e.start && e.end && isFinite(e.val) && Date.parse(e.end) <= asOf);
+  const balAt = (t, d) => { const v = inst(t).filter(e => Math.abs(Date.parse(e.end) - d) <= TEN).sort((a, b) => (a.filed || "").localeCompare(b.filed || "")).pop(); return v ? v.val : null; };
+  const firstAt = (ts, d) => { for (const t of ts) { const v = balAt(t, d); if (v != null) return v; } return null; };
+  const cashAt = d => (firstAt(["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"], d) || 0)
+    + (firstAt(["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"], d) || 0);
+  // deuda: cada empresa la informa con etiquetas distintas; se arman los totales posibles y se toma el mayor (lo común
+  // es que falte una parte, no que se cuente dos veces)
+  const debtAt = d => {
+    const b = t => balAt(t, d), f = ts => firstAt(ts, d);
+    const stb = f(["ShortTermBorrowings", "CommercialPaper", "OtherShortTermBorrowings"]) || 0;
+    const dc = b("DebtCurrent"), ltdc = f(["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"]);
+    const cur = dc != null ? dc : (ltdc || 0) + stb, stbOnly = dc != null ? Math.max(0, dc - (ltdc || 0)) : stb;
+    const cand = [], add = (base, plus) => { if (base != null) cand.push(base + plus); };
+    add(b("LongTermDebtNoncurrent"), cur);
+    add(b("LongTermDebtAndCapitalLeaseObligations"), cur);
+    add(b("LongTermDebt"), stbOnly);
+    add(b("LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"), stbOnly);
+    add(b("DebtLongtermAndShorttermCombinedAmount"), 0);
+    add(b("DebtInstrumentCarryingAmount"), stbOnly);
+    add(b("LongTermNotesPayable"), (b("NotesPayableCurrent") || 0) + stb);
+    add(f(["ConvertibleDebtNoncurrent", "ConvertibleNotesPayable"]), (f(["ConvertibleDebtCurrent", "ConvertibleNotesPayableCurrent"]) || 0) + stb);
+    add(f(["SeniorLongTermNotes", "SeniorNotes"]), stb);
+    if (b("UnsecuredDebt") != null || b("SecuredDebt") != null) cand.push((b("UnsecuredDebt") || 0) + (b("SecuredDebt") || 0) + stb);
+    add(b("NotesPayable"), stb);
+    if (!cand.length) add(b("OtherLongTermDebtNoncurrent"), cur);
+    if (!cand.length && (dc != null || stb)) cand.push(cur);
+    return cand.length ? Math.max(...cand) : null;
+  };
+  const currentDebtAt = d => { const dc = balAt("DebtCurrent", d); if (dc != null) return dc;
+    return (firstAt(["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"], d) || 0) + (firstAt(["ShortTermBorrowings", "CommercialPaper", "OtherShortTermBorrowings"], d) || 0); };
+  const lastBal = Math.max(...Object.keys(C).flatMap(t => inst(t).map(e => Date.parse(e.end))), 0);
+  const dates = () => [...new Set(Object.keys(C).flatMap(t => inst(t).map(e => Date.parse(e.end))))].sort((a, b) => b - a);
+  return { inst, balAt, firstAt, cashAt, debtAt, currentDebtAt, lastBal, dates };
+}
+
 export function cashDebt(raw, normRows, asOf = Date.now()) {
   const C = raw.cd || {}, one = () => 1, TEN = 10 * DAY_MS, YEAR = 365 * DAY_MS;
   const dur = e => (Date.parse(e.end) - Date.parse(e.start)) / DAY_MS;
@@ -497,36 +538,9 @@ export function cashDebt(raw, normRows, asOf = Date.now()) {
   let da = sameT(["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"]);
   if (da == null) { const d = sameT("Depreciation"), am = sameT("AmortizationOfIntangibleAssets"); da = d != null ? d + (am || 0) : null; }
   // balance: el último cierre informado; cada partida, del mismo cierre
-  const inst = t => (C[t] || []).filter(e => !e.start && e.end && isFinite(e.val) && Date.parse(e.end) <= asOf);
-  const lastBal = Math.max(...Object.keys(C).flatMap(t => inst(t).map(e => Date.parse(e.end))), 0);
-  const balAt = (t, d) => { const v = inst(t).filter(e => Math.abs(Date.parse(e.end) - d) <= TEN).sort((a, b) => (a.filed || "").localeCompare(b.filed || "")).pop(); return v ? v.val : null; };
-  const firstAt = (ts, d) => { for (const t of ts) { const v = balAt(t, d); if (v != null) return v; } return null; };
+  const { inst, balAt, firstAt, cashAt, debtAt, lastBal } = balanceHelpers(C, asOf);
   const bal = t => balAt(t, lastBal), firstBal = ts => firstAt(ts, lastBal);
-  const cash = (firstBal(["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"]) || 0)
-    + (firstBal(["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"]) || 0);
-  // deuda: cada empresa la informa con etiquetas distintas; se arman los totales posibles y se toma el mayor (lo común
-  // es que falte una parte, no que se cuente dos veces)
-  const debtAt = d => {
-    const b = t => balAt(t, d), f = ts => firstAt(ts, d);
-    const stb = f(["ShortTermBorrowings", "CommercialPaper", "OtherShortTermBorrowings"]) || 0;
-    const dc = b("DebtCurrent"), ltdc = f(["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"]);
-    const cur = dc != null ? dc : (ltdc || 0) + stb, stbOnly = dc != null ? Math.max(0, dc - (ltdc || 0)) : stb;
-    const cand = [], add = (base, plus) => { if (base != null) cand.push(base + plus); };
-    add(b("LongTermDebtNoncurrent"), cur);
-    add(b("LongTermDebtAndCapitalLeaseObligations"), cur);
-    add(b("LongTermDebt"), stbOnly);
-    add(b("LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"), stbOnly);
-    add(b("DebtLongtermAndShorttermCombinedAmount"), 0);
-    add(b("DebtInstrumentCarryingAmount"), stbOnly);
-    add(b("LongTermNotesPayable"), (b("NotesPayableCurrent") || 0) + stb);
-    add(f(["ConvertibleDebtNoncurrent", "ConvertibleNotesPayable"]), (f(["ConvertibleDebtCurrent", "ConvertibleNotesPayableCurrent"]) || 0) + stb);
-    add(f(["SeniorLongTermNotes", "SeniorNotes"]), stb);
-    if (b("UnsecuredDebt") != null || b("SecuredDebt") != null) cand.push((b("UnsecuredDebt") || 0) + (b("SecuredDebt") || 0) + stb);
-    add(b("NotesPayable"), stb);
-    if (!cand.length) add(b("OtherLongTermDebtNoncurrent"), cur);
-    if (!cand.length && (dc != null || stb)) cand.push(cur);
-    return cand.length ? Math.max(...cand) : null;
-  };
+  const cash = cashAt(lastBal);
   let debt = debtAt(lastBal), debtDate = lastBal, debtFV = false;
   if (debt == null) {
     // sin deuda en el último cierre: la del cierre anterior más cercano (hasta 200 días); si la empresa dejó de informar
@@ -553,6 +567,66 @@ export function cashDebt(raw, normRows, asOf = Date.now()) {
   return { ocf: M(ocf.v), capex: capex != null ? M(capex + sw) : null, sbc: M(sbc), da: M(da), ebit: ebitOk ? +lastR.reduce((a, r) => a + r.ebit, 0).toFixed(1) : null,
     debt: M(debt), cash: M(cash), nci: M(nci), pref: M(pref), fin: D(ocf.t), bal: D(lastBal),
     ...(debtDate && debtDate !== lastBal ? { debtFecha: D(debtDate) } : {}), ...(debtFV ? { deudaValorRazonable: true } : {}), ...(capexNote ? { capexNota: capexNote } : {}) };
+}
+
+// ---- Calidad del negocio ----
+// Ventas de 12 meses (hoy, hace 1 y 3 años), EBIT ajustado del normalizado, NOPAT (EBIT × (1 − tasa típica)), capital
+// invertido y acciones diluidas, hoy y hace un año. Capital invertido operativo: capital de trabajo sin caja ni deuda +
+// activo fijo neto + llave de negocio + intangibles (no depende de cuánto recompró la empresa, que deja el patrimonio en
+// negativo en MCD o HD); si el balance no separa corriente y no corriente, deuda + patrimonio − caja. Promedio de
+// principio y fin del año. Millones de US$ y de acciones.
+function quarterSeries(arr) {
+  const one = () => 1, TEN = 10 * DAY_MS;
+  const q = quartersOf(arr || [], one);
+  const fy = (arr || []).filter(e => e.start && e.end && isFinite(e.val)).sort((a, b) => (isK(b.form) - isK(a.form)) || (b.filed || "").localeCompare(a.filed || ""));
+  for (const e of fy) {
+    const s0 = Date.parse(e.start), t = Date.parse(e.end), d = (t - s0) / DAY_MS;
+    if (d < 350 || d > 380 || q.some(x => Math.abs(x.t - t) <= TEN)) continue;
+    const inside = q.filter(x => x.t > s0 && x.t < t - TEN);
+    if (inside.length === 3) q.push({ t, end: e.end, eps: e.val - inside.reduce((a, x) => a + x.eps, 0), derived: true });
+  }
+  return q.sort((a, b) => a.t - b.t);
+}
+// suma de los cuatro trimestres que terminan en t (±20 días), si son seguidos
+function ttmAt(series, t) {
+  const i = series.findIndex(x => Math.abs(x.t - t) <= 20 * DAY_MS);
+  if (i < 3) return null;
+  const l = series.slice(i - 3, i + 1);
+  return l[3].t - l[0].t <= 300 * DAY_MS ? l.reduce((a, x) => a + x.eps, 0) : null;
+}
+export function quality(raw, normRows, asOf = Date.now()) {
+  const YEAR = 365 * DAY_MS, M = v => v == null || !isFinite(v) ? null : Math.round(v / 1e5) / 10;
+  const REV = quarterSeries(raw.rev).filter(x => x.t <= asOf);
+  if (REV.length < 4) return null;
+  const t0 = REV[REV.length - 1].t;
+  if (asOf - t0 > 290 * DAY_MS) return null;
+  const rev0 = ttmAt(REV, t0), rev1 = ttmAt(REV, t0 - YEAR), rev3 = ttmAt(REV, t0 - 3 * YEAR);
+  if (!(rev0 > 0)) return null;
+  const rows = (normRows || []).filter(r => r.ebit != null).map(r => ({ t: Date.parse(r.fin + "T00:00:00Z"), eps: r.ebit, tasa: r.tasa, sh: r.acciones }));
+  const near = (t, k) => { const r = rows.find(x => Math.abs(x.t - t) <= 20 * DAY_MS); return r ? r[k] : null; };
+  const ebit0 = ttmAt(rows, t0), ebit1 = ttmAt(rows, t0 - YEAR);
+  const tax0 = near(t0, "tasa"), tax1 = near(t0 - YEAR, "tasa");
+  const nopat0 = ebit0 != null && tax0 != null ? ebit0 * (1 - tax0) : null, nopat1 = ebit1 != null && tax1 != null ? ebit1 * (1 - tax1) : null;
+  // capital invertido a una fecha: el cierre más cercano (hasta 100 días)
+  const C = raw.cd || {}, H = balanceHelpers(C, asOf), all = H.dates();
+  const icAt = t => {
+    const d = all.find(x => Math.abs(x - t) <= 100 * DAY_MS); if (d == null) return null;
+    const ac = H.balAt("AssetsCurrent", d), lc = H.balAt("LiabilitiesCurrent", d), ppe = H.balAt("PropertyPlantAndEquipmentNet", d);
+    if (ac != null && lc != null && ppe != null) {
+      const v = ac - H.cashAt(d) - (lc - H.currentDebtAt(d)) + ppe + (H.balAt("Goodwill", d) || 0) + (H.balAt("IntangibleAssetsNetExcludingGoodwill", d) || 0);
+      return v > 0 ? v : null;
+    }
+    const eq = H.balAt("StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", d) ?? (H.balAt("StockholdersEquity", d) != null ? H.balAt("StockholdersEquity", d) + (H.balAt("MinorityInterest", d) || 0) : null);
+    const debt = H.debtAt(d);
+    if (eq == null || debt == null) return null;
+    const v = eq + debt - H.cashAt(d);
+    return v > 0 ? v : null;
+  };
+  const avg = (a, b) => a != null && b != null ? (a + b) / 2 : (a ?? b);
+  const ic0 = avg(icAt(t0), icAt(t0 - YEAR)), ic1 = avg(icAt(t0 - YEAR), icAt(t0 - 2 * YEAR));
+  return { rev0: M(rev0), rev1: M(rev1), rev3: M(rev3), ebit0: ebit0 != null ? +ebit0.toFixed(1) : null, ebit1: ebit1 != null ? +ebit1.toFixed(1) : null,
+    nopat0: nopat0 != null ? +nopat0.toFixed(1) : null, nopat1: nopat1 != null ? +nopat1.toFixed(1) : null, ic0: M(ic0), ic1: M(ic1),
+    sh0: near(t0, "sh"), sh1: near(t0 - YEAR, "sh"), fin: new Date(t0).toISOString().slice(0, 10) };
 }
 
 // acciones diluidas por trimestre, ajustadas por splits (para ponderar en los agregados de índice y sector):

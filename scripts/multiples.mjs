@@ -11,7 +11,7 @@
 // (no la composición de cada fecha): hacia atrás hay sesgo de supervivencia.
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, cashDebt, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, cashDebt, quality, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
 import { yahooSession } from "./fundamentals.mjs";
 
 const CSV_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv";
@@ -130,7 +130,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     const fl = shNow ? fillGaps(epsLike, extra) : { q: [], filled: [] };
     if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
     const shMap = new Map(weeks.map(w => [w, shNow]));
-    return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null),
+    return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null), q: quality(raw, null),
       lastQ: fl.q[fl.q.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
   }
   const normFull = normalizedQuarterly(raw, f, gaap, sym), norm = normFull.eps;
@@ -145,7 +145,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     crudo: Object.fromEntries(["oi", "pt", "ni"].map(k => [k, (raw[k] || []).filter(e => e.end >= "2024-06-30").sort((a, b) => a.end.localeCompare(b.end) || a.start.localeCompare(b.start))
       .map(e => [e.start, e.end, e.val, e.form, e.filed])])) };
   return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
-    cd: cashDebt(raw, normFull.rows), cdTags: Object.fromEntries(Object.entries(raw.cd || {}).map(([t, a]) => [t, a.reduce((m, e) => e.end > m ? e.end : m, "")])),
+    cd: cashDebt(raw, normFull.rows), q: quality(raw, normFull.rows), cdTags: Object.fromEntries(Object.entries(raw.cd || {}).map(([t, a]) => [t, a.reduce((m, e) => e.end > m ? e.end : m, "")])),
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
 
@@ -409,6 +409,14 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     campos: ["flujoOperativo", "inversion", "compensacionAcciones", "amortizaciones", "ebitAjustado", "deuda", "caja", "minoritarios", "preferidos", "finFlujos", "fechaBalance", "notas"],
     data: cdOut }));
   log(`caja_deuda.json: ${Object.keys(cdOut).length} empresas`);
+  // 7) calidad: ventas, EBIT ajustado, NOPAT, capital invertido y acciones, hoy y hace un año
+  const qOut = {};
+  for (const c of list) { const q = cos[c.s]?.q; if (q && ultimos[c.s]) qOut[c.s] = [q.rev0, q.rev1, q.rev3, q.ebit0, q.ebit1, q.nopat0, q.nopat1, q.ic0, q.ic1, q.sh0, q.sh1, q.fin]; }
+  await writeFile(new URL("calidad.json", root), JSON.stringify({ asOf: out.asOf,
+    nota: "Millones de US$ (acciones en millones), de la SEC. Ventas de 12 meses hoy, hace 1 y 3 años; EBIT ajustado (sin extraordinarios) y NOPAT (EBIT × (1 − tasa típica)) hoy y hace un año; capital invertido promedio del año (capital de trabajo sin caja ni deuda + activo fijo + llave + intangibles); acciones diluidas hoy y hace un año.",
+    campos: ["ventas", "ventas1A", "ventas3A", "ebit", "ebit1A", "nopat", "nopat1A", "capitalInvertido", "capitalInvertido1A", "acciones", "acciones1A", "fin"],
+    data: qOut }));
+  log(`calidad.json: ${Object.keys(qOut).length} empresas`);
   // qué falta y por qué (para revisar etiquetas): las no financieras sin flujos o sin inversión o deuda
   cajaDeudaDiag = {};
   for (const c of list) {
