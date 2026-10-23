@@ -440,6 +440,23 @@ async function treasuryYear(year) {
     } finally { clearTimeout(t); }
   }, rows => rows.length > 0).catch(() => []);
 }
+// prueba de la fuente intradiaria de CNBC para 1 y 2 años: devuelve el comienzo de cada respuesta (URLs fijas)
+app.get("/debug-ust-live", async (req, res) => {
+  const urls = {
+    quote: "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=US1Y%7CUS2Y&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1",
+    chart: "https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=US2Y",
+  };
+  const out = {};
+  await Promise.all(Object.entries(urls).map(async ([k, u]) => {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 9000);
+    try {
+      const r = await fetch(u, { headers: { "User-Agent": UA, "Accept": "application/json" }, signal: ctrl.signal });
+      out[k] = { status: r.status, body: (await r.text()).slice(0, 1800) };
+    } catch (e) { out[k] = { error: e.message }; } finally { clearTimeout(t); }
+  }));
+  res.json(out);
+});
+
 app.get("/api/ust", async (req, res) => {
   try {
     const payload = await cached("ust", 5 * 60 * 1000, async () => {
