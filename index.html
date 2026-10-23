@@ -1553,8 +1553,8 @@ function loadCD() {
     .catch(() => { CD = {}; cdPromise = null; return CD; });
   return cdPromise;
 }
-const CD_KEYS = ['ocf', 'capex', 'sbc', 'da', 'ebit', 'debt', 'cash', 'nci', 'pref', 'fin', 'bal'];
-function cdData(sym, own) { if (own) return own; const a = CD && CD[sym]; return a ? Object.fromEntries(CD_KEYS.map((k, i) => [k, a[i]])) : null; }
+const CD_KEYS = ['ocf', 'capex', 'sbc', 'da', 'ebit', 'debt', 'cash', 'nci', 'pref', 'fin', 'bal', 'notas'];
+function cdData(sym, own) { if (own) return own.notas !== undefined ? own : { ...own, notas: [own.debtFecha ? 'deuda al ' + own.debtFecha.split('-').reverse().join('/') : null, own.capexNota ? 'inversión chica, la empresa ya no la informa aparte' : null].filter(Boolean).join('; ') || null }; const a = CD && CD[sym]; return a ? Object.fromEntries(CD_KEYS.map((k, i) => [k, a[i]])) : null; }
 const isFinancial = sym => !!(SPX_INFO[sym] && SPX_INFO[sym].gics === 'Financials');
 // mcap en millones: precio × acciones (las diluidas de la SEC; si no, capitalización / precio de fundamentals)
 function cdMetrics(sym, price, own) {
@@ -1780,7 +1780,7 @@ const REV_COLS = [
 function scrCols() { const i = COLS.findIndex(c => c.k === 'fwdPE') + 1; return [...COLS.slice(0, i), ...(scrRev ? REV_COLS : []), ...(cdOn ? CD_COLS : []), ...COLS.slice(i)]; }
 // campos de caja y deuda de una fila (null si no hay dato; cdFin si es financiera)
 function cdRow(sym, px) { const m = cdMetrics(sym, px); if (!m) return { pfcf: null, pfcfS: null, capexOcf: null, evEbit: null, ndE: null }; if (m.fin) return { cdFin: true, pfcf: null, pfcfS: null, capexOcf: null, evEbit: null, ndE: null };
-  return { pfcf: m.pfcf, pfcfS: m.pfcfS, capexOcf: m.capexOcf, evEbit: m.evEbit, ndE: m.ndE, cdStale: m.stale, cdTip: (m.stale ? 'Flujos viejos: la SEC no tiene el último 10-Q. ' : '') + 'Flujos de 12 meses al ' + m.d.fin.split('-').reverse().join('/') + ', balance al ' + (m.d.bal || '').split('-').reverse().join('/') + ' (US$ M): flujo operativo ' + Math.round(m.d.ocf) + (m.d.capex != null ? ', inversión ' + Math.round(m.d.capex) + ', FCF ' + Math.round(m.fcf) : ', sin la inversión en la SEC') + (m.d.sbc != null ? ', compensación en acciones ' + Math.round(m.d.sbc) : '') + (m.d.ebit != null ? ', EBIT ajustado ' + Math.round(m.d.ebit) : '') + (m.d.debt != null ? ', deuda ' + Math.round(m.d.debt) : '') + ', caja ' + Math.round(m.d.cash || 0) + (m.ev != null ? ', EV ' + Math.round(m.ev) : '') }; }
+  return { pfcf: m.pfcf, pfcfS: m.pfcfS, capexOcf: m.capexOcf, evEbit: m.evEbit, ndE: m.ndE, cdStale: m.stale, cdTip: (m.stale ? 'Flujos viejos: la SEC no tiene el último 10-Q. ' : '') + 'Flujos de 12 meses al ' + m.d.fin.split('-').reverse().join('/') + ', balance al ' + (m.d.bal || '').split('-').reverse().join('/') + ' (US$ M): flujo operativo ' + Math.round(m.d.ocf) + (m.d.capex != null ? ', inversión ' + Math.round(m.d.capex) + ', FCF ' + Math.round(m.fcf) : ', sin la inversión en la SEC') + (m.d.sbc != null ? ', compensación en acciones ' + Math.round(m.d.sbc) : '') + (m.d.ebit != null ? ', EBIT ajustado ' + Math.round(m.d.ebit) : '') + (m.d.debt != null ? ', deuda ' + Math.round(m.d.debt) : '') + ', caja ' + Math.round(m.d.cash || 0) + (m.ev != null ? ', EV ' + Math.round(m.ev) : '') + (m.d.notas ? '. Ojo: ' + m.d.notas : '') }; }
 function toggleScrRev() {
   scrRev = !scrRev;
   try { localStorage.setItem('scrRev', scrRev ? '1' : '0'); } catch (e) {}

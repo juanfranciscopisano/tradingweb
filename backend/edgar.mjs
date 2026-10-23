@@ -106,8 +106,20 @@ export const CD_TAGS = [
   "LongTermDebtAndCapitalLeaseObligationsCurrent", "ShortTermBorrowings", "CommercialPaper", "OtherShortTermBorrowings",
   "LongTermNotesPayable", "NotesPayableCurrent", "OtherLongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
   "DebtLongtermAndShorttermCombinedAmount", "PaymentsToAcquireOtherProductiveAssets",
+  "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToExploreAndDevelopOilAndGasProperties", "PaymentsToAcquireOilAndGasProperty",
+  "PaymentsToAcquireMiningAssets", "PaymentsForConstructionInProcess", "PaymentsToAcquireSoftware", "PaymentsForSoftware",
+  "ConvertibleNotesPayable", "ConvertibleDebtNoncurrent", "ConvertibleNotesPayableCurrent", "ConvertibleDebtCurrent",
+  "SeniorNotes", "SeniorLongTermNotes", "UnsecuredDebt", "SecuredDebt", "NotesPayable", "DebtInstrumentCarryingAmount",
   "MinorityInterest", "PreferredStockValue",
 ];
+const CAPEX_TAGS = ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements",
+  "PaymentsToAcquireOtherProductiveAssets", "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToExploreAndDevelopOilAndGasProperties",
+  "PaymentsToAcquireOilAndGasProperty", "PaymentsToAcquireMiningAssets", "PaymentsForConstructionInProcess"];
+const SOFT_TAGS = ["PaymentsToDevelopSoftware", "PaymentsToAcquireSoftware", "PaymentsForSoftware"];
+const DEBT_TAGS = ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebt", "DebtCurrent", "LongTermDebtCurrent",
+  "LongTermDebtAndCapitalLeaseObligationsCurrent", "ShortTermBorrowings", "CommercialPaper", "LongTermNotesPayable", "NotesPayableCurrent",
+  "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities", "DebtLongtermAndShorttermCombinedAmount", "ConvertibleNotesPayable",
+  "ConvertibleDebtNoncurrent", "SeniorNotes", "SeniorLongTermNotes", "UnsecuredDebt", "SecuredDebt", "NotesPayable", "DebtInstrumentCarryingAmount"];
 // combinan las etiquetas en el orden de EDGAR_TAGS.eps: un trimestre de una etiqueta posterior solo entra si no hay
 // otro que cierre esa misma fecha (±10 días).
 const DAY_MS = 86400000;
@@ -438,57 +450,99 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
 // Todo en millones de US$. Devuelve null si los flujos no llegan a cuatro trimestres seguidos o el último tiene más de
 // 290 días (cuando la SEC no cargó un 10-Q se usa el anterior y se marca como viejo).
 export function cashDebt(raw, normRows, asOf = Date.now()) {
-  const C = raw.cd || {}, one = () => 1, TEN = 10 * DAY_MS;
-  const q = t => quartersOf(C[t] || [], one).sort((a, b) => a.t - b.t);
+  const C = raw.cd || {}, one = () => 1, TEN = 10 * DAY_MS, YEAR = 365 * DAY_MS;
+  const dur = e => (Date.parse(e.end) - Date.parse(e.start)) / DAY_MS;
+  // 12 meses como en research: último anual + acumulado del año − el mismo acumulado del año anterior. El acumulado
+  // anterior se toma en la versión del mismo 10-Q (misma base). Si no cierra, la suma de los últimos cuatro trimestres.
+  const ttmYTD = t => {
+    const per = new Map();
+    for (const e of (C[t] || [])) {
+      if (!e.start || !e.end || !isFinite(e.val) || Date.parse(e.end) > asOf) continue;
+      const k = e.start + "|" + e.end, o = per.get(k);
+      if (!o) per.set(k, { best: e, vers: [e] }); else { o.vers.push(e); if (betterFact(e, o.best, dur(e) > 300)) o.best = e; }
+    }
+    const ps = [...per.values()].filter(p => dur(p.best) >= 80 && dur(p.best) <= 380);
+    if (!ps.length) return null;
+    const E = Math.max(...ps.map(p => Date.parse(p.best.end)));
+    const L = ps.filter(p => Math.abs(Date.parse(p.best.end) - E) <= TEN).sort((x, y) => dur(y.best) - dur(x.best))[0].best;
+    if (dur(L) >= 350) return { v: L.val, t: E };
+    const asOfV = (p, filed) => { const ok = p.vers.filter(v => (v.filed || "") <= (filed || "")).sort((x, y) => (x.filed || "").localeCompare(y.filed || "")); return (ok.length ? ok[ok.length - 1] : p.best).val; };
+    const P = ps.find(p => Math.abs(dur(p.best) - dur(L)) <= 15 && Math.abs(Date.parse(p.best.end) - (E - YEAR)) <= 15 * DAY_MS);
+    const F = ps.find(p => dur(p.best) >= 350 && Math.abs(Date.parse(p.best.end) - (Date.parse(L.start) - DAY_MS)) <= TEN);
+    return P && F ? { v: asOfV(F, L.filed) + L.val - asOfV(P, L.filed), t: E } : null;
+  };
+  const ttmQ = t => {
+    const s = quartersOf(C[t] || [], one).sort((a, b) => a.t - b.t).filter(x => x.t <= asOf); if (s.length < 4) return null;
+    const l = s.slice(-4);
+    return l[3].t - l[0].t > 300 * DAY_MS ? null : { v: l.reduce((a, x) => a + x.eps, 0), t: l[3].t };
+  };
   const ttm = tags => {
     for (const t of [].concat(tags)) {
-      const s = q(t); if (s.length < 4) continue;
-      const l = s.slice(-4);
-      if (l[3].t - l[0].t > 300 * DAY_MS || asOf - l[3].t > 290 * DAY_MS) continue;
-      return { v: l.reduce((a, x) => a + x.eps, 0), t: l[3].t, tag: t };
+      const r = ttmYTD(t) || ttmQ(t);
+      if (r && asOf - r.t <= 290 * DAY_MS) return { ...r, tag: t };
     }
     return null;
   };
   const ocf = ttm(["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"]);
   if (!ocf) return null;
-  const same = x => x && Math.abs(x.t - ocf.t) <= TEN ? x.v : null;
-  // sin la inversión no hay FCF (no se supone cero)
-  const capex = same(ttm(["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements", "PaymentsToAcquireOtherProductiveAssets"]));
-  const sw = same(ttm("PaymentsToDevelopSoftware")) ?? 0;
-  const sbc = same(ttm(["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"]));
-  let da = same(ttm(["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"]));
-  if (da == null) { const d = same(ttm("Depreciation")), am = same(ttm("AmortizationOfIntangibleAssets")); da = d != null ? d + (am || 0) : null; }
+  const sameT = tags => { for (const t of [].concat(tags)) { const r = ttm(t); if (r && Math.abs(r.t - ocf.t) <= TEN) return r.v; } return null; };
+  const lastEnd = tags => Math.max(0, ...[].concat(tags).flatMap(t => (C[t] || []).map(e => Date.parse(e.end))));
+  // inversión en activo fijo (+ software activado). Si la empresa dejó de informarla hace más de un año mientras sigue
+  // informando el flujo operativo, es que pasó a ser chica y la suma en "otras": cero. Si nunca la informó: sin dato.
+  let capex = sameT(CAPEX_TAGS), capexNote = null;
+  if (capex == null && lastEnd(CAPEX_TAGS) && ocf.t - lastEnd(CAPEX_TAGS) > YEAR) { capex = 0; capexNote = "inmaterial"; }
+  const sw = sameT(SOFT_TAGS) ?? 0;
+  const sbc = sameT(["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"]);
+  let da = sameT(["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"]);
+  if (da == null) { const d = sameT("Depreciation"), am = sameT("AmortizationOfIntangibleAssets"); da = d != null ? d + (am || 0) : null; }
   // balance: el último cierre informado; cada partida, del mismo cierre
-  const inst = t => (C[t] || []).filter(e => !e.start && e.end && isFinite(e.val));
-  const lastBal = Math.max(...Object.keys(C).flatMap(t => inst(t).map(e => Date.parse(e.end))).filter(t => t <= asOf), 0);
-  const bal = t => { const v = inst(t).filter(e => Math.abs(Date.parse(e.end) - lastBal) <= TEN).sort((a, b) => (a.filed || "").localeCompare(b.filed || "")).pop(); return v ? v.val : null; };
-  const firstBal = ts => { for (const t of ts) { const v = bal(t); if (v != null) return v; } return null; };
+  const inst = t => (C[t] || []).filter(e => !e.start && e.end && isFinite(e.val) && Date.parse(e.end) <= asOf);
+  const lastBal = Math.max(...Object.keys(C).flatMap(t => inst(t).map(e => Date.parse(e.end))), 0);
+  const balAt = (t, d) => { const v = inst(t).filter(e => Math.abs(Date.parse(e.end) - d) <= TEN).sort((a, b) => (a.filed || "").localeCompare(b.filed || "")).pop(); return v ? v.val : null; };
+  const firstAt = (ts, d) => { for (const t of ts) { const v = balAt(t, d); if (v != null) return v; } return null; };
+  const bal = t => balAt(t, lastBal), firstBal = ts => firstAt(ts, lastBal);
   const cash = (firstBal(["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"]) || 0)
     + (firstBal(["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"]) || 0);
   // deuda: cada empresa la informa con etiquetas distintas; se arman los totales posibles y se toma el mayor (lo común
   // es que falte una parte, no que se cuente dos veces)
-  const stb = firstBal(["ShortTermBorrowings", "CommercialPaper", "OtherShortTermBorrowings"]) || 0;
-  const dc = bal("DebtCurrent"), ltdc = firstBal(["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"]);
-  const cur = dc != null ? dc : (ltdc || 0) + stb, stbOnly = dc != null ? Math.max(0, dc - (ltdc || 0)) : stb;
-  const cand = [];
-  const add = (base, plus) => { if (base != null) cand.push(base + plus); };
-  add(bal("LongTermDebtNoncurrent"), cur);
-  add(bal("LongTermDebtAndCapitalLeaseObligations"), cur);
-  add(bal("LongTermDebt"), stbOnly);
-  add(bal("LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"), stbOnly);
-  add(bal("DebtLongtermAndShorttermCombinedAmount"), 0);
-  add(bal("LongTermNotesPayable"), (bal("NotesPayableCurrent") || 0) + stb);
-  if (!cand.length) add(bal("OtherLongTermDebtNoncurrent"), cur);
-  if (!cand.length && (dc != null || stb)) cand.push(cur);
-  const debt = cand.length ? Math.max(...cand) : null;
+  const debtAt = d => {
+    const b = t => balAt(t, d), f = ts => firstAt(ts, d);
+    const stb = f(["ShortTermBorrowings", "CommercialPaper", "OtherShortTermBorrowings"]) || 0;
+    const dc = b("DebtCurrent"), ltdc = f(["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"]);
+    const cur = dc != null ? dc : (ltdc || 0) + stb, stbOnly = dc != null ? Math.max(0, dc - (ltdc || 0)) : stb;
+    const cand = [], add = (base, plus) => { if (base != null) cand.push(base + plus); };
+    add(b("LongTermDebtNoncurrent"), cur);
+    add(b("LongTermDebtAndCapitalLeaseObligations"), cur);
+    add(b("LongTermDebt"), stbOnly);
+    add(b("LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"), stbOnly);
+    add(b("DebtLongtermAndShorttermCombinedAmount"), 0);
+    add(b("DebtInstrumentCarryingAmount"), stbOnly);
+    add(b("LongTermNotesPayable"), (b("NotesPayableCurrent") || 0) + stb);
+    add(f(["ConvertibleDebtNoncurrent", "ConvertibleNotesPayable"]), (f(["ConvertibleDebtCurrent", "ConvertibleNotesPayableCurrent"]) || 0) + stb);
+    add(f(["SeniorLongTermNotes", "SeniorNotes"]), stb);
+    if (b("UnsecuredDebt") != null || b("SecuredDebt") != null) cand.push((b("UnsecuredDebt") || 0) + (b("SecuredDebt") || 0) + stb);
+    add(b("NotesPayable"), stb);
+    if (!cand.length) add(b("OtherLongTermDebtNoncurrent"), cur);
+    if (!cand.length && (dc != null || stb)) cand.push(cur);
+    return cand.length ? Math.max(...cand) : null;
+  };
+  let debt = debtAt(lastBal), debtDate = lastBal;
+  if (debt == null) {
+    // sin deuda en el último cierre: la del cierre anterior más cercano (hasta 200 días); si la empresa dejó de informar
+    // deuda hace más de dos años, no tiene
+    const dates = [...new Set(DEBT_TAGS.flatMap(t => inst(t).map(e => Date.parse(e.end))))].sort((a, b) => b - a);
+    const d = dates.find(x => lastBal - x <= 200 * DAY_MS && debtAt(x) != null);
+    if (d != null) { debt = debtAt(d); debtDate = d; }
+    else if (dates.length && lastBal - dates[0] > 2 * YEAR) { debt = 0; debtDate = null; }
+  }
   const nci = bal("MinorityInterest") || 0, pref = bal("PreferredStockValue") || 0;
   // EBIT ajustado de 12 meses, de los mismos trimestres del normalizado
   const rs = (normRows || []).filter(r => r.ebit != null);
   const lastR = rs.slice(-4), ebitOk = lastR.length === 4 && Math.abs(Date.parse(lastR[3].fin) - ocf.t) <= 100 * DAY_MS;
-  const M = v => v == null ? null : Math.round(v / 1e5) / 10;
+  const M = v => v == null ? null : Math.round(v / 1e5) / 10, D = t => t ? new Date(t).toISOString().slice(0, 10) : null;
   return { ocf: M(ocf.v), capex: capex != null ? M(capex + sw) : null, sbc: M(sbc), da: M(da), ebit: ebitOk ? +lastR.reduce((a, r) => a + r.ebit, 0).toFixed(1) : null,
-    debt: M(debt), cash: M(cash), nci: M(nci), pref: M(pref),
-    fin: new Date(ocf.t).toISOString().slice(0, 10), bal: lastBal ? new Date(lastBal).toISOString().slice(0, 10) : null };
+    debt: M(debt), cash: M(cash), nci: M(nci), pref: M(pref), fin: D(ocf.t), bal: D(lastBal),
+    ...(debtDate && debtDate !== lastBal ? { debtFecha: D(debtDate) } : {}), ...(capexNote ? { capexNota: capexNote } : {}) };
 }
 
 // acciones diluidas por trimestre, ajustadas por splits (para ponderar en los agregados de índice y sector):
