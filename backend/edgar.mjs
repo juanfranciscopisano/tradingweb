@@ -41,6 +41,9 @@ export const ADJ_TAGS = [
   "GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal", "EquitySecuritiesFvNiGainLoss",
   "GainsLossesOnExtinguishmentOfDebt", "RealizedInvestmentGainsLosses",
   "ResearchAndDevelopmentAssetAcquiredOtherThanThroughBusinessCombinationWrittenOff", "ResearchAndDevelopmentInProcess",
+  // solo para explicar lo que hay entre el operativo y el antes de impuestos (no son ajustes)
+  "BusinessCombinationContingentConsiderationArrangementsChangeInAmountOfContingentConsiderationLiability1",
+  "ForeignCurrencyTransactionGainLossBeforeTax", "DefinedBenefitPlanNetPeriodicBenefitCostCreditExcludingServiceCost",
 ];
 export function rawFromFacts(facts) {
   const g = facts?.facts?.["us-gaap"] || {};
@@ -101,13 +104,20 @@ export function betterFact(e, o, annual) {
   if (annual && isK(e.form) !== isK(o.form)) return isK(e.form);
   return (e.filed || "") > (o.filed || "");
 }
+// Al derivar un trimestre (acumulado largo menos el corto), el corto se toma en la versión presentada hasta la fecha del
+// largo: si la empresa reexpresó después los nueve meses (un negocio que pasó a discontinuadas), restarle esa versión al
+// anual viejo mezcla dos bases y el cuarto trimestre sale inflado.
 function quartersOf(facts, splitFactor) {
   const per = new Map();
   for (const e of facts) {
     if (!e.start || !e.end || !isFinite(e.val)) continue;
     const k = e.start + "|" + e.end, o = per.get(k), annual = (Date.parse(e.end) - Date.parse(e.start)) / DAY_MS > 300;
-    if (!o || betterFact(e, o, annual)) per.set(k, { start: e.start, end: e.end, filed: e.filed, form: e.form, val: e.val / splitFactor(e.end, e.filed), s: Date.parse(e.start), t: Date.parse(e.end) });
+    const v = { start: e.start, end: e.end, filed: e.filed, form: e.form, val: e.val / splitFactor(e.end, e.filed), s: Date.parse(e.start), t: Date.parse(e.end) };
+    const vers = o ? o.vers : [];
+    vers.push(v);
+    if (!o || betterFact(e, o, annual)) per.set(k, { ...v, vers }); else o.vers = vers;
   }
+  const asOf = (S, filed) => { const ok = S.vers.filter(v => (v.filed || "") <= (filed || "")).sort((a, b) => (a.filed || "").localeCompare(b.filed || "")); return ok.length ? ok[ok.length - 1] : S; };
   const ps = [...per.values()], days = (a, b) => (b - a) / DAY_MS;
   const out = [];
   const near = t => out.some(q => Math.abs(q.t - t) <= 10 * DAY_MS);
@@ -119,7 +129,7 @@ function quartersOf(facts, splitFactor) {
     for (const L of g) {
       if (near(L.t)) continue;
       const S = g.filter(x => x.t < L.t && days(x.t, L.t) >= 70 && days(x.t, L.t) <= 125).pop();
-      if (S) out.push({ t: L.t, end: L.end, eps: L.val - S.val, derived: true });
+      if (S) out.push({ t: L.t, end: L.end, eps: L.val - asOf(S, L.filed).val, derived: true });
     }
   }
   return out;
@@ -210,6 +220,14 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     const v = pt !== undefined ? pt : (ni !== undefined && tx !== undefined ? ni + tx : undefined);
     if (v !== undefined) PRE.push({ t: q.t, end: q.end, eps: v });
   }
+  const A = raw.adj || {}, S = {};
+  for (const t of ADJ_TAGS) if (A[t]) S[t] = ser(A[t]);
+  const get = (t, tt) => S[t] ? at(S[t], tt) : undefined;
+  // partidas conocidas de abajo de la línea que no son del negocio: tenencias, diferencias de cambio, cancelación de
+  // deuda, cambio de valor de pagos contingentes por compras (ABBV) y costo de pensiones sin el del servicio
+  const knownNonOp = t => (get("EquitySecuritiesFvNiGainLoss", t) || 0) + (get("ForeignCurrencyTransactionGainLossBeforeTax", t) || 0)
+    + (get("GainsLossesOnExtinguishmentOfDebt", t) || 0) - (get("BusinessCombinationContingentConsiderationArrangementsChangeInAmountOfContingentConsiderationLiability1", t) || 0)
+    - (get("DefinedBenefitPlanNetPeriodicBenefitCostCreditExcludingServiceCost", t) || 0);
   const lastT = gaap[gaap.length - 1].date * 1000;
   const reaches = sr => sr.length > 0 && sr[sr.length - 1].t >= lastT - 100 * DAY_MS;
   let method = reaches(OI) ? "operativo" : (reaches(PRE) ? "impuestos" : null), motivo = null;
@@ -237,7 +255,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
       // operativo no es el consolidado (DIS informa el de sus segmentos, sin los gastos corporativos): base antes de
       // impuestos. Si es positivo (ganancias de tenencias, como GOOGL o AMZN), queda afuera, que es lo conservador.
       const h = inOI, oiMed = median(qs.map(q => Math.abs(q.eps)));
-      const signed = median(qs.map(q => (at(PT, q.t) - q.eps) - (-(h.ie ? 0 : steady(IE, q.t)) + (h.ii ? 0 : steady(II, q.t)) + (h.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0))));
+      const signed = median(qs.map(q => (at(PT, q.t) - q.eps) - (-(h.ie ? 0 : steady(IE, q.t)) + (h.ii ? 0 : steady(II, q.t)) + (h.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0)) - knownNonOp(q.t)));
       if (reaches(PRE) && oiMed > 0 && signed < -0.10 * oiMed) { method = "impuestos"; motivo = "costos recurrentes abajo del operativo"; inOI = { ie: false, ii: false, eq: false }; }
     }
   }
@@ -292,9 +310,6 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   };
 
   // partidas puntuales por categoría y trimestre (US$, signo: + cargo que se suma de vuelta, − ganancia que se resta)
-  const A = raw.adj || {}, S = {};
-  for (const t of ADJ_TAGS) if (A[t]) S[t] = ser(A[t]);
-  const get = (t, tt) => S[t] ? at(S[t], tt) : undefined;
   const firstOf = (tags, tt) => { for (const t of tags) { const v = get(t, tt); if (v !== undefined) return { v, t }; } return null; };
   const catAt = tt => {
     const c = {}, T = {};   // T: etiqueta de la SEC de cada categoría, para mostrar de dónde sale
