@@ -575,7 +575,7 @@ export function cashDebt(raw, normRows, asOf = Date.now()) {
 // activo fijo neto + llave de negocio + intangibles (no depende de cuánto recompró la empresa, que deja el patrimonio en
 // negativo en MCD o HD); si el balance no separa corriente y no corriente, deuda + patrimonio − caja. Promedio de
 // principio y fin del año. Millones de US$ y de acciones.
-function quarterSeries(arr) {
+export function quarterSeries(arr) {
   const one = () => 1, TEN = 10 * DAY_MS;
   const q = quartersOf(arr || [], one);
   const fy = (arr || []).filter(e => e.start && e.end && isFinite(e.val)).sort((a, b) => (isK(b.form) - isK(a.form)) || (b.filed || "").localeCompare(a.filed || ""));

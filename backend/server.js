@@ -7,7 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -240,7 +240,9 @@ async function edgarEPS(sym, splits = []) {
   try { cd = cashDebt(raw, n.rows); } catch (e) { console.log(`pebg ${sym}: caja y deuda ${e.message}`); }
   let q = null;
   try { q = quality(raw, n.rows); } catch (e) { console.log(`pebg ${sym}: calidad ${e.message}`); }
-  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], cd, q };
+  let ventas = [];
+  try { ventas = quarterSeries(raw.rev).map(x => ({ date: Math.floor(x.t / 1000), v: Math.round(x.eps / 1e5) / 10 })); } catch (e) { /* sin ventas */ }
+  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], cd, q, ventas };
 }
 
 // ---------------------------------------------------------------- EPS cargado a mano
@@ -613,6 +615,8 @@ app.get("/api/pebg", async (req, res) => {
         cajaDeuda: manual ? null : (edgarAll.cd || null),
         // calidad: ventas, EBIT ajustado, NOPAT, capital invertido y acciones, hoy y hace un año (millones)
         calidad: manual ? null : (edgarAll.q || null),
+        // ventas trimestrales de la SEC (millones de US$), para comparar con las esperadas
+        ventas: manual ? [] : (edgarAll.ventas || []),
         histNote,
         epsCount: eps.length,
         epsSource: source,

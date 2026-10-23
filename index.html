@@ -250,6 +250,11 @@ td:nth-child(-n+4){text-align:left}
 .pebg-norm-more{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;padding:0;margin-top:6px}
 .dvg{color:var(--warn);font-size:11px;margin-left:4px;cursor:help}
 .sect-rev-btn{float:right;font-size:12px;padding:3px 9px;margin-top:-3px;margin-left:6px}
+.est-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:10px}
+.est-chart h4{margin:0 0 4px;font-size:12px;font-weight:600;color:var(--muted)}
+.est-chart .box{position:relative;height:170px}
+.pebg-norm-body tr.est-fut td{color:var(--ink)}
+.pebg-norm-body tr.est-fut td.q{color:var(--accent)}
 .ct-al{white-space:normal!important;min-width:180px;max-width:260px;font-size:12px;text-align:left!important}
 @media (max-width:640px){
   .pebg-norm-body table{min-width:0;width:100%}
@@ -1019,6 +1024,9 @@ function checkPwd(){
   <div class="pebg-norm" id="pebgNorm" style="display:none">
     <div class="pebg-norm-alert" id="pebgNormAlert" role="status"></div>
     <details id="pebgNormDet"><summary id="pebgNormSum">Ajustes del normalizado</summary><div class="pebg-norm-body" id="pebgNormBody"></div></details>
+  </div>
+  <div class="pebg-norm" id="pebgEst" style="display:none">
+    <details id="pebgEstDet"><summary id="pebgEstSum">Resultados y estimaciones</summary><div class="pebg-norm-body" id="pebgEstBody"></div></details>
   </div>
   <div id="pebgOuter">
     <div id="pebgContainer">
@@ -3265,6 +3273,8 @@ async function loadPebg() {
     if (req !== pebgReq) return;
     if (d.error) throw new Error(d.error);
     await Promise.all([loadFund(), loadRev()]);
+    // base propia de estimaciones (estimaciones/<ticker>.json, la arma la Action de fundamentals); si no está, sin panel
+    d.est = await fetch('estimaciones/' + encodeURIComponent(sym) + '.json?d=' + new Date().toISOString().slice(0, 10), { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
     if (req !== pebgReq) return;
     if (d.forwardPE == null) d.forwardPE = fundFor(sym, d.currentPrice).fpe || null;
     pebgData = d;
@@ -3371,6 +3381,59 @@ function renderPebgNorm(d) {
   h += '<p class="pebg-norm-p">Signo: + es un cargo que se suma de vuelta, − una ganancia que se resta. El normalizado vuelve a gravar el resultado limpio a la tasa típica (' + (adj.length ? (adj[adj.length - 1].tasa * 100).toFixed(0) + '% en el último ajuste' : 'mediana de 12 trimestres') + '). <a class="sect-link" onclick="openMetodo(\'eps\')">Criterio completo</a></p>';
   body.innerHTML = h;
   box.style.display = '';
+}
+
+// ── Resultados y estimaciones: EPS y ventas pasados (SEC), sorpresas y consenso por trimestre y ejercicio, y cómo
+// cambió el consenso de cada ejercicio (estimaciones/<ticker>.json) ──
+function renderPebgEst(d) {
+  const box = document.getElementById('pebgEst'), body = document.getElementById('pebgEstBody'), sum = document.getElementById('pebgEstSum');
+  if (!box) return;
+  const e = d.est;
+  if (!e || !e.actual) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const A = e.actual, per = A.per || {}, hist = A.hist || [];
+  const fD = s => s ? s.split('-').reverse().join('/') : '—';
+  const fE = v => v == null ? '—' : (v < 0 ? '−' : '') + '$' + Math.abs(v).toFixed(2);
+  const fV = v => v == null ? '—' : fMill(v);
+  const near = (arr, t, days = 20) => arr.find(x => Math.abs(x.date - t) <= days * 86400);
+  const ventas = (d.ventas || []).slice().sort((a, b) => a.date - b.date), eps = (d.eps || []).slice().sort((a, b) => a.date - b.date);
+  const T = s => Date.parse(s + 'T00:00:00Z') / 1000;
+  // trimestres informados: los cuatro de earningsHistory, más los anteriores de la SEC hasta 8
+  const qs = [...new Set([...eps.slice(-8).map(x => x.date), ...hist.map(h => T(h.q))])].sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 40 * 86400).slice(-8);
+  let h = '<table><thead><tr><th>Trimestre</th><th>Ventas, US$ M</th><th>Ventas vs año anterior</th><th>EPS contable (SEC)</th><th>EPS informado</th><th>EPS esperado</th><th>Sorpresa</th></tr></thead><tbody>';
+  for (const t of qs) {
+    const v = near(ventas, t), v1 = near(ventas, t - 365 * 86400, 25), g = near(eps, t), hh = hist.find(x => Math.abs(T(x.q) - t) <= 20 * 86400);
+    h += '<tr><td class="q">' + fD(new Date(t * 1000).toISOString().slice(0, 10)) + '</td><td>' + fV(v && v.v) + '</td><td>' + (v && v1 && v1.v > 0 ? fGrow(v.v / v1.v - 1) : '—')
+      + '</td><td>' + fE(g && g.eps) + '</td><td>' + fE(hh && hh.act) + '</td><td>' + fE(hh && hh.est) + '</td><td>' + (hh && hh.sorp != null ? fGrow(hh.sorp) : '—') + '</td></tr>';
+  }
+  // próximos dos trimestres y los dos ejercicios
+  const futRow = (k, lbl) => { const p = per[k]; if (!p) return '';
+    const g = p.rev[0] != null && p.rev[3] > 0 ? fGrow(p.rev[0] / p.rev[3] - 1) : '—';
+    return '<tr class="est-fut"><td class="q">' + lbl + ' (' + fD(p.fin) + ')</td><td title="Rango ' + fV(p.rev[1]) + ' a ' + fV(p.rev[2]) + (p.nRev ? ', ' + p.nRev + ' analistas' : '') + '">' + fV(p.rev[0]) + '</td><td>' + g
+      + '</td><td>—</td><td>' + (p.eps[3] != null ? '<span class="na" title="EPS del mismo período del año anterior">' + fE(p.eps[3]) + ' (año ant.)</span>' : '—') + '</td><td title="Rango ' + fE(p.eps[1]) + ' a ' + fE(p.eps[2]) + (p.n ? ', ' + p.n + ' analistas' : '') + '">' + fE(p.eps[0])
+      + (p.eps[3] > 0 && p.eps[0] != null ? ' <span class="na">(' + revTxt(p.eps[0] / p.eps[3] - 1) + ')</span>' : '') + '</td><td>' + (p.n ? p.n + ' analistas' : '—') + '</td></tr>'; };
+  h += futRow('0q', 'Trimestre en curso') + futRow('+1q', 'Trimestre siguiente') + futRow('0y', 'Ejercicio en curso') + futRow('+1y', 'Ejercicio siguiente');
+  h += '</tbody></table>';
+  h += '<p class="pebg-norm-p">EPS informado y esperado: los de Yahoo, en la base ajustada de la empresa (el que miran los analistas); el contable es el de la SEC. Sorpresa: informado contra esperado. En las filas de estimaciones, pasando el mouse se ve el rango entre analistas.</p>';
+  // cómo cambió el consenso de cada ejercicio (una línea por cierre)
+  const serie = e.serie || [];
+  const byFin = (field, idx) => { const m = new Map(); for (const r of serie) for (const k of ['y0', 'y1']) { const x = r[k]; if (!x || x[idx] == null) continue; if (!m.has(x[0])) m.set(x[0], []); m.get(x[0]).push({ t: T(r.d), v: x[idx] }); } return m; };
+  const eM = byFin('eps', 1), rM = byFin('rev', 2);
+  const cols = [cssVar('--b0'), cssVar('--b1p'), cssVar('--b1m'), cssVar('--b2m'), cssVar('--ink2')];
+  const mk = m => [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-4).map(([fin, pts], i) => ({ name: 'Ejercicio al ' + fD(fin), color: cols[i % cols.length], pts: pts.sort((a, b) => a.t - b.t) })).filter(x => x.pts.length > 1);
+  const eS = mk(eM), rS = mk(rM);
+  const leg = ser => '<div class="arg-chips">' + ser.map(x => `<span class="arg-chip on" style="cursor:default"><span class="arg-chip-dot" style="background:${x.color}"></span>${x.name}</span>`).join('') + '</div>';
+  const chart = (id, title, ser) => '<div class="est-chart"><h4>' + title + '</h4>' + (ser.length ? leg(ser) + '<div class="box"><canvas id="' + id + '"></canvas></div>'
+    : '<p class="pebg-norm-p">Todavía no hay dos días de datos: se completa con la foto diaria.</p>') + '</div>';
+  h += '<div class="est-charts">' + chart('estEpsCv', 'EPS esperado por ejercicio', eS) + chart('estRevCv', 'Ventas esperadas por ejercicio, US$ M', rS) + '</div>';
+  const days = serie.length ? Math.round((T(serie[serie.length - 1].d) - T(serie[0].d)) / 86400) : 0;
+  h += '<p class="pebg-norm-p">La base se arma con una foto diaria del consenso desde el ' + fD(serie.find(r => !r.r)?.d) + '; los puntos anteriores del EPS (hasta 90 días) son los que da Yahoo y no traen ventas. Con el tiempo la historia se alarga sola.</p>';
+  body.innerHTML = h;
+  sum.textContent = 'Resultados y estimaciones: ' + (per['+1y'] ? 'EPS esperado ' + fE(per['+1y'].eps[0]) + ' y ventas ' + fV(per['+1y'].rev[0]) + ' M para el ejercicio que cierra el ' + fD(per['+1y'].fin) : 'consenso de Yahoo') + (days ? '; ' + days + ' días de historia' : '');
+  const draw = (id, ser, fmt) => { if (document.getElementById(id) && ser.length) drawLines(id, ser, fmt); };
+  const drawAll = () => { draw('estEpsCv', eS, v => '$' + v.toFixed(2)); draw('estRevCv', rS, v => fMill(v)); };
+  if (document.getElementById('pebgEstDet').open) drawAll();
+  document.getElementById('pebgEstDet').ontoggle = () => { if (document.getElementById('pebgEstDet').open) drawAll(); };
 }
 
 // ── Bandas móviles: en cada fecha, la media y el desvío (P/E) o los percentiles (PEG) de los N años previos ──
@@ -3606,6 +3669,7 @@ function renderPebg(data) {
   });
   document.getElementById('pebgStatsBar').style.display = 'flex';
   renderPebgNorm(data);
+  renderPebgEst(data);
 
   // el gráfico muestra más años que la ventana del promedio
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
@@ -4439,6 +4503,9 @@ const METODO = [
       { d: 'Estimaciones (Fw P/E): EPS de consenso de los próximos 12 meses, armado con el consenso de Yahoo del ejercicio en curso y del siguiente, ponderados por lo que falta del ejercicio en curso. Si Yahoo no tiene consenso, su Fw P/E; si tampoco, Finnhub.',
         p: 'El Fw P/E que publica Yahoo usa el EPS del próximo ejercicio fiscal, que según el mes del año mira de 2 a 14 meses adelante y no es comparable entre empresas con cierres distintos. Con los próximos 12 meses todas miran el mismo horizonte, y el EPS esperado de la proyección fw es exactamente el EPS de 12 meses que va a tener la empresa dentro de un año. Un ejercicio ya cerrado pero todavía no informado pesa cero.',
         x: 'El Fw P/E de Yahoo tal cual: es lo que se usaba antes; mezcla horizontes.' },
+      { d: 'Base propia de estimaciones: cada día hábil se guarda una foto del consenso de cada empresa (EPS y ventas esperados del trimestre en curso, el siguiente, el ejercicio en curso y el siguiente, con rango y cantidad de analistas) y las sorpresas de los últimos cuatro trimestres. Va en estimaciones/<ticker>.json.',
+        p: 'Yahoo solo da el consenso de hoy y el EPS de hace 7, 30, 60 y 90 días; el historial largo de estimaciones es de proveedores pagos (I/B/E/S, FactSet). Guardándolo todos los días la historia se arma sola desde el 23/10/2026. Los 90 días anteriores del EPS se reconstruyen con lo que da Yahoo, sin ventas.',
+        o: 'El consenso viene de los analistas que cubren cada empresa, agregados por Yahoo; no es un dato oficial. El EPS esperado y el "informado" de Yahoo están en la base ajustada de cada empresa.' },
       { d: 'Composición del S&P 500: la lista de datasets/s-and-p-500-companies, que sale de Wikipedia, con sector y subindustria GICS y el CIK de cada empresa.',
         p: 'S&P no publica la composición gratis. Wikipedia se actualiza el día de cada cambio, y el CIK permite cruzar cada empresa con la SEC sin depender del ticker.' },
       { d: 'Tasas y Fed: curva oficial del Tesoro, Yahoo para los plazos con dato intradiario, la Fed de Nueva York para la EFFR y el rango objetivo, y FRED como respaldo.' },
@@ -4536,6 +4603,8 @@ const METODO = [
       { d: 'Proyección con el EPS esperado (botón EPS fw): el EPS esperado es el precio dividido por el Fw P/E de consenso, y el precio teórico dentro de un año es el múltiplo de cada banda por ese EPS.',
         p: 'Las tarjetas de precio pasan a ese cálculo, con la diferencia contra el precio de hoy. En la vista de precio, la línea punteada es el precio si el P/E de hoy se mantiene; en la de múltiplo, el P/E al que llega si el precio no se mueve. Sirve más en empresas con ganancias previsibles, porque supone que el consenso acierta y que el múltiplo vuelve a su historia.',
         o: 'El consenso suele estar en la base ajustada que guía cada empresa (sin la compensación en acciones, las amortizaciones de compras ni los cargos puntuales), y las bandas salen del EPS de la SEC. Donde esos ajustes pesan, sobre todo en tecnológicas, el EPS esperado queda arriba del contable y la proyección exagera; con el EPS normalizado la distancia es menor, aunque el normalizado sí descuenta la compensación en acciones. El horizonte es exacto: el EPS esperado es el de los próximos 12 meses.' },
+      { d: 'Resultados y estimaciones (desplegable debajo de los números): los últimos ocho trimestres con ventas y EPS contable de la SEC, EPS informado y esperado antes del resultado con la sorpresa, y el consenso de los próximos dos trimestres y dos ejercicios contra el año anterior. Abajo, cómo cambió el consenso de EPS y de ventas de cada ejercicio.',
+        p: 'Junta en un lugar lo que pasó y lo que se espera, en las dos bases: la contable (la del P/E de la terminal) y la ajustada (la que miran los analistas y contra la que se mide la sorpresa).' },
       { d: 'PEG: P/E dividido por el crecimiento tendencial del EPS en porcentaje.',
         p: 'El crecimiento es la pendiente de una regresión log-lineal del EPS de 12 meses de los últimos cinco años (21 puntos trimestrales), con lo que hacen falta seis años de EPS. Con crecimiento menor a 3% no se calcula, porque el cociente se dispara sin decir nada. Las bandas son percentiles (10, 25, 50, 75 y 90) y no desvíos, ya que el PEG es muy asimétrico. Arranca con EPS normalizado, porque un cargo puntual en el contable mueve a la vez el P/E y el crecimiento y el PEG lo cuenta dos veces, y en vista de múltiplo.',
         x: 'El crecimiento punta a punta: un piso o un pico en la base lo hace saltar (con META pasaba de 3% a 51% en tres años).' },
