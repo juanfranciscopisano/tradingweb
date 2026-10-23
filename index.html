@@ -345,6 +345,13 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .cartera-table td:first-child,.cartera-table th:first-child{padding-left:var(--side)}
 .cartera-table td:nth-child(3),.cartera-table th:nth-child(3){text-align:left}
 .cartera-table td:last-child,.cartera-table th:last-child{padding-right:var(--side)}
+.ct-add{display:flex;gap:6px;align-items:center}
+.ct-add-in{width:130px;padding-left:10px;text-transform:uppercase}
+.ct-w{width:58px;font:inherit;font-size:13px;text-align:right;padding:3px 6px;border:1px solid var(--line2);border-radius:5px;background:var(--surf);color:var(--ink)}
+.ct-del{font:inherit;border:none;background:none;color:var(--faint);cursor:pointer;font-size:15px;padding:0 4px}
+.ct-del:hover{color:var(--down)}
+.ct-sum{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:9px var(--side);font-size:13px;color:var(--ink2);line-height:1.5}
+.ct-sum b{color:var(--ink)}
 .ct-ticker{font-weight:700;color:var(--ink)}
 .ct-signal{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:650}
 .ct-barato{background:var(--up-soft);color:var(--up)}
@@ -837,30 +844,25 @@ function checkPwd(){
       <span class="pebg-period" data-m="gaap" onclick="setEpsMode('gaap')">Contable</span>
       <span class="pebg-period" data-m="norm" onclick="setEpsMode('norm')">Normalizado</span>
     </div>
+    <span class="pebg-note">Media y &sigma; de</span>
+    <div class="pebg-period-btns" id="carteraWinBtns" role="group" aria-label="Ventana">
+      <span class="pebg-period active" data-w="1" onclick="setCarteraWin(1)">1A</span>
+      <span class="pebg-period" data-w="3" onclick="setCarteraWin(3)">3A</span>
+      <span class="pebg-period" data-w="5" onclick="setCarteraWin(5)">5A</span>
+      <span class="pebg-period" data-w="10" onclick="setCarteraWin(10)">10A</span>
+    </div>
     <button class="btn" onclick="loadCartera(true)">Actualizar</button>
     <span id="carteraStatus" class="pebg-note"></span>
     <div class="cs"></div>
-    <span class="pebg-note">P/E TTM; media y &sigma; del &uacute;ltimo a&ntilde;o</span>
+    <form class="ct-add" id="carteraAdd" onsubmit="event.preventDefault();addCarteraTicker()">
+      <input class="ctrl-input ct-add-in" id="carteraAddIn" placeholder="Agregar ticker" aria-label="Agregar ticker a la cartera" autocomplete="off">
+      <button class="btn btn-ghost" type="submit">Agregar</button>
+    </form>
   </div>
+  <div class="ct-sum" id="carteraSum" style="display:none"></div>
   <div class="cartera-wrap">
     <table class="cartera-table" id="carteraTable">
-      <thead>
-        <tr>
-          <th onclick="sortCartera('ticker')">#</th>
-          <th onclick="sortCartera('ticker')">Ticker</th>
-          <th onclick="sortCartera('name')">Empresa</th>
-          <th onclick="sortCartera('pe')">P/E actual</th>
-          <th onclick="sortCartera('mu')">P/E media 1A</th>
-          <th onclick="sortCartera('sigma')">&sigma;</th>
-          <th onclick="sortCartera('z')">Z-score</th>
-          <th onclick="sortCartera('z')">Se&ntilde;al</th>
-          <th onclick="sortCartera('implied')">Precio @ &mu;</th>
-          <th onclick="sortCartera('varToMu')">Var. @ &mu;</th>
-          <th id="thPEMode" onclick="toggleCarteraPE()" style="cursor:pointer;user-select:none;width:120px;min-width:120px;max-width:120px;white-space:nowrap">P/E anualizado <span style="color:var(--accent)">&#9662;</span></th>
-          <th id="thVarMode" onclick="sortCartera(carteraPEMode==='fwd'?'varFwd':'varAnual')" style="width:110px;min-width:110px;max-width:110px;white-space:nowrap">Var. anual. @ &mu;</th>
-          <th onclick="sortCartera('price')">Precio</th>
-        </tr>
-      </thead>
+      <thead id="carteraThead"></thead>
       <tbody id="carteraTbody">
         <tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Presioná Actualizar para cargar</td></tr>
       </tbody>
@@ -1481,11 +1483,11 @@ function fundAsOfLabel() {
 
 // EPS de 12 meses de la SEC por empresa (eps_ttm.json, lo arma el proceso diario de múltiplos):
 // data[sym] = [eps contable, eps normalizado, acciones diluidas, cierre del último trimestre, precio usado]
-let SEC_EPS = null, SEC_EPS_AS_OF = null, secEpsPromise = null;
+let SEC_EPS = null, SEC_EPS_AS_OF = null, secEpsPromise = null, secSpx = null, secSpxN = null;
 function loadSecEps() {
   if (!secEpsPromise) secEpsPromise = fetch('eps_ttm.json?d=' + new Date().toISOString().slice(0, 10), { cache: 'no-cache' })
     .then(r => r.ok ? r.json() : null)
-    .then(j => { SEC_EPS = (j && j.data) || null; SEC_EPS_AS_OF = (j && j.asOf) || null; if (!SEC_EPS) secEpsPromise = null; return SEC_EPS; })
+    .then(j => { SEC_EPS = (j && j.data) || null; SEC_EPS_AS_OF = (j && j.asOf) || null; secSpx = (j && j.spx) || null; secSpxN = (j && j.spxN) || null; if (!SEC_EPS) secEpsPromise = null; return SEC_EPS; })
     .catch(() => { secEpsPromise = null; return null; });
   return secEpsPromise;
 }
@@ -2709,7 +2711,10 @@ function peStats(win) {
 }
 
 // ── CARTERA ──────────────────────────────────────────────
-const CARTERA_TICKERS = ['NVDA','META','GOOGL','NU','MELI','ORCL','MSFT','AAPL','TSLA','AMZN','PAM'];
+// lista por defecto: la de siempre más MCD; se puede editar (queda guardada en este navegador)
+const CARTERA_TICKERS = ['NVDA','META','GOOGL','NU','MELI','ORCL','MCD','MSFT','AAPL','TSLA','AMZN','PAM'];
+// pesos opcionales (% de la cartera total); con ellos se calcula el P/E agregado de la cartera
+const CARTERA_W0 = { NU: 13.1, NVDA: 11.2, MCD: 10.3, MELI: 8.0, GOOGL: 7.0, META: 6.1, ORCL: 1.7 };
 const TOP50_TICKERS = [
   'NVDA','AAPL','MSFT','AMZN','GOOGL','META','TSLA','AVGO','JPM','LLY',
   'V','UNH','XOM','WMT','MA','NFLX','COST','ORCL','HD','BAC',
@@ -2720,44 +2725,73 @@ const TOP50_TICKERS = [
 let carteraLoaded = false;
 let carteraMode = 'cartera'; // 'cartera' | 'top50'
 let carteraRaw = {};         // respuesta de /api/pebg por ticker; trae las dos series de EPS
+let carteraYrs = {};         // años de historia pedidos por ticker
 let carteraData = [];
 let carteraSortCol = 'z';
 let carteraSortAsc = true;
 let carteraPEMode = 'anual'; // 'anual' | 'fwd'
-const carteraTickers = () => carteraMode === 'top50' ? TOP50_TICKERS : CARTERA_TICKERS;
+let carteraList = CARTERA_TICKERS.slice(), carteraW = { ...CARTERA_W0 }, carteraWin = 1;
+try {
+  const l = JSON.parse(localStorage.getItem('carteraList') || 'null'); if (Array.isArray(l) && l.length) carteraList = l;
+  const w = JSON.parse(localStorage.getItem('carteraW') || 'null'); if (w && typeof w === 'object') carteraW = w;
+  const n = parseInt(localStorage.getItem('carteraWin')); if ([1, 3, 5, 10].includes(n)) carteraWin = n;
+} catch (e) {}
+const saveCartera = () => { try { localStorage.setItem('carteraList', JSON.stringify(carteraList)); localStorage.setItem('carteraW', JSON.stringify(carteraW)); localStorage.setItem('carteraWin', String(carteraWin)); } catch (e) {} };
+const carteraTickers = () => carteraMode === 'top50' ? TOP50_TICKERS : carteraList;
 
 function toggleCarteraPE() {
   carteraPEMode = carteraPEMode === 'anual' ? 'fwd' : 'anual';
-  document.getElementById('thPEMode').innerHTML =
-    (carteraPEMode === 'anual' ? 'P/E anualizado' : 'Fw P/E') + ' <span style="color:var(--accent)">&#9662;</span>';
-  document.getElementById('thVarMode').textContent =
-    carteraPEMode === 'anual' ? 'Var. anual. @ μ' : 'Var. fw @ μ';
   renderCarteraTable();
+}
+function setCarteraWin(w) {
+  carteraWin = w; saveCartera();
+  document.querySelectorAll('#carteraWinBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.w === w));
+  if (carteraTickers().every(s => carteraRaw[s] && (carteraYrs[s] || 0) >= w + 1)) buildCartera();
+  else loadCartera();
+}
+async function addCarteraTicker() {
+  const inp = document.getElementById('carteraAddIn');
+  const sym = (inp.value || '').trim().toUpperCase().replace(/\./g, '-');
+  if (!sym) return;
+  if (!carteraList.includes(sym)) { carteraList.push(sym); saveCartera(); }
+  inp.value = '';
+  if (carteraMode !== 'cartera') setCarteraMode('cartera'); else loadCartera();
+}
+function removeCarteraTicker(sym) {
+  carteraList = carteraList.filter(s => s !== sym); delete carteraW[sym]; saveCartera(); buildCartera();
+}
+function setCarteraWeight(sym, v) {
+  const x = parseFloat(String(v).replace(',', '.'));
+  if (isFinite(x) && x > 0) carteraW[sym] = x; else delete carteraW[sym];
+  saveCartera(); buildCartera();
 }
 
 function setCarteraMode(mode) {
   carteraMode = mode;
   document.getElementById('carteraTab1').classList.toggle('active', mode === 'cartera');
   document.getElementById('carteraTab2').classList.toggle('active', mode === 'top50');
-  if (carteraTickers().every(s => carteraRaw[s])) buildCartera();
+  document.getElementById('carteraAdd').style.display = mode === 'cartera' ? '' : 'none';
+  if (carteraTickers().every(s => carteraRaw[s] && (carteraYrs[s] || 0) >= carteraWin + 1)) buildCartera();
   else loadCartera();
 }
 
 async function loadCartera(force) {
   carteraLoaded = true;
+  document.querySelectorAll('#carteraWinBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.w === carteraWin));
   const tickers = carteraTickers();
+  const yrs = Math.max(2, carteraWin + 1);
   const status = document.getElementById('carteraStatus');
-  const todo = force === true ? tickers : tickers.filter(s => !carteraRaw[s]);
+  const todo = force === true ? tickers : tickers.filter(s => !carteraRaw[s] || (carteraYrs[s] || 0) < yrs);
   if (todo.length) {
     document.getElementById('carteraTbody').innerHTML =
-      `<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted)">Cargando 0/${todo.length}...</td></tr>`;
+      `<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Cargando 0/${todo.length}...</td></tr>`;
   }
-  await loadFund();
+  await Promise.all([loadFund(), loadSecEps(), loadMultiples()]);
   let done = 0;
   await Promise.allSettled(todo.map(sym =>
-    fetch(BASE_URL + '/api/pebg?symbol=' + sym + '&years=2')
+    fetch(BASE_URL + '/api/pebg?symbol=' + sym + '&years=' + yrs)
       .then(r => r.json())
-      .then(d => { if (d && !d.error) carteraRaw[sym] = d; })
+      .then(d => { if (d && !d.error) { carteraRaw[sym] = d; carteraYrs[sym] = yrs; } })
       .catch(() => {})
       .finally(() => { done++; status.textContent = `Cargando ${done}/${todo.length}...`; })
   ));
@@ -2768,12 +2802,16 @@ function carteraRow(sym, data) {
   const eps = baseEps(data);
   const full = buildPESeries(data, eps);
   if (full.length < 5) return null;
-  const cutoff = full[full.length - 1].date - 365 * 86400;
+  const last = full[full.length - 1];
+  const cutoff = last.date - carteraWin * YR_S;
   const win = full.filter(p => p.date >= cutoff);
   if (win.length < 10) return null;
   const { mu, sigma } = peStats(win);
-  const last = full[full.length - 1];
   const z = (last.pe - mu) / sigma;
+  // z contra el último año: hacia dónde se viene moviendo el múltiplo (se muestra al lado si la ventana es más larga)
+  const w1 = full.filter(p => p.date >= last.date - YR_S), s1 = w1.length >= 10 ? peStats(w1) : null;
+  const z1 = s1 && s1.sigma > 0 ? (last.pe - s1.mu) / s1.sigma : null;
+  const histY = (last.date - full[0].date) / YR_S;
 
   const lastQEps = eps[eps.length - 1]?.eps;
   const peAnual = (lastQEps && lastQEps > 0) ? last.close / (lastQEps * 4) : null;
@@ -2793,7 +2831,9 @@ function carteraRow(sym, data) {
     implied: last.eps4q * mu,
     varToMu: (last.eps4q * mu - last.close) / last.close * 100,
     peAnual, impliedAnual, varAnual,
-    forwardPE: fwdPE, varFwd,
+    forwardPE: fwdPE, varFwd, z1, histY, shortHist: histY < carteraWin - 0.25,
+    ey: last.eps4q / last.close,   // rendimiento de las ganancias (para el agregado de la cartera; las pérdidas restan)
+    w: carteraMode === 'cartera' ? (carteraW[sym] || null) : null,
     normFallback: epsMode === 'norm' && !hasNorm(data),
   };
 }
@@ -2801,9 +2841,27 @@ function carteraRow(sym, data) {
 function buildCartera() {
   carteraData = carteraTickers().map(s => carteraRaw[s] ? carteraRow(s, carteraRaw[s]) : null).filter(Boolean);
   const fb = carteraData.filter(d => d.normFallback).length;
+  const miss = carteraTickers().filter(s => !carteraRaw[s]);
   document.getElementById('carteraStatus').textContent =
     carteraData.length + ' acciones, EPS ' + (epsMode === 'norm' ? 'normalizado' : 'contable')
-    + (fb ? ' (' + fb + ' sin normalizado, van con contable)' : '');
+    + (fb ? ' (' + fb + ' sin normalizado, van con contable)' : '') + (miss.length ? '. Sin datos: ' + miss.join(', ') : '');
+  // P/E de la cartera con los pesos cargados: suma de pesos / suma de (peso × EPS / precio), como el del índice
+  const sum = document.getElementById('carteraSum');
+  const wd = carteraData.filter(d => d.w > 0);
+  if (carteraMode === 'cartera' && wd.length) {
+    const W = wd.reduce((a, d) => a + d.w, 0), Wall = Object.entries(carteraW).filter(([k]) => carteraList.includes(k)).reduce((a, [, v]) => a + v, 0);
+    const E = wd.reduce((a, d) => a + d.w * d.ey, 0);
+    const wf = wd.filter(d => d.forwardPE > 0), Wf = wf.reduce((a, d) => a + d.w, 0), Ef = wf.reduce((a, d) => a + d.w / d.forwardPE, 0);
+    const norm = epsMode === 'norm';
+    const spx = SEC_EPS_AS_OF && (norm ? secSpxN : secSpx), spxFw = MULT && MULT.series.SPX ? MULT.series.SPX.fw : null;
+    const x = v => v != null && isFinite(v) ? v.toFixed(1).replace('.', ',') + 'x' : '—';
+    const zW = wd.reduce((a, d) => a + d.w * d.z, 0) / W;
+    sum.style.display = '';
+    sum.innerHTML = 'Cartera con pesos (' + wd.length + ' posiciones, ' + W.toFixed(1).replace('.', ',') + '% del total cargado' + (Wall > W + 0.05 ? '; ' + (Wall - W).toFixed(1).replace('.', ',') + '% sin datos' : '') + '): '
+      + 'P/E ' + (norm ? 'normalizado' : 'contable') + ' <b>' + (E > 0 ? x(W / E) : '—') + '</b>' + (spx ? ' contra ' + x(spx) + ' del S&P 500' : '')
+      + '; Fw P/E <b>' + (Ef > 0 ? x(Wf / Ef) : '—') + '</b>' + (spxFw ? ' contra ' + x(spxFw) : '')
+      + '; z ponderado ' + (zW >= 0 ? '+' : '−') + Math.abs(zW).toFixed(2).replace('.', ',') + 'σ (' + carteraWin + 'A).';
+  } else { sum.style.display = 'none'; sum.innerHTML = ''; }
   renderCarteraTable();
 }
 
@@ -2822,9 +2880,19 @@ function renderCarteraTable() {
     if (typeof av === 'string') return carteraSortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     return carteraSortAsc ? av - bv : bv - av;
   });
+  const own = carteraMode === 'cartera', w1 = carteraWin > 1;
+  const th = (k, l, extra = '') => `<th onclick="sortCartera('${k}')"${extra}>${l}</th>`;
+  document.getElementById('carteraThead').innerHTML = '<tr>' + th('ticker', '#') + th('ticker', 'Ticker') + th('name', 'Empresa')
+    + (own ? th('w', 'Peso %') : '') + th('pe', 'P/E actual') + th('mu', 'P/E media ' + carteraWin + 'A') + th('sigma', 'σ') + th('z', 'Z-score')
+    + (w1 ? th('z1', 'Z 1A', ' title="Contra el último año: hacia dónde se viene moviendo el múltiplo"') : '') + th('z', 'Señal')
+    + th('implied', 'Precio @ μ') + th('varToMu', 'Var. @ μ')
+    + `<th id="thPEMode" onclick="toggleCarteraPE()" style="cursor:pointer;user-select:none;width:120px;min-width:120px;max-width:120px;white-space:nowrap">${carteraPEMode === 'anual' ? 'P/E anualizado' : 'Fw P/E'} <span style="color:var(--accent)">&#9662;</span></th>`
+    + `<th id="thVarMode" onclick="sortCartera(carteraPEMode==='fwd'?'varFwd':'varAnual')" style="width:110px;min-width:110px;max-width:110px;white-space:nowrap">${carteraPEMode === 'anual' ? 'Var. anual. @ μ' : 'Var. fw @ μ'}</th>`
+    + th('price', 'Precio') + (own ? '<th></th>' : '') + '</tr>';
   const fmtPE = v => v != null ? v.toFixed(1) + 'x' : '—';
   const fmtP = v => '$' + v.toFixed(2);
   const pct = v => v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '—';
+  const zTxt = v => v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(2) + 'σ';
   document.getElementById('carteraTbody').innerHTML = sorted.map((d, i) => {
     const zCls = d.z < -1 ? 'pp' : d.z > 1 ? 'pn' : '';
     const sig = d.z < -1 ? '<span class="ct-signal ct-barato">Barato</span>'
@@ -2832,20 +2900,24 @@ function renderCarteraTable() {
               : '<span class="ct-signal ct-justo">Justo</span>';
     const vAlt = carteraPEMode === 'fwd' ? d.varFwd : d.varAnual;
     const fb = d.normFallback ? ' <span class="na" title="Sin EPS normalizado: se usa el contable">(contable)</span>' : '';
+    const sh = d.shortHist ? ' <span class="na" title="Tiene menos historia que la ventana elegida">(' + d.histY.toFixed(1).replace('.', ',') + ' años)</span>' : '';
     return `<tr>
       <td style="color:var(--faint)">${i + 1}</td>
       <td><span class="ct-ticker">${d.ticker}</span></td>
-      <td style="color:var(--muted)">${d.name}${fb}</td>
+      <td style="color:var(--muted)">${d.name}${fb}${sh}</td>
+      ${own ? `<td><input class="ct-w" value="${d.w != null ? String(d.w).replace('.', ',') : ''}" placeholder="—" aria-label="Peso de ${d.ticker} en %" onchange="setCarteraWeight('${d.ticker}', this.value)"></td>` : ''}
       <td>${fmtPE(d.pe)}</td>
       <td style="color:var(--muted)">${fmtPE(d.mu)}</td>
       <td style="color:var(--muted)">${d.sigma.toFixed(1)}x</td>
-      <td class="${zCls}" style="font-weight:700">${d.z >= 0 ? '+' : ''}${d.z.toFixed(2)}σ</td>
+      <td class="${zCls}" style="font-weight:700">${zTxt(d.z)}</td>
+      ${w1 ? `<td style="color:var(--muted)">${zTxt(d.z1)}</td>` : ''}
       <td>${sig}</td>
       <td style="color:var(--ink)">${fmtP(d.implied)}</td>
       <td class="${d.varToMu >= 0 ? 'pp' : 'pn'}">${pct(d.varToMu)}</td>
       <td style="color:var(--muted)">${carteraPEMode === 'fwd' ? fmtPE(d.forwardPE) : fmtPE(d.peAnual)}</td>
       <td class="${vAlt != null ? (vAlt >= 0 ? 'pp' : 'pn') : ''}">${pct(vAlt)}</td>
       <td style="color:var(--ink)">${fmtP(d.price)}</td>
+      ${own ? `<td><button type="button" class="ct-del" onclick="removeCarteraTicker('${d.ticker}')" title="Sacar ${d.ticker} de la lista" aria-label="Sacar ${d.ticker}">×</button></td>` : ''}
     </tr>`;
   }).join('');
 }
