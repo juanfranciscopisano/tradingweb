@@ -190,397 +190,396 @@
   }
  },
  "yahoo": {
-  "ABBV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AAPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ABNB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AAPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ABBV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ACGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ABT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ADP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ADM": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "AEE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "AEP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "AFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ADP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AES": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AEP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AIG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AIZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AJG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ALGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ALB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AKAM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AIG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "ALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ALGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMCR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ANET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AMP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMZN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ANET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "APA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "APD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "APH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "APP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ARE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ARES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AVY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ATO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AVY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ARE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AXON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BAX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AZO": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
-  "BDX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "BA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BEN": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "BAX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BDX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "BG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BIIB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BKNG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "BR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BIIB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BLK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BMY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BRK-B": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "BNY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BRK-B": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
+  "BR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BXP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BRO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "C": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CAH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CARR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CBOE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "CCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CDNS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CDW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CDNS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CFG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CHRW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CFG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CHTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CHD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CINF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CMG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CLX": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "CMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CMG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CMS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CNC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CNP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "COHR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "COF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "COHR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CNP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "COF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CPAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CRH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CPT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CRL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CTSH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CPT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CSGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CVNA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CVS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CSGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DASH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CTSH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CVX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DASH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DECK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DDOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DGX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "D": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DHI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DDOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DECK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DGX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DHI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DLR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DOC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DOW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DVN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DTE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "DUK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DVA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DXCM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DVN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EBAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DVA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ECHO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "ED": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ECL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EIX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "ED": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EMR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EIX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "EL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EMR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EQIX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ERIE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EQIX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EQT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ESS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EQT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ETN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EVRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "EW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ESS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ETR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EVRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "EXE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EXPD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EXC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EXPE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "F": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "EXR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "F": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "FANG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FCX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FDX": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
+  "FERG": "continuas 0, total 5 (2025-07-31 a 2026-06-30)",
   "FDXF": "continuas 0, total 1 (2025-11-30 a 2025-11-30)",
+  "FICO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FFIV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "FERG": "continuas 0, total 5 (2025-07-31 a 2026-06-30)",
-  "FISV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FICO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FLEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FOX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FOXA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FTNT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FITB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FSLR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "FISV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FOX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FLEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FOXA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FTNT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FSLR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "GEHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GDDY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GEN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GEHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GEV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GILD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GLW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GOOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GNRC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GRMN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GOOGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GPN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GWW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HAL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GRMN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GWW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HBAN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HAL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HCA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HLT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HOOD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HONA": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "HIG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HONA": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
+  "HOOD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HSIC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HSY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HUBB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IBKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HSY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HUM": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "HWM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HUBB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IBKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ICE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "IDXX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IFF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ICE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "INTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ILMN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "INVH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "INTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "INCY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "INVH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IQV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IRM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IVZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ITW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IRM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "JBL": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
-  "IT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "J": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "JCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KDP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "JKHY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "J": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "JBL": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
   "JPM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KEY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "JKHY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KIM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KEY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KLAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KVUE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KDP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KIM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "L": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "KVUE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LDOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LHX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LHX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LITE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "LNT": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "LVS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LYV": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "LYB": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
-  "MAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MCD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LYV": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "LVS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MAA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MA": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "MCHP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MAS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MCD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MCK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MDLZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MCHP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MLM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MGM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MNST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MPC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "MGM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "MPC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MPWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MRNA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MSFT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MTD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MTB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MSI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MTD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NCLH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NEE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NI": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "NOW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "NOW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "NVR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NUE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "NVR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NWSA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "O": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NWS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NXPI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "O": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ODFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "OKE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ORLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "OKE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "OTIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "OXY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ORLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PCG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "PEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PCAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PCG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PFE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PFG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "PH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PGR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "PLD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "PH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PFG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PKG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PLD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PLTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PNR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PNC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PNW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PODD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PRU": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PNW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PNR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PSA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PSX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PRU": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PYPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "Q": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "QCOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RCL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RDDT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "REG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RCL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RDDT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "REGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RJF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RJF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ROK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ROP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SBAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RSG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RVTY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SBUX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SCHW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SKYD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "RSG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SHW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SBUX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SBAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SKYD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "SLB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SMCI": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "SNDK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SCHW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SRE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SOLV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SPGI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SRE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "STT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "STLD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "STX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "STE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "STT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "STLD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SWKS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TDG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SYK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SWKS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SYY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SYK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TDG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TDY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TER": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TECH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TEL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TER": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TKO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TMO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TMUS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TRGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TPR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TRMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TROW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TPR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TRGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TSCO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TSN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TTWO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TWLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TXT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TYL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UBER": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UDR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "UHS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UNH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "UHS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UPS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "V": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "URI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VICI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "V": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "USB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VICI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VLTO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VMC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VMRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VRSK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VMRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VRTX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VST": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "VTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VYLR": "continuas 0, total 0",
   "VZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WEC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WEC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WFC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WELL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WMB": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "WRB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WELL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WYNN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WTW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "XOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WYNN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "XEL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "YUM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "XYL": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "XYZ": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "ZTS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "XOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "XYL": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "ZBH": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "ZBRA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)"
+  "ZBRA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "YUM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ZTS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)"
  },
  "cajaDeuda": {
   "ADP": {
@@ -607,7 +606,14 @@
     "SecuredDebt": "2012-03-31",
     "NotesPayable": "2026-06-30",
     "LongTermDebtFairValue": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2020-09-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "AES": {
@@ -625,7 +631,14 @@
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "ShortTermInvestments": "2026-06-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2024-12-31"
+    "PreferredStockValue": "2024-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "AKAM": {
@@ -649,7 +662,13 @@
     "SeniorNotes": "2004-01-31",
     "LongTermDebtFairValue": "2018-12-31",
     "ConvertibleDebtFairValueDisclosures": "2009-12-31",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2025-12-31",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "ALGN": {
@@ -667,7 +686,13 @@
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "MarketableSecuritiesCurrent": "2019-12-31",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2024-12-31",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "ANET": {
@@ -688,7 +713,13 @@
     "LongTermDebtCurrent": "2014-06-30",
     "ConvertibleNotesPayableCurrent": "2014-12-31",
     "DebtInstrumentCarryingAmount": "2014-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2025-03-31"
    }
   },
   "APD": {
@@ -715,7 +746,14 @@
     "OtherShortTermBorrowings": "2012-09-30",
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": "2025-09-30",
     "DebtInstrumentCarryingAmount": "2025-09-30",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "ARE": {
@@ -735,7 +773,10 @@
     "SecuredDebt": "2025-12-31",
     "DebtInstrumentCarryingAmount": "2025-09-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2017-12-31"
+    "PreferredStockValue": "2017-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30"
    }
   },
   "BAX": {
@@ -761,7 +802,14 @@
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": "2025-12-31",
     "PaymentsToAcquireOtherProductiveAssets": "2026-06-30",
     "DebtInstrumentCarryingAmount": "2025-12-31",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "BKR": {
@@ -787,7 +835,9 @@
     "SecuredDebt": "2026-06-30",
     "DebtInstrumentCarryingAmount": "2013-12-31",
     "LongTermDebtFairValue": "2016-12-31",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30"
    }
   },
   "CAH": {
@@ -814,7 +864,14 @@
     "DebtLongtermAndShorttermCombinedAmount": "2025-09-30",
     "DebtInstrumentFairValue": "2011-06-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "CDNS": {
@@ -832,7 +889,13 @@
     "ShortTermInvestments": "2025-12-31",
     "LongTermDebtCurrent": "2018-06-30",
     "ConvertibleNotesPayableCurrent": "2016-01-02",
-    "PreferredStockValue": "2025-12-31"
+    "PreferredStockValue": "2025-12-31",
+    "StockholdersEquity": "2026-03-31",
+    "AssetsCurrent": "2026-03-31",
+    "LiabilitiesCurrent": "2026-03-31",
+    "PropertyPlantAndEquipmentNet": "2026-03-31",
+    "Goodwill": "2026-03-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-03-31"
    }
   },
   "CMS": {
@@ -856,7 +919,12 @@
     "DebtInstrumentCarryingAmount": "2025-12-31",
     "LongTermDebtFairValue": "2015-03-31",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30"
    }
   },
   "CPRT": {
@@ -881,7 +949,14 @@
     "ShortTermBorrowings": "2011-10-31",
     "LongTermDebtFairValue": "2023-07-31",
     "MinorityInterest": "2018-07-31",
-    "PreferredStockValue": "2026-07-31"
+    "PreferredStockValue": "2026-07-31",
+    "StockholdersEquity": "2023-07-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-07-31",
+    "AssetsCurrent": "2026-07-31",
+    "LiabilitiesCurrent": "2026-07-31",
+    "PropertyPlantAndEquipmentNet": "2026-07-31",
+    "Goodwill": "2026-07-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-07-31"
    }
   },
   "CPT": {
@@ -902,7 +977,9 @@
     "UnsecuredDebt": "2026-06-30",
     "SecuredDebt": "2026-06-30",
     "NotesPayable": "2026-06-30",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30"
    }
   },
   "CRH": {
@@ -923,7 +1000,14 @@
     "LongTermDebtCurrent": "2026-06-30",
     "ShortTermBorrowings": "2026-06-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "CVNA": {
@@ -944,7 +1028,12 @@
     "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-06-30",
-    "ConvertibleNotesPayableCurrent": "2021-12-31"
+    "ConvertibleNotesPayableCurrent": "2021-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "DDOG": {
@@ -960,7 +1049,12 @@
     "AmortizationOfIntangibleAssets": "2026-06-30",
     "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-06-30",
-    "ConvertibleNotesPayableCurrent": "2025-12-31"
+    "ConvertibleNotesPayableCurrent": "2025-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30"
    }
   },
   "DOC": {
@@ -979,7 +1073,11 @@
     "SecuredDebt": "2026-06-30",
     "DebtInstrumentCarryingAmount": "2026-06-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2011-12-31"
+    "PreferredStockValue": "2011-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "DTE": {
@@ -1004,7 +1102,14 @@
     "OtherLongTermDebtNoncurrent": "2026-03-31",
     "LongTermDebtFairValue": "2011-12-31",
     "DebtInstrumentFairValue": "2012-03-31",
-    "MinorityInterest": "2026-03-31"
+    "MinorityInterest": "2026-03-31",
+    "StockholdersEquity": "2026-03-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-03-31",
+    "AssetsCurrent": "2026-03-31",
+    "LiabilitiesCurrent": "2026-03-31",
+    "PropertyPlantAndEquipmentNet": "2026-03-31",
+    "Goodwill": "2026-03-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-03-31"
    }
   },
   "DXCM": {
@@ -1024,7 +1129,14 @@
     "LongTermDebt": "2015-09-30",
     "ConvertibleNotesPayableCurrent": "2025-12-31",
     "LongTermDebtFairValue": "2017-06-30",
-    "ConvertibleDebtFairValueDisclosures": "2018-09-30"
+    "ConvertibleDebtFairValueDisclosures": "2018-09-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2024-12-31",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2023-03-31",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "EQIX": {
@@ -1052,7 +1164,14 @@
     "DebtInstrumentCarryingAmount": "2025-12-31",
     "ConvertibleDebtFairValueDisclosures": "2016-12-31",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2022-12-31"
+    "PreferredStockValue": "2022-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2013-09-30"
    }
   },
   "EXPD": {
@@ -1068,7 +1187,14 @@
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "ShortTermInvestments": "2015-12-31",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2025-12-31"
+    "PreferredStockValue": "2025-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2011-12-31"
    }
   },
   "F": {
@@ -1085,7 +1211,13 @@
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-03-31",
     "MarketableSecuritiesCurrent": "2026-03-31",
     "LongTermDebtNoncurrent": "2020-12-31",
-    "MinorityInterest": "2026-03-31"
+    "MinorityInterest": "2026-03-31",
+    "StockholdersEquity": "2026-03-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-03-31",
+    "AssetsCurrent": "2026-03-31",
+    "LiabilitiesCurrent": "2026-03-31",
+    "PropertyPlantAndEquipmentNet": "2025-09-30",
+    "Goodwill": "2025-12-31"
    }
   },
   "FCX": {
@@ -1110,7 +1242,14 @@
     "SeniorLongTermNotes": "2009-09-30",
     "DebtInstrumentCarryingAmount": "2016-09-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2009-03-31"
+    "PreferredStockValue": "2009-03-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2014-12-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2025-12-31"
    }
   },
   "FERG": {
@@ -1132,7 +1271,13 @@
     "LongTermDebt": "2025-12-31",
     "DebtCurrent": "2026-06-30",
     "LongTermDebtCurrent": "2026-06-30",
-    "DebtInstrumentCarryingAmount": "2026-06-30"
+    "DebtInstrumentCarryingAmount": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "GEHC": {
@@ -1153,7 +1298,14 @@
     "LongTermDebtCurrent": "2026-03-31",
     "ShortTermBorrowings": "2026-03-31",
     "DebtInstrumentCarryingAmount": "2026-03-31",
-    "MinorityInterest": "2026-03-31"
+    "MinorityInterest": "2026-03-31",
+    "StockholdersEquity": "2026-03-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-03-31",
+    "AssetsCurrent": "2026-03-31",
+    "LiabilitiesCurrent": "2026-03-31",
+    "PropertyPlantAndEquipmentNet": "2023-12-31",
+    "Goodwill": "2026-03-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-03-31"
    }
   },
   "GM": {
@@ -1171,7 +1323,14 @@
     "MarketableSecuritiesCurrent": "2019-06-30",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-09-30",
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": "2025-12-31",
-    "MinorityInterest": "2026-09-30"
+    "MinorityInterest": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2023-09-30",
+    "Goodwill": "2025-12-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2016-12-31"
    }
   },
   "GRMN": {
@@ -1186,7 +1345,13 @@
     "CashAndCashEquivalentsAtCarryingValue": "2026-03-28",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-03-28",
     "MarketableSecuritiesCurrent": "2015-06-27",
-    "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-03-28"
+    "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-03-28",
+    "StockholdersEquity": "2026-03-28",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2011-03-26",
+    "AssetsCurrent": "2026-03-28",
+    "LiabilitiesCurrent": "2026-03-28",
+    "PropertyPlantAndEquipmentNet": "2026-03-28",
+    "Goodwill": "2026-03-28"
    }
   },
   "HSY": {
@@ -1211,7 +1376,12 @@
     "UnsecuredDebt": "2026-06-30",
     "SecuredDebt": "2026-06-30",
     "DebtInstrumentCarryingAmount": "2026-06-30",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "ISRG": {
@@ -1229,7 +1399,14 @@
     "ShortTermInvestments": "2009-06-30",
     "MarketableSecuritiesCurrent": "2026-09-30",
     "MinorityInterest": "2026-09-30",
-    "PreferredStockValue": "2026-09-30"
+    "PreferredStockValue": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2026-09-30",
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-09-30"
    }
   },
   "KIM": {
@@ -1254,7 +1431,11 @@
     "LongTermDebtFairValue": "2016-03-31",
     "DebtInstrumentFairValue": "2011-09-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2010-12-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2025-12-31"
    }
   },
   "LEN": {
@@ -1274,7 +1455,12 @@
     "DebtLongtermAndShorttermCombinedAmount": "2020-05-31",
     "NotesPayable": "2016-02-29",
     "MinorityInterest": "2026-08-31",
-    "PreferredStockValue": "2026-08-31"
+    "PreferredStockValue": "2026-08-31",
+    "StockholdersEquity": "2026-08-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-08-31",
+    "PropertyPlantAndEquipmentNet": "2025-11-30",
+    "Goodwill": "2025-11-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2014-11-30"
    }
   },
   "LULU": {
@@ -1292,7 +1478,13 @@
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-08-02",
     "ShortTermBorrowings": "2026-08-02",
     "MinorityInterest": "2012-08-31",
-    "PreferredStockValue": "2026-08-02"
+    "PreferredStockValue": "2026-08-02",
+    "StockholdersEquity": "2026-08-02",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2017-04-30",
+    "AssetsCurrent": "2026-08-02",
+    "LiabilitiesCurrent": "2026-08-02",
+    "PropertyPlantAndEquipmentNet": "2026-08-02",
+    "Goodwill": "2026-08-02"
    }
   },
   "MAR": {
@@ -1315,7 +1507,14 @@
     "LongTermDebt": "2026-06-30",
     "LongTermDebtCurrent": "2012-03-23",
     "LongTermDebtAndCapitalLeaseObligationsCurrent": "2026-06-30",
-    "MinorityInterest": "2010-09-10"
+    "MinorityInterest": "2010-09-10",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2022-12-31",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2025-12-31"
    }
   },
   "MKC": {
@@ -1341,7 +1540,14 @@
     "LongTermNotesPayable": "2013-08-31",
     "DebtInstrumentCarryingAmount": "2022-08-31",
     "LongTermDebtFairValue": "2026-08-31",
-    "MinorityInterest": "2026-08-31"
+    "MinorityInterest": "2026-08-31",
+    "StockholdersEquity": "2026-08-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-08-31",
+    "AssetsCurrent": "2026-08-31",
+    "LiabilitiesCurrent": "2026-08-31",
+    "PropertyPlantAndEquipmentNet": "2026-08-31",
+    "Goodwill": "2026-08-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-08-31"
    }
   },
   "MNST": {
@@ -1361,7 +1567,14 @@
     "LongTermDebt": "2025-03-31",
     "LongTermDebtCurrent": "2025-03-31",
     "OtherLongTermDebtNoncurrent": "2025-09-30",
-    "DebtInstrumentCarryingAmount": "2025-03-31"
+    "DebtInstrumentCarryingAmount": "2025-03-31",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2011-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "MPWR": {
@@ -1379,7 +1592,14 @@
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "ShortTermInvestments": "2026-06-30",
     "MarketableSecuritiesCurrent": "2025-09-30",
-    "OtherLongTermDebtNoncurrent": "2013-09-30"
+    "OtherLongTermDebtNoncurrent": "2013-09-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2012-03-31",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "NEE": {
@@ -1398,7 +1618,13 @@
     "CommercialPaper": "2026-03-31",
     "OtherShortTermBorrowings": "2026-03-31",
     "NotesPayableCurrent": "2017-12-31",
-    "MinorityInterest": "2026-03-31"
+    "MinorityInterest": "2026-03-31",
+    "StockholdersEquity": "2026-03-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-03-31",
+    "AssetsCurrent": "2026-03-31",
+    "LiabilitiesCurrent": "2026-03-31",
+    "PropertyPlantAndEquipmentNet": "2026-03-31",
+    "Goodwill": "2026-03-31"
    }
   },
   "NVR": {
@@ -1414,7 +1640,9 @@
     "CashAndCashEquivalentsAtCarryingValue": "2020-12-31",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "LongTermDebt": "2013-12-31",
-    "SeniorNotes": "2012-12-31"
+    "SeniorNotes": "2012-12-31",
+    "StockholdersEquity": "2026-06-30",
+    "Goodwill": "2017-03-31"
    }
   },
   "P": {
@@ -1437,7 +1665,13 @@
     "ConvertibleDebtNoncurrent": "2020-08-02",
     "SeniorLongTermNotes": "2021-01-31",
     "NotesPayable": "2015-01-31",
-    "PreferredStockValue": "2026-08-02"
+    "PreferredStockValue": "2026-08-02",
+    "StockholdersEquity": "2026-08-02",
+    "AssetsCurrent": "2026-08-02",
+    "LiabilitiesCurrent": "2026-08-02",
+    "PropertyPlantAndEquipmentNet": "2026-08-02",
+    "Goodwill": "2026-08-02",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-08-02"
    }
   },
   "PHM": {
@@ -1455,7 +1689,11 @@
     "SeniorNotes": "2026-09-30",
     "NotesPayable": "2026-09-30",
     "DebtInstrumentFairValue": "2021-12-31",
-    "PreferredStockValue": "2024-12-31"
+    "PreferredStockValue": "2024-12-31",
+    "StockholdersEquity": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2025-12-31",
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2024-12-31"
    }
   },
   "PSX": {
@@ -1476,7 +1714,14 @@
     "CommercialPaper": "2019-12-31",
     "DebtLongtermAndShorttermCombinedAmount": "2025-12-31",
     "DebtInstrumentFairValue": "2012-06-30",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2019-09-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "RDDT": {
@@ -1492,7 +1737,13 @@
     "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "REG": {
@@ -1510,7 +1761,11 @@
     "SecuredDebt": "2011-12-31",
     "NotesPayable": "2026-03-31",
     "MinorityInterest": "2026-03-31",
-    "PreferredStockValue": "2026-03-31"
+    "PreferredStockValue": "2026-03-31",
+    "StockholdersEquity": "2026-03-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-03-31",
+    "PropertyPlantAndEquipmentNet": "2026-03-31",
+    "Goodwill": "2026-03-31"
    }
   },
   "RL": {
@@ -1533,7 +1788,14 @@
     "CommercialPaper": "2026-06-27",
     "DebtLongtermAndShorttermCombinedAmount": "2026-03-28",
     "DebtInstrumentCarryingAmount": "2011-07-02",
-    "LongTermDebtFairValue": "2012-06-30"
+    "LongTermDebtFairValue": "2012-06-30",
+    "StockholdersEquity": "2026-06-27",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2011-04-02",
+    "AssetsCurrent": "2026-06-27",
+    "LiabilitiesCurrent": "2026-06-27",
+    "PropertyPlantAndEquipmentNet": "2026-06-27",
+    "Goodwill": "2026-06-27",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-27"
    }
   },
   "ROK": {
@@ -1560,7 +1822,14 @@
     "CommercialPaper": "2020-03-31",
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": "2025-09-30",
     "LongTermDebtFairValue": "2017-09-30",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "STZ": {
@@ -1592,7 +1861,12 @@
     "DebtLongtermAndShorttermCombinedAmount": "2022-09-30",
     "DebtInstrumentCarryingAmount": "2025-12-31",
     "MinorityInterest": "2026-09-30",
-    "PreferredStockValue": "2019-12-31"
+    "PreferredStockValue": "2019-12-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2020-06-30",
+    "Goodwill": "2026-09-30"
    }
   },
   "TKO": {
@@ -1609,7 +1883,14 @@
     "LongTermDebtNoncurrent": "2026-06-30",
     "LongTermDebt": "2026-06-30",
     "LongTermDebtCurrent": "2026-06-30",
-    "DebtInstrumentCarryingAmount": "2026-06-30"
+    "DebtInstrumentCarryingAmount": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "TPL": {
@@ -1625,7 +1906,12 @@
     "AmortizationOfIntangibleAssets": "2026-06-30",
     "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "TT": {
@@ -1652,7 +1938,14 @@
     "CommercialPaper": "2018-12-31",
     "OtherShortTermBorrowings": "2011-03-31",
     "DebtInstrumentFairValue": "2026-06-30",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
    }
   },
   "TXT": {
@@ -1666,7 +1959,10 @@
     "Depreciation": "2012-12-29",
     "AmortizationOfIntangibleAssets": "2026-01-03",
     "CashAndCashEquivalentsAtCarryingValue": "2018-06-30",
-    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-07-04"
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-07-04",
+    "StockholdersEquity": "2026-07-04",
+    "PropertyPlantAndEquipmentNet": "2023-12-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-01-03"
    }
   },
   "VEEV": {
@@ -1683,7 +1979,13 @@
     "CashAndCashEquivalentsAtCarryingValue": "2026-07-31",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-07-31",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2026-07-31",
-    "PaymentsForSoftware": "2026-07-31"
+    "PaymentsForSoftware": "2026-07-31",
+    "StockholdersEquity": "2026-07-31",
+    "AssetsCurrent": "2026-07-31",
+    "LiabilitiesCurrent": "2026-07-31",
+    "PropertyPlantAndEquipmentNet": "2026-07-31",
+    "Goodwill": "2026-07-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2015-10-31"
    }
   },
   "VLO": {
@@ -1711,7 +2013,14 @@
     "PaymentsToAcquireOilAndGasPropertyAndEquipment": "2020-12-31",
     "LongTermDebtFairValue": "2012-03-31",
     "DebtInstrumentFairValue": "2011-12-31",
-    "MinorityInterest": "2026-06-30"
+    "MinorityInterest": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2025-09-30",
+    "Goodwill": "2025-12-31",
+    "IntangibleAssetsNetExcludingGoodwill": "2025-12-31"
    }
   },
   "VTR": {
@@ -1735,7 +2044,10 @@
     "DebtInstrumentCarryingAmount": "2026-06-30",
     "DebtInstrumentFairValue": "2011-09-30",
     "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "Goodwill": "2026-06-30"
    }
   },
   "WEC": {
@@ -1761,7 +2073,14 @@
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": "2018-12-31",
     "DebtInstrumentCarryingAmount": "2025-12-31",
     "DebtInstrumentFairValue": "2014-12-31",
-    "PreferredStockValue": "2026-06-30"
+    "PreferredStockValue": "2026-06-30",
+    "StockholdersEquity": "2017-12-31",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
+    "AssetsCurrent": "2026-06-30",
+    "LiabilitiesCurrent": "2026-06-30",
+    "PropertyPlantAndEquipmentNet": "2026-06-30",
+    "Goodwill": "2026-06-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2015-12-31"
    }
   }
  },
