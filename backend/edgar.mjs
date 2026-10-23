@@ -94,12 +94,19 @@ export const qkeyOf = end => { const d = new Date(Date.parse(end) - 45 * 8640000
 // combinan las etiquetas en el orden de EDGAR_TAGS.eps: un trimestre de una etiqueta posterior solo entra si no hay
 // otro que cierre esa misma fecha (±10 días).
 const DAY_MS = 86400000;
+// Un período anual que aparece en un 10-Q es casi siempre un error de etiquetado de la empresa (FIX cargó en su 10-Q de
+// 2026 el primer trimestre de 2025 con fecha de todo el año): para los períodos de un año manda el 10-K.
+const isK = f => /^10-K/.test(f || "");
+export function betterFact(e, o, annual) {
+  if (annual && isK(e.form) !== isK(o.form)) return isK(e.form);
+  return (e.filed || "") > (o.filed || "");
+}
 function quartersOf(facts, splitFactor) {
   const per = new Map();
   for (const e of facts) {
     if (!e.start || !e.end || !isFinite(e.val)) continue;
-    const k = e.start + "|" + e.end, o = per.get(k);
-    if (!o || (e.filed || "") > (o.filed || "")) per.set(k, { start: e.start, end: e.end, filed: e.filed, val: e.val / splitFactor(e.end, e.filed), s: Date.parse(e.start), t: Date.parse(e.end) });
+    const k = e.start + "|" + e.end, o = per.get(k), annual = (Date.parse(e.end) - Date.parse(e.start)) / DAY_MS > 300;
+    if (!o || betterFact(e, o, annual)) per.set(k, { start: e.start, end: e.end, filed: e.filed, form: e.form, val: e.val / splitFactor(e.end, e.filed), s: Date.parse(e.start), t: Date.parse(e.end) });
   }
   const ps = [...per.values()], days = (a, b) => (b - a) / DAY_MS;
   const out = [];
@@ -179,7 +186,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   // trimestres por período; si falta el cuarto y no hay acumulado de 9 meses, anual menos los otros tres (en US$ se puede restar)
   const ser = arr => {
     const q = quartersOf(arr || [], one);
-    const fy = (arr || []).filter(e => e.start && e.end && isFinite(e.val)).sort((a, b) => (b.filed || "").localeCompare(a.filed || ""));
+    const fy = (arr || []).filter(e => e.start && e.end && isFinite(e.val)).sort((a, b) => (isK(b.form) - isK(a.form)) || (b.filed || "").localeCompare(a.filed || ""));
     for (const e of fy) {
       const s0 = Date.parse(e.start), t = Date.parse(e.end), d = (t - s0) / DAY_MS;
       if (d < 350 || d > 380 || q.some(x => Math.abs(x.t - t) <= TEN)) continue;
@@ -205,9 +212,11 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   }
   const lastT = gaap[gaap.length - 1].date * 1000;
   const reaches = sr => sr.length > 0 && sr[sr.length - 1].t >= lastT - 100 * DAY_MS;
-  const method = reaches(OI) ? "operativo" : (reaches(PRE) ? "impuestos" : null);
+  let method = reaches(OI) ? "operativo" : (reaches(PRE) ? "impuestos" : null), motivo = null;
   if (!method) return { eps: [], method: null };
-  const BASE = method === "operativo" ? OI : PRE;
+  // eléctricas (informan AFUDC): lo de abajo de la línea (AFUDC, créditos de pensiones, intereses ganados) es parte del
+  // negocio regulado, así que la base es el resultado antes de impuestos
+  if (method === "operativo" && reaches(PRE) && AF.some(q => q.t >= lastT - 3 * 365 * DAY_MS)) { method = "impuestos"; motivo = "eléctrica"; }
 
   // armado de la base: qué partidas de abajo de la línea operativa suman (fuera = la empresa las tiene abajo de la línea).
   // Hipótesis: cada una de intereses pagados, ganados y asociadas, adentro o afuera del operativo; se elige la que mejor
@@ -215,7 +224,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   // la cuarta parte del interés.
   let inOI = { ie: false, ii: false, eq: false };
   if (method === "operativo") {
-    const qs = OI.filter(q => at(PT, q.t) !== undefined).slice(-16);
+    const qs = OI.filter(q => at(PT, q.t) !== undefined && q.t >= lastT - 4 * 365 * DAY_MS).slice(-16);
     if (qs.length >= 6) {
       const res = h => median(qs.map(q => Math.abs((at(PT, q.t) - q.eps) - (-(h.ie ? 0 : steady(IE, q.t)) + (h.ii ? 0 : steady(II, q.t)) + (h.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0)))));
       const H = [];
@@ -223,8 +232,16 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
       const def = H[0], best = H.slice(1).sort((a, b) => a.r - b.r)[0];
       const scale = Math.max(median(qs.map(q => Math.abs(steady(IE, q.t)))), median(qs.map(q => Math.abs(steady(II, q.t)))), 1);
       if (best && best.r < 0.4 * def.r && best.r < 0.25 * scale) inOI = { ie: best.ie, ii: best.ii, eq: best.eq };
+      // Lo que queda sin explicar entre el antes de impuestos y el operativo: si es negativo y sistemático (más de 10%
+      // del operativo, mediana de 4 años), hay costos recurrentes abajo de la línea o lo que la empresa etiqueta como
+      // operativo no es el consolidado (DIS informa el de sus segmentos, sin los gastos corporativos): base antes de
+      // impuestos. Si es positivo (ganancias de tenencias, como GOOGL o AMZN), queda afuera, que es lo conservador.
+      const h = inOI, oiMed = median(qs.map(q => Math.abs(q.eps)));
+      const signed = median(qs.map(q => (at(PT, q.t) - q.eps) - (-(h.ie ? 0 : steady(IE, q.t)) + (h.ii ? 0 : steady(II, q.t)) + (h.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0))));
+      if (reaches(PRE) && oiMed > 0 && signed < -0.10 * oiMed) { method = "impuestos"; motivo = "costos recurrentes abajo del operativo"; inOI = { ie: false, ii: false, eq: false }; }
     }
   }
+  const BASE = method === "operativo" ? OI : PRE;
   const baseOf = q => method === "operativo"
     ? q.eps - (inOI.ie ? 0 : steady(IE, q.t)) + (inOI.ii ? 0 : steady(II, q.t)) + (inOI.eq ? 0 : (at(EQ, q.t) || 0)) + (at(AF, q.t) || 0)
     : q.eps;
@@ -258,7 +275,16 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     let best = null; for (const x of cands) if (!best || Math.abs(x.t - t) < Math.abs(best.t - t)) best = x;
     return best && Math.abs(best.t - t) <= 200 * DAY_MS ? best.v : null;
   };
-  // parte de los minoritarios en la ganancia
+  // parte de los minoritarios en la ganancia: de las etiquetas; si no están o dan poco, la que se deduce de
+  // 1 − resultado de los accionistas / (antes de impuestos − impuesto), si es estable (sociedades como BX o TKO, que
+  // informan la parte de los socios con etiquetas propias)
+  const inferredNci = i => {
+    const v = BASE.slice(Math.max(0, i - 7), i + 1).map(x => { const pt = at(PT, x.t), tx = at(TX, x.t), ni = at(NI, x.t);
+      return pt !== undefined && tx !== undefined && ni !== undefined && pt - tx > 0 && ni > 0 ? 1 - ni / (pt - tx) : null; }).filter(r => r != null).sort((a, b) => a - b);
+    if (v.length < 4) return null;
+    const m = median(v), iqr = v[Math.floor(v.length * 0.75)] - v[Math.floor(v.length * 0.25)];
+    return m >= 0.15 && m < 0.95 && iqr <= 0.15 ? m : null;
+  };
   const nciAt = t => {
     const n = nciVal(t); if (n === undefined) return null;
     const pl = at(PL, t) ?? ((at(NI, t) ?? undefined) !== undefined ? at(NI, t) + n : undefined);
@@ -334,7 +360,8 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     adjBases.push(base + addBack);
     if (method === "operativo") { const rv = at(REV, q.t); if (rv > 0) margins.push({ i, t: q.t, end: q.end, m: (q.eps + addBack) / rv }); }
     const nciW = BASE.slice(Math.max(0, i - 7), i + 1).map(x => nciAt(x.t)).filter(r => r != null);
-    const nci = nciW.length ? median(nciW) : 0, pref = at(PREF, q.t) || 0;
+    let nci = nciW.length ? median(nciW) : 0; const inf = inferredNci(i); if (inf != null && inf > nci + 0.10) nci = inf;
+    const pref = at(PREF, q.t) || 0;
     // importes en millones de US$; eps = lo que le restó (o sumó) al EPS contable: neto de impuestos, o entero si no deduce
     if (items.length) adj.push({ fin: q.end, base: +(base / 1e6).toFixed(1), tasa: +tax.toFixed(3),
       items: items.map(x => ({ ...x, cat: CAT_ES[x.cat] || x.cat, pre: +(x.pre / 1e6).toFixed(1),
@@ -355,7 +382,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     const mu = prev.reduce((a, b) => a + b, 0) / prev.length, sd = Math.sqrt(prev.reduce((a, b) => a + (b - mu) ** 2, 0) / prev.length);
     if (Math.abs(x.m - mu) > Math.max(2.5 * sd, 0.04)) flags.push({ fin: x.end, margen: +(x.m * 100).toFixed(1), media: +(mu * 100).toFixed(1) });
   });
-  const armado = method === "operativo" ? { interesesPagadosEnOperativo: inOI.ie, interesesGanadosEnOperativo: inOI.ii, asociadasEnOperativo: inOI.eq, afudc: AF.length > 0 } : null;
+  const armado = method === "operativo" ? { interesesPagadosEnOperativo: inOI.ie, interesesGanadosEnOperativo: inOI.ii, asociadasEnOperativo: inOI.eq, afudc: AF.length > 0 } : (motivo ? { motivo } : null);
   return { eps: out, method, adj, flags, rows, armado, accionesInformadas: !!repOk };
 }
 
