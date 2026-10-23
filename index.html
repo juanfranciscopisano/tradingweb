@@ -228,6 +228,37 @@ td:nth-child(-n+4){text-align:left}
 .pebg-leg-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
 .pebg-leg-line{width:20px;height:2px;border-radius:1px}
 .pebg-note{font-size:12.5px;color:var(--muted)}
+.pebg-norm{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:8px var(--side);font-size:12.5px;color:var(--ink2)}
+.pebg-norm-alert{color:var(--warn);margin-bottom:4px;max-width:120ch;line-height:1.45}
+.pebg-norm-alert b{font-weight:600}
+.pebg-norm summary{cursor:pointer;color:var(--muted);width:max-content;max-width:100%}
+.pebg-norm summary:hover{color:var(--ink)}
+.pebg-norm summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pebg-norm-body{margin-top:8px;overflow-x:auto}
+.pebg-norm-body table{border-collapse:collapse;min-width:640px}
+.pebg-norm-body th{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;padding:0 8px 5px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pebg-norm-body td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pebg-norm-body th:nth-child(-n+2),.pebg-norm-body td:nth-child(-n+2),.pebg-norm-body th:last-child,.pebg-norm-body td:last-child{text-align:left}
+.pebg-norm-body td:last-child{white-space:normal;color:var(--muted);max-width:52ch}
+.pebg-norm-body td.q{color:var(--ink)}
+.pebg-norm-body tr.sep td{border-top:1px solid var(--line2)}
+.pebg-norm-body .tag{font-size:11.5px;color:var(--faint);word-break:break-all}
+.pebg-norm-body a{color:var(--accent)}
+.pebg-norm-p{margin:8px 0 0;color:var(--muted);max-width:120ch;line-height:1.45}
+.pebg-norm-more{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;padding:0;margin-top:6px}
+.dvg{color:var(--warn);font-size:11px;margin-left:4px;cursor:help}
+@media (max-width:640px){
+  .pebg-norm-body table{min-width:0;width:100%}
+  .pebg-norm-body thead{display:none}
+  .pebg-norm-body tr{display:grid;grid-template-columns:1fr auto auto;column-gap:12px;row-gap:2px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .pebg-norm-body tr.sep{border-top:1px solid var(--line2)}
+  .pebg-norm-body tr.sep td{border-top:none}
+  .pebg-norm-body td{border:none;padding:0;text-align:left!important;white-space:normal}
+  .pebg-norm-body td.q{grid-column:1/-1;font-weight:600}
+  .pebg-norm-body td.q:empty{display:none}
+  .pebg-norm-body td:nth-child(3)::after{content:' M'}
+  .pebg-norm-body td:last-child{grid-column:1/-1;max-width:none;font-size:12px}
+}
 
 /* resumen */
 .ov-clock-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:10px var(--side);display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink2)}
@@ -976,6 +1007,10 @@ function checkPwd(){
       <div class="pebg-stat-sub">consenso</div>
     </div>
   </div>
+  <div class="pebg-norm" id="pebgNorm" style="display:none">
+    <div class="pebg-norm-alert" id="pebgNormAlert" role="status"></div>
+    <details id="pebgNormDet"><summary id="pebgNormSum">Ajustes del normalizado</summary><div class="pebg-norm-body" id="pebgNormBody"></div></details>
+  </div>
   <div id="pebgOuter">
     <div id="pebgContainer">
      <div id="pebgMain">
@@ -1629,7 +1664,9 @@ function peCell(r) {
     const q = (r.qSec ? ', último trimestre al ' + r.qSec.split('-').reverse().join('/') : '')
       + (r.fSec === 'sec+yahoo' ? '; los trimestres que la SEC todavía no cargó, de Yahoo' : '');
     if (r.eSec <= 0) return '<td title="EPS de 12 meses (SEC): ' + r.eSec.toFixed(2) + q + '"><span class="na">pérd.</span></td>';
-    return '<td title="Precio / EPS de 12 meses de la SEC (' + r.eSec.toFixed(2) + q + ')">' + fMx(r.pe, 1000) + '</td>';
+    const gN = normGap(r.eSec, r.eNSec);
+    const nTxt = r.eNSec != null ? '. Normalizado: ' + r.eNSec.toFixed(2) + (r.eNSec > 0 && r.price ? ', P/E ' + (r.price / r.eNSec).toFixed(1) + 'x' : '') : '';
+    return '<td title="Precio / EPS de 12 meses de la SEC (' + r.eSec.toFixed(2) + q + ')' + nTxt + '">' + fMx(r.pe, 1000) + dvgMark(gN) + '</td>';
   }
   if (r.peSrc === 'yahoo') return '<td title="Yahoo: la SEC no tiene el EPS trimestral de esta empresa">' + fMx(r.pe, 1000) + '<span class="na">*</span></td>';
   return '<td>' + NA + '</td>';
@@ -2641,8 +2678,8 @@ async function loadCompare() {
 let epsMode = 'gaap';
 try { if (localStorage.getItem('epsMode') === 'norm') epsMode = 'norm'; } catch (e) {}
 const NORM_NOTE = {
-  operativo: ['resultado operativo', 'Resultado operativo menos intereses netos, más resultado de asociadas, a la tasa efectiva típica de los últimos 12 trimestres. Deja afuera cargos puntuales, impuestos extraordinarios y resultados no recurrentes debajo de la línea operativa.'],
-  impuestos: ['antes de impuestos', 'La empresa no informa resultado operativo (bancos, aseguradoras, algunos conglomerados): resultado antes de impuestos a la tasa efectiva típica. Neutraliza impuestos puntuales, no otros cargos extraordinarios.'],
+  operativo: ['operativo sin extraordinarios', 'Resultado operativo menos intereses netos, más resultado de asociadas, sin los extraordinarios (reestructuraciones, deterioros, juicios, costos de adquisiciones y ventas de activos fijos, en lo que exceden su nivel habitual), a la tasa efectiva típica de los últimos 12 trimestres. El detalle está en Ajustes del normalizado, abajo de los números.'],
+  impuestos: ['antes de impuestos sin extraordinarios', 'La empresa no informa resultado operativo (bancos, aseguradoras, algunos conglomerados): resultado antes de impuestos sin los extraordinarios (los mismos más ventas de negocios, tenencias de acciones, cancelación de deuda y ganancias realizadas de inversiones), a la tasa efectiva típica.'],
   ajustado: ['ajustado (Finnhub)', 'EPS ajustado que informa la empresa, vía Finnhub. Solo los últimos 4 trimestres.'],
   ajustado_empresa: ['ajustado por la empresa', 'Resultado ajustado que publica la empresa, cargado a mano desde sus reportes trimestrales.'],
 };
@@ -3044,6 +3081,86 @@ function updEpsNote(d) {
   el.title = d.normNote || n[1];
 }
 
+// ── Contable contra normalizado: alerta si difieren más de 20% y detalle de lo que se ajustó ──
+const NORM_DIVERGE = 0.20;
+let pebgNormAll = false;
+// EPS de 12 meses contable y normalizado sobre los mismos 4 trimestres (los últimos del normalizado)
+function ttmPair(d) {
+  if (!hasNorm(d)) return null;
+  const n = d.epsNorm.slice().sort((a, b) => a.date - b.date).slice(-4), g = d.eps || [];
+  const m = n.map(q => g.find(x => Math.abs(x.date - q.date) <= 10 * 86400));
+  if (m.some(x => !x)) return null;
+  return { g: m.reduce((a, x) => a + x.eps, 0), n: n.reduce((a, x) => a + x.eps, 0), from: n[0].date, to: n[3].date };
+}
+// diferencia del normalizado contra el contable; null si no se puede comparar
+function normGap(g, n) {
+  if (g == null || n == null) return null;
+  if (g > 0 && n > 0) return n / g - 1;
+  return (g > 0) !== (n > 0) ? Infinity : null;
+}
+const fUsd = v => (v < 0 ? '−' : '') + 'US$ ' + Math.abs(v).toFixed(2);
+const fSgn = v => (v >= 0 ? '+' : '−') + 'US$ ' + Math.abs(v).toFixed(2);
+const fMill = v => (v < 0 ? '−' : '') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 0 });
+const fQd = s => s.split('-').reverse().join('/');
+function renderPebgNorm(d) {
+  const box = document.getElementById('pebgNorm'), al = document.getElementById('pebgNormAlert');
+  const det = document.getElementById('pebgNormDet'), sum = document.getElementById('pebgNormSum'), body = document.getElementById('pebgNormBody');
+  if (!box) return;
+  const adj = Array.isArray(d.normAdj) ? d.normAdj : [], flags = Array.isArray(d.normFlags) ? d.normFlags : [];
+  const own = d.normMethod === 'operativo' || d.normMethod === 'impuestos';
+  const t = ttmPair(d), gap = t ? normGap(t.g, t.n) : null;
+  const px = d.currentPrice;
+  // alerta: qué explica la diferencia en los últimos 4 trimestres
+  let alertHtml = '';
+  if (gap != null && Math.abs(gap) > NORM_DIVERGE) {
+    const pe = v => v > 0 && px ? (px / v).toFixed(1) + 'x' : 'pérdida';
+    const inWin = adj.filter(a => { const ts = Date.parse(a.fin + 'T00:00:00Z') / 1000; return ts >= t.from - 10 * 86400 && ts <= t.to + 10 * 86400; });
+    const byCat = new Map();
+    inWin.forEach(a => a.items.forEach(x => { if (x.eps != null) byCat.set(x.cat, (byCat.get(x.cat) || 0) + x.eps); }));
+    const expl = [...byCat.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    const sumExpl = expl.reduce((a, [, v]) => a + v, 0), rest = (t.n - t.g) - sumExpl;
+    const gapTxt = gap === Infinity ? 'uno da ganancia y el otro pérdida' : 'el normalizado da ' + Math.abs(gap * 100).toFixed(0) + '% ' + (gap > 0 ? 'más' : 'menos');
+    let why = '';
+    if (expl.length) why = ' La diferencia sale de ' + expl.map(([c, v]) => c + ' (' + fSgn(v) + ' por acción)').join(', ');
+    if (own && Math.abs(rest) >= 0.05 * Math.abs(t.n - t.g) && Math.abs(rest) >= 0.01)
+      why += (why ? '; el resto, ' : ' La diferencia sale de ') + fSgn(rest) + ' por acción, de impuestos fuera de la tasa habitual y de resultados debajo de la línea operativa (tenencias, diferencias de cambio)';
+    if (!own) why = ' El normalizado es el ajustado que publica la empresa' + (d.normMethod === 'ajustado' ? ' (vía Finnhub)' : '') + ': el detalle de los ajustes está en su reporte.';
+    else if (why) why += '.';
+    alertHtml = '<b>Contable y normalizado difieren:</b> ' + gapTxt + '. EPS de 12 meses ' + fUsd(t.g) + ' contable (P/E ' + pe(t.g) + ') y ' + fUsd(t.n) + ' normalizado (P/E ' + pe(t.n) + ').' + why;
+  }
+  al.innerHTML = alertHtml; al.style.display = alertHtml ? '' : 'none';
+  if (!own || (!adj.length && !flags.length)) {
+    det.style.display = 'none';
+    box.style.display = alertHtml ? '' : 'none';
+    return;
+  }
+  det.style.display = '';
+  const now = Date.now() / 1000, cut = now - 5 * YR_S;
+  const recent = adj.filter(a => Date.parse(a.fin + 'T00:00:00Z') / 1000 >= cut);
+  const shown = (pebgNormAll ? adj : recent).slice().reverse();
+  sum.textContent = 'Ajustes del normalizado: ' + (recent.length ? recent.length + (recent.length === 1 ? ' trimestre' : ' trimestres') + ' con extraordinarios en los últimos 5 años' : 'sin extraordinarios en los últimos 5 años')
+    + (flags.length ? ', ' + flags.length + (flags.length === 1 ? ' margen' : ' márgenes') + ' para revisar' : '');
+  let h = '';
+  if (shown.length) {
+    h += '<table><thead><tr><th>Trimestre</th><th>Partida</th><th>Antes de impuestos, US$ M</th><th>Efecto en el EPS contable</th><th>De dónde sale</th></tr></thead><tbody>';
+    shown.forEach(a => a.items.forEach((x, j) => {
+      const src = x.src === 'manual'
+        ? (x.desc ? x.desc.replace(/</g, '&lt;') + '. ' : '') + (x.fuente ? '<a href="' + x.fuente + '" target="_blank" rel="noopener">10-Q en la SEC</a>' : 'Cargado a mano') + (x.noDeduce ? '. No deduce impuestos' : '')
+        : 'Informado ' + fMill(x.informado) + ', habitual ' + fMill(x.habitual) + ' (mediana de los 12 trimestres previos): se ajusta la diferencia. <span class="tag">' + (x.tag || '') + '</span>';
+      h += '<tr' + (j === 0 ? ' class="sep"' : '') + '><td class="q">' + (j === 0 ? fQd(a.fin) : '') + '</td><td>' + x.cat + '</td><td>' + (x.pre > 0 ? '+' : '') + fMill(x.pre) + '</td><td>'
+        + (x.eps != null ? fSgn(x.eps) : '—') + '</td><td>' + src + '</td></tr>';
+    }));
+    h += '</tbody></table>';
+  } else h += '<p class="pebg-norm-p">Sin extraordinarios en los últimos 5 años.</p>';
+  if (adj.length > recent.length) h += '<button class="pebg-norm-more" onclick="pebgNormAll=!pebgNormAll;renderPebgNorm(pebgData)">' + (pebgNormAll ? 'Ver solo los últimos 5 años' : 'Ver toda la historia (' + adj.length + ' trimestres)') + '</button>';
+  if (flags.length) h += '<p class="pebg-norm-p">Margen operativo fuera de lo habitual sin un extraordinario etiquetado: '
+    + flags.slice().reverse().map(f => fQd(f.fin) + ' (' + f.margen.toFixed(1) + '% contra ' + f.media.toFixed(1) + '% de los 8 trimestres previos)').join(', ')
+    + '. Puede haber un cargo o una ganancia que la empresa no etiqueta en la SEC: conviene leer ese 10-Q.</p>';
+  h += '<p class="pebg-norm-p">Signo: + es un cargo que se suma de vuelta, − una ganancia que se resta. El normalizado vuelve a gravar el resultado limpio a la tasa típica (' + (adj.length ? (adj[adj.length - 1].tasa * 100).toFixed(0) + '% en el último ajuste' : 'mediana de 12 trimestres') + '). <a class="sect-link" onclick="openMetodo(\'eps\')">Criterio completo</a></p>';
+  body.innerHTML = h;
+  box.style.display = '';
+}
+
 // ── Bandas móviles: en cada fecha, la media y el desvío (P/E) o los percentiles (PEG) de los N años previos ──
 const YR_S = 365.25 * 86400;
 let pebgMetric = 'pe';
@@ -3273,6 +3390,7 @@ function renderPebg(data) {
     else { v.textContent = fmtP(px); v.style.color = cols[i]; set('psSub' + id, (peg ? 'PEG ' : 'P/E ') + fmtX(m) + (pxNow > 0 ? ', ' + pctTxt2(px / pxNow - 1) : '')); }
   });
   document.getElementById('pebgStatsBar').style.display = 'flex';
+  renderPebgNorm(data);
 
   // el gráfico muestra más años que la ventana del promedio
   const CHART_YEARS = { 1: 3, 2: 4, 3: 5, 5: 8, 10: 15, 15: 16 };
@@ -4131,9 +4249,28 @@ const METODO = [
         x: 'La fecha de presentación: es más correcta para medir estrategias y queda como cambio pendiente.' },
       { d: 'Si el último trimestre cerró hace más de 200 días, el EPS se considera viejo y no se usa.',
         p: 'En 200 días entra el plazo de presentación del 10-K con margen. Pasado eso, casi siempre se trata de una empresa que cambió de etiqueta o de una presentación que la SEC no cargó, y seguir con el último dato daba P/E absurdos, como el de MNST con el EPS de 2011.' },
-      { d: 'EPS normalizado: resultado operativo, menos intereses pagados, más intereses ganados y resultado de asociadas, a la tasa de impuesto típica de la empresa, dividido por las acciones diluidas.',
-        p: 'Saca lo que mueve el contable sin decir nada del negocio, como los cargos o beneficios impositivos puntuales, las ganancias por tenencias de acciones o las diferencias de cambio. La tasa típica es la mediana de la tasa efectiva de los últimos 12 trimestres, descartando los que quedan fuera de 0 a 45%, y acotada entre 5 y 35%. Bancos y aseguradoras no informan resultado operativo, y en ellos se normaliza solo el impuesto sobre el resultado antes de impuestos.',
-        x: 'El EPS ajustado que publica cada empresa: cada una lo define a su manera, no está en la SEC y Finnhub solo da cuatro trimestres.' },
+      { d: 'EPS normalizado: resultado operativo, menos intereses pagados, más intereses ganados y resultado de asociadas, sin los extraordinarios, a la tasa de impuesto típica de la empresa, dividido por las acciones diluidas.',
+        p: 'Es la ganancia que el negocio genera en un trimestre normal. Quedan afuera los cargos o beneficios impositivos puntuales, las ganancias por tenencias de acciones, las diferencias de cambio y los extraordinarios que se detallan abajo. La tasa típica es la mediana de la tasa efectiva de los últimos 12 trimestres, descartando los que quedan fuera de 0 a 45%, y acotada entre 5 y 35%.',
+        x: 'El EPS ajustado que publica cada empresa: cada una lo define a su manera (muchas sacan también la compensación en acciones), no está en la SEC y Finnhub solo da cuatro trimestres.' },
+      { d: 'Extraordinarios que se sacan: reestructuraciones, deterioros de llave de negocio, intangibles y activos fijos, juicios y contingencias, costos de adquisiciones y resultado por venta de activos fijos. Los cargos se suman de vuelta y las ganancias se restan, en toda la historia.',
+        p: 'Salen de las etiquetas de la SEC (RestructuringCharges, GoodwillImpairmentLoss, AssetImpairmentCharges, LitigationSettlementExpense y otras). Por US GAAP (ASC 350, 360 y 420) estas partidas van dentro del resultado operativo cuando la empresa lo presenta, así que sumarlas de vuelta no cuenta nada dos veces. Las que solo aparecen en el flujo de caja vienen acumuladas en el año y se pasan a trimestres como el EPS.',
+        x: 'Sacar también la amortización de intangibles comprados y la compensación en acciones, como hacen los ajustados de las empresas: la compensación en acciones es un costo de verdad y se deja; la amortización de intangibles se deja para no premiar a quien crece comprando.' },
+      { d: 'Solo se ajusta lo que excede el nivel habitual: el cargo del trimestre menos la mediana de esa partida en los 12 trimestres anteriores, y solo si mueve la base 3% o más.',
+        p: 'Una empresa que reestructura todos los trimestres tiene un costo del negocio, no un extraordinario: si informa 30 M por trimestre y un trimestre 300 M, se suman de vuelta 270 M. El umbral de 3% evita mover el número por partidas que no cambian la lectura.',
+        x: 'Sumar de vuelta todo lo que la empresa etiqueta: premia a las que viven reestructurando.' },
+      { d: 'Si la reestructuración viene en una etiqueta que ya incluye deterioros, los deterioros no se suman aparte.',
+        p: 'Algunas (INTC, por ejemplo) informan los dos juntos en RestructuringSettlementAndImpairmentProvisions y también por separado. Mejor quedarse corto que contar dos veces.' },
+      { d: 'Lo que la SEC no trae etiquetado se carga a mano, con el 10-Q de donde sale: hoy, los juicios de META (FTC en 2019, US$ 3.000 y 2.000 M; cargos por juicios de US$ 2.400 M en el segundo trimestre de 2026 y el acuerdo con los fiscales de los estados, US$ 9.890 M, en el tercero).',
+        p: 'META no usa ninguna etiqueta estándar para esos cargos: sin cargarlos, el normalizado los trataba como gasto operativo y en los últimos 12 meses quedaba alrededor de US$ 4 por acción abajo. Lo cargado a mano reemplaza a la etiqueta de la misma categoría en ese trimestre. Está en backend/data/norm_adj.json.',
+        o: 'La lista a mano cubre los casos revisados; una empresa con un cargo grande sin etiqueta y sin revisar queda con el normalizado bajo. Para eso está la marca de margen raro.' },
+      { d: 'Si el cargo deduce impuestos o no (una multa no deduce) no cambia el normalizado; solo cambia cuánto le restó al EPS contable.',
+        p: 'El normalizado vuelve a gravar el resultado limpio a la tasa típica, así que el cargo entra entero antes de impuestos. Una multa que no deduce sube la tasa efectiva de ese trimestre, y la mediana la descarta.' },
+      { d: 'Margen raro: se marcan los trimestres con un margen operativo, ya ajustado, a más de 2,5 desvíos y más de 4 puntos de la media de los 8 trimestres previos.',
+        p: 'Es la red para lo que no está etiquetado ni cargado a mano: no cambia el número, avisa que conviene leer ese 10-Q.' },
+      { d: 'Contable contra normalizado: si el EPS de 12 meses difiere más de 20%, P/E histórico lo avisa y descompone la diferencia por partida, y Sectores y el screener lo marcan en la empresa.',
+        p: 'Con esa diferencia, cuál de los dos P/E se usa cambia la conclusión. La descomposición muestra cuánto sale de cada extraordinario y cuánto de impuestos fuera de la tasa habitual o de resultados debajo de la línea operativa.' },
+      { d: 'Bancos, aseguradoras y quienes no informan resultado operativo: resultado antes de impuestos, sin los mismos extraordinarios y además sin ventas de negocios, tenencias de acciones a valor de mercado, cancelación de deuda y ganancias realizadas de inversiones (por lo que exceden lo habitual).',
+        p: 'Sin el subtotal operativo, esas partidas quedan dentro de la base y hay que sacarlas una por una. En una aseguradora las ganancias realizadas son parte del negocio: por eso también acá cuenta solo el exceso sobre la mediana.' },
       { d: 'Antes de 2008, cuando no había XBRL, el EPS está cargado a mano desde los 10-K originales para AAPL, MSFT, NVDA, ORCL, AMZN, GOOGL y MELI.',
         p: 'Se copió tal como se publicó, con la fecha de presentación, y se ajusta por los splits posteriores. Solo se agrega si empalma con el primer trimestre de la SEC. En modo normalizado esos años quedan en contable, porque no hay con qué normalizarlos.',
         o: 'MSFT y ORCL 1996-97 usan EPS primario (la regla anterior a 1997), algo más alto que el diluido. ORCL 2000 incluye la venta de parte de Oracle Japan. MELI 2007 tiene las acciones de antes de salir a la bolsa. AAPL muestra un escalón chico en 2008, donde se junta con datos que Apple reexpresó después.' },
@@ -4369,6 +4506,12 @@ function groupMembers(key) {
 function setSectCoSort(k) { if (sectCoSort.k === k) sectCoSort.dir = -sectCoSort.dir; else sectCoSort = { k, dir: k === 'sym' ? 1 : (k === 'w' || k === 'es') ? -1 : 1 }; renderSectCo(); }
 function openPebgFor(sym) { document.getElementById('pebgSym').value = sym; const was = pebgLoaded; switchTab('pebg'); if (was) loadPebg(); }
 // empresas del grupo elegido: peso, P/E de cada una y cuánto aporta a las ganancias del grupo
+// marca en el P/E normalizado cuando difiere del contable más de 20%
+function dvgMark(gap) {
+  if (gap == null || Math.abs(gap) <= NORM_DIVERGE) return '';
+  const t = gap === Infinity ? 'Uno da ganancia y el otro pérdida' : 'El EPS normalizado da ' + Math.abs(gap * 100).toFixed(0) + '% ' + (gap > 0 ? 'más' : 'menos') + ' que el contable';
+  return '<span class="dvg" title="' + t + ': hay extraordinarios o impuestos fuera de lo habitual. En P/E histórico, Ajustes del normalizado muestra cuáles.">' + (gap === Infinity ? '±' : (gap > 0 ? '+' : '−') + Math.abs(gap * 100).toFixed(0) + '%') + '</span>';
+}
 function renderSectCo() {
   const box = document.getElementById('sectCo'), title = document.getElementById('sectCoTitle'), note = document.getElementById('sectCoNote');
   if (!box || !MULT) return;
@@ -4383,7 +4526,7 @@ function renderSectCo() {
     const fpe = f && f.fpe > 0 ? (f.p > 0 && px ? f.fpe * px / f.p : f.fpe) : null;
     return { sym, name: (f && f.n) || info.n || sym, cap, earn,
       pe: d && d[0] > 0 && px ? px / d[0] : null, peNeg: !!(d && d[0] <= 0),
-      peN: d && d[1] > 0 && px ? px / d[1] : null, fpe };
+      peN: d && d[1] > 0 && px ? px / d[1] : null, fpe, gap: d ? normGap(d[0], d[1]) : null };
   });
   const capT = rows.reduce((a, r) => a + (r.cap || 0), 0), earnT = rows.reduce((a, r) => a + (r.earn != null ? r.earn : 0), 0);
   rows.forEach(r => { r.w = capT > 0 && r.cap ? r.cap / capT : null; r.es = earnT > 0 && r.earn != null ? r.earn / earnT : null; });
@@ -4399,7 +4542,7 @@ function renderSectCo() {
   const th = COLS.map(([c, l], i) => `<th class="srt${k === c ? ' on' : ''}" tabindex="0" onclick="setSectCoSort('${c}')" onkeydown="if(event.key==='Enter')setSectCoSort('${c}')"${k === c ? ` aria-sort="${dir > 0 ? 'ascending' : 'descending'}"` : ''}>${l}${k === c ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
   box.innerHTML = `<table class="ov-tbl sect-co"><thead><tr>${th}</tr></thead><tbody>` + rows.map(r =>
     `<tr onclick="openPebgFor('${r.sym}')" title="Abrir ${r.sym} en P/E histórico"><td>${r.sym}<span class="sect-nm">${r.name.replace(/</g, '&lt;')}</span></td><td>${pc(r.w)}</td>`
-    + `<td>${r.peNeg ? '<span class="na">pérd.</span>' : f1(r.pe)}</td><td>${f1(r.peN)}</td><td>${f1(r.fpe)}</td><td>${pc(r.es)}</td></tr>`).join('') + '</tbody></table>';
+    + `<td>${r.peNeg ? '<span class="na">pérd.</span>' : f1(r.pe)}</td><td>${f1(r.peN)}${dvgMark(r.gap)}</td><td>${f1(r.fpe)}</td><td>${pc(r.es)}</td></tr>`).join('') + '</tbody></table>';
   title.innerHTML = 'Empresas de ' + multName(key) + ' <span>' + mem.length + (mem.length === 1 ? ' empresa' : ' empresas') + '</span>';
   note.textContent = 'Peso por capitalización. P/E con el precio y el EPS de la SEC al cierre del ' + (SEC_EPS_AS_OF || MULT.asOf).split('-').reverse().join('/')
     + ', los mismos que arman el P/E del grupo; "% de las ganancias" es la parte de la ganancia ' + (norm ? 'normalizada' : 'contable') + ' del grupo que pone cada una (las pérdidas restan). Clic en una empresa abre su P/E histórico.';

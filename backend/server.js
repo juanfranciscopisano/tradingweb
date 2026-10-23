@@ -235,7 +235,8 @@ async function edgarEPS(sym, splits = []) {
   const f = makeSplitFactor(splits);
   const gaap = gaapQuarterly(raw, f, sym);
   const n = normalizedQuarterly(raw, f, gaap, sym);
-  return { gaap, norm: n.eps, normMethod: n.method };
+  console.log(`pebg ${sym}: normalizado (${n.method}) ${n.eps.length} trimestres, ${(n.adj || []).length} con ajustes, ${(n.flags || []).length} márgenes raros`);
+  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [] };
 }
 
 // ---------------------------------------------------------------- EPS cargado a mano
@@ -601,6 +602,9 @@ app.get("/api/pebg", async (req, res) => {
         epsNorm: normMethod ? epsNorm.map(e => ({ date: e.date, eps: e.eps })) : [],
         normMethod,
         normNote,
+        // extraordinarios sacados del normalizado (trimestre, partida, millones de US$ antes de impuestos, efecto por acción)
+        normAdj: normMethod && !manual ? (edgarAll.normAdj || []) : [],
+        normFlags: normMethod && !manual ? (edgarAll.normFlags || []) : [],
         histNote,
         epsCount: eps.length,
         epsSource: source,

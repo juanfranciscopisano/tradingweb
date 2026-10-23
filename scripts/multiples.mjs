@@ -133,7 +133,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0,
       lastQ: fl.q[fl.q.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
   }
-  const norm = normalizedQuarterly(raw, f, gaap, "").eps;
+  const normFull = normalizedQuarterly(raw, f, gaap, sym), norm = normFull.eps;
   const sh = sharesQuarterly(raw, f, gaap);
   const fl = fillGaps(gaap, extra);
   // hueco en los últimos dos años (un trimestre que no se pudo derivar): se busca en Yahoo

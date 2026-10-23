@@ -1,0 +1,9 @@
+{
+  "_nota": "Extraordinarios que la SEC no trae etiquetados. Importes en millones de US$, antes de impuestos. deducible:false = no reduce el impuesto (multas): no cambia el normalizado (se vuelve a gravar el resultado limpio a la tasa típica), solo el efecto que se muestra sobre el EPS contable. cat: lit (juicios), restr, imp, acq. fin: cierre del trimestre. Reemplaza a la etiqueta de la misma categoría en ese trimestre.",
+  "META": [
+    { "fin": "2019-03-31", "cat": "lit", "pre": 3000, "deducible": false, "desc": "Previsión por la investigación de la FTC (privacidad)", "fuente": "https://www.sec.gov/Archives/edgar/data/1326801/000132680119000037/fb-03312019x10q.htm" },
+    { "fin": "2019-06-30", "cat": "lit", "pre": 2000, "deducible": false, "desc": "Multa de la FTC: US$ 2.000 M adicionales (US$ 5.000 M en total)", "fuente": "https://www.sec.gov/Archives/edgar/data/1326801/000132680119000055/fb-06302019x10q.htm" },
+    { "fin": "2026-06-30", "cat": "lit", "pre": 2400, "deducible": true, "desc": "Cargos por juicios (legal proceedings)", "fuente": "https://www.sec.gov/Archives/edgar/data/1326801/000162828026050705/meta-20260630.htm" },
+    { "fin": "2026-09-30", "cat": "lit", "pre": 9890, "deducible": true, "desc": "Acuerdo con los fiscales generales de los estados", "fuente": "https://www.sec.gov/Archives/edgar/data/1326801/000162828026066773/meta-20260930.htm" }
+  ]
+}
