@@ -250,6 +250,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-norm-more{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;padding:0;margin-top:6px}
 .dvg{color:var(--warn);font-size:11px;margin-left:4px;cursor:help}
 .sect-rev-btn{float:right;font-size:12px;padding:3px 9px;margin-top:-3px;margin-left:6px}
+.ct-al{white-space:normal!important;min-width:180px;max-width:260px;font-size:12px;text-align:left!important}
 @media (max-width:640px){
   .pebg-norm-body table{min-width:0;width:100%}
   .pebg-norm-body thead{display:none}
@@ -779,6 +780,7 @@ function checkPwd(){
     </select>
     <button class="btn btn-ghost" onclick="toggleFilters()">Filtros</button>
     <button class="btn btn-ghost cd-btn" aria-pressed="false" onclick="toggleCD()" title="Columnas opcionales de la SEC: P/FCF, P/(FCF − compensación en acciones), inversión sobre flujo operativo, EV/EBIT y deuda neta / EBITDA">Caja y deuda</button>
+    <button class="btn btn-ghost q-btn" aria-pressed="false" onclick="toggleQual()" title="Columnas opcionales de la SEC: crecimiento de ventas, margen operativo, ROIC y acciones, con su cambio en un año">Calidad</button>
     <button class="btn btn-ghost" id="revBtn" aria-pressed="false" onclick="toggleScrRev()" title="Columnas opcionales: cómo cambió el EPS esperado de los próximos 12 meses en 1 y 3 meses, y cuántos analistas lo subieron o bajaron en 30 días">Revisiones del EPS</button>
     <button class="btn" id="rfBtn" onclick="loadData()">Actualizar</button>
     <div class="cs"></div>
@@ -888,6 +890,7 @@ function checkPwd(){
       <span class="pebg-period" data-w="10" onclick="setCarteraWin(10)">10A</span>
     </div>
     <button class="btn btn-ghost cd-btn" aria-pressed="false" onclick="toggleCD()" title="Columnas opcionales de la SEC: P/FCF, EV/EBIT y deuda neta / EBITDA">Caja y deuda</button>
+    <button class="btn btn-ghost q-btn" aria-pressed="false" onclick="toggleQual()" title="Columnas opcionales de la SEC: ROIC, cambio del margen, crecimiento de ventas y alertas de deterioro">Calidad</button>
     <button class="btn" onclick="loadCartera(true)">Actualizar</button>
     <span id="carteraStatus" class="pebg-note"></span>
     <div class="cs"></div>
@@ -1603,6 +1606,69 @@ const CD_COLS = [
   { k: 'ndE', l: 'Deuda neta / EBITDA', s: true, t: 'Deuda financiera menos caja, sobre EBITDA (EBIT ajustado + amortizaciones). Negativo: caja neta' },
 ];
 
+// Calidad: calidad.json (millones, SEC). Ventas, margen operativo ajustado, ROIC y acciones, hoy contra hace un año.
+let QUAL = null, qualPromise = null;
+function loadQual() {
+  if (!qualPromise) qualPromise = fetch('calidad.json?d=' + new Date().toISOString().slice(0, 10), { cache: 'no-cache' })
+    .then(r => r.ok ? r.json() : null).then(j => { QUAL = (j && j.data) || {}; if (!j) qualPromise = null; return QUAL; })
+    .catch(() => { QUAL = {}; qualPromise = null; return QUAL; });
+  return qualPromise;
+}
+const Q_KEYS = ['rev0', 'rev1', 'rev3', 'ebit0', 'ebit1', 'nopat0', 'nopat1', 'ic0', 'ic1', 'sh0', 'sh1', 'fin'];
+function qMetrics(sym, own) {
+  if (isFinancial(sym)) return { fin: true };
+  const a = !own && QUAL && QUAL[sym];
+  const d = own || (a ? Object.fromEntries(Q_KEYS.map((k, i) => [k, a[i]])) : null);
+  if (!d || !(d.rev0 > 0)) return null;
+  const r = (x, y) => x != null && y > 0 ? x / y : null;
+  const m = r(d.ebit0, d.rev0), m1 = r(d.ebit1, d.rev1), roic = r(d.nopat0, d.ic0), roic1 = r(d.nopat1, d.ic1);
+  return { d, g1: d.rev1 > 0 ? d.rev0 / d.rev1 - 1 : null, g3: d.rev3 > 0 ? Math.pow(d.rev0 / d.rev3, 1 / 3) - 1 : null,
+    m, m1, dm: m != null && m1 != null ? m - m1 : null, roic, roic1, droic: roic != null && roic1 != null ? roic - roic1 : null,
+    shChg: d.sh0 > 0 && d.sh1 > 0 ? d.sh0 / d.sh1 - 1 : null };
+}
+const fGrow = v => v == null || !isFinite(v) ? NA : '<span class="' + (v > 0.0005 ? 'pp' : v < -0.0005 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(1) + '%</span>';
+const fLvl = v => v == null || !isFinite(v) ? NA : (v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(Math.abs(v) >= 1 ? 0 : 1) + '%';
+const fBps = v => v == null || !isFinite(v) ? NA : '<span class="' + (v > 0.00005 ? 'pp' : v < -0.00005 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.round(Math.abs(v) * 10000) + ' bps</span>';
+// acciones: subir es diluir (rojo), bajar es recomprar (verde)
+const fSh = v => v == null || !isFinite(v) ? NA : '<span class="' + (v < -0.0005 ? 'pp' : v > 0.0005 ? 'pn' : '') + '">' + (v > 0 ? '+' : v < 0 ? '−' : '') + (Math.abs(v) * 100).toFixed(1) + '%</span>';
+let qOn = false;
+try { qOn = localStorage.getItem('qOn') === '1'; } catch (e) {}
+function toggleQual() {
+  qOn = !qOn;
+  try { localStorage.setItem('qOn', qOn ? '1' : '0'); } catch (e) {}
+  document.querySelectorAll('.q-btn').forEach(b => b.setAttribute('aria-pressed', qOn));
+  if (!qOn && Q_COLS.some(c => c.k === sKey)) { sKey = 'marketCap'; sDir = -1; }
+  loadQual().then(() => {
+    if (typeof render === 'function' && rows.length) render();
+    if (MULT && document.getElementById('tab-sect').classList.contains('active')) renderSectCo();
+    if (Object.keys(carteraRaw).length) buildCartera();
+  });
+}
+const Q_TIP_FIN = 'No aplica a bancos y aseguradoras: sus ventas y su capital no se miden igual';
+const Q_COLS = [
+  { k: 'qg1', l: 'Ventas 1A', s: true, f: fGrow, t: 'Crecimiento de las ventas de 12 meses contra las de hace un año (SEC)' },
+  { k: 'qg3', l: 'Ventas 3A', s: true, f: fGrow, t: 'Crecimiento anual compuesto de las ventas en 3 años' },
+  { k: 'qm', l: 'Margen op.', s: true, f: fLvl, t: 'EBIT ajustado (sin extraordinarios) / ventas, 12 meses' },
+  { k: 'qdm', l: 'Δ margen 1A', s: true, f: fBps, t: 'Cambio del margen operativo contra hace un año' },
+  { k: 'qroic', l: 'ROIC', s: true, f: fLvl, t: 'EBIT ajustado × (1 − tasa típica) / capital invertido promedio del año (capital de trabajo sin caja ni deuda + activo fijo + llave + intangibles)' },
+  { k: 'qdroic', l: 'Δ ROIC 1A', s: true, f: fBps, t: 'Cambio del ROIC contra hace un año' },
+  { k: 'qsh', l: 'Acciones 1A', s: true, f: fSh, t: 'Cambio de las acciones diluidas en un año: negativo es recompra, positivo es dilución' },
+];
+function qRow(sym) { const m = qMetrics(sym); if (!m) return {}; if (m.fin) return { qFin: true };
+  return { qg1: m.g1, qg3: m.g3, qm: m.m, qdm: m.dm, qroic: m.roic, qdroic: m.droic, qsh: m.shChg,
+    qTip: 'Al ' + m.d.fin.split('-').reverse().join('/') + ' (US$ M): ventas ' + Math.round(m.d.rev0) + (m.d.rev1 ? ' (hace un año ' + Math.round(m.d.rev1) + ')' : '') + (m.d.ebit0 != null ? ', EBIT ajustado ' + Math.round(m.d.ebit0) : '') + (m.d.nopat0 != null ? ', NOPAT ' + Math.round(m.d.nopat0) : '') + (m.d.ic0 != null ? ', capital invertido ' + Math.round(m.d.ic0) : '') }; }
+// deterioro que conviene mirar antes de comprar algo barato
+function qAlerts(m, rev3m) {
+  if (!m || m.fin) return [];
+  const a = [];
+  if (m.g1 != null && m.g1 < 0) a.push('ventas ' + revTxt(m.g1));
+  if (m.dm != null && m.dm <= -0.02) a.push('margen −' + Math.round(-m.dm * 10000) + ' bps');
+  if (m.droic != null && m.droic <= -0.03) a.push('ROIC −' + Math.round(-m.droic * 10000) + ' bps');
+  if (m.shChg != null && m.shChg >= 0.02) a.push('dilución ' + revTxt(m.shChg));
+  if (rev3m != null && rev3m <= -0.05) a.push('EPS esperado ' + revTxt(rev3m) + ' en 3M');
+  return a;
+}
+
 // Ratios del día reescalados con el precio en vivo: ratio x precio actual / precio de referencia.
 function fundFor(sym, livePrice) {
   const f = FUND && FUND[sym];
@@ -1648,7 +1714,7 @@ async function loadData() {
   document.getElementById('pFill').style.width='0%';
   document.getElementById('tWrap').innerHTML='<div class="sc"><div class="spin"></div><div class="sm" id="loadMsg">Conectando...</div></div>';
   pp(2,'Conectando con backend...');
-  const fundP = loadFund(), secP = loadSecEps(), revP = loadRev(), cdP = loadCD(), spxP = loadSpx();
+  const fundP = loadFund(), secP = loadSecEps(), revP = loadRev(), cdP = loadCD(), spxP = loadSpx(), qP = loadQual();
   let connOk=false, connMsg='';
   for(let a=0;a<3;a++) {
     try{
@@ -1679,7 +1745,7 @@ async function loadData() {
   }
   if(!Object.keys(qM).length){ showErr('Sin datos','El backend respondió vacío. Intentá en unos minutos.'); btn.disabled=false; return; }
   pp(97,'Fundamentals...');
-  await fundP; await secP; await revP; await cdP; await spxP;
+  await fundP; await secP; await revP; await cdP; await spxP; await qP;
   for(const sym of tks) {
     const q=qM[sym]; if(!q) continue;
     const sp=spM[sym], c=sp?.closes||[], ts=sp?.timestamps||[];
@@ -1693,7 +1759,7 @@ async function loadData() {
       marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, eNSec:se?se[1]:null, shSec:se?se[2]:null, qSec:se?se[3]:null, fSec:se?se[5]:null,
       fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
       ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252),
-      rev1m:revOf(sym,'1m'), rev3m:revOf(sym,'3m'), revBr:revBreadth(sym), ...cdRow(sym, px)});
+      rev1m:revOf(sym,'1m'), rev3m:revOf(sym,'3m'), revBr:revBreadth(sym), ...cdRow(sym, px), ...qRow(sym)});
   }
   document.getElementById('pWrap').style.display='none';
   sv('lastUpd', new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}));
@@ -1784,7 +1850,7 @@ const REV_COLS = [
   { k: 'rev3m', l: 'Rev. EPS 3M', s: true, f: fRev, t: 'Cambio del EPS esperado de los próximos 12 meses (consenso) en los últimos 3 meses' },
   { k: 'revBr', l: 'Analistas 30d', s: true, t: 'Analistas que subieron y que bajaron su estimación del próximo ejercicio en 30 días' },
 ];
-function scrCols() { const i = COLS.findIndex(c => c.k === 'fwdPE') + 1; return [...COLS.slice(0, i), ...(scrRev ? REV_COLS : []), ...(cdOn ? CD_COLS : []), ...COLS.slice(i)]; }
+function scrCols() { const i = COLS.findIndex(c => c.k === 'fwdPE') + 1; return [...COLS.slice(0, i), ...(scrRev ? REV_COLS : []), ...(cdOn ? CD_COLS : []), ...(qOn ? Q_COLS : []), ...COLS.slice(i)]; }
 // campos de caja y deuda de una fila (null si no hay dato; cdFin si es financiera)
 function cdRow(sym, px) { const m = cdMetrics(sym, px); if (!m) return { pfcf: null, pfcfS: null, capexOcf: null, evEbit: null, ndE: null }; if (m.fin) return { cdFin: true, pfcf: null, pfcfS: null, capexOcf: null, evEbit: null, ndE: null };
   return { pfcf: m.pfcf, pfcfS: m.pfcfS, capexOcf: m.capexOcf, evEbit: m.evEbit, ndE: m.ndE, cdStale: m.stale, cdTip: (m.stale ? 'Flujos viejos: la SEC no tiene el último 10-Q. ' : '') + 'Flujos de 12 meses al ' + m.d.fin.split('-').reverse().join('/') + ', balance al ' + (m.d.bal || '').split('-').reverse().join('/') + ' (US$ M): flujo operativo ' + Math.round(m.d.ocf) + (m.d.capex != null ? ', inversión ' + Math.round(m.d.capex) + ', FCF ' + Math.round(m.fcf) : ', sin la inversión en la SEC') + (m.d.sbc != null ? ', compensación en acciones ' + Math.round(m.d.sbc) : '') + (m.d.ebit != null ? ', EBIT ajustado ' + Math.round(m.d.ebit) : '') + (m.d.debt != null ? ', deuda ' + Math.round(m.d.debt) : '') + ', caja ' + Math.round(m.d.cash || 0) + (m.ev != null ? ', EV ' + Math.round(m.ev) : '') + (m.d.notas ? '. Ojo: ' + m.d.notas : '') }; }
@@ -1798,14 +1864,14 @@ function toggleScrRev() {
 const scrVal = (r, k) => k === 'revBr' ? (r.revBr ? r.revBr.v : null) : r[k];
 function render() {
   const COLS = scrCols();
-  { const b = document.getElementById('revBtn'); if (b) b.setAttribute('aria-pressed', scrRev); document.querySelectorAll('.cd-btn').forEach(b => b.setAttribute('aria-pressed', cdOn)); }
+  { const b = document.getElementById('revBtn'); if (b) b.setAttribute('aria-pressed', scrRev); document.querySelectorAll('.cd-btn').forEach(b => b.setAttribute('aria-pressed', cdOn)); document.querySelectorAll('.q-btn').forEach(b => b.setAttribute('aria-pressed', qOn)); }
   const filt=getF();
   const sorted=[...filt].sort((a,b)=>{ if(sKey==='_r')return 0; const va=scrVal(a,sKey),vb=scrVal(b,sKey); if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return-1; if(typeof va==='string')return sDir*va.localeCompare(vb); return sDir*(va-vb); });
   sv('rCnt', sorted.length+' / '+TKS.length+' acciones');
   if(!sorted.length){ document.getElementById('tWrap').innerHTML=rows.length===0?'<div class="sc"><div class="sm">Sin datos</div></div>':'<div class="sc"><div class="sm">Sin resultados para el filtro</div></div>'; return; }
   const th=COLS.map(c=>{ const act=sKey===c.k?' active':''; const arr=c.s?'<span class="sa">'+(sKey===c.k?(sDir===-1?'&#9660;':'&#9650;'):'&#8645;')+'</span>':''; const clk=c.s?' onclick="ss(\''+c.k+'\')"':''; return '<th class="'+act+'"'+clk+(c.t?' title="'+c.t+'"':'')+'>'+c.l+arr+'</th>'; }).join('');
   const trs=sorted.map((row,i)=>{
-    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
+    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'qg1':case'qg3':case'qm':case'qdm':case'qroic':case'qdroic':case'qsh':{ return '<td title="'+(row.qFin?Q_TIP_FIN:(row.qTip||'Sin ventas de 12 meses en la SEC'))+'">'+(row.qFin?'<span class="na">n/a</span>':c.f(row[c.k]))+'</td>'; } case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
     const sym=row.symbol, nm=row.name.replace(/\\/g,'').replace(/'/g,'&#39;');
     return '<tr onclick="openChart(\''+sym+'\',\''+nm+'\')">'+cells+'</tr>';
   }).join('');
@@ -2950,8 +3016,9 @@ async function loadCartera(force) {
     document.getElementById('carteraTbody').innerHTML =
       `<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Cargando 0/${todo.length}...</td></tr>`;
   }
-  await Promise.all([loadFund(), loadSecEps(), loadMultiples(), loadCD(), loadSpx(), loadRev()]);
+  await Promise.all([loadFund(), loadSecEps(), loadMultiples(), loadCD(), loadSpx(), loadRev(), loadQual()]);
   document.querySelectorAll('.cd-btn').forEach(b => b.setAttribute('aria-pressed', cdOn));
+  document.querySelectorAll('.q-btn').forEach(b => b.setAttribute('aria-pressed', qOn));
   let done = 0;
   await Promise.allSettled(todo.map(sym =>
     fetch(BASE_URL + '/api/pebg?symbol=' + sym + '&years=' + yrs)
@@ -3002,6 +3069,8 @@ function carteraRow(sym, data) {
     normFallback: epsMode === 'norm' && !hasNorm(data),
     ...(() => { const m = cdMetrics(sym, data.currentPrice || last.close, data.cajaDeuda || null);
       return m && !m.fin ? { pfcf: m.pfcf, evEbit: m.evEbit, ndE: m.ndE, cdFin: false } : { pfcf: null, evEbit: null, ndE: null, cdFin: !!(m && m.fin) }; })(),
+    ...(() => { const q = qMetrics(sym, data.calidad || null), al = qAlerts(q, revOf(sym, '3m'));
+      return q && !q.fin ? { qroic: q.roic, qdm: q.dm, qg1: q.g1, qAl: al, qAlN: al.length, qFin: false } : { qroic: null, qdm: null, qg1: null, qAl: al, qAlN: al.length, qFin: !!(q && q.fin) }; })(),
   };
 }
 
@@ -3056,6 +3125,7 @@ function renderCarteraTable() {
     + `<th id="thPEMode" onclick="toggleCarteraPE()" style="cursor:pointer;user-select:none;width:120px;min-width:120px;max-width:120px;white-space:nowrap">${carteraPEMode === 'anual' ? 'P/E anualizado' : 'Fw P/E'} <span style="color:var(--accent)">&#9662;</span></th>`
     + `<th id="thVarMode" onclick="sortCartera(carteraPEMode==='fwd'?'varFwd':'varAnual')" style="width:110px;min-width:110px;max-width:110px;white-space:nowrap">${carteraPEMode === 'anual' ? 'Var. anual. @ μ' : 'Var. fw @ μ'}</th>`
     + (cdOn ? th('pfcf', 'P/FCF', ' title="Capitalización / flujo de caja libre de 12 meses (SEC)"') + th('evEbit', 'EV/EBIT', ' title="Valor de la empresa / EBIT ajustado de 12 meses"') + th('ndE', 'Deuda neta / EBITDA', ' title="Negativo: caja neta"') : '')
+    + (qOn ? th('qroic', 'ROIC', ' title="EBIT ajustado después de impuestos / capital invertido"') + th('qdm', 'Δ margen 1A', ' title="Cambio del margen operativo en un año"') + th('qg1', 'Ventas 1A') + th('qAlN', 'Alertas', ' title="Deterioro para mirar antes de comprar algo barato: ventas que caen, margen −200 bps o más, ROIC −300 bps o más, dilución de 2% o más, EPS esperado −5% o más en 3 meses"') : '')
     + th('price', 'Precio') + (own ? '<th></th>' : '') + '</tr>';
   const fmtPE = v => v != null ? v.toFixed(1) + 'x' : '—';
   const fmtP = v => '$' + v.toFixed(2);
@@ -3085,6 +3155,8 @@ function renderCarteraTable() {
       <td style="color:var(--muted)">${carteraPEMode === 'fwd' ? fmtPE(d.forwardPE) : fmtPE(d.peAnual)}</td>
       <td class="${vAlt != null ? (vAlt >= 0 ? 'pp' : 'pn') : ''}">${pct(vAlt)}</td>
       ${cdOn ? (d.cdFin ? `<td title="${CD_TIP_FIN}"><span class="na">n/a</span></td>`.repeat(3) : `<td>${fMult(d.pfcf)}</td><td>${fMult(d.evEbit)}</td><td>${fND(d.ndE)}</td>`) : ''}
+      ${qOn ? (d.qFin ? `<td title="${Q_TIP_FIN}"><span class="na">n/a</span></td>`.repeat(3) : `<td>${fLvl(d.qroic)}</td><td>${fBps(d.qdm)}</td><td>${fGrow(d.qg1)}</td>`)
+        + `<td class="ct-al">${d.qAl.length ? '<span class="pn">' + d.qAl.join('; ') + '</span>' : '<span class="na">—</span>'}</td>` : ''}
       <td style="color:var(--ink)">${fmtP(d.price)}</td>
       ${own ? `<td><button type="button" class="ct-del" onclick="removeCarteraTicker('${d.ticker}')" title="Sacar ${d.ticker} de la lista" aria-label="Sacar ${d.ticker}">×</button></td>` : ''}
     </tr>`;
@@ -4538,6 +4610,27 @@ const METODO = [
         p: 'En un banco la deuda es la materia prima del negocio y el flujo operativo se mueve con los préstamos y depósitos: EV, FCF y deuda neta no tienen sentido.' },
     ] },
 
+  { id: 'calidad', t: 'Calidad del negocio (opcional)',
+    i: 'Botón "Calidad" en el screener, en las empresas de Sectores y en Cartera. Las bandas dicen si algo está barato contra su historia; esto dice si el negocio sigue siendo el mismo. Un P/E bajo con el ROIC y el margen cayendo es la forma típica de una trampa de valor.',
+    items: [
+      { d: 'Crecimiento de ventas: las de 12 meses contra las de hace un año, y el crecimiento anual compuesto de 3 años.',
+        p: 'Las ventas son lo más difícil de maquillar y lo primero que se frena cuando un negocio pierde posición.' },
+      { d: 'Margen operativo: EBIT ajustado (sin extraordinarios, el mismo del normalizado) / ventas, de 12 meses, y su cambio contra hace un año en bps.',
+        p: 'Con el ajustado, una reestructuración no se confunde con una caída del margen.' },
+      { d: 'ROIC = EBIT ajustado × (1 − tasa típica) / capital invertido promedio del año.',
+        p: 'Mide cuánto rinde el capital que el negocio necesita para funcionar. Un ROIC alto y estable justifica un múltiplo alto; uno que cae explica por qué el múltiplo baja y avisa que la media histórica puede no volver.' },
+      { d: 'Capital invertido = capital de trabajo (sin caja ni deuda) + activo fijo neto + llave de negocio + intangibles. Si el balance no separa corriente y no corriente (REITs, algunas holdings), deuda + patrimonio − caja.',
+        p: 'Medido desde los activos no depende de cuánto recompró la empresa: MCD, HD o SBUX tienen patrimonio negativo por las recompras, y con deuda + patrimonio el ROIC daría absurdo. Incluye la llave de negocio, así que el ROIC de una empresa que creció comprando se mide sobre lo que pagó.',
+        x: 'Sin la llave de negocio: da ROIC más altos y premia comprar empresas caras.',
+        o: 'Los arrendamientos operativos no entran en el capital: en minoristas y restaurantes el ROIC queda algo más alto que con ellos.' },
+      { d: 'Acciones: el cambio de las acciones diluidas en un año. Negativo es recompra; positivo, dilución.',
+        p: 'Separa el crecimiento del EPS que viene del negocio del que viene de comprar acciones, y muestra cuánto diluye la compensación en acciones.' },
+      { d: 'Alertas (en Cartera): ventas que caen, margen −200 bps o más, ROIC −300 bps o más, dilución de 2% o más, o EPS esperado −5% o más en 3 meses.',
+        p: 'No son señales de venta: son las preguntas que hay que contestar antes de comprar algo porque está barato contra su historia.' },
+      { d: 'No se calcula para bancos ni aseguradoras.',
+        p: 'Sus ventas y su capital no se miden igual: lo que corresponde es ROE y P/BV.' },
+    ] },
+
   { id: 'cmp', t: 'Panel de comparación de P/E histórico',
     items: [
       { d: 'Referencia: el S&P 500 por defecto, o el sector o la subindustria GICS de la empresa si está en el índice.' },
@@ -4739,9 +4832,10 @@ function renderSectCo() {
     return { sym, name: (f && f.n) || info.n || sym, cap, earn,
       pe: d && d[0] > 0 && px ? px / d[0] : null, peNeg: !!(d && d[0] <= 0),
       peN: d && d[1] > 0 && px ? px / d[1] : null, fpe, gap: d ? normGap(d[0], d[1]) : null, rev: revOf(sym, '3m'), shr: d && d[2] ? d[2] : (f && f.mc && f.p ? f.mc / f.p : null),
-      cdm: cdOn ? cdMetrics(sym, px) : null };
+      cdm: cdOn ? cdMetrics(sym, px) : null, qm: qOn ? qMetrics(sym) : null };
   });
-  rows.forEach(r => { const m = r.cdm; r.pfcf = m && !m.fin ? m.pfcf : null; r.evEbit = m && !m.fin ? m.evEbit : null; r.ndE = m && !m.fin ? m.ndE : null; });
+  rows.forEach(r => { const m = r.cdm; r.pfcf = m && !m.fin ? m.pfcf : null; r.evEbit = m && !m.fin ? m.evEbit : null; r.ndE = m && !m.fin ? m.ndE : null;
+    const q = r.qm; r.qroic = q && !q.fin ? q.roic : null; r.qm2 = q && !q.fin ? q.m : null; r.qg1 = q && !q.fin ? q.g1 : null; });
   const capT = rows.reduce((a, r) => a + (r.cap || 0), 0), earnT = rows.reduce((a, r) => a + (r.earn != null ? r.earn : 0), 0);
   rows.forEach(r => { r.w = capT > 0 && r.cap ? r.cap / capT : null; r.es = earnT > 0 && r.earn != null ? r.earn / earnT : null; });
   const k = sectCoSort.k, dir = sectCoSort.dir;
@@ -4753,12 +4847,14 @@ function renderSectCo() {
   const f1 = v => v == null ? '<span class="na">—</span>' : v.toFixed(1) + 'x';
   const pc = v => v == null ? '<span class="na">—</span>' : (v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(1) + '%';
   const COLS = [['sym', 'Empresa'], ['w', 'Peso'], ['pe', 'P/E contable'], ['peN', 'P/E normalizado'], ['fpe', 'Fw P/E'], ...(scrRev ? [['rev', 'Rev. EPS 3M']] : []),
-    ...(cdOn ? [['pfcf', 'P/FCF'], ['evEbit', 'EV/EBIT'], ['ndE', 'Deuda neta / EBITDA']] : []), ['es', '% de las ganancias']];
+    ...(cdOn ? [['pfcf', 'P/FCF'], ['evEbit', 'EV/EBIT'], ['ndE', 'Deuda neta / EBITDA']] : []),
+    ...(qOn ? [['qroic', 'ROIC'], ['qm2', 'Margen op.'], ['qg1', 'Ventas 1A']] : []), ['es', '% de las ganancias']];
+  const qCells = r => !qOn ? '' : r.qm && r.qm.fin ? `<td title="${Q_TIP_FIN}"><span class="na">n/a</span></td>`.repeat(3) : `<td>${fLvl(r.qroic)}</td><td>${fLvl(r.qm2)}</td><td>${fGrow(r.qg1)}</td>`;
   const cdCells = r => !cdOn ? '' : r.cdm && r.cdm.fin ? `<td title="${CD_TIP_FIN}"><span class="na">n/a</span></td>`.repeat(3) : `<td>${fMult(r.pfcf)}</td><td>${fMult(r.evEbit)}</td><td>${fND(r.ndE)}</td>`;
   const th = COLS.map(([c, l], i) => `<th class="srt${k === c ? ' on' : ''}" tabindex="0" onclick="setSectCoSort('${c}')" onkeydown="if(event.key==='Enter')setSectCoSort('${c}')"${k === c ? ` aria-sort="${dir > 0 ? 'ascending' : 'descending'}"` : ''}>${l}${k === c ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
   box.innerHTML = `<table class="ov-tbl sect-co"><thead><tr>${th}</tr></thead><tbody>` + rows.map(r =>
     `<tr onclick="openPebgFor('${r.sym}')" title="Abrir ${r.sym} en P/E histórico"><td>${r.sym}<span class="sect-nm">${r.name.replace(/</g, '&lt;')}</span></td><td>${pc(r.w)}</td>`
-    + `<td>${r.peNeg ? '<span class="na">pérd.</span>' : f1(r.pe)}</td><td>${f1(r.peN)}${dvgMark(r.gap)}</td><td>${f1(r.fpe)}</td>${scrRev ? `<td>${fRev(r.rev)}</td>` : ''}${cdCells(r)}<td>${pc(r.es)}</td></tr>`).join('') + '</tbody></table>';
+    + `<td>${r.peNeg ? '<span class="na">pérd.</span>' : f1(r.pe)}</td><td>${f1(r.peN)}${dvgMark(r.gap)}</td><td>${f1(r.fpe)}</td>${scrRev ? `<td>${fRev(r.rev)}</td>` : ''}${cdCells(r)}${qCells(r)}<td>${pc(r.es)}</td></tr>`).join('') + '</tbody></table>';
   // revisión del grupo: EPS esperado de 12 meses de todas, ponderado por acciones (ganancia esperada del grupo), hoy contra hace 3 meses
   let grpRev = null;
   if (scrRev) { let C = 0, P = 0; for (const { sym } of mem) { const q = ntmPair(sym, '3m'), r = rows.find(x => x.sym === sym); if (q && r && r.shr > 0) { C += q.cur * r.shr; P += q.past * r.shr; } } grpRev = P > 0 && C > 0 ? C / P - 1 : null; }
@@ -4772,10 +4868,21 @@ function renderSectCo() {
     const x = v => v.toFixed(1) + 'x';
     grpCD = n ? '; EV/EBIT del grupo ' + (EB > 0 ? x(EV / EB) : '—') + ', deuda neta / EBITDA ' + (EBD > 0 ? (ND < 0 ? '−' : '') + x(Math.abs(ND / EBD)) : '—') + ', P/FCF ' + (FCF > 0 ? x(MC / FCF) : '—') + ' (' + n + ' empresas' + (fin ? ', sin financieras' : '') + ')' : (fin ? '; caja y deuda no aplica a financieras' : '');
   }
+  // grupo: ROIC = suma de NOPAT / suma de capital invertido; margen = suma de EBIT / suma de ventas; ventas del grupo
+  let grpQ = '';
+  if (qOn) {
+    let N = 0, IC = 0, E = 0, R = 0, R0 = 0, R1 = 0, n = 0;
+    for (const r of rows) { const q = r.qm; if (!q || q.fin) continue; const d = q.d; n++;
+      if (d.nopat0 != null && d.ic0 > 0) { N += d.nopat0; IC += d.ic0; }
+      if (d.ebit0 != null && d.rev0 > 0) { E += d.ebit0; R += d.rev0; }
+      if (d.rev0 > 0 && d.rev1 > 0) { R0 += d.rev0; R1 += d.rev1; } }
+    grpQ = n ? '; ROIC del grupo ' + (IC > 0 ? fLvl(N / IC) : '—') + ', margen ' + (R > 0 ? fLvl(E / R) : '—') + ', ventas ' + (R1 > 0 ? revTxt(R0 / R1 - 1) : '—') + ' en un año' : '';
+  }
   title.innerHTML = 'Empresas de ' + multName(key) + ' <span>' + mem.length + (mem.length === 1 ? ' empresa' : ' empresas')
-    + (grpRev != null ? '; ganancia esperada del grupo ' + revTxt(grpRev) + ' en 3 meses' : '') + grpCD + '</span>'
+    + (grpRev != null ? '; ganancia esperada del grupo ' + revTxt(grpRev) + ' en 3 meses' : '') + grpCD + grpQ + '</span>'
     + `<button type="button" class="btn btn-ghost sect-rev-btn" aria-pressed="${scrRev}" onclick="toggleScrRev(); renderSectCo()" title="Columna opcional: cambio del EPS esperado de los próximos 12 meses en 3 meses">Revisiones del EPS</button>`
-    + `<button type="button" class="btn btn-ghost sect-rev-btn cd-btn" aria-pressed="${cdOn}" onclick="toggleCD()" title="Columnas opcionales: P/FCF, EV/EBIT y deuda neta / EBITDA, de la SEC">Caja y deuda</button>`;
+    + `<button type="button" class="btn btn-ghost sect-rev-btn cd-btn" aria-pressed="${cdOn}" onclick="toggleCD()" title="Columnas opcionales: P/FCF, EV/EBIT y deuda neta / EBITDA, de la SEC">Caja y deuda</button>`
+    + `<button type="button" class="btn btn-ghost sect-rev-btn q-btn" aria-pressed="${qOn}" onclick="toggleQual()" title="Columnas opcionales: ROIC, margen operativo y crecimiento de ventas, de la SEC">Calidad</button>`;
   note.textContent = 'Peso por capitalización. P/E con el precio y el EPS de la SEC al cierre del ' + (SEC_EPS_AS_OF || MULT.asOf).split('-').reverse().join('/')
     + ', los mismos que arman el P/E del grupo; "% de las ganancias" es la parte de la ganancia ' + (norm ? 'normalizada' : 'contable') + ' del grupo que pone cada una (las pérdidas restan). Clic en una empresa abre su P/E histórico.';
 }
@@ -4792,7 +4899,7 @@ function sectStats(key, norm) {
 }
 async function loadSect() {
   document.getElementById('sectStatus').textContent = 'Cargando…';
-  await Promise.all([loadMultiples(), loadSpx(), loadSecEps(), loadFund(), loadRev(), loadCD()]);
+  await Promise.all([loadMultiples(), loadSpx(), loadSecEps(), loadFund(), loadRev(), loadCD(), loadQual()]);
   renderSect();
 }
 function renderSect() {
