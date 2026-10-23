@@ -145,7 +145,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     crudo: Object.fromEntries(["oi", "pt", "ni"].map(k => [k, (raw[k] || []).filter(e => e.end >= "2024-06-30").sort((a, b) => a.end.localeCompare(b.end) || a.start.localeCompare(b.start))
       .map(e => [e.start, e.end, e.val, e.form, e.filed])])) };
   return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
-    cd: cashDebt(raw, normFull.rows),
+    cd: cashDebt(raw, normFull.rows), cdTags: Object.fromEntries(Object.entries(raw.cd || {}).map(([t, a]) => [t, a.reduce((m, e) => e.end > m ? e.end : m, "")])),
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
 
@@ -385,14 +385,23 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   }));
   log(`eps_ttm.json: ${Object.keys(ultimos).length} empresas`);
   // 6) flujo de caja y deuda (12 meses y último balance) para P/FCF, EV/EBIT y deuda neta / EBITDA
-  const cdOut = {};
+  const cdOut = {}; let cajaDeudaDiag = {};
   for (const c of list) { const d = cos[c.s]?.cd; if (d && ultimos[c.s]) cdOut[c.s] = [d.ocf, d.capex, d.sbc, d.da, d.ebit, d.debt, d.cash, d.nci, d.pref, d.fin, d.bal]; }
   await writeFile(new URL("caja_deuda.json", root), JSON.stringify({ asOf: out.asOf,
     nota: "Millones de US$, de la SEC. Flujos de 12 meses (últimos cuatro trimestres): flujo operativo, inversión en activo fijo (con software activado), compensación en acciones, amortizaciones, EBIT ajustado (sin extraordinarios). Último balance: deuda financiera, caja e inversiones de corto plazo, minoritarios y preferidos.",
     campos: ["flujoOperativo", "inversion", "compensacionAcciones", "amortizaciones", "ebitAjustado", "deuda", "caja", "minoritarios", "preferidos", "finFlujos", "fechaBalance"],
     data: cdOut }));
   log(`caja_deuda.json: ${Object.keys(cdOut).length} empresas`);
-  const diag = { splits: {}, fechas: {}, yahoo: yDiag, tasaReal: out.real10 ? (out.real10Fuente + ", al " + out.real10AsOf) : ("sin datos: " + realErr),
+  // qué falta y por qué (para revisar etiquetas): las no financieras sin flujos o sin inversión o deuda
+  cajaDeudaDiag = {};
+  for (const c of list) {
+    if (!ultimos[c.s] || c.gics === "Financials") continue;
+    const d = cos[c.s]?.cd;
+    if (d && d.capex != null && d.debt != null && d.ebit != null) continue;
+    cajaDeudaDiag[c.s] = { falta: !d ? "flujos" : [d.capex == null ? "inversión" : null, d.debt == null ? "deuda" : null, d.ebit == null ? "EBIT" : null].filter(Boolean).join(", "),
+      etiquetas: cos[c.s]?.cdTags || null };
+  }
+  const diag = { splits: {}, fechas: {}, yahoo: yDiag, cajaDeuda: cajaDeudaDiag, tasaReal: out.real10 ? (out.real10Fuente + ", al " + out.real10AsOf) : ("sin datos: " + realErr),
     sinUltimoDato: list.filter(c => !ultimos[c.s]).map(c => c.s + (cos[c.s] ? ` (último trimestre ${cos[c.s].lastQ ? iso(cos[c.s].lastQ) : "?"}${cos[c.s].fillRejected ? ", Yahoo no coincide" : ""}${yDiag[c.s] ? ", Yahoo: " + yDiag[c.s] : ""})` : " (sin datos)")) };
   for (const s of ["AAPL", "NVDA", "AMZN", "GOOGL", "TSLA", "WMT", "AVGO", "CMG", "MSFT", "META"]) if (cos[s]) diag.splits[s] = cos[s].splits;
   // contable y normalizado que difieren más de 20% (o con distinto signo): qué se ajustó y la cuenta trimestre a trimestre

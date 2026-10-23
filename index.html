@@ -1563,12 +1563,14 @@ function cdMetrics(sym, price, own) {
   const se = SEC_EPS && SEC_EPS[sym], f = FUND && FUND[sym];
   const sh = se && se[2] ? se[2] : (f && f.mc > 0 && f.p > 0 ? f.mc / f.p : null);
   if (!sh) return null;
-  const mcap = price * sh / 1e6, fcf = d.ocf - (d.capex || 0), fcfS = d.sbc != null ? fcf - d.sbc : null;
+  const mcap = price * sh / 1e6, fcf = d.capex != null ? d.ocf - d.capex : null, fcfS = fcf != null && d.sbc != null ? fcf - d.sbc : null;
+  // flujos de más de 200 días: la SEC no cargó el último 10-Q; se usan los anteriores y se marcan
+  const stale = d.fin ? Date.now() - Date.parse(d.fin + 'T00:00:00Z') > 200 * 86400000 : false;
   const ev = d.debt != null ? mcap + d.debt + (d.nci || 0) + (d.pref || 0) - (d.cash || 0) : null;
   const ebitda = d.ebit != null && d.da != null ? d.ebit + d.da : null, nd = d.debt != null ? d.debt - (d.cash || 0) : null;
-  return { d, mcap, fcf, ev, nd, ebitda,
+  return { d, mcap, fcf, ev, nd, ebitda, stale,
     pfcf: fcf > 0 ? mcap / fcf : null, pfcfS: fcfS != null && fcfS > 0 ? mcap / fcfS : null,
-    capexOcf: d.ocf > 0 ? (d.capex || 0) / d.ocf : null,
+    capexOcf: d.ocf > 0 && d.capex != null ? d.capex / d.ocf : null,
     evEbit: ev != null && d.ebit > 0 ? ev / d.ebit : null,
     ndE: nd != null && ebitda > 0 ? nd / ebitda : null };
 }
@@ -1778,7 +1780,7 @@ const REV_COLS = [
 function scrCols() { const i = COLS.findIndex(c => c.k === 'fwdPE') + 1; return [...COLS.slice(0, i), ...(scrRev ? REV_COLS : []), ...(cdOn ? CD_COLS : []), ...COLS.slice(i)]; }
 // campos de caja y deuda de una fila (null si no hay dato; cdFin si es financiera)
 function cdRow(sym, px) { const m = cdMetrics(sym, px); if (!m) return { pfcf: null, pfcfS: null, capexOcf: null, evEbit: null, ndE: null }; if (m.fin) return { cdFin: true, pfcf: null, pfcfS: null, capexOcf: null, evEbit: null, ndE: null };
-  return { pfcf: m.pfcf, pfcfS: m.pfcfS, capexOcf: m.capexOcf, evEbit: m.evEbit, ndE: m.ndE, cdTip: 'Flujos de 12 meses al ' + m.d.fin.split('-').reverse().join('/') + ', balance al ' + (m.d.bal || '').split('-').reverse().join('/') + ' (US$ M): flujo operativo ' + Math.round(m.d.ocf) + ', inversión ' + Math.round(m.d.capex || 0) + ', FCF ' + Math.round(m.fcf) + (m.d.sbc != null ? ', compensación en acciones ' + Math.round(m.d.sbc) : '') + (m.d.ebit != null ? ', EBIT ajustado ' + Math.round(m.d.ebit) : '') + (m.d.debt != null ? ', deuda ' + Math.round(m.d.debt) : '') + ', caja ' + Math.round(m.d.cash || 0) + (m.ev != null ? ', EV ' + Math.round(m.ev) : '') }; }
+  return { pfcf: m.pfcf, pfcfS: m.pfcfS, capexOcf: m.capexOcf, evEbit: m.evEbit, ndE: m.ndE, cdStale: m.stale, cdTip: (m.stale ? 'Flujos viejos: la SEC no tiene el último 10-Q. ' : '') + 'Flujos de 12 meses al ' + m.d.fin.split('-').reverse().join('/') + ', balance al ' + (m.d.bal || '').split('-').reverse().join('/') + ' (US$ M): flujo operativo ' + Math.round(m.d.ocf) + (m.d.capex != null ? ', inversión ' + Math.round(m.d.capex) + ', FCF ' + Math.round(m.fcf) : ', sin la inversión en la SEC') + (m.d.sbc != null ? ', compensación en acciones ' + Math.round(m.d.sbc) : '') + (m.d.ebit != null ? ', EBIT ajustado ' + Math.round(m.d.ebit) : '') + (m.d.debt != null ? ', deuda ' + Math.round(m.d.debt) : '') + ', caja ' + Math.round(m.d.cash || 0) + (m.ev != null ? ', EV ' + Math.round(m.ev) : '') }; }
 function toggleScrRev() {
   scrRev = !scrRev;
   try { localStorage.setItem('scrRev', scrRev ? '1' : '0'); } catch (e) {}
@@ -1796,7 +1798,7 @@ function render() {
   if(!sorted.length){ document.getElementById('tWrap').innerHTML=rows.length===0?'<div class="sc"><div class="sm">Sin datos</div></div>':'<div class="sc"><div class="sm">Sin resultados para el filtro</div></div>'; return; }
   const th=COLS.map(c=>{ const act=sKey===c.k?' active':''; const arr=c.s?'<span class="sa">'+(sKey===c.k?(sDir===-1?'&#9660;':'&#9650;'):'&#8645;')+'</span>':''; const clk=c.s?' onclick="ss(\''+c.k+'\')"':''; return '<th class="'+act+'"'+clk+(c.t?' title="'+c.t+'"':'')+'>'+c.l+arr+'</th>'; }).join('');
   const trs=sorted.map((row,i)=>{
-    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses recientes en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
+    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
     const sym=row.symbol, nm=row.name.replace(/\\/g,'').replace(/'/g,'&#39;');
     return '<tr onclick="openChart(\''+sym+'\',\''+nm+'\')">'+cells+'</tr>';
   }).join('');
@@ -4758,7 +4760,7 @@ function renderSectCo() {
     let EV = 0, EB = 0, ND = 0, EBD = 0, MC = 0, FCF = 0, n = 0, fin = 0;
     for (const r of rows) { const m = r.cdm; if (!m) continue; if (m.fin) { fin++; continue; }
       if (m.ev != null && m.d.ebit != null) { EV += m.ev; EB += m.d.ebit; ND += m.nd; if (m.ebitda != null) EBD += m.ebitda; n++; }
-      MC += m.mcap; FCF += m.fcf; }
+      if (m.fcf != null) { MC += m.mcap; FCF += m.fcf; } }
     const x = v => v.toFixed(1) + 'x';
     grpCD = n ? '; EV/EBIT del grupo ' + (EB > 0 ? x(EV / EB) : '—') + ', deuda neta / EBITDA ' + (EBD > 0 ? (ND < 0 ? '−' : '') + x(Math.abs(ND / EBD)) : '—') + ', P/FCF ' + (FCF > 0 ? x(MC / FCF) : '—') + ' (' + n + ' empresas' + (fin ? ', sin financieras' : '') + ')' : (fin ? '; caja y deuda no aplica a financieras' : '');
   }
