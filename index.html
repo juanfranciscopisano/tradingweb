@@ -1554,7 +1554,7 @@ function loadCD() {
   return cdPromise;
 }
 const CD_KEYS = ['ocf', 'capex', 'sbc', 'da', 'ebit', 'debt', 'cash', 'nci', 'pref', 'fin', 'bal', 'notas'];
-function cdData(sym, own) { if (own) return own.notas !== undefined ? own : { ...own, notas: [own.debtFecha ? 'deuda al ' + own.debtFecha.split('-').reverse().join('/') : null, own.capexNota ? 'inversión chica, la empresa ya no la informa aparte' : null].filter(Boolean).join('; ') || null }; const a = CD && CD[sym]; return a ? Object.fromEntries(CD_KEYS.map((k, i) => [k, a[i]])) : null; }
+function cdData(sym, own) { if (own) return own.notas !== undefined ? own : { ...own, notas: [own.debtFecha ? 'deuda' + (own.deudaValorRazonable ? ' a valor razonable' : '') + ' al ' + own.debtFecha.split('-').reverse().join('/') : null, own.capexNota ? 'inversión chica, la empresa ya no la informa aparte' : null].filter(Boolean).join('; ') || null }; const a = CD && CD[sym]; return a ? Object.fromEntries(CD_KEYS.map((k, i) => [k, a[i]])) : null; }
 const isFinancial = sym => !!(SPX_INFO[sym] && SPX_INFO[sym].gics === 'Financials');
 // mcap en millones: precio × acciones (las diluidas de la SEC; si no, capitalización / precio de fundamentals)
 function cdMetrics(sym, price, own) {

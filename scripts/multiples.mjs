@@ -387,7 +387,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   // 6) flujo de caja y deuda (12 meses y último balance) para P/FCF, EV/EBIT y deuda neta / EBITDA
   const cdOut = {}; let cajaDeudaDiag = {};
   for (const c of list) { const d = cos[c.s]?.cd; if (d && ultimos[c.s]) cdOut[c.s] = [d.ocf, d.capex, d.sbc, d.da, d.ebit, d.debt, d.cash, d.nci, d.pref, d.fin, d.bal,
-    [d.debtFecha ? "deuda al " + d.debtFecha.split("-").reverse().join("/") : null, d.capexNota ? "inversión chica, la empresa ya no la informa aparte" : null].filter(Boolean).join("; ") || null]; }
+    [d.debtFecha ? "deuda" + (d.deudaValorRazonable ? " a valor razonable" : "") + " al " + d.debtFecha.split("-").reverse().join("/") : null, d.capexNota ? "inversión chica, la empresa ya no la informa aparte" : null].filter(Boolean).join("; ") || null]; }
   await writeFile(new URL("caja_deuda.json", root), JSON.stringify({ asOf: out.asOf,
     nota: "Millones de US$, de la SEC. Flujos de 12 meses (últimos cuatro trimestres): flujo operativo, inversión en activo fijo (con software activado), compensación en acciones, amortizaciones, EBIT ajustado (sin extraordinarios). Último balance: deuda financiera, caja e inversiones de corto plazo, minoritarios y preferidos.",
     campos: ["flujoOperativo", "inversion", "compensacionAcciones", "amortizaciones", "ebitAjustado", "deuda", "caja", "minoritarios", "preferidos", "finFlujos", "fechaBalance", "notas"],

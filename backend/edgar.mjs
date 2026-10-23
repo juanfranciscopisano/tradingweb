@@ -110,6 +110,7 @@ export const CD_TAGS = [
   "PaymentsToAcquireMiningAssets", "PaymentsForConstructionInProcess", "PaymentsToAcquireSoftware", "PaymentsForSoftware",
   "ConvertibleNotesPayable", "ConvertibleDebtNoncurrent", "ConvertibleNotesPayableCurrent", "ConvertibleDebtCurrent",
   "SeniorNotes", "SeniorLongTermNotes", "UnsecuredDebt", "SecuredDebt", "NotesPayable", "DebtInstrumentCarryingAmount",
+  "LongTermDebtFairValue", "ConvertibleDebtFairValueDisclosures", "DebtInstrumentFairValue",
   "MinorityInterest", "PreferredStockValue",
 ];
 const CAPEX_TAGS = ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements",
@@ -526,14 +527,18 @@ export function cashDebt(raw, normRows, asOf = Date.now()) {
     if (!cand.length && (dc != null || stb)) cand.push(cur);
     return cand.length ? Math.max(...cand) : null;
   };
-  let debt = debtAt(lastBal), debtDate = lastBal;
+  let debt = debtAt(lastBal), debtDate = lastBal, debtFV = false;
   if (debt == null) {
     // sin deuda en el último cierre: la del cierre anterior más cercano (hasta 200 días); si la empresa dejó de informar
     // deuda hace más de dos años, no tiene
     const dates = [...new Set(DEBT_TAGS.flatMap(t => inst(t).map(e => Date.parse(e.end))))].sort((a, b) => b - a);
     const d = dates.find(x => lastBal - x <= 200 * DAY_MS && debtAt(x) != null);
+    // valor razonable de la deuda (nota de instrumentos financieros): si es lo único que hay, sirve de aproximación
+    const fvTags = ["LongTermDebtFairValue", "ConvertibleDebtFairValueDisclosures", "DebtInstrumentFairValue"];
+    const fvLast = fvTags.flatMap(t => inst(t)).sort((a, b) => a.end.localeCompare(b.end) || (a.filed || "").localeCompare(b.filed || "")).pop();
     if (d != null) { debt = debtAt(d); debtDate = d; }
-    else if (dates.length && lastBal - dates[0] > 2 * YEAR) { debt = 0; debtDate = null; }
+    else if (fvLast && lastBal - Date.parse(fvLast.end) <= 200 * DAY_MS) { debt = fvLast.val; debtDate = Date.parse(fvLast.end); debtFV = true; }
+    else if (dates.length && lastBal - dates[0] > 2 * YEAR && !(fvLast && lastBal - Date.parse(fvLast.end) <= 2 * YEAR)) { debt = 0; debtDate = null; }
   }
   const nci = bal("MinorityInterest") || 0, pref = bal("PreferredStockValue") || 0;
   // EBIT ajustado de 12 meses, de los mismos trimestres del normalizado
@@ -542,7 +547,7 @@ export function cashDebt(raw, normRows, asOf = Date.now()) {
   const M = v => v == null ? null : Math.round(v / 1e5) / 10, D = t => t ? new Date(t).toISOString().slice(0, 10) : null;
   return { ocf: M(ocf.v), capex: capex != null ? M(capex + sw) : null, sbc: M(sbc), da: M(da), ebit: ebitOk ? +lastR.reduce((a, r) => a + r.ebit, 0).toFixed(1) : null,
     debt: M(debt), cash: M(cash), nci: M(nci), pref: M(pref), fin: D(ocf.t), bal: D(lastBal),
-    ...(debtDate && debtDate !== lastBal ? { debtFecha: D(debtDate) } : {}), ...(capexNote ? { capexNota: capexNote } : {}) };
+    ...(debtDate && debtDate !== lastBal ? { debtFecha: D(debtDate) } : {}), ...(debtFV ? { deudaValorRazonable: true } : {}), ...(capexNote ? { capexNota: capexNote } : {}) };
 }
 
 // acciones diluidas por trimestre, ajustadas por splits (para ponderar en los agregados de índice y sector):
