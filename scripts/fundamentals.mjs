@@ -4,7 +4,7 @@
 //   2) Lo que Yahoo no trae: Finnhub /stock/metric (60 llamadas/min en el plan gratis).
 //   3) Lo que ninguna trae hoy: se arrastra del archivo anterior marcado como "stale".
 // Guarda el precio de referencia (p) para que la página reescale los ratios con el precio en vivo.
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -70,20 +70,61 @@ export function parseTrend(j) {
     up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts) };
   return (e.t0?.[0] != null || e.t1?.[0] != null) ? e : null;
 }
+// Estimaciones completas (base de datos propia de consenso): para el trimestre en curso y el siguiente (0q, +1q) y el
+// ejercicio en curso y el siguiente (0y, +1y), EPS y ventas esperados (promedio, mínimo, máximo, el del año anterior,
+// analistas); y los últimos cuatro trimestres informados con el EPS esperado antes del resultado (earningsHistory).
+// El EPS de consenso y el "informado" de Yahoo están en la base ajustada de cada empresa, no en la contable.
+export function parseEstimates(j) {
+  const res = j?.quoteSummary?.result?.[0] || {}, tr = res.earningsTrend?.trend || [];
+  const raw = v => (v && typeof v === "object" ? num(v.raw) : num(v));
+  const r4 = v => v == null ? null : +v.toFixed(4), big = v => v == null ? null : Math.round(v / 1e5) / 10;   // ventas en millones
+  const per = {};
+  for (const k of ["0q", "+1q", "0y", "+1y"]) {
+    const t = tr.find(x => x.period === k); if (!t) continue;
+    const ee = t.earningsEstimate || {}, re = t.revenueEstimate || {};
+    per[k] = { fin: t.endDate || null,
+      eps: [r4(raw(ee.avg)), r4(raw(ee.low)), r4(raw(ee.high)), r4(raw(ee.yearAgoEps))], n: raw(ee.numberOfAnalysts),
+      rev: [big(raw(re.avg)), big(raw(re.low)), big(raw(re.high)), big(raw(re.yearAgoRevenue))], nRev: raw(re.numberOfAnalysts),
+      epsT: TREND_LAGS.map(l => r4(raw(t.epsTrend?.[l]))) };
+    if (per[k].eps[0] == null) per[k].eps[0] = per[k].epsT[0];   // el promedio y la tendencia de hoy son el mismo número
+  }
+  const hist = (res.earningsHistory?.history || []).map(h => ({ q: h.quarter?.fmt || (raw(h.quarter) ? new Date(raw(h.quarter) * 1000).toISOString().slice(0, 10) : null),
+    act: r4(raw(h.epsActual)), est: r4(raw(h.epsEstimate)), sorp: raw(h.surprisePercent) != null ? +raw(h.surprisePercent).toFixed(4) : null }))
+    .filter(h => h.q && (h.act != null || h.est != null));
+  return Object.keys(per).length || hist.length ? { per, hist } : null;
+}
+// agrega el día a la serie de cada empresa (estimaciones/<ticker>.json). La primera vez la arranca con el EPS de hace
+// 90, 60, 30 y 7 días que da Yahoo (sin ventas), marcado como reconstruido.
+export function addEstimate(prev, sym, est, today) {
+  const rec = { d: today };
+  for (const [k, short] of [["0q", "q0"], ["+1q", "q1"], ["0y", "y0"], ["+1y", "y1"]]) { const p = est.per[k]; if (p) rec[short] = [p.fin, p.eps[0], p.rev[0]]; }
+  let serie = prev && Array.isArray(prev.serie) ? prev.serie.slice() : [];
+  if (!serie.length) {
+    const back = [[90, 4], [60, 3], [30, 2], [7, 1]];
+    for (const [days, i] of back) {
+      const d = new Date(Date.parse(today + "T00:00:00Z") - days * 86400000).toISOString().slice(0, 10), r = { d, r: 1 };
+      for (const [k, short] of [["0y", "y0"], ["+1y", "y1"]]) { const p = est.per[k]; if (p && p.epsT[i] != null) r[short] = [p.fin, p.epsT[i], null]; }
+      if (r.y0 || r.y1) serie.push(r);
+    }
+  }
+  serie = serie.filter(x => x.d !== today);
+  serie.push(rec);
+  return { sym, asOf: today, actual: est, serie };
+}
 async function trendsFromYahoo(f, symbols, sleep, gapMs = 120) {
-  const s = await yahooSession(f), out = {};
+  const s = await yahooSession(f), out = {}, est = {};
   let fails = 0;
   for (const sym of symbols) {
-    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=earningsTrend&crumb=${encodeURIComponent(s.crumb)}`;
+    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=earningsTrend,earningsHistory&crumb=${encodeURIComponent(s.crumb)}`;
     try {
       let r = await f(url, { headers: { "User-Agent": UA, Cookie: s.cookie, Accept: "application/json" } });
       if (r.status === 429) { await sleep(5000); r = await f(url, { headers: { "User-Agent": UA, Cookie: s.cookie, Accept: "application/json" } }); }
-      if (r.ok) { const e = parseTrend(await r.json()); if (e) out[sym] = e; } else fails++;
+      if (r.ok) { const j = await r.json(); const e = parseTrend(j); if (e) out[sym] = e; const x = parseEstimates(j); if (x) est[sym] = x; } else fails++;
     } catch (e) { fails++; }
     if (fails > 60 && !Object.keys(out).length) throw new Error("Yahoo earningsTrend no responde");
     await sleep(gapMs);
   }
-  return out;
+  return { out, est };
 }
 
 async function fromFinnhub(f, symbols, key, today, sleep, delayMs) {
@@ -148,7 +189,17 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
 
   if (withTrends) {
     try {
-      const tr = await trendsFromYahoo(fetchImpl, symbols, sleep, trendGapMs);
+      const { out: tr, est } = await trendsFromYahoo(fetchImpl, symbols, sleep, trendGapMs);
+      if (Object.keys(est).length) {
+        await mkdir(new URL("estimaciones/", root), { recursive: true });
+        for (const [sym, e] of Object.entries(est)) {
+          const file = new URL(`estimaciones/${sym}.json`, root);
+          let prevE = null;
+          try { prevE = JSON.parse(await readFile(file, "utf8")); } catch (_) { /* primera vez */ }
+          await writeFile(file, JSON.stringify(addEstimate(prevE, sym, e, today)) + "\n");
+        }
+        log(`Estimaciones: ${Object.keys(est).length} empresas`);
+      }
       if (Object.keys(tr).length) {
         await writeFile(new URL("revisions.json", root), JSON.stringify({ asOf: now.toISOString(),
           nota: "Consenso de EPS (Yahoo) del ejercicio en curso (t0, cierre f0) y del siguiente (t1, cierre f1): hoy y hace 7, 30, 60 y 90 días; up/dn: analistas que lo subieron o bajaron en 30 días (ejercicio siguiente); n: analistas",
