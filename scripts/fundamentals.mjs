@@ -79,7 +79,7 @@ export function parseTrend(j) {
 // por la parte que cae entre hoy y dentro de un año. Los dos trimestres que estima Yahoo (en curso y siguiente) van
 // con su estimación. Lo que queda de cada ejercicio (consenso del año − trimestres estimados − trimestres ya informados)
 // se reparte entre los trimestres que faltan con la estacionalidad del mismo trimestre un año antes: proporcional si
-// todos son positivos, y si no (trimestres con pérdida) se le suma a cada uno la misma diferencia. La estacionalidad
+// todos son positivos y ninguno casi cero, y si no (trimestres con pérdida) se le suma a cada uno la misma diferencia. La estacionalidad
 // sale del EPS que esperaba el consenso antes de cada resultado, no del informado, para que no entren extraordinarios.
 // Repartir parejo sería peor que no usar trimestres: tomaría la estacionalidad de los dos trimestres estimados y no la
 // de los demás. Lo que pasa del ejercicio siguiente (pocas semanas) va con el mismo trimestre un año antes por el
@@ -103,9 +103,11 @@ export function ntmFrom(r, now) {
   const hist = (r.h || []).map(h => ({ t: P(h[0]), v: h[1], e: h[2] ?? null }));
   const done = [];   // trimestres ya resueltos, para la estacionalidad del ejercicio siguiente
   const shape = t => { const k = find(known, t); if (k) return k.v; const h = find(hist, t); if (h) return h.e ?? h.v; const c = find(done, t); return c ? c.v : null; };
+  // proporcional si todos son positivos y ninguno es casi cero (menos de un cuarto del promedio: un piso que se recupera,
+  // INTC con 0,01 en el primer trimestre de 2026, haría crecer ese trimestre como el año entero); si no, la misma suma
   const spread = (rest, s) => {
-    const S = s.reduce((a, b) => a + b, 0);
-    return s.every(x => x > 0) && rest > 0 ? s.map(x => rest * x / S) : s.map(x => x + (rest - S) / s.length);
+    const S = s.reduce((a, b) => a + b, 0), m = S / s.length;
+    return s.every(x => x > 0.25 * m) && rest > 0 ? s.map(x => rest * x / S) : s.map(x => x + (rest - S) / s.length);
   };
   const years = [];
   if (r.f0 && t0[0] != null) years.push({ f: P(r.f0), E: t0[0] });
@@ -129,12 +131,13 @@ export function ntmFrom(r, now) {
       if (missingPast || suspect) return blend();
       const s = unk.map(q => shape(endOfMonth(q.t, -12)));
       if (s.some(x => x == null)) return blend();
-      // un trimestre del año anterior con un extraordinario dentro del consenso (VRTX: I+D comprada en el de septiembre)
-      // no es estacionalidad: si contra el mismo trimestre dos años antes se movió más de 0,4–2,5 veces y otro trimestre
-      // se movió poco (0,67–1,5), va el de dos años antes por el crecimiento de los que se movieron poco
+      // un trimestre del año anterior con un cargo dentro del consenso (VRTX: I+D comprada en el de septiembre) no es
+      // estacionalidad: si cayó a menos de 0,4 veces el mismo trimestre dos años antes y otro trimestre se movió poco
+      // (0,67–1,5), va el de dos años antes por el crecimiento de los que se movieron poco. Solo caídas: los saltos para
+      // arriba suelen ser compras de empresas o una base estacional baja (NRG), y el consenso casi nunca suma ganancias.
       const pr = unk.map(q => shape(endOfMonth(q.t, -24))), ra = s.map((x, i) => pr[i] > 0 ? x / pr[i] : null);
       const ok = ra.filter(x => x != null && x >= 2 / 3 && x <= 1.5).sort((a, b) => a - b);
-      if (ok.length) { const m = ok[ok.length >> 1]; ra.forEach((x, i) => { if (x != null && (x < 0.4 || x > 2.5)) s[i] = pr[i] * m; }); }
+      if (ok.length) { const m = ok[ok.length >> 1]; ra.forEach((x, i) => { if (x != null && x < 0.4) s[i] = pr[i] * m; }); }
       // sin el de dos años antes: una pérdida entre tres trimestres positivos y parejos (±35%) del mismo año es un
       // extraordinario (GILD: I+D comprada en el segundo trimestre de 2026); va el promedio de los otros tres
       unk.forEach((q, i) => {
