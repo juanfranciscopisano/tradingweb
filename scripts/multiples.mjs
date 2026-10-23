@@ -335,7 +335,23 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   for (const v of Object.values(agg)) { v.g = v.g.slice(first); v.n = v.n.slice(first); }
 
   // 4) fw P/E de hoy por grupo, con fundamentals.json (capitalización / ganancias esperadas)
-  const fwOf = syms => { let M = 0, E = 0; for (const s of syms) { const f = fund[s]; if (f?.mc > 0 && f?.fpe > 0) { M += f.mc; E += f.mc / f.fpe; } } return E > 0 ? +(M / E).toFixed(1) : null; };
+  // ganancia esperada de los próximos 12 meses: consenso del ejercicio en curso y del siguiente ponderados por lo que falta
+  // del primero (revisions.json); sin consenso, la del Fw P/E de Yahoo. Una ganancia esperada negativa resta.
+  let rev = {};
+  try { rev = JSON.parse(await readFile(new URL("revisions.json", root), "utf8")).data || {}; } catch (e) { log("revisions.json: " + e.message); }
+  const ntm = sym => {
+    const r = rev[sym]; if (!r) return null;
+    const t0 = r.t0 || [], t1 = r.t1 || [], f0 = r.f0 ? Date.parse(r.f0 + "T00:00:00Z") : null;
+    const w = f0 ? Math.min(1, Math.max(0, (f0 - now.getTime()) / (365.25 * DAY * 1000))) : 0;
+    if (t0[0] != null && t1[0] != null) return w * t0[0] + (1 - w) * t1[0];
+    return t1[0] ?? t0[0] ?? null;
+  };
+  const fwOf = syms => { let M = 0, E = 0; for (const s of syms) {
+    const f = fund[s]; if (!(f?.mc > 0)) continue;
+    const e = ntm(s);
+    if (e != null && f.p > 0) { M += f.mc; E += f.mc / f.p * e; }
+    else if (f.fpe > 0) { M += f.mc; E += f.mc / f.fpe; }
+  } return E > 0 ? +(M / E).toFixed(1) : null; };
 
   const series = {};
   for (const [key, v] of Object.entries(agg)) {
