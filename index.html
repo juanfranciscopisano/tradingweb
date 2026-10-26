@@ -170,11 +170,14 @@ td:nth-child(-n+4){text-align:left}
 
 /* P/E histórico */
 .pebg-stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:stretch;flex-wrap:wrap;row-gap:10px}
-.pebg-stat-block{display:flex;flex-direction:column;gap:2px;padding:0 18px;border-left:1px solid var(--line)}
+/* una sola fila hasta ~1366 px de ancho: los bloques crecen parejo para llenar la barra y el espacio entre ellos se achica con la pantalla */
+.pebg-stat-block{display:flex;flex-direction:column;gap:2px;padding:0 clamp(10px,1vw,18px);border-left:1px solid var(--line);flex:1 1 auto;white-space:nowrap}
 .pebg-stat-block:first-child{padding-left:0;border-left:none}
 .pebg-stat-lbl{font-size:12px;color:var(--muted)}
 .pebg-stat-val{font-size:17px;font-weight:650;color:var(--ink);white-space:nowrap;font-stretch:92%}
 .pebg-stat-sub{font-size:11.5px;color:var(--faint)}
+/* laptops (1280–1600 px): letra y espacio algo menores para que las doce cifras entren en una fila */
+@media (max-width:1599px) and (min-width:769px){.pebg-stat-block{padding:0 8px}.pebg-stat-lbl{font-size:11px}.pebg-stat-val{font-size:15.5px}.pebg-stat-sub{font-size:10.5px}}
 #pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden;margin:14px var(--side);border:1px solid var(--line);border-radius:10px;background:var(--chart-bg)}
 #pebgContainer{flex:1;position:relative;overflow:hidden;background:var(--chart-bg);min-width:0;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
 #pebgMain{flex:1;position:relative;min-height:0;overflow:hidden}
@@ -3738,8 +3741,8 @@ function renderPebg(data) {
     b.title = peg ? 'La proyección es solo para P/E' : fwEpsS == null ? 'Sin Fw P/E de consenso para esta empresa' : 'Precio teórico dentro de un año si se cumple el EPS esperado (consenso, $' + fwEpsS.toFixed(2) + ') y el P/E vuelve a cada banda'; } }
   { const sub = document.getElementById('psStatFwd')?.nextElementSibling;
     const rv = revOf(data.symbol, '3m');
-    if (sub) { sub.textContent = (fwEpsS != null ? 'consenso 12m, EPS $' + fwEpsS.toFixed(2) : 'consenso 12m') + (rv != null ? ', ' + revTxt(rv) + ' en 3M' : '');
-      const mt = ntmMethod(data.symbol), mtTxt = mt === 'trimestres' ? 'EPS de 12 meses armado por trimestres (los dos que estima el consenso y el resto de cada ejercicio)' : mt === 'ejercicios' ? 'EPS de 12 meses: ejercicio en curso y siguiente ponderados por lo que falta del primero (no hay trimestres para armarlo)' : '';
+    if (sub) { sub.textContent = (fwEpsS != null ? 'EPS 12m $' + fwEpsS.toFixed(2) : 'consenso 12m') + (rv != null ? ', ' + revTxt(rv) + ' 3M' : '');
+      const mt = ntmMethod(data.symbol), mtTxt = mt === 'trimestres' ? 'EPS de consenso de los próximos 12 meses, armado por trimestres (los dos que estima el consenso y el resto de cada ejercicio)' : mt === 'ejercicios' ? 'EPS de consenso de los próximos 12 meses: ejercicio en curso y siguiente ponderados por lo que falta del primero (no hay trimestres para armarlo)' : 'EPS de consenso de los próximos 12 meses';
       sub.title = [mtTxt, rv != null ? 'Cambio del EPS esperado de los próximos 12 meses en los últimos 3 meses (1 mes: ' + (revTxt(revOf(data.symbol, '1m')) || '—') + '), con el promedio por ejercicios' : ''].filter(Boolean).join('. '); } }
   ['psStatAnual', 'psStatFwd'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg ? 'none' : ''; });
 
