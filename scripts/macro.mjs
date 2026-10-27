@@ -81,8 +81,11 @@ export function parseItcrm(sheets) {
   for (const [name, rows] of Object.entries(sheets)) {
     const h = rows.slice(0, 40).findIndex(r => r.some(c => typeof c === "string" && /^itcrm$/i.test(c.trim())));
     if (h < 0) continue;
-    const head = rows[h].map(c => (typeof c === "string" ? c.trim() : ""));
-    const idx = ITCRM_COLS.map(([, re]) => head.findIndex(c => re.test(c)));
+    // los bilaterales pueden estar en la misma fila o en la de al lado (encabezado en dos filas)
+    const clean = r => (r || []).map(c => (typeof c === "string" ? c.trim().replace(/\s+/g, " ") : ""));
+    const heads = [rows[h], rows[h + 1], rows[h - 1]].map(clean);
+    const idx = ITCRM_COLS.map(([, re]) => { for (const hd of heads) { const i = hd.findIndex(c => re.test(c)); if (i >= 0) return i; } return -1; });
+    const head = heads[0];
     if (idx[0] < 0) continue;
     let dc = -1;   // columna de fechas: la primera con fechas en las filas de abajo
     for (let c = 0; c < head.length && dc < 0; c++) if (rows.slice(h + 1, h + 30).filter(r => toISO(r[c])).length >= 10) dc = c;
@@ -94,7 +97,7 @@ export function parseItcrm(sheets) {
       data.push([d, ...idx.map(i => (i >= 0 && typeof r[i] === "number" && r[i] > 0 ? +r[i].toFixed(2) : null))]);
     }
     // si hay dos hojas (diaria y promedio mensual), la de más filas
-    if (data.length > (best?.data.length || 0)) best = { sheet: name, data };
+    if (data.length > (best?.data.length || 0)) best = { sheet: name, data, encabezado: [rows[h - 1], rows[h], rows[h + 1]].map(r => (r || []).slice(0, 40)) };
   }
   if (!best || best.data.length < 100) throw new Error("no encontré la serie diaria del ITCRM en la planilla");
   best.data.sort((a, b) => a[0].localeCompare(b[0]));
@@ -105,8 +108,11 @@ export async function main({ fetchImpl = fetch, root = new URL("../", import.met
   const r = await fetchImpl(ITCRM_URL, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; serie ITCRM)" } });
   if (!r.ok) throw new Error("BCRA ITCRM HTTP " + r.status);
   const buf = Buffer.from(await r.arrayBuffer());
-  const { sheet, data } = parseItcrm(readXlsx(buf));
-  const out = { asOf: new Date().toISOString(), src: ITCRM_URL, hoja: sheet, base: "17-12-15=100", cols: ["fecha", ...ITCRM_COLS.map(c => c[0])], data };
+  const { sheet, data, encabezado } = parseItcrm(readXlsx(buf));
+  const faltan = ITCRM_COLS.filter((c, i) => !data.some(r => r[i + 1] != null)).map(c => c[0]);
+  if (faltan.length) log("sin datos para " + faltan.join(", ") + "; encabezado: " + JSON.stringify(encabezado));
+  const out = { asOf: new Date().toISOString(), src: ITCRM_URL, hoja: sheet, base: "17-12-15=100", cols: ["fecha", ...ITCRM_COLS.map(c => c[0])], data,
+    ...(faltan.length ? { encabezado } : {}) };
   await writeFile(new URL("itcrm.json", root), JSON.stringify(out));
   log(`itcrm.json: ${data.length} días (${data[0][0]} a ${data[data.length - 1][0]}), hoja "${sheet}", último ITCRM ${data[data.length - 1][1]}`);
   return out;
