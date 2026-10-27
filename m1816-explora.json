@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-27T17:24:21.460Z",
+ "asOf": "2026-10-27T17:28:11.997Z",
  "pruebas": {
   "indicadores_repetido": {
    "status": 200,
@@ -21,20 +21,20 @@
    "error": "invalid_params"
   },
   "cashflow": {
-   "status": 429,
+   "status": 200,
    "ticker": "TX26",
-   "cupones": 0,
+   "cupones": 12,
    "error": null
   }
  },
  "balanceAntes": {
   "module": "mercado",
   "daily": {
-   "used": 0,
+   "used": 25,
    "limit": 100000
   },
   "monthly": {
-   "used": 0,
+   "used": 25,
    "limit": 3100000
   }
  },
@@ -410,8 +410,65 @@
    "id": 25,
    "name": "Corporativos ARS Fijo",
    "convencionTna": "90-360",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "FTN2O",
+     "2026-11-24",
+     "ARS",
+     "ARS",
+     "FCA"
+    ],
+    [
+     "PS38O",
+     "2027-03-26",
+     "ARS",
+     "ARS",
+     "PSA"
+    ],
+    [
+     "RB65O",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "RB68O",
+     "2027-04-17",
+     "ARS",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "SXC7O",
+     "2026-11-24",
+     "ARS",
+     "ARS",
+     "Mercado Pago"
+    ],
+    [
+     "TY38O",
+     "2027-03-06",
+     "ARS",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "TY40O",
+     "2027-06-22",
+     "ARS",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "VWCHO",
+     "2027-03-18",
+     "ARS",
+     "ARS",
+     "Volkswagen FS"
+    ]
+   ]
   },
   {
    "id": 5,
@@ -1882,8 +1939,2333 @@
    "id": 16,
    "name": "Corporativos USD",
    "convencionTna": "180-360",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "AEC2O",
+     "2027-08-30",
+     "USD",
+     "USD",
+     "AES Argentina"
+    ],
+    [
+     "AEC3O",
+     "2028-08-06",
+     "USD",
+     "USD",
+     "AES Argentina"
+    ],
+    [
+     "AER1O",
+     "2027-02-01",
+     "USD",
+     "USD",
+     "AA 2000"
+    ],
+    [
+     "AER4O",
+     "2028-11-01",
+     "USD",
+     "USD",
+     "AA 2000"
+    ],
+    [
+     "AERAO",
+     "2027-02-01",
+     "USD",
+     "USD",
+     "AA 2000"
+    ],
+    [
+     "AERBO",
+     "2026-12-15",
+     "USD",
+     "USD",
+     "AA 2000"
+    ],
+    [
+     "AERCO",
+     "2036-11-05",
+     "USD",
+     "USD",
+     "AA 2000"
+    ],
+    [
+     "AFCIO",
+     "2026-11-07",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCJO",
+     "2027-02-06",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCKO",
+     "2029-02-06",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCLO",
+     "2027-08-06",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCMO",
+     "2027-04-17",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCOO",
+     "2027-10-24",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCPO",
+     "2028-06-05",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCQO",
+     "2027-12-06",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCRO",
+     "2027-08-26",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AFCTO",
+     "2028-08-26",
+     "USD",
+     "USD",
+     "B. Comafi"
+    ],
+    [
+     "AQ11L",
+     "2028-03-31",
+     "USD",
+     "USD",
+     "Apache"
+    ],
+    [
+     "ARC1O",
+     "2031-08-01",
+     "USD",
+     "USD",
+     "AA 2000"
+    ],
+    [
+     "AUS1L",
+     "2027-12-22",
+     "USD",
+     "USD",
+     "Alz Nutrientes"
+    ],
+    [
+     "AXS1M",
+     "2029-04-09",
+     "USD",
+     "USD",
+     "Akron"
+    ],
+    [
+     "BACAO",
+     "2026-11-04",
+     "USD",
+     "USD",
+     "B. Macro"
+    ],
+    [
+     "BACGO",
+     "2029-06-23",
+     "USD",
+     "USD",
+     "B. Macro"
+    ],
+    [
+     "BACHO",
+     "2031-01-28",
+     "USD",
+     "USD",
+     "B. Macro"
+    ],
+    [
+     "BCCLO",
+     "2027-08-24",
+     "USD",
+     "USD",
+     "CMF"
+    ],
+    [
+     "BF39O",
+     "2026-12-05",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BF40O",
+     "2027-08-27",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BF44O",
+     "2028-05-08",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BF45O",
+     "2027-05-08",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BF48O",
+     "2028-01-24",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BF49O",
+     "2027-07-24",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BF50O",
+     "2028-07-24",
+     "USD",
+     "USD",
+     "BBVA Argentina"
+    ],
+    [
+     "BGC4O",
+     "2026-11-13",
+     "USD",
+     "USD",
+     "B. Patagonia"
+    ],
+    [
+     "BGC5O",
+     "2027-09-25",
+     "USD",
+     "USD",
+     "B. Patagonia"
+    ],
+    [
+     "BGC6O",
+     "2028-09-25",
+     "USD",
+     "USD",
+     "B. Patagonia"
+    ],
+    [
+     "BPCTO",
+     "2027-08-26",
+     "USD",
+     "USD",
+     "B. Supervielle"
+    ],
+    [
+     "BPCUO",
+     "2026-12-04",
+     "USD",
+     "USD",
+     "B. Supervielle"
+    ],
+    [
+     "BPCVO",
+     "2027-05-05",
+     "USD",
+     "USD",
+     "B. Supervielle"
+    ],
+    [
+     "BPCWO",
+     "2028-08-07",
+     "USD",
+     "USD",
+     "B. Supervielle"
+    ],
+    [
+     "BPCXO",
+     "2027-08-07",
+     "USD",
+     "USD",
+     "B. Supervielle"
+    ],
+    [
+     "BVCRO",
+     "2027-01-15",
+     "USD",
+     "USD",
+     "BST"
+    ],
+    [
+     "BVCUO",
+     "2027-05-06",
+     "USD",
+     "USD",
+     "BST"
+    ],
+    [
+     "BVCVO",
+     "2027-07-19",
+     "USD",
+     "USD",
+     "BST"
+    ],
+    [
+     "BVCXO",
+     "2027-09-27",
+     "USD",
+     "USD",
+     "BST"
+    ],
+    [
+     "BY34O",
+     "2028-08-31",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYCHO",
+     "2028-10-10",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYCWO",
+     "2026-11-30",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYCXO",
+     "2026-12-30",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYY2O",
+     "2028-06-05",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYY3O",
+     "2027-12-05",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYZ1O",
+     "2027-08-02",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "BYZ2O",
+     "2029-07-30",
+     "USD",
+     "USD",
+     "B. Galicia"
+    ],
+    [
+     "CAC5O",
+     "2028-08-25",
+     "USD",
+     "USD",
+     "Capex"
+    ],
+    [
+     "CACBO",
+     "2028-06-16",
+     "USD",
+     "USD",
+     "Capex"
+    ],
+    [
+     "CACDO",
+     "2029-06-04",
+     "USD",
+     "USD",
+     "Capex"
+    ],
+    [
+     "CIC7O",
+     "2026-11-12",
+     "USD",
+     "USD",
+     "CNH"
+    ],
+    [
+     "CIC8O",
+     "2028-11-12",
+     "USD",
+     "USD",
+     "CNH"
+    ],
+    [
+     "CIC9O",
+     "2027-05-21",
+     "USD",
+     "USD",
+     "CNH"
+    ],
+    [
+     "CICAO",
+     "2028-06-03",
+     "USD",
+     "USD",
+     "CNH"
+    ],
+    [
+     "CICBO",
+     "2029-02-09",
+     "USD",
+     "USD",
+     "CNH"
+    ],
+    [
+     "CLI1O",
+     "2034-12-10",
+     "USD",
+     "USD",
+     "Clisa"
+    ],
+    [
+     "CLSIO",
+     "2031-12-10",
+     "USD",
+     "USD",
+     "Clisa"
+    ],
+    [
+     "COC4O",
+     "2029-08-10",
+     "USD",
+     "USD",
+     "B. de Córdoba"
+    ],
+    [
+     "CP36O",
+     "2027-10-10",
+     "USD",
+     "USD",
+     "CGC"
+    ],
+    [
+     "CP37O",
+     "2027-03-10",
+     "USD",
+     "USD",
+     "CGC"
+    ],
+    [
+     "CP38O",
+     "2030-11-28",
+     "USD",
+     "USD",
+     "CGC"
+    ],
+    [
+     "CP40O",
+     "2028-03-09",
+     "USD",
+     "USD",
+     "CGC"
+    ],
+    [
+     "CP41O",
+     "2029-09-07",
+     "USD",
+     "USD",
+     "CGC"
+    ],
+    [
+     "CS47O",
+     "2028-11-15",
+     "USD",
+     "USD",
+     "Cresud"
+    ],
+    [
+     "CS48O",
+     "2028-07-11",
+     "USD",
+     "USD",
+     "Cresud"
+    ],
+    [
+     "CS50O",
+     "2029-03-10",
+     "USD",
+     "USD",
+     "Cresud"
+    ],
+    [
+     "CS51O",
+     "2027-01-20",
+     "USD",
+     "USD",
+     "Cresud"
+    ],
+    [
+     "CS52O",
+     "2028-04-30",
+     "USD",
+     "USD",
+     "Cresud"
+    ],
+    [
+     "CS53O",
+     "2030-04-30",
+     "USD",
+     "USD",
+     "Cresud"
+    ],
+    [
+     "CWC6O",
+     "2027-10-30",
+     "USD",
+     "USD",
+     "Crown Point"
+    ],
+    [
+     "CWCAO",
+     "2029-09-03",
+     "USD",
+     "USD",
+     "Crown Point"
+    ],
+    [
+     "CY2BP",
+     "2027-05-19",
+     "USD",
+     "USD",
+     "Chaye"
+    ],
+    [
+     "DEC2O",
+     "2027-02-24",
+     "USD",
+     "USD",
+     "Edesa"
+    ],
+    [
+     "DEC4O",
+     "2028-07-03",
+     "USD",
+     "USD",
+     "Edesa"
+    ],
+    [
+     "DFS1L",
+     "2029-05-29",
+     "USD",
+     "USD",
+     "Del Fabro"
+    ],
+    [
+     "DGS1L",
+     "2027-03-25",
+     "USD",
+     "USD",
+     "Diesel Lange"
+    ],
+    [
+     "DHSMO",
+     "2027-05-28",
+     "USD",
+     "USD",
+     "Credicuotas Consumo"
+    ],
+    [
+     "DHSOO",
+     "2027-08-18",
+     "USD",
+     "USD",
+     "Credicuotas Consumo"
+    ],
+    [
+     "DHSPO",
+     "2027-09-28",
+     "USD",
+     "USD",
+     "Credicuotas Consumo"
+    ],
+    [
+     "DIC2L",
+     "2028-11-29",
+     "USD",
+     "USD",
+     "Diransa"
+    ],
+    [
+     "DKC1O",
+     "2028-09-28",
+     "USD",
+     "USD",
+     "Central Dock Sud"
+    ],
+    [
+     "DNC3O",
+     "2026-11-22",
+     "USD",
+     "USD",
+     "Edenor"
+    ],
+    [
+     "DNC5O",
+     "2028-08-05",
+     "USD",
+     "USD",
+     "Edenor"
+    ],
+    [
+     "DNC7O",
+     "2030-10-24",
+     "USD",
+     "USD",
+     "Edenor"
+    ],
+    [
+     "DNCAO",
+     "2033-04-28",
+     "USD",
+     "USD",
+     "Edenor"
+    ],
+    [
+     "DNCBO",
+     "2029-07-03",
+     "USD",
+     "USD",
+     "Edenor"
+    ],
+    [
+     "DQS1L",
+     "2027-08-27",
+     "USD",
+     "USD",
+     "DQD"
+    ],
+    [
+     "EA14O",
+     "2036-06-16",
+     "USD",
+     "USD",
+     "MSU Green Energy"
+    ],
+    [
+     "EAC3O",
+     "2028-12-20",
+     "USD",
+     "USD",
+     "MSU Green Energy"
+    ],
+    [
+     "EAC4O",
+     "2036-06-16",
+     "USD",
+     "USD",
+     "MSU Green Energy"
+    ],
+    [
+     "ECS1L",
+     "2028-12-30",
+     "USD",
+     "USD",
+     "Agroempresa Colon"
+    ],
+    [
+     "EDS1P",
+     "2027-12-07",
+     "USD",
+     "USD",
+     "Edisur"
+    ],
+    [
+     "EH13M",
+     "2027-09-20",
+     "USD",
+     "USD",
+     "Hector A. Bertone"
+    ],
+    [
+     "EMC1O",
+     "2027-07-04",
+     "USD",
+     "USD",
+     "Compañía Mega"
+    ],
+    [
+     "EOC1O",
+     "2028-02-28",
+     "USD",
+     "USD",
+     "EPEC"
+    ],
+    [
+     "FAS1M",
+     "2028-03-09",
+     "USD",
+     "USD",
+     "Finanlease"
+    ],
+    [
+     "FCS1M",
+     "2028-06-03",
+     "USD",
+     "USD",
+     "Fortecar"
+    ],
+    [
+     "FO4AO",
+     "2027-07-20",
+     "USD",
+     "USD",
+     "Futuros y Opciones"
+    ],
+    [
+     "FPC1O",
+     "2028-02-10",
+     "USD",
+     "USD",
+     "Fiplasto"
+    ],
+    [
+     "FYC1O",
+     "2029-05-11",
+     "USD",
+     "USD",
+     "Farmacity"
+    ],
+    [
+     "GHS1M",
+     "2029-09-03",
+     "USD",
+     "USD",
+     "Cohen"
+    ],
+    [
+     "GIS1L",
+     "2028-02-21",
+     "USD",
+     "USD",
+     "Giorgi Automotores"
+    ],
+    [
+     "GN43O",
+     "2027-03-08",
+     "USD",
+     "USD",
+     "Genneia"
+    ],
+    [
+     "GN47O",
+     "2028-10-17",
+     "USD",
+     "USD",
+     "Genneia"
+    ],
+    [
+     "GN48O",
+     "2028-03-05",
+     "USD",
+     "USD",
+     "Genneia"
+    ],
+    [
+     "GN49O",
+     "2033-12-02",
+     "USD",
+     "USD",
+     "Genneia"
+    ],
+    [
+     "GOC4O",
+     "2030-10-28",
+     "USD",
+     "USD",
+     "Generación Litoral"
+    ],
+    [
+     "GYC4O",
+     "2027-10-30",
+     "USD",
+     "USD",
+     "360 Energy Solar"
+    ],
+    [
+     "GYC5O",
+     "2027-09-05",
+     "USD",
+     "USD",
+     "360 Energy Solar"
+    ],
+    [
+     "HA11M",
+     "2027-11-26",
+     "USD",
+     "USD",
+     "Madero Harbour"
+    ],
+    [
+     "HBCDO",
+     "2026-11-20",
+     "USD",
+     "USD",
+     "B. Hipotecario"
+    ],
+    [
+     "HBCFO",
+     "2027-02-23",
+     "USD",
+     "USD",
+     "B. Hipotecario"
+    ],
+    [
+     "HBCGO",
+     "2027-08-24",
+     "USD",
+     "USD",
+     "B. Hipotecario"
+    ],
+    [
+     "HJCGO",
+     "2028-10-21",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HJCHO",
+     "2028-01-17",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HJCIO",
+     "2027-05-27",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HJCJO",
+     "2027-07-25",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HJCKO",
+     "2029-01-16",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HJCLO",
+     "2028-12-08",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HJCMO",
+     "2029-03-28",
+     "USD",
+     "USD",
+     "John Deere"
+    ],
+    [
+     "HT11M",
+     "2028-08-21",
+     "USD",
+     "USD",
+     "Hattrick Energy"
+    ],
+    [
+     "HTS2M",
+     "2029-06-30",
+     "USD",
+     "USD",
+     "Hattrick Energy"
+    ],
+    [
+     "HVS1O",
+     "2028-07-08",
+     "USD",
+     "USD",
+     "Havanna Holding"
+    ],
+    [
+     "ICC6O",
+     "2027-05-22",
+     "USD",
+     "USD",
+     "B. ICBC"
+    ],
+    [
+     "ICC9O",
+     "2027-08-28",
+     "USD",
+     "USD",
+     "B. ICBC"
+    ],
+    [
+     "IDS1L",
+     "2029-02-13",
+     "USD",
+     "USD",
+     "Indave"
+    ],
+    [
+     "IES1M",
+     "2027-08-10",
+     "USD",
+     "USD",
+     "IEBC"
+    ],
+    [
+     "IRCFO",
+     "2028-06-22",
+     "USD",
+     "USD",
+     "Irsa Prop"
+    ],
+    [
+     "IRCJO",
+     "2027-02-28",
+     "USD",
+     "USD",
+     "IRSA"
+    ],
+    [
+     "IRCNO",
+     "2027-10-23",
+     "USD",
+     "USD",
+     "IRSA"
+    ],
+    [
+     "IRCOO",
+     "2029-10-23",
+     "USD",
+     "USD",
+     "IRSA"
+    ],
+    [
+     "IRCPO",
+     "2035-03-31",
+     "USD",
+     "USD",
+     "IRSA"
+    ],
+    [
+     "IRCQO",
+     "2027-06-08",
+     "USD",
+     "USD",
+     "IRSA"
+    ],
+    [
+     "JES1L",
+     "2028-01-24",
+     "USD",
+     "USD",
+     "Jemersoft"
+    ],
+    [
+     "JFS1L",
+     "2028-10-23",
+     "USD",
+     "USD",
+     "Jefesa"
+    ],
+    [
+     "JNC6O",
+     "2027-10-03",
+     "USD",
+     "USD",
+     "Inversora Juramento"
+    ],
+    [
+     "JNC7O",
+     "2028-06-25",
+     "USD",
+     "USD",
+     "Inversora Juramento"
+    ],
+    [
+     "K2S1M",
+     "2029-08-21",
+     "USD",
+     "USD",
+     "Chamical Solar II"
+    ],
+    [
+     "KCS1M",
+     "2029-08-20",
+     "USD",
+     "USD",
+     "Chamical Solar I"
+    ],
+    [
+     "KDS1L",
+     "2028-10-23",
+     "USD",
+     "USD",
+     "Endanik"
+    ],
+    [
+     "LDCGO",
+     "2027-10-04",
+     "USD",
+     "USD",
+     "Ledesma"
+    ],
+    [
+     "LMS7O",
+     "2028-10-12",
+     "USD",
+     "USD",
+     "Aluar"
+    ],
+    [
+     "LMS8O",
+     "2027-03-21",
+     "USD",
+     "USD",
+     "Aluar"
+    ],
+    [
+     "LOC5O",
+     "2027-07-24",
+     "USD",
+     "USD",
+     "Loma Negra"
+    ],
+    [
+     "LOC6O",
+     "2029-01-23",
+     "USD",
+     "USD",
+     "Loma Negra"
+    ],
+    [
+     "LOC7O",
+     "2029-10-22",
+     "USD",
+     "USD",
+     "Loma Negra"
+    ],
+    [
+     "LQC1O",
+     "2034-07-28",
+     "USD",
+     "USD",
+     "PCR y Luz de Tres Picos"
+    ],
+    [
+     "LR7BO",
+     "2026-12-10",
+     "USD",
+     "USD",
+     "Laboratorios Richmond"
+    ],
+    [
+     "LR8BO",
+     "2028-07-31",
+     "USD",
+     "USD",
+     "Laboratorios Richmond"
+    ],
+    [
+     "LRS5O",
+     "2027-03-08",
+     "USD",
+     "USD",
+     "Laboratorios Richmond"
+    ],
+    [
+     "LUC5O",
+     "2029-02-26",
+     "USD",
+     "USD",
+     "Luz de Tres Picos"
+    ],
+    [
+     "MCC1O",
+     "2029-03-10",
+     "USD",
+     "USD",
+     "Pecom Servicios Energia"
+    ],
+    [
+     "MCC2O",
+     "2027-06-02",
+     "USD",
+     "USD",
+     "Pecom Servicios Energia"
+    ],
+    [
+     "MCC3O",
+     "2030-05-11",
+     "USD",
+     "USD",
+     "Pecom Servicios Energia"
+    ],
+    [
+     "MGCMO",
+     "2031-09-10",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MGCNO",
+     "2028-10-04",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MGCOO",
+     "2034-12-16",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MGCQO",
+     "2028-08-06",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MGCRO",
+     "2037-11-14",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MGCTO",
+     "2029-04-01",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MGCUO",
+     "2030-08-21",
+     "USD",
+     "USD",
+     "Pampa Energia"
+    ],
+    [
+     "MIC3O",
+     "2026-11-11",
+     "USD",
+     "USD",
+     "Mirgor"
+    ],
+    [
+     "MIC4O",
+     "2027-07-29",
+     "USD",
+     "USD",
+     "Mirgor"
+    ],
+    [
+     "MIC6O",
+     "2028-05-28",
+     "USD",
+     "USD",
+     "Mirgor"
+    ],
+    [
+     "MJC1O",
+     "2027-02-19",
+     "USD",
+     "USD",
+     "Minas Argentinas"
+    ],
+    [
+     "MR38P",
+     "2027-06-17",
+     "USD",
+     "USD",
+     "Meranol"
+    ],
+    [
+     "MR44O",
+     "2036-06-30",
+     "USD",
+     "USD",
+     "GEMSA-CTR"
+    ],
+    [
+     "MR45O",
+     "2036-06-30",
+     "USD",
+     "USD",
+     "GEMSA-CTR"
+    ],
+    [
+     "MR46O",
+     "2034-12-31",
+     "USD",
+     "USD",
+     "GEMSA-CTR"
+    ],
+    [
+     "MR47O",
+     "2036-06-30",
+     "USD",
+     "USD",
+     "GEMSA-CTR"
+    ],
+    [
+     "MR48O",
+     "2034-12-31",
+     "USD",
+     "USD",
+     "GEMSA-CTR"
+    ],
+    [
+     "MRCYP",
+     "2026-12-19",
+     "USD",
+     "USD",
+     "Meranol"
+    ],
+    [
+     "MSSFO",
+     "2027-07-23",
+     "USD",
+     "USD",
+     "MSU"
+    ],
+    [
+     "MSSGO",
+     "2029-04-16",
+     "USD",
+     "USD",
+     "MSU"
+    ],
+    [
+     "MTC2O",
+     "2028-06-22",
+     "USD",
+     "USD",
+     "Mastellone"
+    ],
+    [
+     "MU00M",
+     "2029-09-07",
+     "USD",
+     "USD",
+     "Centro Interaccion Multimedia"
+    ],
+    [
+     "MU32O",
+     "2027-12-19",
+     "USD",
+     "USD",
+     "Hijos de Salvador Muñoz"
+    ],
+    [
+     "MUC4O",
+     "2027-10-27",
+     "USD",
+     "USD",
+     "Hijos de Salvador Muñoz"
+    ],
+    [
+     "NAS1L",
+     "2029-01-08",
+     "USD",
+     "USD",
+     "Agricola Noroeste"
+    ],
+    [
+     "NPCCO",
+     "2029-08-25",
+     "USD",
+     "USD",
+     "Central Puerto"
+    ],
+    [
+     "NPCDO",
+     "2030-04-30",
+     "USD",
+     "USD",
+     "Central Puerto"
+    ],
+    [
+     "NPCEO",
+     "2029-07-27",
+     "USD",
+     "USD",
+     "Central Puerto"
+    ],
+    [
+     "NPCFO",
+     "2029-10-08",
+     "USD",
+     "USD",
+     "Central Puerto"
+    ],
+    [
+     "NZC2O",
+     "2029-05-11",
+     "USD",
+     "USD",
+     "BNA"
+    ],
+    [
+     "NZC5O",
+     "2029-07-14",
+     "USD",
+     "USD",
+     "BNA"
+    ],
+    [
+     "OFS1L",
+     "2029-04-06",
+     "USD",
+     "USD",
+     "Tropfen"
+    ],
+    [
+     "OLC5O",
+     "2028-06-12",
+     "USD",
+     "USD",
+     "Oleoductos del Valle"
+    ],
+    [
+     "OLC6O",
+     "2029-06-05",
+     "USD",
+     "USD",
+     "Oleoductos del Valle"
+    ],
+    [
+     "OLC7O",
+     "2030-02-23",
+     "USD",
+     "USD",
+     "Oleoductos del Valle"
+    ],
+    [
+     "OR3BP",
+     "2027-05-29",
+     "USD",
+     "USD",
+     "Agronorte"
+    ],
+    [
+     "ORS1L",
+     "2029-05-13",
+     "USD",
+     "USD",
+     "Agronorte"
+    ],
+    [
+     "OT41O",
+     "2028-01-17",
+     "USD",
+     "USD",
+     "Otamerica Ebytem"
+    ],
+    [
+     "OT42O",
+     "2030-01-17",
+     "USD",
+     "USD",
+     "Otamerica Ebytem"
+    ],
+    [
+     "OTS2O",
+     "2027-04-24",
+     "USD",
+     "USD",
+     "Otamerica Ebytem"
+    ],
+    [
+     "OTS3O",
+     "2028-11-01",
+     "USD",
+     "USD",
+     "Otamerica Ebytem"
+    ],
+    [
+     "OTS6O",
+     "2029-07-29",
+     "USD",
+     "USD",
+     "Otamerica Ebytem"
+    ],
+    [
+     "OTS7O",
+     "2030-09-25",
+     "USD",
+     "USD",
+     "Otamerica Ebytem"
+    ],
+    [
+     "OZC3O",
+     "2027-11-29",
+     "USD",
+     "USD",
+     "Edemsa"
+    ],
+    [
+     "OZC6O",
+     "2031-07-28",
+     "USD",
+     "USD",
+     "Edemsa"
+    ],
+    [
+     "OZC8O",
+     "2033-06-11",
+     "USD",
+     "USD",
+     "Edemsa"
+    ],
+    [
+     "PBS1M",
+     "2028-12-23",
+     "USD",
+     "USD",
+     "Promedon"
+    ],
+    [
+     "PBS2M",
+     "2029-09-14",
+     "USD",
+     "USD",
+     "Promedon"
+    ],
+    [
+     "PECNO",
+     "2032-08-25",
+     "USD",
+     "USD",
+     "Tango Energy Argentina"
+    ],
+    [
+     "PECOO",
+     "2030-08-25",
+     "USD",
+     "USD",
+     "Tango Energy Argentina"
+    ],
+    [
+     "PFC2O",
+     "2027-07-14",
+     "USD",
+     "USD",
+     "Profertil"
+    ],
+    [
+     "PFC3O",
+     "2029-11-08",
+     "USD",
+     "USD",
+     "Profertil"
+    ],
+    [
+     "PFC4O",
+     "2030-02-28",
+     "USD",
+     "USD",
+     "Profertil"
+    ],
+    [
+     "PHC3O",
+     "2027-01-16",
+     "USD",
+     "USD",
+     "Puente"
+    ],
+    [
+     "PHC4O",
+     "2029-05-12",
+     "USD",
+     "USD",
+     "Puente"
+    ],
+    [
+     "PLC1O",
+     "2028-01-27",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PLC2O",
+     "2030-01-27",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PLC3O",
+     "2028-04-30",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PLC4O",
+     "2032-05-30",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PLC5O",
+     "2031-05-18",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PLC6O",
+     "2029-02-27",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PLC7O",
+     "2037-09-30",
+     "USD",
+     "USD",
+     "Pluspetrol"
+    ],
+    [
+     "PN34O",
+     "2027-09-27",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN35O",
+     "2029-09-27",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN36O",
+     "2031-11-13",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN37O",
+     "2028-11-13",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN38O",
+     "2027-08-11",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN41O",
+     "2029-08-27",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN42O",
+     "2027-04-17",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PN43O",
+     "2037-01-15",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PNDCO",
+     "2027-04-30",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PNXCO",
+     "2032-04-30",
+     "USD",
+     "USD",
+     "Pan American Energy"
+    ],
+    [
+     "PQCRO",
+     "2028-10-22",
+     "USD",
+     "USD",
+     "PCR"
+    ],
+    [
+     "PQCSO",
+     "2031-02-17",
+     "USD",
+     "USD",
+     "PCR"
+    ],
+    [
+     "PQCTO",
+     "2028-07-21",
+     "USD",
+     "USD",
+     "PCR"
+    ],
+    [
+     "PUC2O",
+     "2027-08-28",
+     "USD",
+     "USD",
+     "Petroleos Sudamericanos"
+    ],
+    [
+     "PVC3O",
+     "2026-11-25",
+     "USD",
+     "USD",
+     "BPBA"
+    ],
+    [
+     "PVC5O",
+     "2027-06-08",
+     "USD",
+     "USD",
+     "BPBA"
+    ],
+    [
+     "PVC8O",
+     "2028-09-16",
+     "USD",
+     "USD",
+     "BPBA"
+    ],
+    [
+     "PZC6O",
+     "2030-10-19",
+     "USD",
+     "USD",
+     "Plaza Logistica"
+    ],
+    [
+     "PZCGO",
+     "2028-06-04",
+     "USD",
+     "USD",
+     "Plaza Logistica"
+    ],
+    [
+     "RAC4O",
+     "2027-05-04",
+     "USD",
+     "USD",
+     "Raghsa"
+    ],
+    [
+     "RAC7O",
+     "2032-12-11",
+     "USD",
+     "USD",
+     "Raghsa"
+    ],
+    [
+     "RAC8O",
+     "2036-08-04",
+     "USD",
+     "USD",
+     "Raghsa"
+    ],
+    [
+     "RC1CO",
+     "2033-07-31",
+     "USD",
+     "USD",
+     "Arcor"
+    ],
+    [
+     "RC5CO",
+     "2029-05-21",
+     "USD",
+     "USD",
+     "Arcor"
+    ],
+    [
+     "RC7CO",
+     "2029-10-05",
+     "USD",
+     "USD",
+     "Arcor"
+    ],
+    [
+     "RCCRO",
+     "2027-05-09",
+     "USD",
+     "USD",
+     "Arcor"
+    ],
+    [
+     "RIS1L",
+     "2029-03-23",
+     "USD",
+     "USD",
+     "Riboldi"
+    ],
+    [
+     "RUCDO",
+     "2030-12-05",
+     "USD",
+     "USD",
+     "MSU Energy"
+    ],
+    [
+     "RUCEO",
+     "2027-10-30",
+     "USD",
+     "USD",
+     "MSU Energy"
+    ],
+    [
+     "RZABO",
+     "2029-09-03",
+     "USD",
+     "USD",
+     "Rizobacter"
+    ],
+    [
+     "RZBBO",
+     "2029-09-03",
+     "USD",
+     "USD",
+     "Rizobacter"
+    ],
+    [
+     "RZBCO",
+     "2029-09-03",
+     "USD",
+     "USD",
+     "Rizobacter"
+    ],
+    [
+     "SBC1O",
+     "2027-09-05",
+     "USD",
+     "USD",
+     "Scania Credit Argentina"
+    ],
+    [
+     "SBC2O",
+     "2029-01-16",
+     "USD",
+     "USD",
+     "Scania Credit Argentina"
+    ],
+    [
+     "SBC3O",
+     "2029-05-26",
+     "USD",
+     "USD",
+     "Scania Credit Argentina"
+    ],
+    [
+     "SBC4O",
+     "2029-09-08",
+     "USD",
+     "USD",
+     "Scania Credit Argentina"
+    ],
+    [
+     "SIC1O",
+     "2026-12-09",
+     "USD",
+     "USD",
+     "Sidersa"
+    ],
+    [
+     "SIC2O",
+     "2029-06-19",
+     "USD",
+     "USD",
+     "Sidersa"
+    ],
+    [
+     "SNEBO",
+     "2029-07-14",
+     "USD",
+     "USD",
+     "San Miguel"
+    ],
+    [
+     "SNSBO",
+     "2029-07-14",
+     "USD",
+     "USD",
+     "San Miguel"
+    ],
+    [
+     "SNSDO",
+     "2029-07-14",
+     "USD",
+     "USD",
+     "San Miguel"
+    ],
+    [
+     "STCFO",
+     "2027-02-18",
+     "USD",
+     "USD",
+     "Grupo ST"
+    ],
+    [
+     "T641O",
+     "2027-04-30",
+     "USD",
+     "USD",
+     "Tarjeta Naranja"
+    ],
+    [
+     "T672O",
+     "2027-02-22",
+     "USD",
+     "USD",
+     "Tarjeta Naranja"
+    ],
+    [
+     "T673O",
+     "2027-11-22",
+     "USD",
+     "USD",
+     "Tarjeta Naranja"
+    ],
+    [
+     "TBCAO",
+     "2028-01-03",
+     "USD",
+     "USD",
+     "CT Barragan"
+    ],
+    [
+     "TLCMO",
+     "2031-07-18",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCOO",
+     "2028-11-28",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCPO",
+     "2033-05-28",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCQO",
+     "2027-07-02",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCTO",
+     "2036-01-20",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCUO",
+     "2029-03-05",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCVO",
+     "2027-05-29",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCWO",
+     "2030-05-29",
+     "USD",
+     "USD",
+     "Telecom Argentina"
+    ],
+    [
+     "TSC3O",
+     "2031-07-24",
+     "USD",
+     "USD",
+     "Transportadora de Gas del Sur"
+    ],
+    [
+     "TSC4O",
+     "2035-11-20",
+     "USD",
+     "USD",
+     "Transportadora de Gas del Sur"
+    ],
+    [
+     "TT1AO",
+     "2033-01-22",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "TTC8O",
+     "2027-10-24",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "TTC9O",
+     "2029-10-24",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "TTCAO",
+     "2033-01-22",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "TTCBO",
+     "2027-10-16",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "TTCDO",
+     "2030-11-03",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "TTCEO",
+     "2029-05-21",
+     "USD",
+     "USD",
+     "Tecpetrol"
+    ],
+    [
+     "VAC3P",
+     "2027-10-27",
+     "USD",
+     "USD",
+     "Vitalcan"
+    ],
+    [
+     "VBC1O",
+     "2027-03-11",
+     "USD",
+     "USD",
+     "B. de Valores"
+    ],
+    [
+     "VBC4O",
+     "2027-07-20",
+     "USD",
+     "USD",
+     "B. de Valores"
+    ],
+    [
+     "VES2L",
+     "2028-10-28",
+     "USD",
+     "USD",
+     "Ricardo Venturino"
+    ],
+    [
+     "VMC1O",
+     "2030-09-22",
+     "USD",
+     "USD",
+     "VMOS"
+    ],
+    [
+     "VS1XO",
+     "2038-04-08",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCPO",
+     "2029-05-03",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCRO",
+     "2031-10-10",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCTO",
+     "2035-12-10",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCUO",
+     "2030-03-07",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCVO",
+     "2033-06-10",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCXO",
+     "2038-04-08",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCYO",
+     "2028-01-16",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCZO",
+     "2029-07-16",
+     "USD",
+     "USD",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VX12M",
+     "2028-06-30",
+     "USD",
+     "USD",
+     "Tecnovax"
+    ],
+    [
+     "WBS3O",
+     "2027-07-06",
+     "USD",
+     "USD",
+     "B. Mariva"
+    ],
+    [
+     "XMC1O",
+     "2027-11-11",
+     "USD",
+     "USD",
+     "Minera Exar"
+    ],
+    [
+     "YCAMO",
+     "2027-07-21",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YCANO",
+     "2047-12-15",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YFCGO",
+     "2027-02-27",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCIO",
+     "2027-06-13",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCJO",
+     "2032-10-16",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCKO",
+     "2026-11-22",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCLO",
+     "2028-11-22",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCMO",
+     "2027-05-20",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCOO",
+     "2028-12-15",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YFCPO",
+     "2029-08-18",
+     "USD",
+     "USD",
+     "YPF Luz"
+    ],
+    [
+     "YM34O",
+     "2034-01-17",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM37O",
+     "2027-05-07",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM38O",
+     "2027-07-22",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM39O",
+     "2030-07-22",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM40O",
+     "2028-08-28",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM41O",
+     "2027-01-08",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM42O",
+     "2029-03-02",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM43O",
+     "2030-04-14",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YM44O",
+     "2035-06-18",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMC1O",
+     "2029-06-27",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMCIO",
+     "2029-06-30",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMCJO",
+     "2033-09-30",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMCUO",
+     "2031-01-17",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMCXO",
+     "2031-09-11",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMCYO",
+     "2028-10-10",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YMCZO",
+     "2028-10-10",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "YPC4O",
+     "2028-11-02",
+     "USD",
+     "USD",
+     "YPF"
+    ],
+    [
+     "ZPC2O",
+     "2027-06-02",
+     "USD",
+     "USD",
+     "Plaza Logistica"
+    ],
+    [
+     "ZPC3O",
+     "2027-09-03",
+     "USD",
+     "USD",
+     "Plaza Logistica"
+    ],
+    [
+     "ZPC5O",
+     "2029-06-26",
+     "USD",
+     "USD",
+     "Plaza Logistica"
+    ],
+    [
+     "ZZC1O",
+     "2027-02-21",
+     "USD",
+     "USD",
+     "Camuzzi Gas Pampeana"
+    ]
+   ]
   },
   {
    "id": 3,
@@ -2640,8 +5022,65 @@
    "id": 21,
    "name": "Provinciales ARS Fijo",
    "convencionTna": "plazo-rem",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "BB2D6",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "BBE27",
+     "2027-01-21",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "BBN26",
+     "2026-11-19",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "BL2D6",
+     "2026-12-11",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BL3E7",
+     "2027-01-15",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLN26",
+     "2026-11-13",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "LBD26",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "LBN26",
+     "2026-11-19",
+     "ARS",
+     "ARS",
+     "PBA"
+    ]
+   ]
   },
   {
    "id": 19,
@@ -2985,8 +5424,205 @@
    "id": 18,
    "name": "Provinciales USD",
    "convencionTna": "180-360",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "BA37D",
+     "2037-09-01",
+     "USD",
+     "USD",
+     "PBA"
+    ],
+    [
+     "BB37D",
+     "2037-09-01",
+     "USD",
+     "USD",
+     "PBA"
+    ],
+    [
+     "BC37D",
+     "2037-09-01",
+     "USD",
+     "USD",
+     "PBA"
+    ],
+    [
+     "BDC33",
+     "2033-11-26",
+     "USD",
+     "USD",
+     "CABA"
+    ],
+    [
+     "BDC36",
+     "2036-05-13",
+     "USD",
+     "USD",
+     "CABA"
+    ],
+    [
+     "Bueair27",
+     "2027-06-01",
+     "USD",
+     "USD",
+     "CABA"
+    ],
+    [
+     "CH24D",
+     "2028-02-18",
+     "USD",
+     "USD",
+     "Chaco"
+    ],
+    [
+     "CO24",
+     "2027-06-01",
+     "USD",
+     "USD",
+     "Cordoba"
+    ],
+    [
+     "CO27",
+     "2029-02-01",
+     "USD",
+     "USD",
+     "Cordoba"
+    ],
+    [
+     "CO32",
+     "2032-07-02",
+     "USD",
+     "USD",
+     "Cordoba"
+    ],
+    [
+     "CO35",
+     "2035-02-03",
+     "USD",
+     "USD",
+     "Cordoba"
+    ],
+    [
+     "ERF25",
+     "2028-08-08",
+     "USD",
+     "USD",
+     "Entre Rios"
+    ],
+    [
+     "ERM33",
+     "2033-03-04",
+     "USD",
+     "USD",
+     "Entre Rios"
+    ],
+    [
+     "JUS22",
+     "2027-03-20",
+     "USD",
+     "USD",
+     "Jujuy"
+    ],
+    [
+     "Muni27",
+     "2027-09-29",
+     "USD",
+     "USD",
+     "Muni Cordoba"
+    ],
+    [
+     "NDG34",
+     "2034-08-25",
+     "USD",
+     "USD",
+     "Neuquen"
+    ],
+    [
+     "NDT11",
+     "2030-05-12",
+     "USD",
+     "USD",
+     "Neuquen"
+    ],
+    [
+     "NDT25",
+     "2030-04-27",
+     "USD",
+     "USD",
+     "Neuquen"
+    ],
+    [
+     "PMM29",
+     "2029-03-19",
+     "USD",
+     "USD",
+     "Mendoza"
+    ],
+    [
+     "PUA36",
+     "2036-04-29",
+     "USD",
+     "USD",
+     "Chubut"
+    ],
+    [
+     "PUL26",
+     "2029-04-26",
+     "USD",
+     "USD",
+     "Chubut"
+    ],
+    [
+     "RIF25",
+     "2028-02-24",
+     "USD",
+     "USD",
+     "La Rioja"
+    ],
+    [
+     "RND25",
+     "2028-03-10",
+     "USD",
+     "USD",
+     "Rio Negro"
+    ],
+    [
+     "SA24D",
+     "2027-12-01",
+     "USD",
+     "USD",
+     "Salta"
+    ],
+    [
+     "SF27D",
+     "2027-11-01",
+     "USD",
+     "USD",
+     "Santa Fe"
+    ],
+    [
+     "SFD34",
+     "2034-12-11",
+     "USD",
+     "USD",
+     "Santa Fe"
+    ],
+    [
+     "SJO35",
+     "2035-10-01",
+     "USD",
+     "USD",
+     "San Juan"
+    ],
+    [
+     "TFU27",
+     "2030-01-21",
+     "USD",
+     "USD",
+     "Tierra del Fuego"
+    ]
+   ]
   },
   {
    "id": 20,
@@ -3085,8 +5721,23 @@
    "id": 10,
    "name": "Soberanos ARS Botes",
    "convencionTna": "180-360",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "TY30P",
+     "2030-05-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TY30P @PUT",
+     "2027-05-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ]
+   ]
   },
   {
    "id": 7,
@@ -3275,8 +5926,44 @@
    "id": 28,
    "name": "Soberanos ARS Tamar",
    "convencionTna": "32-365",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "TMF27",
+     "2027-02-26",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TMF28",
+     "2028-02-25",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TMG27",
+     "2027-08-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TMG28",
+     "2028-08-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TML27",
+     "2027-07-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ]
+   ]
   },
   {
    "id": 9,
@@ -3551,8 +6238,72 @@
    "id": 8,
    "name": "Soberanos USD Bonares",
    "convencionTna": "180-360",
-   "status": 429,
-   "instrumentos": []
+   "status": 200,
+   "instrumentos": [
+    [
+     "AE38",
+     "2038-01-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AL29",
+     "2029-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AL30",
+     "2030-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AL35",
+     "2035-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AL41",
+     "2041-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AN29",
+     "2029-11-30",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AO27",
+     "2027-10-29",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AO28",
+     "2028-10-31",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "AO29",
+     "2029-10-31",
+     "USD",
+     "USD",
+     "Argentina"
+    ]
+   ]
   },
   {
    "id": 11,
@@ -3679,18 +6430,18 @@
    "id": 17,
    "name": "Soberanos USD Linked Lelink",
    "convencionTna": "180-360",
-   "status": 429,
+   "status": 200,
    "instrumentos": []
   }
  ],
  "balanceDespues": {
   "module": "mercado",
   "daily": {
-   "used": 25,
+   "used": 70,
    "limit": 100000
   },
   "monthly": {
-   "used": 25,
+   "used": 70,
    "limit": 3100000
   }
  },
