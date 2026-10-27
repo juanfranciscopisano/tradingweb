@@ -1,7 +1,7 @@
 // Series macro que el navegador no puede bajar directo (el BCRA no habilita CORS en sus planillas) o que no tienen
 // historia pública. El Índice de Tipo de Cambio Real Multilateral (ITCRM) diario y los bilaterales con Brasil, Estados Unidos,
-// China y la Zona Euro, de la planilla ITCRMSerie.xlsx del BCRA (itcrm.json), y los cierres del MSCI MERVAL
-// (merval.json). Escribe en la raíz del repo.
+// China y la Zona Euro, de la planilla ITCRMSerie.xlsx del BCRA (itcrm.json), los cierres del MSCI MERVAL
+// (merval.json) y la caución a 1 día (cauciones.json). Escribe en la raíz del repo.
 //   node scripts/macro.mjs
 import { readFile, writeFile } from "node:fs/promises";
 import { inflateRawSync } from "node:zlib";
@@ -132,9 +132,31 @@ async function msciMerval({ fetchImpl, root, log, now }) {
   log(`merval.json: ${msci.length} cierres del MSCI MERVAL` + (msci.length ? `, último ${msci[msci.length - 1].join(" ")}` : ""));
 }
 
+// Caución a 1 día: BYMA no publica la historia. A la noche se guarda la más corta del día (1 día, o 3 un viernes) con su
+// promedio ponderado y el monto operado: cauciones.json, c1 = [[fecha, días, TNA promedio ponderada %, monto en millones]].
+export const BYMA_CAU_URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/cauciones";
+export function addCaucion(hist, list, now = new Date()) {
+  const rows = new Map(hist.map(r => [r[0], r]));
+  const hoy = new Date(now.getTime() - 3 * 3600000).toISOString().slice(0, 10);   // fecha de Buenos Aires
+  const c = (list || []).filter(x => x.denominationCcy === "ARS" && x.daysToMaturity > 0 && x.vwap > 0 && x.volumeAmount > 0).sort((a, b) => a.daysToMaturity - b.daysToMaturity)[0];
+  if (c && now.getUTCHours() >= 20) rows.set(hoy, [hoy, c.daysToMaturity, +(c.vwap * 100).toFixed(2), Math.round(c.volumeAmount / 1e6)]);
+  return [...rows.values()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+async function caucion({ fetchImpl, root, log, now }) {
+  const r = await fetchImpl(BYMA_CAU_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ excludeZeroPxAndQty: true, T2: true, T1: true, T0: true }) });
+  if (!r.ok) throw new Error("BYMA cauciones HTTP " + r.status);
+  const j = await r.json();
+  let prev = { c1: [] };
+  try { prev = JSON.parse(await readFile(new URL("cauciones.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  const c1 = addCaucion(prev.c1 || [], Array.isArray(j) ? j : j.data || [], now);
+  await writeFile(new URL("cauciones.json", root), JSON.stringify({ asOf: now.toISOString(), src: "BYMA, datos abiertos (cauciones en pesos)", cols: ["fecha", "dias", "tna_vwap", "monto_millones"], c1 }));
+  log(`cauciones.json: ${c1.length} días` + (c1.length ? `, último ${c1[c1.length - 1].join(" ")}` : ""));
+}
+
 export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, now = new Date() } = {}) {
-  // el MSCI MERVAL no frena el ITCRM si BYMA no responde
+  // el MSCI MERVAL y la caución no frenan el ITCRM si BYMA no responde
   await msciMerval({ fetchImpl, root, log, now }).catch(e => log("MSCI MERVAL: " + e.message));
+  await caucion({ fetchImpl, root, log, now }).catch(e => log("Caución: " + e.message));
   const r = await fetchImpl(ITCRM_URL, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; serie ITCRM)" } });
   if (!r.ok) throw new Error("BCRA ITCRM HTTP " + r.status);
   const buf = Buffer.from(await r.arrayBuffer());

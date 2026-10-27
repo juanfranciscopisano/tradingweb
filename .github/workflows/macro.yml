@@ -1,4 +1,4 @@
-name: Series macro (ITCRM y MSCI MERVAL)
+name: Series macro (ITCRM, MSCI MERVAL y caución)
 
 on:
   schedule:
@@ -22,14 +22,14 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Bajar ITCRM del BCRA y MSCI MERVAL de BYMA
+      - name: Bajar ITCRM (BCRA), MSCI MERVAL y caución (BYMA)
         run: node scripts/macro.mjs
       - name: Commit si cambió
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add itcrm.json merval.json 2>/dev/null || git add itcrm.json
+          for f in itcrm.json merval.json cauciones.json; do [ -f "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
-          git commit -m "macro: ITCRM y MSCI MERVAL"
+          git commit -m "macro: ITCRM, MSCI MERVAL y caución"
           git pull --rebase -q
           git push
