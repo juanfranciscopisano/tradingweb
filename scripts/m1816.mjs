@@ -28,9 +28,13 @@ export function cliente({ key, fetchImpl = fetch, log = console.log, espera = +(
     const headers = { "User-Agent": UA, Accept: "application/json" };
     if (body) headers["Content-Type"] = "application/json";
     if (auth) headers.Authorization = "Bearer " + token;
-    const r = await fetchImpl(BASE + path + (query || ""), { method: metodo, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });
-    let j = null; try { j = await r.json(); } catch (e) { /* sin cuerpo */ }
-    return { status: r.status, j };
+    // 429 (más de un pedido por segundo): esperar y repetir, hasta 5 veces
+    for (let k = 0; ; k++) {
+      const r = await fetchImpl(BASE + path + (query || ""), { method: metodo, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });
+      let j = null; try { j = await r.json(); } catch (e) { /* sin cuerpo */ }
+      if (r.status !== 429 || k >= 4) return { status: r.status, j };
+      await pausa(espera * 2 * (k + 1)); ultimo = Date.now();
+    }
   };
   return {
     get pedidos() { return pedidos; },
