@@ -55,6 +55,9 @@ button,input,select{font:inherit;color:inherit}
 .inf-presets{display:flex;flex-direction:column;gap:2px}
 .inf-preset{text-align:left;background:none;border:0;border-left:3px solid transparent;border-radius:0 5px 5px 0;padding:6px 9px;font-size:13.5px;color:var(--ink2);cursor:pointer}
 .inf-preset:hover{background:var(--surf2);color:var(--ink)}
+.inf-extra{margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
+.inf-extra summary{font-size:12px;color:var(--muted);cursor:pointer;padding:4px 9px;list-style-position:inside}
+.inf-extra summary:hover{color:var(--ink)}
 .inf-preset.on{background:var(--accent-soft);border-left-color:var(--accent);color:var(--ink);font-weight:650}
 .inf-grp{margin-bottom:8px}
 .inf-grp-name{font-size:12px;color:var(--faint);margin-bottom:4px}
@@ -5040,12 +5043,14 @@ const METODO = [
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
       { d: 'Curvas soberanas (dólares, CER, dólar linked y BOPREAL): TIR por duration modificada de la API de 1816, con precios de cierre de BYMA a 24 hs, hoy contra hace una semana y hace un mes. Los bonos en dólares, con el precio en dólares MEP. Fuera los que tienen menos de 0,15 años de duration.',
         p: 'La TIR de un bono a días del vencimiento se dispara con cualquier centavo de precio y desarma la curva; 0,15 años deja afuera también a los CER cuyo último cupón ya tiene el índice fijado, que rinden en pesos y no en tasa real. Globales y Bonares van en series separadas porque la diferencia entre las dos legislaciones es parte de lo que se mira. Un workflow consulta 1816 todas las noches (unos 1.000 créditos de los 100.000 diarios del plan) y guarda el resultado en soberanos.json; la clave vive en un secreto de GitHub y nunca llega a la página.' },
-      { d: 'Vencimientos en dólares: flujo de fondos de cada bono (1816, por cada 100 de valor nominal) por el monto en circulación de BYMA, más el REPO del BCRA (US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital). Por año (el último junta todo lo que sigue) o por semestre, apilado por deuda o por capital e intereses.',
+      { d: 'Vencimientos en dólares (sin la tabla de 1816): flujo de fondos de cada bono (1816, por cada 100 de valor nominal) por el monto en circulación de BYMA, más el REPO del BCRA (US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital). Por año (el último junta todo lo que sigue) o por semestre, apilado por deuda o por capital e intereses.',
         p: 'Los flujos de 1816 son por cada 100 del valor nominal original: la amortización que falta suma lo mismo que el residual sobre el emitido (64 en el AL30 y el GD30), así que se multiplica por el emitido. BYMA no publica montos de LECAP, BONCAP, duales ni CER, y Finanzas los publica en un sitio que no se puede leer desde acá, así que los vencimientos en pesos quedan afuera. Los montos de BYMA incluyen lo que tienen el BCRA y el FGS. El REPO no cotiza: va a mano, del comunicado del BCRA del 30/06/2026.' },
       { d: 'Curvas: tasa en TNA 365, TEA o TEM; eje por días al vencimiento, por vencimiento o por duration modificada; tramo corto, medio, largo o toda la curva. Los cortes van por días al vencimiento: tasa fija hasta 90 y 270 días; dólares hasta 3 y 9 años; CER hasta 1 y 3 años; dólar linked hasta 6 y 18 meses; BOPREAL hasta 1 y 2 años; Treasuries hasta 1 y 7 años.',
         p: 'En las curvas de 1816 la TNA es la que calcula 1816 sobre 365 días: con capitalización semestral en los bonos con cupón (dólares, CER, BOPREAL) y simple al vencimiento en las letras dólar linked. En tasa fija la TNA es simple al vencimiento y la duration modificada de una letra es plazo / (1 + TEA). Los cortes de cada tramo cambian por curva porque los plazos también: lo corto de los bonos en dólares es más largo que toda la curva de LECAP.' },
       { d: 'Vencimientos del Tesoro (1816): capital e intereses de toda la deuda en títulos negociables, por día e instrumento, de la pantalla Vencimientos del Tesoro de 1816 (Datasets › Macro › Tesoro), con los valores nominales actualizados hasta la última licitación. Por mes, trimestre o año, apilado por ajuste (tasa fija, CER, TAMAR, BADLAR, duales, dólar linked, dólares, euros) o por curva, en $ billones o en US$ millones al oficial que usa 1816.',
         p: 'Esa tabla no está en la API de 1816 (el módulo de mercado no tiene montos), así que la trae un favorito del navegador que la lee de la web de 1816 con la sesión de quien la tiene abierta y abre el Informe con los datos. Quedan guardados en ese navegador y no en el repositorio, que es público. Hay que tocar el favorito después de cada licitación.' },
+      { d: 'Merval: el S&P Merval hasta el 16/10/2026 y desde el 19/10 la variación del MSCI MERVAL, que lo reemplazó y arrancó con base 100.000 en el cierre del 16/10. La serie empalmada queda en puntos del S&P Merval; el MSCI MERVAL suelto sigue en sus propios puntos. Las ruedas del 19 al 23/10 son las que publicó EFE (BYMA da solo el día).' },
+      { d: 'Vencimientos en dólares del Tesoro y el BCRA: los del Tesoro, de la tabla de 1816 cuando está cargada en el navegador (Bonares, Globales y Globales en euros, con los nominales de la última licitación); si no, flujos de 1816 por montos de BYMA, sin los Globales en euros. Los del BCRA: BOPREAL (flujos de 1816 por montos de BYMA) y el REPO.' },
       { d: 'Reservas netas: brutas menos los encajes de los depósitos en dólares (cuentas corrientes en moneda extranjera de los bancos en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día). Todo del BCRA, por día.',
         p: 'Es la cuenta más común y se puede rehacer con datos públicos. El REPO con bancos (US$ 6.000 millones) vence en septiembre de 2028, a más de un año, y no se resta. No resta los pagos a organismos ni los de BOPREAL a menos de un año, ni los depósitos del Tesoro en dólares; las estimaciones privadas que restan alguno de esos dan menos, y la meta del FMI usa otra definición.' },
       { d: 'Inflación: mensual e interanual del INDEC (series 27 y 28 del BCRA); la acumulada en el año es el producto de las mensuales desde enero. "Inflación mensual y acumulada" trae la mensual en columnas sobre el eje izquierdo y las acumuladas en el derecho.' },
@@ -5635,9 +5640,10 @@ const INF_CAT = {
   itcrm: { n: 'ITCRM', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(1) },
   tcrBr: { n: 'TCR bilateral con Brasil', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(2) },
   tcrUs: { n: 'TCR bilateral con EE.UU.', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(3) },
+  mervalEmp: { n: 'Merval (S&P y MSCI empalmados)', g: 'Acciones', u: 'puntos S&P Merval', src: 'Yahoo Finance y BYMA', load: () => infMervalEmp() },
+  mervalUsd: { n: 'Merval en US$ CCL', g: 'Acciones', u: 'US$', src: 'Yahoo Finance, BYMA y argentinadatos', load: () => infRatio('mervalEmp', 'ccl') },
   merval: { n: 'S&P Merval (hasta 16/10/26)', g: 'Acciones', u: 'puntos S&P Merval', src: 'Yahoo Finance', load: () => infYahoo('^MERV') },
-  mervalUsd: { n: 'S&P Merval en US$ CCL', g: 'Acciones', u: 'US$', src: 'Yahoo Finance y argentinadatos', load: () => infRatio('merval', 'ccl') },
-  msci: { n: 'MSCI MERVAL (desde 19/10/26)', g: 'Acciones', u: 'puntos MSCI MERVAL', src: 'BYMA', load: () => infMsci() },
+  msci: { n: 'MSCI MERVAL (base 100.000 el 16/10/26)', g: 'Acciones', u: 'puntos MSCI MERVAL', src: 'BYMA', load: () => infMsci() },
   spx: { n: 'S&P 500', g: 'Acciones', u: 'puntos S&P 500', src: 'Yahoo Finance', load: () => infYahoo('^GSPC') },
   ibov: { n: 'Bovespa', g: 'Acciones', u: 'puntos Bovespa', src: 'Yahoo Finance', load: () => infYahoo('^BVSP') },
   cau1: { n: 'Caución a 1 día (promedio ponderado)', g: 'Tasas', u: '% TNA', src: 'BYMA', load: () => infCaucion(), nota: 'hay historia desde el 26/02/2026 (BYMA no la publica)' },
@@ -5652,6 +5658,7 @@ const INF_CAT = {
   reservas: { n: 'Reservas internacionales', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infBcra(1) },
   resNetas: { n: 'Reservas netas', g: 'BCRA', u: 'US$ millones', src: 'BCRA y BCE', load: () => infReservasNetas() },
   encajes: { n: 'Encajes en dólares en el BCRA', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infBcra(1243) },
+  swapChina: { n: 'Swap con China (en dólares)', g: 'BCRA', u: 'US$ millones', src: 'BCE', load: () => infSwapChina() },
   compras: { n: 'Compras de divisas (acumuladas)', g: 'BCRA', u: 'US$ millones', src: 'BCRA', flow: true, load: () => infBcra(78) },
   base: { n: 'Base monetaria', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(15, 1e-6) },
   m2: { n: 'M2 transaccional privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(197, 1e-6) },
@@ -5675,14 +5682,14 @@ const INF_GROUP_N = { BCRA: 'BCRA y Tesoro' };
 const INF_PRESETS = [
   { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna' },
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
-  { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau' },
+  { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau', extra: true },
   { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true }, tasa: 'tea' },
   { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true }, tasa: 'tea' },
-  { id: 'venc', n: 'Vencimientos en dólares', mode: 'pagos' },
+  { id: 'venc', n: 'Vencimientos en dólares (Tesoro y BCRA)', mode: 'pagos' },
   { id: 'tesoro', n: 'Vencimientos del Tesoro (1816)', mode: 'tesoro' },
   { id: 'fx', n: 'Dólar, DXY, real e ITCRM', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', t: 'Dólar oficial, DXY, real e ITCRM' },
   { id: 'latam', n: 'Monedas de la región', mode: 'serie', keys: ['a3500', 'brl', 'clp', 'mxn', 'pen'], trans: 'base', period: '1A', inv: { a3500: true, brl: true, clp: true, mxn: true, pen: true }, t: 'Monedas de la región contra el dólar' },
-  { id: 'merval', n: 'Merval en pesos y en dólares', mode: 'serie', keys: ['merval', 'mervalUsd'], trans: 'nivel', period: '1A', t: 'Merval en pesos y en dólares' },
+  { id: 'merval', n: 'Merval en pesos y en dólares', mode: 'serie', keys: ['mervalEmp', 'mervalUsd'], trans: 'nivel', period: '1A', t: 'Merval en pesos y en dólares' },
   { id: 'tasas1d', n: 'Tasas a 1 día', mode: 'serie', keys: ['cau1', 'pases1d', 'baibar'], trans: 'nivel', period: '6M', t: 'Tasas a 1 día' },
   { id: 'otros', n: 'Tasas y cuenta Otros del BCRA', mode: 'serie', keys: ['tamar', 'pases1d', 'cau1', 'otros'], trans: 'nivel', period: '1A', bars: { otros: true }, t: 'Tasas y cuenta Otros del BCRA' },
   { id: 'tasasRef', n: 'TAMAR, BADLAR y plazo fijo', mode: 'serie', keys: ['tamar', 'badlar', 'pf30'], trans: 'nivel', period: '1A', t: 'Tasas de referencia' },
@@ -5691,13 +5698,14 @@ const INF_PRESETS = [
   { id: 'reservas', n: 'Reservas y compras del BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
   { id: 'inflacion', n: 'Inflación mensual y acumulada', mode: 'serie', keys: ['ipcM', 'ipcYtd', 'ipcA'], trans: 'nivel', period: '2A', bars: { ipcM: true }, t: 'Inflación mensual, acumulada en el año e interanual' },
   { id: 'netas', n: 'Reservas brutas y netas', mode: 'serie', keys: ['reservas', 'resNetas'], trans: 'nivel', period: '2A', t: 'Reservas internacionales brutas y netas' },
+  { id: 'netasDes', n: 'Reservas netas: desglose', mode: 'serie', keys: ['reservas', 'encajes', 'swapChina', 'resNetas'], trans: 'nivel', period: '1A', t: 'Reservas brutas, encajes, swap con China y reservas netas' },
   { id: 'dinero', n: 'Base monetaria y M2', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
 
 let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
-  pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, bopreal: true, repo: true },
+  pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, eur: true, bopreal: true, repo: true },
   tesoro: { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {} },
   real: false, tramo: 'toda', ejeX16: 'dm', size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
@@ -5789,6 +5797,16 @@ function infMsci() {
     return [...map].sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => ({ d, t: argT(d), v }));
   });
 }
+// Merval empalmado: el S&P Merval hasta el 16/10/2026 y desde ahí la variación del MSCI MERVAL, que arrancó con base 100.000
+// en el cierre de ese día (BYMA cambió de índice el 19/10). Queda en puntos del S&P Merval
+const INF_MERVAL_CAMBIO = '2026-10-16';
+async function infMervalEmp() {
+  const [sp, ms] = await Promise.all([infYahoo('^MERV'), infMsci()]);
+  const viejo = sp.filter(p => p.d <= INF_MERVAL_CAMBIO), base = viejo[viejo.length - 1];
+  if (!base || base.d !== INF_MERVAL_CAMBIO) throw new Error('falta el cierre del S&P Merval del 16/10');
+  const msBase = (ms.find(p => p.d === INF_MERVAL_CAMBIO) || { v: 100000 }).v;
+  return [...viejo, ...ms.filter(p => p.d > INF_MERVAL_CAMBIO).map(p => ({ d: p.d, t: p.t, v: base.v * p.v / msBase }))];
+}
 // caución a 1 día: lo guardado por el workflow (cauciones.json: fecha, días, promedio ponderado, monto en millones) y la de hoy
 function infCaucion() {
   return infOnce('cau1', async () => {
@@ -5810,6 +5828,14 @@ async function infIpcAnio() {
 // en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día).
 // El REPO con bancos vence en septiembre de 2028, a más de un año, así que no se resta
 const INF_SWAP_CNY = 130000;
+// el swap en dólares, día por día, al yuan del BCE (fx.json); antes del primer dato, el primero
+async function infSwapChina() {
+  const [br, fx] = await Promise.all([infBcra(1), infOnce('fxjson', () => infJson('fx.json?d=' + new Date().toISOString().slice(0, 10))).catch(() => ({}))]);
+  const cny = (fx.cny || []).map(([d, v]) => ({ d, t: argT(d), v })); let k = 0;
+  const out = br.map(p => { while (k + 1 < cny.length && cny[k + 1].t <= p.t) k++; const c = cny[k] || cny[0]; return { d: p.d, t: p.t, v: INF_SWAP_CNY / (c ? c.v : 7.1) }; });
+  if (!cny.length) out.src = 'BCRA (a 7,1 yuanes por dólar)';
+  return out;
+}
 async function infReservasNetas() {
   const [br, enc, fx] = await Promise.all([infBcra(1), infBcra(1243), infOnce('fxjson', () => infJson('fx.json?d=' + new Date().toISOString().slice(0, 10))).catch(() => ({}))]);
   const cny = (fx.cny || []).map(([d, v]) => ({ d, t: argT(d), v }));
@@ -5859,7 +5885,8 @@ const INF_C1816 = {
 // REPO del BCRA con bancos: no cotiza, va a mano. Refinanciado el 30/06/2026 (comunicado del BCRA): US$ 6.000 millones
 // con diez bancos a SOFR + 4%, con Bonares de garantía, vence en septiembre de 2028
 const INF_REPO = { monto: 6000, fecha: '2028-09-15', txt: 'REPO del BCRA: US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital' };
-const INF_PAGOS_G = [['bonares', 'Bonares', BV.navy], ['globales', 'Globales', BV.azul], ['bopreal', 'BOPREAL', BV.celeste], ['repo', 'REPO del BCRA', BV.teal]];
+const INF_PAGOS_G = [['bonares', 'Bonares (Tesoro)', BV.navy, 'Tesoro'], ['globales', 'Globales (Tesoro)', BV.azul, 'Tesoro'], ['eur', 'Globales en euros (Tesoro)', BV.medio, 'Tesoro'],
+  ['bopreal', 'BOPREAL (BCRA)', BV.celeste, 'BCRA'], ['repo', 'REPO (BCRA)', BV.teal, 'BCRA']];
 const infPagosGrupo = t => /^BPO[A-D]\d$/.test(t) ? 'bopreal' : /^GD\d/.test(t) ? 'globales' : /^(AL|AE|AN|AO)\d/.test(t) ? 'bonares' : null;
 // los flujos de 1816 son por cada 100 de valor nominal: si la amortización que falta suma lo mismo que el residual sobre el
 // emitido, son por 100 del original (se multiplica por el emitido); si suma 100, son por 100 del residual
@@ -5980,7 +6007,9 @@ async function infBuildSerie() {
   const tAuto = (preset && preset.t && sameKeys(preset.keys, keys) && invIgual) ? preset.t : infJoinY(ser.map(s => s.name.replace(/ \(.*\)$/, '')));
   const bAuto = (units.length === 2 ? unitTxt(units[0]) + ' (eje izq.) y ' + unitTxt(units[1]) + ' (eje der.)' : unitTxt(units[0])) + ', ' + periodo;
   const srcs = [...new Set(ser.flatMap(s => s.src.split(' y ')))];
-  const fAuto = 'Fuente: ' + (srcs.length > 1 ? srcs.slice(0, -1).join(', ') + ' y ' + srcs[srcs.length - 1] : srcs[0]) + '.';
+  // con reservas netas, la cuenta va al pie: el número depende de qué se resta
+  const metod = ser.some(s => s.k === 'resNetas') ? ' Reservas netas: brutas menos encajes de los depósitos en dólares y swap con China.' : '';
+  const fAuto = 'Fuente: ' + (srcs.length > 1 ? srcs.slice(0, -1).join(', ') + ' y ' + srcs[srcs.length - 1] : srcs[0]) + '.' + metod;
   return { kind: 'serie', ser, units, unitTxt, tAuto, bAuto, fAuto, notes, last, first, flow: ser.some(s => INF_CAT[s.k]?.flow) };
 }
 // "a, b y c" (o "e" antes de i/hi)
@@ -6036,33 +6065,50 @@ async function infBuildTesoro() {
     tAuto: 'Vencimientos del Tesoro', bAuto: (usd ? 'US$ millones' : '$ billones') + ', capital e intereses, por ' + ({ mes: 'mes', trim: 'trimestre', anio: 'año' }[T.por]),
     fAuto: 'Fuente: 1816, con valores nominales hasta la licitación del ' + fecha + '.' };
 }
+// vencimientos en dólares del Tesoro y del BCRA. Tesoro: la tabla de 1816 si está en este navegador (todos los bonos en
+// dólares y en euros, con los nominales de la última licitación); si no, flujos de 1816 por montos de BYMA (sin euros).
+// BCRA: BOPREAL (flujos de 1816 por montos de BYMA) y el REPO
 async function infBuildPagos() {
-  const j = await infSoberanos(), hoy = new Date().toISOString().slice(0, 10), y0 = +hoy.slice(0, 4), notes = [];
-  const por = INF.pagosPor === 'sem' ? 'sem' : 'anio', apilar = INF.pagosApilar === 'tipo' ? 'tipo' : 'grupo', inc = INF.pagosInc || {};
+  const j = await infSoberanos().catch(() => ({})), d16 = infVenc1816(), hoy = new Date().toISOString().slice(0, 10), y0 = +hoy.slice(0, 4), notes = [];
+  const por = INF.pagosPor === 'sem' ? 'sem' : 'anio', apilar = INF.pagosApilar === 'emisor' ? 'emisor' : 'grupo', inc = INF.pagosInc || {};
   // períodos: 10 años (el último junta todo lo que sigue) o 10 semestres
   const cats = [], idx = d => { const y = +d.slice(0, 4), m = +d.slice(5, 7);
     if (por === 'anio') return Math.min(9, y - y0);
     const s0 = y0 * 2 + (+hoy.slice(5, 7) > 6 ? 1 : 0), si = y * 2 + (m > 6 ? 1 : 0) - s0; return si > 9 ? -1 : si; };
   for (let i = 0; i < 10; i++) { if (por === 'anio') cats.push(i === 9 ? (y0 + 9) + ' en adelante' : String(y0 + i)); else { const si = y0 * 2 + (+hoy.slice(5, 7) > 6 ? 1 : 0) + i; cats.push((si % 2 ? '2S ' : '1S ') + Math.floor(si / 2)); } }
-  const sk = apilar === 'grupo' ? INF_PAGOS_G.filter(g => inc[g[0]] !== false).map(([k, n, c]) => ({ k, name: n, color0: c })) : [{ k: 'capital', name: 'Capital', color0: BV.navy }, { k: 'interes', name: 'Intereses', color0: BV.celeste }];
-  const val = Object.fromEntries(sk.map(x => [x.k, cats.map(() => 0)])), sinMonto = [], porTk = {};
-  for (const [t, fl] of Object.entries(j.flujos || {})) {
-    const g = infPagosGrupo(t); if (!g || inc[g] === false) continue;
-    const m = (j.montos || {})[t]; if (!m) { sinMonto.push(t); continue; }
-    const base = infPagosBase(fl, m) / 100 / 1e6;   // US$ millones por cada punto del flujo
-    for (const [d, am, it] of fl) { const i = idx(d); if (i < 0 || d <= hoy) continue;
-      if (apilar === 'grupo') val[g][i] += (am + it) * base; else { val.capital[i] += am * base; val.interes[i] += it * base; }
-      porTk[t] = (porTk[t] || 0) + (am + it) * base; }
+  const val = {}, add = (g, d, v) => { if (d <= hoy || inc[g] === false) return; const i = idx(d); if (i < 0) return; (val[g] = val[g] || cats.map(() => 0))[i] += v; };
+  const sinMonto = [], porFlujos = g => {
+    for (const [t, fl] of Object.entries(j.flujos || {})) {
+      if (infPagosGrupo(t) !== g) continue;
+      const m = (j.montos || {})[t]; if (!m) { sinMonto.push(t); continue; }
+      const base = infPagosBase(fl, m) / 100 / 1e6;   // US$ millones por cada punto del flujo
+      for (const [d, am, it] of fl) add(g, d, (am + it) * base);
+    }
+  };
+  const fuentes = [];
+  if (d16) {
+    const g16 = { 'USD Bonares': 'bonares', 'USD Globales': 'globales', 'EUR Globales': 'eur' };
+    for (const r of d16.rows) if (g16[r[2]]) add(g16[r[2]], r[0], r[4] / d16.fx);
+    notes.push('Tesoro: vencimientos de 1816 con los nominales hasta la licitación del ' + infDdmmaa(d16.asOf) + ', en dólares al oficial de 1816 (los Globales en euros, también pasados a dólares)');
+    fuentes.push('1816 (Tesoro y BOPREAL)');
+  } else {
+    porFlujos('bonares'); porFlujos('globales');
+    notes.push('Tesoro: sin la tabla de 1816 en este navegador, Bonares y Globales salen de los flujos de 1816 por los montos de BYMA y faltan los Globales en euros');
+    fuentes.push('1816 (flujos de fondos)');
   }
-  if (inc.repo !== false && INF_REPO.fecha > hoy) { const i = idx(INF_REPO.fecha); if (i >= 0) { (apilar === 'grupo' ? val.repo : val.capital)[i] += INF_REPO.monto; } notes.push(INF_REPO.txt); }
-  const ser = sk.map(x => ({ ...x, vals: val[x.k], bars: true })).filter(x => x.vals.some(v => v > 0));
-  if (!ser.length) return { kind: 'vacio', msg: j.flujos ? 'No hay pagos para mostrar con esa selección.' : 'Todavía no están los flujos de 1816 (soberanos.json).', notes };
+  porFlujos('bopreal');
+  fuentes.push('BYMA (montos en circulación)');
+  if (inc.repo !== false && INF_REPO.fecha > hoy) { add('repo', INF_REPO.fecha, INF_REPO.monto); notes.push(INF_REPO.txt); fuentes.push('BCRA (REPO)'); }
+  let ser = INF_PAGOS_G.filter(g => val[g[0]]).map(([k, n, c]) => ({ k, name: n, color0: c, vals: val[k], bars: true }));
+  if (apilar === 'emisor') ser = [['tesoro', 'Tesoro', BV.navy], ['bcra', 'BCRA', BV.celeste]].map(([k, n, c]) => ({ k, name: n, color0: c, bars: true,
+    vals: cats.map((_, i) => INF_PAGOS_G.filter(g => g[3].toLowerCase() === k && val[g[0]]).reduce((a, g) => a + val[g[0]][i], 0)) }));
+  ser = ser.filter(x => x.vals.some(v => v > 0));
+  if (!ser.length) return { kind: 'vacio', msg: j.flujos || d16 ? 'No hay pagos para mostrar con esa selección.' : 'Todavía no están los flujos de 1816 (soberanos.json).', notes };
   if (sinMonto.length) notes.push('Sin monto en circulación en BYMA, no suman: ' + sinMonto.join(', '));
-  notes.push('Montos en circulación según BYMA (incluye tenencias del sector público)');
-  const fuentes = ['1816 (flujos de fondos)', 'BYMA (montos en circulación)'].concat(inc.repo !== false ? ['BCRA (REPO)'] : []);
-  return { kind: 'pagos', cats, ser, porTk, units: ['US$ millones'], notes, last: (j.asOf || hoy).slice(0, 10),
-    tAuto: 'Vencimientos de deuda en dólares', bAuto: 'US$ millones, capital e intereses, por ' + (por === 'anio' ? 'año' : 'semestre'),
-    fAuto: 'Fuente: ' + fuentes.slice(0, -1).join(', ') + ' y ' + fuentes[fuentes.length - 1] + '.' };
+  notes.push('Montos con las tenencias del sector público');
+  return { kind: 'pagos', cats, ser, units: ['US$ millones'], notes, last: (d16 ? d16.asOf : (j.asOf || hoy)).slice(0, 10),
+    tAuto: 'Vencimientos de deuda en dólares del Tesoro y el BCRA', bAuto: 'US$ millones, capital e intereses, por ' + (por === 'anio' ? 'año' : 'semestre'),
+    fAuto: 'Fuente: ' + infJoinY(fuentes) + '.' };
 }
 async function infBuildCurva() {
   const cmpTxt = { s: 'hace una semana', m: 'hace un mes' }, notes = [];
@@ -6444,7 +6490,7 @@ function infTsv() {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
-  if (sp.kind === 'pagos') return ['Período\t' + sp.ser.map(s => s.name + ' (' + sp.units[0] + ')').join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
+  if (sp.kind === 'pagos') return ['Período (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
     return ['Bono\t' + sp.ser.map(s => s.name + ' ' + INF_TASA_N[sp.tasa || 'tea'] + ' (%)\t' + s.name + ' ' + (sp.xU === 'días' ? 'días' : 'duration')).join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
@@ -6459,7 +6505,9 @@ function infTsv() {
 // ---- controles
 function renderInfCtl() {
   const P = document.getElementById('infPresets'); if (!P) return;
-  P.innerHTML = INF_PRESETS.map(p => '<button type="button" class="inf-preset' + (p.id === INF.preset ? ' on' : '') + '" aria-pressed="' + (p.id === INF.preset) + '" onclick="infPreset(\'' + p.id + '\')">' + p.n + '</button>').join('');
+  const btn = p => '<button type="button" class="inf-preset' + (p.id === INF.preset ? ' on' : '') + '" aria-pressed="' + (p.id === INF.preset) + '" onclick="infPreset(\'' + p.id + '\')">' + p.n + '</button>';
+  const extra = INF_PRESETS.filter(p => p.extra), abierto = extra.some(p => p.id === INF.preset);
+  P.innerHTML = INF_PRESETS.filter(p => !p.extra).map(btn).join('') + (extra.length ? '<details class="inf-extra"' + (abierto ? ' open' : '') + '><summary>Gráficos adicionales</summary>' + extra.map(btn).join('') + '</details>' : '');
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
   let h = '', cat = '';
   if (INF.mode === 'tesoro') {
@@ -6475,7 +6523,7 @@ function renderInfCtl() {
       + '<a class="btn btn-ghost inf-fav" href="' + infFavorito1816() + '" onclick="infToast(\'Arrastralo a la barra de favoritos; se usa desde la página de 1816\'); return false;">Traer de 1816</a>';
   } else if (INF.mode === 'pagos') {
     cat = '<div class="inf-lbl inf-lbl-first">Por</div>' + seg([['anio', 'Año'], ['sem', 'Semestre']], INF.pagosPor, 'infPagosPor')
-      + '<div class="inf-lbl">Apilar</div>' + seg([['grupo', 'Por deuda'], ['tipo', 'Capital e intereses']], INF.pagosApilar, 'infPagosApilar')
+      + '<div class="inf-lbl">Apilar</div>' + seg([['grupo', 'Por deuda'], ['emisor', 'Tesoro y BCRA']], INF.pagosApilar === 'emisor' ? 'emisor' : 'grupo', 'infPagosApilar')
       + '<div class="inf-lbl">Incluir</div><div class="inf-chips">' + INF_PAGOS_G.map(([k, n]) => { const on = (INF.pagosInc || {})[k] !== false;
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infPagosInc(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.kind === 'pagos' && infSpec.ser.find(s => s.k === k)?.color) || INF_PAGOS_G.find(g => g[0] === k)[2] : 'transparent') + '"></span>' + n + '</button>'; }).join('') + '</div>';
   } else if (INF.mode === 'serie') {
@@ -6488,7 +6536,7 @@ function renderInfCtl() {
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
       + '</div></div>').join('') + '</div>';
   } else {
-    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['cau', 'Cauciones'], ['usd', 'Dólares'], ['cer', 'CER'], ['linked', 'Dólar linked'], ['bopreal', 'BOPREAL']], INF.curva, 'infCurva');
+    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['usd', 'Dólares'], ['cer', 'CER'], ['linked', 'Dólar linked'], ['bopreal', 'BOPREAL']], INF.curva, 'infCurva');
     if (INF.curva !== 'cau') cat += '<div class="inf-lbl">Comparar con</div><div class="inf-chips">'
       + [['s', 'Hace una semana', BV.azul], ['m', 'Hace un mes', BV.celeste]].map(([k, l, c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? (infSpec?.kind === 'curva' && infSpec.ser.find(s => s.k === k)?.color) || c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
     if (INF.curva === 'fija' || INF_C1816[INF.curva]) cat += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA 365'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa');

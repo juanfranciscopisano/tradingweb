@@ -129,7 +129,7 @@ async function msciMerval({ fetchImpl, root, log, now }) {
   let prev = { msci: [] };
   try { prev = JSON.parse(await readFile(new URL("merval.json", root), "utf8")); } catch (e) { /* primera vez */ }
   const msci = addMsci(prev.msci || [], m, now);
-  await writeFile(new URL("merval.json", root), JSON.stringify({ asOf: now.toISOString(), src: "BYMA, datos abiertos (MSCI MERVAL)", desde: "2026-10-19", msci }));
+  await writeFile(new URL("merval.json", root), JSON.stringify({ asOf: now.toISOString(), src: "BYMA, datos abiertos (MSCI MERVAL)", desde: "2026-10-16", nota: prev.nota, msci }));
   log(`merval.json: ${msci.length} cierres del MSCI MERVAL` + (msci.length ? `, último ${msci[msci.length - 1].join(" ")}` : ""));
 }
 
