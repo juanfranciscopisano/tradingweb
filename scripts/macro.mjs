@@ -1,8 +1,9 @@
-// Series macro que el navegador no puede bajar directo (el BCRA no habilita CORS en sus planillas).
-// Hoy: el Índice de Tipo de Cambio Real Multilateral (ITCRM) diario y los bilaterales con Brasil, Estados Unidos,
-// China y la Zona Euro, de la planilla ITCRMSerie.xlsx del BCRA. Escribe itcrm.json en la raíz del repo.
+// Series macro que el navegador no puede bajar directo (el BCRA no habilita CORS en sus planillas) o que no tienen
+// historia pública. El Índice de Tipo de Cambio Real Multilateral (ITCRM) diario y los bilaterales con Brasil, Estados Unidos,
+// China y la Zona Euro, de la planilla ITCRMSerie.xlsx del BCRA (itcrm.json), y los cierres del MSCI MERVAL
+// (merval.json). Escribe en la raíz del repo.
 //   node scripts/macro.mjs
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { inflateRawSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 
@@ -104,7 +105,36 @@ export function parseItcrm(sheets) {
   return best;
 }
 
-export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log } = {}) {
+// MSCI MERVAL: desde el 19/10/2026 MSCI calcula el Merval (S&P lo calculó hasta el 16/10) y no hay historia pública
+// del índice nuevo. Se guarda el cierre de cada día de los datos abiertos de BYMA: a la noche, el precio del día; y el
+// cierre anterior si falta (sirve para la primera corrida y si un día no corrió).
+export const BYMA_INDEX_URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/index-price";
+const prevWeekday = d => { const t = new Date(d + "T12:00:00Z"); do t.setUTCDate(t.getUTCDate() - 1); while (t.getUTCDay() % 6 === 0); return t.toISOString().slice(0, 10); };
+export function addMsci(hist, m, now = new Date()) {
+  const rows = new Map(hist);
+  if (!(m && m.date && m.price > 0)) return [...rows].sort((a, b) => a[0].localeCompare(b[0]));
+  const last = [...rows.keys()].sort().pop() || "";
+  const pd = prevWeekday(m.date), lastV = last ? rows.get(last) : null;
+  // cierre anterior: solo si falta ese día y no repite el último guardado (si el día hábil anterior fue feriado, es el mismo)
+  if (m.previousClosingPrice > 0 && !rows.has(pd) && pd > last && m.previousClosingPrice !== lastV) rows.set(pd, +m.previousClosingPrice.toFixed(2));
+  // el del día, después del cierre (20 UTC = 17 de Buenos Aires)
+  if (now.getUTCHours() >= 20 && m.date === now.toISOString().slice(0, 10)) rows.set(m.date, +m.price.toFixed(2));
+  return [...rows].sort((a, b) => a[0].localeCompare(b[0]));
+}
+async function msciMerval({ fetchImpl, root, log, now }) {
+  const r = await fetchImpl(BYMA_INDEX_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  if (!r.ok) throw new Error("BYMA índices HTTP " + r.status);
+  const j = await r.json(), m = (j.data || j).find?.(x => x.symbol === "MMSCI");
+  let prev = { msci: [] };
+  try { prev = JSON.parse(await readFile(new URL("merval.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  const msci = addMsci(prev.msci || [], m, now);
+  await writeFile(new URL("merval.json", root), JSON.stringify({ asOf: now.toISOString(), src: "BYMA, datos abiertos (MSCI MERVAL)", desde: "2026-10-19", msci }));
+  log(`merval.json: ${msci.length} cierres del MSCI MERVAL` + (msci.length ? `, último ${msci[msci.length - 1].join(" ")}` : ""));
+}
+
+export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, now = new Date() } = {}) {
+  // el MSCI MERVAL no frena el ITCRM si BYMA no responde
+  await msciMerval({ fetchImpl, root, log, now }).catch(e => log("MSCI MERVAL: " + e.message));
   const r = await fetchImpl(ITCRM_URL, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; serie ITCRM)" } });
   if (!r.ok) throw new Error("BCRA ITCRM HTTP " + r.status);
   const buf = Buffer.from(await r.arrayBuffer());
