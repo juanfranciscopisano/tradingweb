@@ -450,7 +450,7 @@ app.get("/api/fedhist", async (req, res) => {
 // Curva par del Tesoro (cierre oficial de cada día hábil, se publica a la tarde): da 1 y 2 años, que Yahoo no tiene.
 // Para 13 semanas, 5, 10 y 30 años se usan las series diarias de Yahoo (^IRX, ^FVX, ^TNX, ^TYX), las mismas del
 // dato intradiario, así los cambios a 1 semana, 1, 3 y 6 meses no mezclan fuentes.
-const UST_COLS = { "3 Mo": "3M", "6 Mo": "6M", "1 Yr": "1Y", "2 Yr": "2Y", "5 Yr": "5Y", "10 Yr": "10Y", "30 Yr": "30Y" };
+const UST_COLS = { "1 Mo": "1M", "2 Mo": "2M", "3 Mo": "3M", "4 Mo": "4M", "6 Mo": "6M", "1 Yr": "1Y", "2 Yr": "2Y", "3 Yr": "3Y", "5 Yr": "5Y", "7 Yr": "7Y", "10 Yr": "10Y", "20 Yr": "20Y", "30 Yr": "30Y" };
 async function treasuryYear(year) {
   return cached(`ust:${year}`, (year === new Date().getUTCFullYear() ? 30 * 60 : 24 * 3600) * 1000, async () => {
     const url = `https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${year}/all?type=daily_treasury_yield_curve&field_tdr_date_value=${year}&page&_format=csv`;

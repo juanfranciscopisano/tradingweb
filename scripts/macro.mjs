@@ -10,10 +10,10 @@ export const ITCRM_URL = "https://www.bcra.gob.ar/Pdfs/PublicacionesEstadisticas
 // columnas que se guardan: nombre en el archivo de salida y cómo se reconoce el encabezado de la planilla
 export const ITCRM_COLS = [
   ["itcrm", /^itcrm$/i],
-  ["brasil", /^brasil$/i],
-  ["eeuu", /^estados unidos$/i],
-  ["china", /^china$/i],
-  ["euro", /^zona euro$/i],
+  ["brasil", /^(itcrb )?brasil$/i],          // en la planilla: "ITCRB Brasil" (bilateral)
+  ["eeuu", /^(itcrb )?estados unidos$/i],
+  ["china", /^(itcrb )?china$/i],
+  ["euro", /^(itcrb )?zona euro$/i],
 ];
 
 // ---- lector mínimo de .xlsx (un zip con XML adentro), sin dependencias
