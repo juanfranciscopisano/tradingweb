@@ -206,20 +206,47 @@ export function addEstimate(prev, sym, est, today) {
   serie.push(rec);
   return { sym, asOf: today, actual: est, serie };
 }
+// fecha del próximo balance (Yahoo quoteSummary, módulo calendarEvents): [fecha en Nueva York, 1 si es estimada, EPS
+// esperado, "a" antes de la apertura / "c" después del cierre / "d" durante la rueda, según la hora de la conferencia]
+export function parseCalendar(j) {
+  const ce = j?.quoteSummary?.result?.[0]?.calendarEvents?.earnings; if (!ce) return null;
+  const raw = v => (v && typeof v === "object" ? num(v.raw) : num(v));
+  const ds = (ce.earningsDate || []).map(x => ({ t: raw(x), f: x && typeof x === "object" && /^\d{4}-\d\d-\d\d$/.test(x.fmt || "") ? x.fmt : null })).filter(x => x.t).sort((a, b) => a.t - b.t);
+  if (!ds.length) return null;
+  const ny = t => new Date(t * 1000).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const est = ce.isEarningsDateEstimate === true || ds.length > 1 ? 1 : 0;
+  const call = raw((ce.earningsCallDate || [])[0]);
+  let hora = null;
+  if (call) { const h = +new Date(call * 1000).toLocaleString("en-US", { timeZone: "America/New_York", hour: "2-digit", hour12: false }); hora = h < 12 ? "a" : h >= 16 ? "c" : "d"; }
+  const eps = raw(ce.earningsAverage);
+  return [ds[0].f || ny(ds[0].t), est, eps == null ? null : +eps.toFixed(4), hora];
+}
+// earnings.json: el próximo balance de cada empresa (p) y los ya presentados (h). Cuando una fecha confirmada pasa y
+// Yahoo ya muestra la siguiente, la vieja queda en el historial
+export function mergeEarnings(prev, cal, today) {
+  const out = {};
+  for (const sym of new Set([...Object.keys(prev || {}), ...Object.keys(cal || {})])) {
+    const p = (prev || {})[sym] || {}, n = (cal || {})[sym], h = new Set(p.h || []);
+    if (p.p && p.p[0] < today && !p.p[1] && (!n || n[0] !== p.p[0])) h.add(p.p[0]);
+    const r = { p: n || (p.p && p.p[0] >= today ? p.p : null), h: [...h].sort().slice(-8) };
+    if (r.p || r.h.length) out[sym] = r;
+  }
+  return out;
+}
 async function trendsFromYahoo(f, symbols, sleep, gapMs = 120) {
-  const s = await yahooSession(f), out = {}, est = {};
+  const s = await yahooSession(f), out = {}, est = {}, cal = {};
   let fails = 0;
   for (const sym of symbols) {
-    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=earningsTrend,earningsHistory&crumb=${encodeURIComponent(s.crumb)}`;
+    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=earningsTrend,earningsHistory,calendarEvents&crumb=${encodeURIComponent(s.crumb)}`;
     try {
       let r = await f(url, { headers: { "User-Agent": UA, Cookie: s.cookie, Accept: "application/json" } });
       if (r.status === 429) { await sleep(5000); r = await f(url, { headers: { "User-Agent": UA, Cookie: s.cookie, Accept: "application/json" } }); }
-      if (r.ok) { const j = await r.json(); const e = parseTrend(j); if (e) out[sym] = e; const x = parseEstimates(j); if (x) est[sym] = x; } else fails++;
+      if (r.ok) { const j = await r.json(); const e = parseTrend(j); if (e) out[sym] = e; const x = parseEstimates(j); if (x) est[sym] = x; const c = parseCalendar(j); if (c) cal[sym] = c; } else fails++;
     } catch (e) { fails++; }
     if (fails > 60 && !Object.keys(out).length) throw new Error("Yahoo earningsTrend no responde");
     await sleep(gapMs);
   }
-  return { out, est };
+  return { out, est, cal };
 }
 
 async function fromFinnhub(f, symbols, key, today, sleep, delayMs) {
@@ -284,7 +311,15 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
 
   if (withTrends) {
     try {
-      const { out: tr, est } = await trendsFromYahoo(fetchImpl, symbols, sleep, trendGapMs);
+      const { out: tr, est, cal } = await trendsFromYahoo(fetchImpl, symbols, sleep, trendGapMs);
+      if (Object.keys(cal).length) {
+        let prevE = {};
+        try { prevE = JSON.parse(await readFile(new URL("earnings.json", root), "utf8")).data || {}; } catch (_) { /* primera vez */ }
+        await writeFile(new URL("earnings.json", root), JSON.stringify({ asOf: now.toISOString(),
+          nota: "Próximo balance (p: fecha en Nueva York, 1 si es estimada, EPS esperado, a/c/d = antes de la apertura, después del cierre o durante la rueda) y los anteriores (h). Yahoo quoteSummary, calendarEvents.",
+          data: mergeEarnings(prevE, cal, today) }) + "\n");
+        log(`Balances: ${Object.keys(cal).length} empresas con fecha`);
+      }
       if (Object.keys(est).length) {
         await mkdir(new URL("estimaciones/", root), { recursive: true });
         for (const [sym, e] of Object.entries(est)) {
