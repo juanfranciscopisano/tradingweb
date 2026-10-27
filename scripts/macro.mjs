@@ -168,15 +168,20 @@ export const FX_FUENTES = {
     const j = await f(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json&dataInicial=${ddmm(d0)}&dataFinal=${ddmm(d1)}`);
     return j.map(x => { const [dd, mm, yy] = x.data.split("/"); return [`${yy}-${mm}-${dd}`, +x.valor]; });
   } },
-  // dólar observado: solo con clave de la CMF (secreto CMF_KEY). Sin clave lo lee la página de mindicador.cl, que responde
-  // al navegador pero no a los servidores de GitHub (tres intentos de 30 segundos por año se comían el tiempo del job)
+  // dólar observado: con clave de la CMF (secreto CMF_KEY), todo; sin clave, el último mes de mindicador.cl, que se va
+  // acumulando (para atrás, la página completa con Yahoo sin saltos)
   clp: { src: "Banco Central de Chile (dólar observado)", get: async (f, d0, d1) => {
     const out = [], key = process.env.CMF_KEY;
     for (let y = +d0.slice(0, 4); y <= +d1.slice(0, 4); y++) {
       if (key) {
         const j = await f(`https://api.cmfchile.cl/api-sbifv3/recursos_api/dolar/${y}?apikey=${encodeURIComponent(key)}&formato=json`);
         for (const x of j.Dolares || []) out.push([x.Fecha, +String(x.Valor).replace(/\./g, "").replace(",", ".")]);
-      } else throw new Error("sin CMF_KEY: el peso chileno lo lee la página de mindicador.cl, que no responde a los servidores de GitHub");
+      } else {
+        // sin clave: el último mes de mindicador.cl (el endpoint por año no responde); se acumula día a día en fx.json
+        const j = await f("https://mindicador.cl/api/dolar");
+        for (const x of j.serie || []) out.push([new Date(Date.parse(x.fecha) + 3 * 3600000).toISOString().slice(0, 10), +x.valor]);
+        break;
+      }
     }
     return out.filter(x => x[1] > 0);
   } },
