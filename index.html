@@ -5689,7 +5689,10 @@ function infFija() {
     const j = await infJson('https://api.argentinadatos.com/v1/finanzas/letras');
     const L = (j.letras || j || []).filter(x => /^[ST]\d{2}[A-Z]\d$/.test(x.ticker) && !/^TT/.test(x.ticker) && x.tnaPorcentaje > 0 && x.diasAlVencimiento > 0 && x.precioArs > 0);
     const to = Math.floor(Date.now() / 1000), fr = to - 50 * 86400;
-    const hist = await Promise.all(L.map(x => infJson(BYMA_HIST + encodeURIComponent(x.ticker + ' 24HS') + '&resolution=D&from=' + fr + '&to=' + to).catch(() => null)));
+    // BYMA corta los pedidos simultáneos: de a dos y con un reintento
+    const hist = new Array(L.length).fill(null); let next = 0;
+    const one = async x => { for (let k = 0; k < 3; k++) { try { return await infJson(BYMA_HIST + encodeURIComponent(x.ticker + ' 24HS') + '&resolution=D&from=' + fr + '&to=' + to); } catch (e) { await new Promise(r => setTimeout(r, 400 * (k + 1))); } } return null; };
+    await Promise.all([0, 1].map(async () => { while (next < L.length) { const i = next++; hist[i] = await one(L[i]); } }));
     const asOf = (j.fechaActualizacion || '').slice(0, 10);
     return L.map((x, i) => {
       const h = hist[i], closes = h && h.s === 'ok' ? h.t.map((t, k) => ({ d: infDay(t), p: h.c[k] })).filter(z => z.p > 0) : [];
@@ -5775,6 +5778,8 @@ async function infBuildCurva() {
       return { name: k === 'h' ? 'Al ' + infDdmmaa(d) : 'Al ' + infDdmmaa(d) + ' (' + cmpTxt[k] + ')', d, k, pts, color: [BV.navy, BV.azul, BV.celeste][i] };
     }).filter(s => s.pts.length >= 2);
     if (!ser.length) return { kind: 'vacio', msg: 'Faltan precios para armar la curva.' };
+    const sinPrecio = L.filter(x => !x.closes.length).map(x => x.tk);
+    if (sinPrecio.length) notes.push('BYMA no devolvió cierres de ' + sinPrecio.join(', '));
     const tasaTxt2 = { tna: 'TNA', tea: 'TEA', tem: 'TEM' }[INF.tasa];
     return { kind: 'curva', curva: 'fija', ser, xNum: true, xDate: INF.ejeX === 'vto', yU: '%', notes,
       tAuto: 'Curva de tasa fija en pesos', bAuto: tasaTxt2 + ' de LECAP y BONCAP por ' + (INF.ejeX === 'vto' ? 'vencimiento' : 'días al vencimiento'),
