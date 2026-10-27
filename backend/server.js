@@ -353,7 +353,7 @@ app.get("/api/quote", async (req, res) => {
   }
 });
 
-const SPARK_RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "ytd", "1y", "2y"];
+const SPARK_RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "ytd", "1y", "2y", "5y"];
 const SPARK_INTERVALS = ["1d", "5m", "15m", "30m", "60m"];
 app.get("/api/spark", async (req, res) => {
   const syms = parseSyms(req.query.symbols);

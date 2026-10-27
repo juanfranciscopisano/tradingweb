@@ -1,0 +1,35 @@
+name: Series macro (ITCRM)
+
+on:
+  schedule:
+    - cron: "23 14 * * 1-5"   # 11:23 de Buenos Aires: el BCRA actualiza la planilla del ITCRM a la mañana
+    - cron: "23 22 * * 1-5"   # y de nuevo a la noche por si la subió tarde
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macro
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Bajar ITCRM del BCRA
+        run: node scripts/macro.mjs
+      - name: Commit si cambió
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add itcrm.json
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "macro: ITCRM"
+          git pull --rebase -q
+          git push
