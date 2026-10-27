@@ -1408,6 +1408,8 @@ const CAL_CATS = {
   indec:    { label:'INDEC: comercio, PIB, empleo, balanza de pagos', color:'#0E7490' },
   deuda:    { label:'Pago de Globales y Bonares', color:'#1E3A8A' },
   venc:     { label:'Vencimientos: futuros de dólar y opciones', color:'#A0522D' },
+  earn_mag7:    { label:'Balances: Magníficas 7', color:'#0F172A' },
+  earn_cartera: { label:'Balances: mi cartera', color:'#C026D3' },
 };
 
 const CAL_Y0 = 2026;
@@ -1560,7 +1562,32 @@ const CAL_PENDIENTE = {
 };
 function calPad(n){ return (n<10?'0':'')+n; }
 
+// balances: el próximo de cada empresa (y los ya presentados) de earnings.json, que arma el workflow de fundamentals con
+// Yahoo. Van las Magníficas 7 y la lista de la pestaña Cartera (la de este navegador)
+const CAL_MAG7 = ['AAPL','MSFT','GOOGL','AMZN','META','NVDA','TSLA'];
+let calEarn = null;
+function calLoadEarnings() {
+  if (calEarn) return; calEarn = {};
+  fetch('earnings.json?d=' + new Date().toISOString().slice(0, 10)).then(r => r.ok ? r.json() : null).then(j => { calEarn = (j && j.data) || {}; if (document.getElementById('calGrid')) renderCalendar(); }).catch(() => {});
+}
+function calEarnEvents() {
+  if (!calEarn) return [];
+  const HORA = { a: 'antes de la apertura', c: 'después del cierre', d: 'durante la rueda' }, out = [];
+  const cart = (typeof carteraList !== 'undefined' ? carteraList : CARTERA_TICKERS).filter(x => !CAL_MAG7.includes(x));
+  const nombre = x => (typeof rows !== 'undefined' && Array.isArray(rows) && (rows.find(r => r.symbol === x) || {}).name) || x;
+  [[CAL_MAG7, 'earn_mag7'], [cart, 'earn_cartera']].forEach(([syms, c]) => syms.forEach(x => {
+    const e = calEarn[x]; if (!e) return;
+    const items = (e.h || []).map(d => ({ d })).concat(e.p ? [{ d: e.p[0], est: !!e.p[1], eps: e.p[2], hora: e.p[3] }] : []);
+    items.forEach(it => {
+      if ([0, 6].includes(new Date(it.d + 'T12:00:00Z').getUTCDay())) return;
+      const ut = nombre(x) + ': balance trimestral' + (it.hora ? ', ' + HORA[it.hora] : '') + (it.eps != null ? '; EPS esperado US$ ' + numAR(it.eps, 2, 2) : '') + (it.est ? '; fecha estimada, a confirmar' : '') + ' (ver en Yahoo Finance)';
+      out.push({ d: it.d, c, t: 'Balance ' + x + (it.est ? ' (a confirmar)' : ''), u: 'https://finance.yahoo.com/quote/' + x, ut });
+    });
+  }));
+  return out;
+}
 function initCalendar(){
+  calLoadEarnings();
   if(!calendarLoaded){
     calendarLoaded = true;
     const now = new Date();
@@ -1596,7 +1623,7 @@ function renderCalendar(){
   if(pend){ pend.textContent = CAL_PENDIENTE[calY] || ''; pend.style.display = CAL_PENDIENTE[calY] ? 'block' : 'none'; }
   const prefix = calY+'-'+calPad(calM+1)+'-';
   const byDay = {};
-  CAL_EVENTS.forEach(function(e){
+  CAL_EVENTS.concat(calEarnEvents()).forEach(function(e){
     if(e.d.indexOf(prefix)===0 && !calOff.has(e.c)){ const day=parseInt(e.d.slice(8),10); (byDay[day]=byDay[day]||[]).push(e); }
   });
   const dim = new Date(calY,calM+1,0).getDate();
@@ -1617,7 +1644,7 @@ function renderCalendar(){
     evs.forEach(function(e){
       const cat = CAL_CATS[e.c];
       if(e.u){
-        html += '<a class="cal-chip cal-chip-link" href="'+e.u+'" target="_blank" rel="noopener" style="border-left-color:'+cat.color+'" title="'+e.t+' — ver en Investing"><span class="cal-chip-dot" style="background:'+cat.color+'"></span>'+e.t+'</a>';
+        html += '<a class="cal-chip cal-chip-link" href="'+e.u+'" target="_blank" rel="noopener" style="border-left-color:'+cat.color+'" title="'+(e.ut || e.t+' — ver en Investing')+'"><span class="cal-chip-dot" style="background:'+cat.color+'"></span>'+e.t+'</a>';
       } else {
         html += '<div class="cal-chip" style="border-left-color:'+cat.color+'" title="'+e.t+'"><span class="cal-chip-dot" style="background:'+cat.color+'"></span>'+e.t+'</div>';
       }
@@ -5077,6 +5104,8 @@ const METODO = [
     items: [
       { d: 'Fechas oficiales cargadas a mano (INDEC, BCRA, Fed, BCE, BoJ, COPOM, IBGE, Finanzas, feriados). Lo que sale de una regla se calcula con los feriados cargados: vencimiento de futuros de dólar (último día hábil del mes), opciones de BYMA (tercer viernes de los meses pares) y de EE.UU. (tercer viernes de marzo, junio, septiembre y diciembre), y pago de Globales (9/1 y 9/7, día hábil siguiente en Nueva York) y Bonares (día hábil siguiente en Buenos Aires).' },
       { d: 'Las elecciones de domingo van el lunes siguiente, que es cuando reacciona el mercado. La leyenda prende y apaga cada categoría.' },
+      { d: 'Balances: el próximo de las Magníficas 7 y de cada empresa de la lista de la pestaña Cartera, con la fecha de Yahoo (fecha de Nueva York), si es antes de la apertura o después del cierre (por la hora de la conferencia) y el EPS esperado. "A confirmar" es la fecha que Yahoo estima antes de que la empresa la anuncie. Se actualiza todas las noches con fundamentals.',
+        p: 'Yahoo solo da el próximo balance; los que ya pasaron quedan porque el archivo guarda cada fecha confirmada cuando Yahoo pasa a la siguiente. Por eso los balances anteriores a la primera corrida (27/10/2026) no están.' },
     ] },
 
   { id: 'lim', t: 'Lo que todavía no está resuelto',
