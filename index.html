@@ -5036,6 +5036,10 @@ const METODO = [
       { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile vía mindicador.cl, que sin clave da solo el último mes; el workflow lo va guardando día a día y, para atrás de lo guardado, va Yahoo sin los saltos de un día, con aviso y las dos fuentes al pie. Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
         p: 'El tipo de cambio de Yahoo para estas monedas tiene datos malos: el 26/10/2026 dio 959,6 pesos chilenos por dólar con el observado en 990,35, y el sol alterna entre dos niveles 3% separados día por medio. Si una fuente oficial no responde, se usa Yahoo sacando los saltos de un día (más de 2% contra los dos vecinos que vuelven).' },
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
+      { d: 'Curvas soberanas (dólares, CER, dólar linked y BOPREAL): TIR por duration modificada de la API de 1816, con precios de cierre de BYMA a 24 hs, hoy contra hace una semana y hace un mes. Los bonos en dólares, con el precio en dólares MEP. Fuera los que tienen menos de 0,15 años de duration.',
+        p: 'La TIR de un bono a días del vencimiento se dispara con cualquier centavo de precio y desarma la curva; 0,15 años deja afuera también a los CER cuyo último cupón ya tiene el índice fijado, que rinden en pesos y no en tasa real. Globales y Bonares van en series separadas porque la diferencia entre las dos legislaciones es parte de lo que se mira. Un workflow consulta 1816 todas las noches (unos 1.000 créditos de los 100.000 diarios del plan) y guarda el resultado en soberanos.json; la clave vive en un secreto de GitHub y nunca llega a la página.' },
+      { d: 'Vencimientos en dólares: flujo de fondos de cada bono (1816, por cada 100 de valor nominal) por el monto en circulación de BYMA, más el REPO del BCRA (US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital). Por año (el último junta todo lo que sigue) o por semestre, apilado por deuda o por capital e intereses.',
+        p: 'Los flujos de 1816 son por cada 100 del valor nominal original: la amortización que falta suma lo mismo que el residual sobre el emitido (64 en el AL30 y el GD30), así que se multiplica por el emitido. BYMA no publica montos de LECAP, BONCAP, duales ni CER, y Finanzas los publica en un sitio que no se puede leer desde acá, así que los vencimientos en pesos quedan afuera. Los montos de BYMA incluyen lo que tienen el BCRA y el FGS. El REPO no cotiza: va a mano, del comunicado del BCRA del 30/06/2026.' },
       { d: 'Estilo de cada serie: color de la paleta BAVSA (más el gris de texto), cuatro grosores y cuatro trazos (sólida, rayas, puntos, raya y punto). Elegir un color que ya usa otra serie del gráfico las intercambia. Se guarda por serie, no por gráfico.',
         p: 'Una referencia como el DXY se marca una vez (gris, gruesa y punteada) y sale igual en cualquier gráfico donde aparezca. El intercambio evita dos series del mismo color sin tener que tocar la otra. Las columnas solo toman el color; las demás series siguen la rampa en orden (navy primero) salteando los colores ya elegidos. La leyenda repite el trazo y el grosor.' },
       { d: '"Monedas de la región" trae los pares invertidos y en base 100: arriba de 100, la moneda se apreció contra el dólar.' },
@@ -5652,9 +5656,12 @@ const INF_GROUP_N = { BCRA: 'BCRA y Tesoro' };
 
 // gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo
 const INF_PRESETS = [
-  { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija' },
-  { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust' },
+  { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true } },
+  { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
   { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau' },
+  { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true } },
+  { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true } },
+  { id: 'venc', n: 'Vencimientos en dólares', mode: 'pagos' },
   { id: 'fx', n: 'Dólar, DXY, real e ITCRM', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', t: 'Dólar oficial, DXY, real e ITCRM' },
   { id: 'latam', n: 'Monedas de la región', mode: 'serie', keys: ['a3500', 'brl', 'clp', 'mxn', 'pen'], trans: 'base', period: '1A', inv: { a3500: true, brl: true, clp: true, mxn: true, pen: true }, t: 'Monedas de la región contra el dólar' },
   { id: 'merval', n: 'Merval en pesos y en dólares', mode: 'serie', keys: ['merval', 'mervalUsd'], trans: 'nivel', period: '1A', t: 'Merval en pesos y en dólares' },
@@ -5670,6 +5677,7 @@ const INF_PRESETS = [
 
 let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
+  pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, bopreal: true, repo: true },
   size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
 const infSave = () => { try { const { t, b, f, edit, ...rest } = INF; localStorage.setItem('infState', JSON.stringify(rest)); } catch (e) {} };
@@ -5771,6 +5779,25 @@ async function infRatio(a, b) {
   return out;
 }
 function infUst() { return infOnce('ust', () => infJson(BASE_URL + '/api/ust')); }
+// curvas soberanas, flujos de fondos y montos en circulación: los baja todas las noches el workflow de 1816 (soberanos.json)
+function infSoberanos() { return infOnce('soberanos', () => infJson('soberanos.json?d=' + new Date().toISOString().slice(0, 10))); }
+const INF_C1816 = {
+  usd: { b: 'Curva', t: 'Curva soberana en dólares', baj: 'TIR por duration modificada, precios en dólares MEP' },
+  cer: { b: 'CER', t: 'Curva CER', baj: 'Tasa real (TIR sobre CER) por duration modificada' },
+  linked: { b: 'Dólar linked', t: 'Curva dólar linked', baj: 'TIR sobre el dólar A3500 por duration modificada' },
+  bopreal: { b: 'BOPREAL', t: 'Curva de BOPREAL', baj: 'TIR por duration modificada, precios en dólares MEP' },
+};
+// REPO del BCRA con bancos: no cotiza, va a mano. Refinanciado el 30/06/2026 (comunicado del BCRA): US$ 6.000 millones
+// con diez bancos a SOFR + 4%, con Bonares de garantía, vence en septiembre de 2028
+const INF_REPO = { monto: 6000, fecha: '2028-09-15', txt: 'REPO del BCRA: US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital' };
+const INF_PAGOS_G = [['bonares', 'Bonares', BV.navy], ['globales', 'Globales', BV.azul], ['bopreal', 'BOPREAL', BV.celeste], ['repo', 'REPO del BCRA', BV.teal]];
+const infPagosGrupo = t => /^BPO[A-D]\d$/.test(t) ? 'bopreal' : /^GD\d/.test(t) ? 'globales' : /^(AL|AE|AN|AO)\d/.test(t) ? 'bonares' : null;
+// los flujos de 1816 son por cada 100 de valor nominal: si la amortización que falta suma lo mismo que el residual sobre el
+// emitido, son por 100 del original (se multiplica por el emitido); si suma 100, son por 100 del residual
+function infPagosBase(fl, monto) {
+  const [nom, res] = monto, am = fl.reduce((a, x) => a + x[1], 0);
+  return Math.abs(am - 100 * res / nom) <= 2 ? nom : Math.abs(am - 100) <= 2 ? res : nom;
+}
 function infUstSerie(k) { return infUst().then(j => (j.cmt || []).filter(x => x[k] != null).map(x => ({ d: x.date, t: argT(x.date), v: x[k] }))); }
 
 // días hábiles de BYMA (fines de semana y los feriados del calendario)
@@ -5887,8 +5914,53 @@ function infBarPts(pts, ancho) {
   return by(d => d.slice(0, 4), 'año');
 }
 
+async function infBuildPagos() {
+  const j = await infSoberanos(), hoy = new Date().toISOString().slice(0, 10), y0 = +hoy.slice(0, 4), notes = [];
+  const por = INF.pagosPor === 'sem' ? 'sem' : 'anio', apilar = INF.pagosApilar === 'tipo' ? 'tipo' : 'grupo', inc = INF.pagosInc || {};
+  // períodos: 10 años (el último junta todo lo que sigue) o 10 semestres
+  const cats = [], idx = d => { const y = +d.slice(0, 4), m = +d.slice(5, 7);
+    if (por === 'anio') return Math.min(9, y - y0);
+    const s0 = y0 * 2 + (+hoy.slice(5, 7) > 6 ? 1 : 0), si = y * 2 + (m > 6 ? 1 : 0) - s0; return si > 9 ? -1 : si; };
+  for (let i = 0; i < 10; i++) { if (por === 'anio') cats.push(i === 9 ? (y0 + 9) + ' en adelante' : String(y0 + i)); else { const si = y0 * 2 + (+hoy.slice(5, 7) > 6 ? 1 : 0) + i; cats.push((si % 2 ? '2S ' : '1S ') + Math.floor(si / 2)); } }
+  const sk = apilar === 'grupo' ? INF_PAGOS_G.filter(g => inc[g[0]] !== false).map(([k, n, c]) => ({ k, name: n, color0: c })) : [{ k: 'capital', name: 'Capital', color0: BV.navy }, { k: 'interes', name: 'Intereses', color0: BV.celeste }];
+  const val = Object.fromEntries(sk.map(x => [x.k, cats.map(() => 0)])), sinMonto = [], porTk = {};
+  for (const [t, fl] of Object.entries(j.flujos || {})) {
+    const g = infPagosGrupo(t); if (!g || inc[g] === false) continue;
+    const m = (j.montos || {})[t]; if (!m) { sinMonto.push(t); continue; }
+    const base = infPagosBase(fl, m) / 100 / 1e6;   // US$ millones por cada punto del flujo
+    for (const [d, am, it] of fl) { const i = idx(d); if (i < 0 || d <= hoy) continue;
+      if (apilar === 'grupo') val[g][i] += (am + it) * base; else { val.capital[i] += am * base; val.interes[i] += it * base; }
+      porTk[t] = (porTk[t] || 0) + (am + it) * base; }
+  }
+  if (inc.repo !== false && INF_REPO.fecha > hoy) { const i = idx(INF_REPO.fecha); if (i >= 0) { (apilar === 'grupo' ? val.repo : val.capital)[i] += INF_REPO.monto; } notes.push(INF_REPO.txt); }
+  const ser = sk.map(x => ({ ...x, vals: val[x.k], bars: true })).filter(x => x.vals.some(v => v > 0));
+  if (!ser.length) return { kind: 'vacio', msg: j.flujos ? 'No hay pagos para mostrar con esa selección.' : 'Todavía no están los flujos de 1816 (soberanos.json).', notes };
+  if (sinMonto.length) notes.push('Sin monto en circulación en BYMA, no suman: ' + sinMonto.join(', '));
+  notes.push('Montos en circulación según BYMA (incluye tenencias del sector público)');
+  const fuentes = ['1816 (flujos de fondos)', 'BYMA (montos en circulación)'].concat(inc.repo !== false ? ['BCRA (REPO)'] : []);
+  return { kind: 'pagos', cats, ser, porTk, units: ['US$ millones'], notes, last: (j.asOf || hoy).slice(0, 10),
+    tAuto: 'Vencimientos de deuda en dólares', bAuto: 'US$ millones, capital e intereses, por ' + (por === 'anio' ? 'año' : 'semestre'),
+    fAuto: 'Fuente: ' + fuentes.slice(0, -1).join(', ') + ' y ' + fuentes[fuentes.length - 1] + '.' };
+}
 async function infBuildCurva() {
   const cmpTxt = { s: 'hace una semana', m: 'hace un mes' }, notes = [];
+  if (INF_C1816[INF.curva]) {
+    const j = await infSoberanos(), C = (j.curvas || {})[INF.curva], D = INF_C1816[INF.curva];
+    if (!C || !C.fechas || !C.fechas.h) return { kind: 'vacio', msg: '1816 todavía no trajo esta curva.' };
+    const grupos = [...new Set(Object.values(C.grupo))];
+    const pal = [[BV.navy, BV.azul], [BV.teal, BV.celeste], [BV.medio, BV.claro]];
+    const ser = [];
+    [['h'], ['s'], ['m']].filter(([k]) => (k === 'h' || INF.cmp[k]) && C.fechas[k]).forEach(([k], i) => grupos.forEach((g, gi) => {
+      // fuera los que vencen enseguida (la TIR de un bono a días no dice nada) y las TIR absurdas
+      const pts = Object.entries(C.datos[k] || {}).filter(([t, v]) => C.grupo[t] === g && v[0] != null && v[1] != null && v[1] >= 0.15 && Math.abs(v[0]) < 1.5)
+        .map(([t, v]) => ({ x: v[1], v: v[0] * 100, tk: t, par: v[2] })).sort((a, b) => a.x - b.x);
+      if (pts.length >= 2) ser.push({ name: (grupos.length > 1 ? g + ' al ' : 'Al ') + infDdmmaa(C.fechas[k]) + (k === 'h' ? '' : ' (' + cmpTxt[k] + ')'), d: C.fechas[k], k: k + (gi ? String(gi) : ''), pts, color: pal[i][gi % 2] });
+    }));
+    if (!ser.length) return { kind: 'vacio', msg: 'Faltan precios para armar la curva.' };
+    notes.push('Fuera los bonos con menos de 0,15 años de duration');
+    return { kind: 'curva', curva: INF.curva, ser, xNum: true, xU: 'años', yU: '%', notes, tAuto: D.t, bAuto: D.baj,
+      fAuto: 'Fuente: 1816, con precios de cierre de BYMA (24 hs).', last: C.fechas.h };
+  }
   if (INF.curva === 'fija') {
     const L = await infFija();
     const lastD = L.flatMap(x => x.closes.map(z => z.d)).sort().pop();
@@ -5943,7 +6015,8 @@ function infDash(tr, w) {
 }
 const infCap = tr => tr === 'puntos' || tr === 'rayapunto' ? 'round' : 'butt';
 function infLum(hex) { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
-const infEstKey = (sp, s) => (sp.kind === 'curva' ? 'curva:' : '') + s.k;
+const infEstKey = (sp, s) => (sp.kind === 'curva' ? 'curva:' : sp.kind === 'pagos' ? 'pagos:' : '') + s.k;
+const infEnBarras = (sp, s) => sp.kind === 'pagos' || (sp.kind === 'serie' && !!(s.bars && s.barPts));
 // el color elegido manda; si dos eligieron el mismo, el primero. Las demás toman la rampa en orden (navy primero; las
 // columnas, los tonos claros, para que las líneas se lean encima) sin repetir colores ya usados
 function infEstilar(sp) {
@@ -5953,12 +6026,12 @@ function infEstilar(sp) {
   const pick = (pal, i0) => { for (let j = 0; j < pal.length; j++) { const c = pal[(i0 + j) % pal.length]; if (!usados.has(c)) return c; } return pal[i0 % pal.length]; };
   let li = 0, bi = 0;
   sp.ser.forEach(s => {
-    const lineas = sp.kind !== 'serie' || !(s.bars && s.barPts);
-    if (!s.color) { s.color = sp.kind === 'curva' && s.color0 && !usados.has(s.color0) ? s.color0 : lineas ? pick(INF_LINEAS, li) : pick(INF_BARRAS, bi); usados.add(s.color); }
+    const lineas = !infEnBarras(sp, s);
+    if (!s.color) { s.color = sp.kind !== 'serie' && s.color0 && !usados.has(s.color0) ? s.color0 : lineas ? pick(INF_LINEAS, li) : pick(INF_BARRAS, bi); usados.add(s.color); }
     lineas ? li++ : bi++;
     const e = est[infEstKey(sp, s)] || {}, g = INF_GROSOR.find(x => x[0] === e.grosor);
-    s.w = g ? g[1] : sp.kind === 'curva' ? (s.k === 'h' ? 2.5 : 2) : 2.25;
-    s.trazo = INF_TRAZO.some(x => x[0] === e.trazo) ? e.trazo : sp.kind === 'curva' && s.k === 'm' ? 'rayas' : 'solida';
+    s.w = g ? g[1] : sp.kind === 'curva' ? (s.k[0] === 'h' ? 2.5 : 2) : 2.25;
+    s.trazo = INF_TRAZO.some(x => x[0] === e.trazo) ? e.trazo : sp.kind === 'curva' && s.k[0] === 'm' ? 'rayas' : 'solida';
     s.grosor = g ? g[0] : 'auto'; s.dash = infDash(s.trazo, s.w); s.cap = infCap(s.trazo);
     s.ink = infLum(s.color) > 0.3 ? BV.navy : '#ffffff';
   });
@@ -5982,7 +6055,7 @@ function renderInfEst() {
   const sp = infSpec;
   if (!sp || !sp.ser || !sp.ser.length || sp.kind === 'vacio') { E.innerHTML = ''; return; }
   const rows = sp.ser.map(s => {
-    const key = infEstKey(sp, s), q = "'" + key + "'", barras = sp.kind === 'serie' && !!(s.bars && s.barPts), c = sp.kind === 'serie' ? INF_CAT[s.k] : null;
+    const key = infEstKey(sp, s), q = "'" + key + "'", barras = infEnBarras(sp, s), c = sp.kind === 'serie' ? INF_CAT[s.k] : null;
     const muestra = barras ? '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><rect x="11" y="0" width="12" height="12" fill="' + s.color + '"/></svg>' : infLineSvg(s.color, s.w, s.trazo, 34);
     let h = '<div class="inf-est-row"><div class="inf-est-name">' + muestra + '<span title="' + s.name.replace(/"/g, '&quot;') + '">' + s.name + '</span></div>';
     h += '<div class="inf-sw" role="group" aria-label="Color de ' + s.name.replace(/"/g, '&quot;') + '">' + INF_COLORES.map(([n, col]) => '<button type="button" class="' + (col === s.color ? 'on' : '') + '" style="background:' + col + '" title="' + n[0].toUpperCase() + n.slice(1) + '" aria-label="' + n + '" aria-pressed="' + (col === s.color) + '" onclick="infColor(' + q + ', \'' + col + '\')"></button>').join('') + '</div>';
@@ -6036,7 +6109,7 @@ function infPaint() {
   const plot = { x0: M, y0: y, x1: W - M, y1: yFoot - footH - legH - 6 };
   if (sp.kind === 'vacio') { ctx.fillStyle = BV.texto2; ctx.font = `14px ${BV_SANS}`; infText(ctx, sp.msg, M, plot.y0 + 30, W - 2 * M); return; }
   infLegend(ctx, sp, M, plot.y1 + 22, W - 2 * M);
-  if (sp.kind === 'serie') infPlotSerie(ctx, sp, plot); else infPlotCurva(ctx, sp, plot);
+  if (sp.kind === 'serie') infPlotSerie(ctx, sp, plot); else if (sp.kind === 'pagos') infPlotPagos(ctx, sp, plot); else infPlotCurva(ctx, sp, plot);
 }
 function infText(ctx, s, x, y, maxW, track) {
   if (!s) return;
@@ -6046,7 +6119,7 @@ function infText(ctx, s, x, y, maxW, track) {
   if (track) try { ctx.letterSpacing = '0px'; } catch (e) {}
 }
 function infLegendItems(sp) {
-  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, w: s.w, trazo: s.trazo, bars: !!(s.bars && s.barPts) }));
+  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, w: s.w, trazo: s.trazo, bars: infEnBarras(sp, s) }));
 }
 function infLegendRows(ctx, sp, maxW) {
   ctx.font = `13px ${BV_SANS}`;
@@ -6133,6 +6206,26 @@ function infPlotSerie(ctx, sp, P) {
   tags.forEach(t => { const w = infW(ctx, t.txt) + 12; ctx.fillStyle = t.color; infRound(ctx, x1 + 6, t.y - 9, w, 18, 3); ctx.fill(); ctx.fillStyle = t.ink; ctx.fillText(t.txt, x1 + 12, t.y + 4); });
   ctx.textAlign = 'left';
 }
+function infPlotPagos(ctx, sp, P) {
+  const tot = sp.cats.map((_, i) => sp.ser.reduce((a, s) => a + s.vals[i], 0)), a = infAxis(0, Math.max(...tot) * 1.08, 8);
+  a.lo = 0; a.tk = a.tk.filter(t => t >= 0);
+  const st = a.tk.length > 1 ? a.tk[1] - a.tk[0] : 1, fmt = v => numAR(v, infDecs(st), infDecs(st));
+  ctx.font = `12px ${BV_SANS}`;
+  const wL = Math.max(...a.tk.map(v => infW(ctx, fmt(v)))) + 10, x0 = P.x0 + wL, x1 = P.x1, y0 = P.y0 + (INF.titulos ? 16 : 22), y1 = P.y1 - 22;
+  const ys = v => y0 + (1 - (v - a.lo) / (a.hi - a.lo)) * (y1 - y0), slot = (x1 - x0) / sp.cats.length, bw = Math.min(64, slot * 0.62);
+  ctx.lineWidth = 1;
+  a.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmt(v), x0 - 8, yy + 4); });
+  if (!INF.titulos) { ctx.font = `600 11.5px ${BV_SANS}`; ctx.textAlign = 'left'; ctx.fillText(sp.units[0], P.x0, P.y0 + 4); }
+  sp.cats.forEach((c, i) => {
+    const xc = x0 + slot * (i + 0.5); let acc = 0;
+    sp.ser.forEach(s => { const v = s.vals[i]; if (v <= 0) return; ctx.fillStyle = s.color; const ya = ys(acc), yb = ys(acc + v); ctx.fillRect(xc - bw / 2, yb, bw, Math.max(0.5, ya - yb)); acc += v; });
+    ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center';
+    const lbl = c.replace(' en adelante', '+'); ctx.fillText(lbl, xc, y1 + 17);
+    if (tot[i] > 0) { ctx.font = `700 11.5px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.fillText(numAR(tot[i], 0, 0), xc, ys(tot[i]) - 6); }
+  });
+  ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, Math.round(y1) + 0.5); ctx.lineTo(x1, Math.round(y1) + 0.5); ctx.stroke();
+  ctx.textAlign = 'left';
+}
 function infRound(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 // marcas de fecha: días, meses o años según el período, sin amontonarse
 function infDateTicks(t0, t1, width) {
@@ -6150,7 +6243,7 @@ function infDateTicks(t0, t1, width) {
   return out;
 }
 function infPlotCurva(ctx, sp, P) {
-  const vals = sp.ser.flatMap(s => s.pts.map(p => p.v)), ay = infAxis(Math.min(...vals), Math.max(...vals));
+  const vals = sp.ser.flatMap(s => s.pts.map(p => p.v)), ay = infAxis(Math.min(...vals), Math.max(...vals), 8);
   const dY = Math.max(1, infDecs(ay.tk.length > 1 ? ay.tk[1] - ay.tk[0] : 1)), fmtY = v => numAR(v, dY, dY) + '%';
   ctx.font = `12px ${BV_SANS}`;
   const wL = Math.max(...ay.tk.map(v => infW(ctx, fmtY(v)))) + 10;
@@ -6159,26 +6252,31 @@ function infPlotCurva(ctx, sp, P) {
   if (sp.xCat) {
     const n = sp.xCat.length; xs = i => x0 + (i + 0.5) / n * (x1 - x0); xTicks = sp.xCat.map((l, i) => [i, l]);
   } else {
-    const xv = sp.ser.flatMap(s => s.pts.map(p => p.x)), lo = 0, hi = Math.max(...xv) * 1.05;
+    // por duration, el eje arranca cerca del bono más corto (no en cero)
+    const xv = sp.ser.flatMap(s => s.pts.map(p => p.x)), xmx = Math.max(...xv), xmn = Math.min(...xv);
+    const lo = sp.xU ? Math.max(0, Math.floor((xmn - (xmx - xmn) * 0.06) * 2) / 2) : 0, hi = sp.xU ? xmx + (xmx - lo) * 0.04 : xmx * 1.05;
     xs = v => x0 + (v - lo) / (hi - lo) * (x1 - x0);
     if (sp.xDate) {   // eje de vencimientos: el primero de cada mes
       const base = sp.last, out = [];
       for (let m = 0; m < 30; m++) { const d = new Date(base + 'T12:00:00Z'); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + m + 1); const dias = (d - new Date(argNextHabil(base) + 'T12:00:00Z')) / 86400000; if (dias > hi) break; out.push([dias, MES_CORTO[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2)]); }
       const k = Math.ceil(out.length / Math.max(3, Math.floor((x1 - x0) / 70))); xTicks = out.filter((_, i) => i % k === 0);
-    } else xTicks = infTicks(lo, hi, Math.max(3, Math.floor((x1 - x0) / 90))).filter(v => v <= hi).map(v => [v, numAR(v, 0, 0) + (sp.curva === 'cau' ? 'd' : '')]);
+    } else { const tk = infTicks(lo, hi, Math.max(3, Math.floor((x1 - x0) / 90))).filter(v => v <= hi), dx = infDecs(tk.length > 1 ? tk[1] - tk[0] : 1);
+      xTicks = tk.map(v => [v, numAR(v, dx, dx) + (sp.curva === 'cau' ? 'd' : '')]); }
   }
   const ys = v => y0 + (1 - (v - ay.lo) / (ay.hi - ay.lo)) * (y1 - y0);
   ctx.lineWidth = 1;
   ay.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmtY(v), x0 - 8, yy + 4); });
   ctx.textAlign = 'center'; ctx.fillStyle = BV.texto2;
   xTicks.forEach(([v, l]) => ctx.fillText(l, xs(v), y1 + 17));
-  if (!sp.xCat && !sp.xDate && sp.curva === 'fija') { ctx.textAlign = 'right'; ctx.fillText('días al vencimiento', x1, y1 + 34 > P.y1 + 10 ? y1 - 6 : y1 + 34); }
-  // curvas: de la más vieja a la de hoy, para que la de hoy quede arriba
+  if (!sp.xCat && !sp.xDate && (sp.curva === 'fija' || sp.xU)) { ctx.textAlign = 'right'; ctx.fillText(sp.xU ? 'duration modificada (años)' : 'días al vencimiento', x1, y1 + 34 > P.y1 + 10 ? y1 - 6 : y1 + 34); }
+  // curvas: de la más vieja a la de hoy, para que la de hoy quede arriba; recortadas al área del gráfico (el ajuste
+  // logarítmico puede salirse en las puntas)
+  ctx.save(); ctx.beginPath(); ctx.rect(x0 - 6, P.y0 - 4, x1 - x0 + 12, y1 - P.y0 + 4); ctx.clip();
   [...sp.ser].reverse().forEach(s => {
     const pts = s.pts;
     ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2; ctx.lineCap = s.cap || 'butt'; ctx.setLineDash(s.dash || []);
     ctx.beginPath();
-    if (sp.curva === 'fija' && INF.ajuste && pts.length >= 3) {   // ajuste logarítmico: tasa = a + b × ln(días)
+    if ((sp.curva === 'fija' || INF_C1816[sp.curva]) && INF.ajuste && pts.length >= 3) {   // ajuste logarítmico: tasa = a + b × ln(plazo)
       const n = pts.length, lx = pts.map(p => Math.log(p.x)), mx = lx.reduce((a, b) => a + b) / n, my = pts.reduce((a, p) => a + p.v, 0) / n;
       const b = lx.reduce((a, x, i) => a + (x - mx) * (pts[i].v - my), 0) / (lx.reduce((a, x) => a + (x - mx) ** 2, 0) || 1), a = my - b * mx;
       const xa = pts[0].x, xb = pts[n - 1].x;
@@ -6187,18 +6285,20 @@ function infPlotCurva(ctx, sp, P) {
     ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
     pts.forEach(p => { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(xs(p.x), ys(p.v), (s.w || 2) * 1.6 + 0.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.25; ctx.stroke(); });
   });
-  // tickers (o valores) de la curva de hoy, arriba de cada punto
-  const hoy = sp.ser.find(s => s.k === 'h');
-  if (hoy && (sp.curva !== 'fija' || INF.tickers)) {
+  ctx.restore();
+  // tickers (o valores) de las curvas de hoy, arriba de cada punto; si choca con una etiqueta ya puesta, va abajo
+  const conTk = sp.curva === 'fija' || INF_C1816[sp.curva];
+  if (!conTk || INF.tickers) {
     ctx.font = `600 11px ${BV_SANS}`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
-    let last = null;
-    hoy.pts.forEach(p => {
-      const x = xs(p.x), lbl = sp.curva === 'fija' ? p.tk : numAR(p.v, 2, 2), w = infW(ctx, lbl);
-      let yl = ys(p.v) - 11;
-      if (last && x - w / 2 < last.x + last.w / 2 + 4 && Math.abs(yl - last.y) < 13) yl = ys(p.v) + 21;   // si choca con el anterior, va abajo del punto
+    const puestas = [], choca = (x, w, y) => puestas.some(o => Math.abs(x - o.x) < (w + o.w) / 2 + 4 && Math.abs(y - o.y) < 13);
+    sp.ser.filter(s => s.k[0] === 'h').forEach(hoy => hoy.pts.forEach(p => {
+      const x = xs(p.x), lbl = conTk ? p.tk : numAR(p.v, 2, 2), w = infW(ctx, lbl);
+      // arriba, abajo, más arriba o más abajo; si todo choca (bonos casi iguales), sin etiqueta
+      const yl = [ys(p.v) - 11, ys(p.v) + 21, ys(p.v) - 24, ys(p.v) + 34].find(y => !choca(x, w, y));
+      if (yl == null) return;
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3.5; ctx.strokeText(lbl, x, yl); ctx.fillStyle = BV.navy; ctx.fillText(lbl, x, yl);
-      last = { x, w, y: yl };
-    });
+      puestas.push({ x, w, y: yl });
+    }));
   }
   ctx.textAlign = 'left';
 }
@@ -6210,6 +6310,11 @@ function infTsv() {
   if (sp.kind === 'serie') {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
+  }
+  if (sp.kind === 'pagos') return ['Período\t' + sp.ser.map(s => s.name + ' (US$ millones)').join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
+  if (INF_C1816[sp.curva]) {
+    const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
+    return ['Bono\t' + sp.ser.map(s => s.name + ' TIR (%)\t' + s.name + ' duration').join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
   }
   const keys = [...new Set(sp.ser.flatMap(s => s.pts.map(p => sp.curva === 'cau' ? p.x : p.tk)))];
   const head = sp.curva === 'fija' ? 'Instrumento\tVencimiento' : sp.curva === 'ust' ? 'Plazo' : 'Días';
@@ -6224,7 +6329,12 @@ function renderInfCtl() {
   P.innerHTML = INF_PRESETS.map(p => '<button type="button" class="inf-preset' + (p.id === INF.preset ? ' on' : '') + '" aria-pressed="' + (p.id === INF.preset) + '" onclick="infPreset(\'' + p.id + '\')">' + p.n + '</button>').join('');
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
   let h = '', cat = '';
-  if (INF.mode === 'serie') {
+  if (INF.mode === 'pagos') {
+    cat = '<div class="inf-lbl inf-lbl-first">Por</div>' + seg([['anio', 'Año'], ['sem', 'Semestre']], INF.pagosPor, 'infPagosPor')
+      + '<div class="inf-lbl">Apilar</div>' + seg([['grupo', 'Por deuda'], ['tipo', 'Capital e intereses']], INF.pagosApilar, 'infPagosApilar')
+      + '<div class="inf-lbl">Incluir</div><div class="inf-chips">' + INF_PAGOS_G.map(([k, n]) => { const on = (INF.pagosInc || {})[k] !== false;
+        return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infPagosInc(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.kind === 'pagos' && infSpec.ser.find(s => s.k === k)?.color) || INF_PAGOS_G.find(g => g[0] === k)[2] : 'transparent') + '"></span>' + n + '</button>'; }).join('') + '</div>';
+  } else if (INF.mode === 'serie') {
     h += '<div class="inf-lbl">Período</div>' + seg(INF_PERIODS.map(p => [p[0], p[0]]), INF.desde ? '' : INF.period, 'infPeriod')
       + '<label class="inf-desde">Desde <input type="date" value="' + (INF.desde || '') + '" onchange="infDesde(this.value)"></label>';
     h += '<div class="inf-lbl">Escala</div>' + seg([['nivel', 'Valores'], ['base', 'Base 100']], INF.trans, 'infTrans');
@@ -6233,12 +6343,12 @@ function renderInfCtl() {
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
       + '</div></div>').join('') + '</div>';
   } else {
-    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['cau', 'Cauciones']], INF.curva, 'infCurva');
+    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['cau', 'Cauciones'], ['usd', 'Dólares'], ['cer', 'CER'], ['linked', 'Dólar linked'], ['bopreal', 'BOPREAL']], INF.curva, 'infCurva');
     if (INF.curva !== 'cau') cat += '<div class="inf-lbl">Comparar con</div><div class="inf-chips">'
       + [['s', 'Hace una semana', BV.azul], ['m', 'Hace un mes', BV.celeste]].map(([k, l, c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? (infSpec?.kind === 'curva' && infSpec.ser.find(s => s.k === k)?.color) || c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
     if (INF.curva === 'fija') cat += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa')
-      + '<div class="inf-lbl">Eje horizontal</div>' + seg([['dias', 'Días'], ['vto', 'Vencimiento']], INF.ejeX, 'infEjeX')
-      + '<div class="inf-checks"><label><input type="checkbox"' + (INF.ajuste ? ' checked' : '') + ' onchange="infSet(\'ajuste\', this.checked)"> Curva ajustada (logarítmica)</label>'
+      + '<div class="inf-lbl">Eje horizontal</div>' + seg([['dias', 'Días'], ['vto', 'Vencimiento']], INF.ejeX, 'infEjeX');
+    if (INF.curva === 'fija' || INF_C1816[INF.curva]) cat += '<div class="inf-checks"><label><input type="checkbox"' + (INF.ajuste ? ' checked' : '') + ' onchange="infSet(\'ajuste\', this.checked)"> Curva ajustada (logarítmica)</label>'
       + '<label><input type="checkbox"' + (INF.tickers ? ' checked' : '') + ' onchange="infSet(\'tickers\', this.checked)"> Tickers</label></div>';
   }
   document.getElementById('infCtl').innerHTML = h;
@@ -6255,7 +6365,7 @@ function infSyncTexts() {
 function infPreset(id) {
   const p = INF_PRESETS.find(x => x.id === id); if (!p) return;
   INF.preset = id; INF.mode = p.mode; INF.edit = { t: false, b: false, f: false }; INF.desde = '';
-  if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else INF.curva = p.curva;
+  if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; }
   infUpdate();
 }
 function infToggle(k) { INF.keys = INF.keys.includes(k) ? INF.keys.filter(x => x !== k) : [...INF.keys, k]; infUpdate(); }
@@ -6264,7 +6374,10 @@ function infBars(k) { INF.bars = { ...INF.bars, [k]: !INF.bars[k] }; infUpdate()
 function infPeriod(p) { INF.period = p; INF.desde = ''; infUpdate(); }
 function infDesde(d) { INF.desde = d || ''; infUpdate(); }
 function infTrans(t) { INF.trans = t; infUpdate(); }
-function infCurva(c) { INF.curva = c; INF.preset = { fija: 'fija', ust: 'ust', cau: 'cau' }[c]; INF.edit = { t: false, b: false, f: false }; infUpdate(); }
+function infCurva(c) { INF.curva = c; INF.preset = INF_PRESETS.some(p => p.id === c && p.mode === 'curva') ? c : ''; INF.edit = { t: false, b: false, f: false }; infUpdate(); }
+function infPagosPor(v) { INF.pagosPor = v; infUpdate(); }
+function infPagosApilar(v) { INF.pagosApilar = v; infUpdate(); }
+function infPagosInc(k) { INF.pagosInc = { ...(INF.pagosInc || {}), [k]: (INF.pagosInc || {})[k] === false }; infUpdate(); }
 function infCmp(k) { INF.cmp[k] = !INF.cmp[k]; infUpdate(); }
 function infTasa(t) { INF.tasa = t; infUpdate(); }
 function infEjeX(x) { INF.ejeX = x; infUpdate(); }
@@ -6281,7 +6394,7 @@ async function infUpdate() {
   if (st) st.textContent = 'Cargando datos...';
   if (!infFontsOk && document.fonts && document.fonts.load) { infFontsOk = true; await Promise.all(['900 26px Inter', '800 15px Inter', '400 13px Inter', '700 12px Inter'].map(f => document.fonts.load(f).catch(() => null))); }
   let sp;
-  try { sp = INF.mode === 'curva' ? await infBuildCurva() : await infBuildSerie(); }
+  try { sp = INF.mode === 'curva' ? await infBuildCurva() : INF.mode === 'pagos' ? await infBuildPagos() : await infBuildSerie(); }
   catch (e) { sp = { kind: 'vacio', msg: 'No se pudieron bajar los datos: ' + e.message, notes: [] }; }
   if (tok !== infTok) return;
   infSpec = sp; window.infLastSpec = sp; infEstilar(sp);
