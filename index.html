@@ -105,6 +105,8 @@ button,input,select{font:inherit;color:inherit}
 .inf-field input{font-weight:400;width:100%}
 .inf-field-wide,.inf-texts .inf-checks{grid-column:1 / -1}
 .inf-reset{padding:4px 10px;font-size:12.5px;margin-left:auto}
+.inf-tes-datos{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:8px}
+.inf-fav{align-self:flex-start;cursor:grab}
 .inf-toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .inf-toast.on{opacity:1;transform:translate(-50%,0)}
 @media (max-width:900px){.inf-body{grid-template-columns:minmax(0,1fr);grid-template-areas:"main" "panel" "cat"}.inf-texts{grid-template-columns:1fr}.inf-stage{padding:8px}}
@@ -5040,6 +5042,8 @@ const METODO = [
         p: 'La TIR de un bono a días del vencimiento se dispara con cualquier centavo de precio y desarma la curva; 0,15 años deja afuera también a los CER cuyo último cupón ya tiene el índice fijado, que rinden en pesos y no en tasa real. Globales y Bonares van en series separadas porque la diferencia entre las dos legislaciones es parte de lo que se mira. Un workflow consulta 1816 todas las noches (unos 1.000 créditos de los 100.000 diarios del plan) y guarda el resultado en soberanos.json; la clave vive en un secreto de GitHub y nunca llega a la página.' },
       { d: 'Vencimientos en dólares: flujo de fondos de cada bono (1816, por cada 100 de valor nominal) por el monto en circulación de BYMA, más el REPO del BCRA (US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital). Por año (el último junta todo lo que sigue) o por semestre, apilado por deuda o por capital e intereses.',
         p: 'Los flujos de 1816 son por cada 100 del valor nominal original: la amortización que falta suma lo mismo que el residual sobre el emitido (64 en el AL30 y el GD30), así que se multiplica por el emitido. BYMA no publica montos de LECAP, BONCAP, duales ni CER, y Finanzas los publica en un sitio que no se puede leer desde acá, así que los vencimientos en pesos quedan afuera. Los montos de BYMA incluyen lo que tienen el BCRA y el FGS. El REPO no cotiza: va a mano, del comunicado del BCRA del 30/06/2026.' },
+      { d: 'Vencimientos del Tesoro (1816): capital e intereses de toda la deuda en títulos negociables, por día e instrumento, de la pantalla Vencimientos del Tesoro de 1816 (Datasets › Macro › Tesoro), con los valores nominales actualizados hasta la última licitación. Por mes, trimestre o año, apilado por ajuste (tasa fija, CER, TAMAR, BADLAR, duales, dólar linked, dólares, euros) o por curva, en $ billones o en US$ millones al oficial que usa 1816.',
+        p: 'Esa tabla no está en la API de 1816 (el módulo de mercado no tiene montos), así que la trae un favorito del navegador que la lee de la web de 1816 con la sesión de quien la tiene abierta y abre el Informe con los datos. Quedan guardados en ese navegador y no en el repositorio, que es público. Hay que tocar el favorito después de cada licitación.' },
       { d: 'Reservas netas: brutas menos los encajes de los depósitos en dólares (cuentas corrientes en moneda extranjera de los bancos en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día). Todo del BCRA, por día.',
         p: 'Es la cuenta más común y se puede rehacer con datos públicos. El REPO con bancos (US$ 6.000 millones) vence en septiembre de 2028, a más de un año, y no se resta. No resta los pagos a organismos ni los de BOPREAL a menos de un año, ni los depósitos del Tesoro en dólares; las estimaciones privadas que restan alguno de esos dan menos, y la meta del FMI usa otra definición.' },
       { d: 'Inflación: mensual e interanual del INDEC (series 27 y 28 del BCRA); la acumulada en el año es el producto de las mensuales desde enero. "Inflación mensual y acumulada" trae la mensual en columnas sobre el eje izquierdo y las acumuladas en el derecho.' },
@@ -5673,6 +5677,7 @@ const INF_PRESETS = [
   { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true } },
   { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true } },
   { id: 'venc', n: 'Vencimientos en dólares', mode: 'pagos' },
+  { id: 'tesoro', n: 'Vencimientos del Tesoro (1816)', mode: 'tesoro' },
   { id: 'fx', n: 'Dólar, DXY, real e ITCRM', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', t: 'Dólar oficial, DXY, real e ITCRM' },
   { id: 'latam', n: 'Monedas de la región', mode: 'serie', keys: ['a3500', 'brl', 'clp', 'mxn', 'pen'], trans: 'base', period: '1A', inv: { a3500: true, brl: true, clp: true, mxn: true, pen: true }, t: 'Monedas de la región contra el dólar' },
   { id: 'merval', n: 'Merval en pesos y en dólares', mode: 'serie', keys: ['merval', 'mervalUsd'], trans: 'nivel', period: '1A', t: 'Merval en pesos y en dólares' },
@@ -5691,9 +5696,24 @@ const INF_PRESETS = [
 let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
   pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, bopreal: true, repo: true },
+  tesoro: { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {} },
   real: false, size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
 const infSave = () => { try { const { t, b, f, edit, ...rest } = INF; localStorage.setItem('infState', JSON.stringify(rest)); } catch (e) {} };
+// vencimientos del Tesoro de 1816: los trae el favorito "Traer de 1816" (lee la tabla de la web de 1816 con la sesión de
+// quien la tiene abierta) y llegan en el hash de la dirección. Se guardan solo en este navegador, no en el repositorio.
+function infRecibir1816() {
+  const h = location.hash; if (!h.startsWith('#venc1816=')) return;
+  try {
+    const d = JSON.parse(decodeURIComponent(h.slice(10)));
+    if (d && Array.isArray(d.rows) && d.rows.length && /^\d{4}-\d\d-\d\d$/.test(d.asOf) && d.fx > 0) {
+      localStorage.setItem('venc1816', JSON.stringify({ ...d, cargado: new Date().toISOString() }));
+      window._venc1816Nuevo = true; INF.preset = 'tesoro'; INF.mode = 'tesoro'; infSave();
+    }
+  } catch (e) {}
+  history.replaceState(null, '', location.pathname + location.search);
+}
+infRecibir1816();
 
 // ---- datos (una sola carga por fuente; 5 años)
 const infMemo = {};
@@ -5963,6 +5983,47 @@ function infBarPts(pts, ancho) {
   return by(d => d.slice(0, 4), 'año');
 }
 
+const INF_AJ = [['Tasa fija', BV.navy], ['Inflación', BV.azul], ['Tamar', BV.teal], ['Badlar', BV.medio], ['Dual', BV.celeste], ['USD linked', BV.claro], ['USD', BV.texto2], ['EUR', '#b9b9cf']];
+function infVenc1816() { try { const d = JSON.parse(localStorage.getItem('venc1816') || 'null'); return d && Array.isArray(d.rows) ? d : null; } catch (e) { return null; } }
+// el favorito: cambia la vista de 1816 a "diario, por ajuste, curva e instrumento", lee la tabla en pesos y en dólares (para
+// el tipo de cambio que usa 1816), devuelve la vista como estaba y abre esta página con los datos en el hash
+function infFavorito1816() {
+  const site = location.href.split('#')[0].split('?')[0];
+  const code = `(async()=>{const S=${JSON.stringify(site)};const v=document.querySelector('tableau-viz');if(!v||!v.workbook){alert('Abrí Vencimientos del Tesoro en 1816 (Datasets > Macro > Tesoro) y tocá de nuevo el favorito.');return}const wb=v.workbook;const ps=await wb.getParametersAsync();const cur=n=>{const p=ps.find(x=>x.name===n);return p?p.currentValue.value:null};const orig=['Param_selector_frecuencia','Param_selector_apertura','Param_selector_moneda'].map(n=>[n,cur(n)]);const set=(n,x)=>wb.changeParameterValueAsync(n,x);const esp=()=>new Promise(r=>setTimeout(r,2500));const hoja=async n=>{let ws=(wb.activeSheet.worksheets||[]).find(w=>w.name===n);if(!ws){const sh=await wb.activateSheetAsync('Tabla');ws=sh.worksheets.find(w=>w.name===n)}return ws};const datos=async n=>{const ws=await hoja(n);const r=await ws.getSummaryDataReaderAsync(10000,{ignoreSelection:true});const t=await r.getAllPagesAsync();await r.releaseAsync();return t};const leer=async()=>{const t=await datos('diaAjCurBon');const ix=n=>t.columns.findIndex(c=>c.fieldName===n);return t.data.map(x=>[x[ix('Fecha de pago')].value,x[ix('Instrumento')].value,x[ix('Curva')].value,x[ix('Ajuste_new')].value,x[ix('SUMA(Saldo vto.)')].value])};const volver=async()=>{for(const[n,x]of orig)if(x)try{await set(n,x)}catch(_){}};try{await set('Param_selector_frecuencia','Diario');await set('Param_selector_apertura','Ajuste / Curva / Instrumento');await set('Param_selector_moneda','Millones de ARS');await esp();const a=await leer();await set('Param_selector_moneda','Millones de USD (@FX oficial)');await esp();const u=await leer();let nota='';try{const t=await datos('Fecha_datos');nota=t.data[0][0].formattedValue}catch(_){}const fa=(ps.find(x=>x.name==='Fecha_analisis')||{currentValue:{formattedValue:''}}).currentValue.formattedValue.split('/');const asOf=fa.length===3?fa[2]+'-'+fa[1].padStart(2,'0')+'-'+fa[0].padStart(2,'0'):new Date().toISOString().slice(0,10);const sa=a.reduce((s,r)=>s+r[4],0),su=u.reduce((s,r)=>s+r[4],0);const d={v:1,asOf,nota,fx:sa/su,rows:a.map(r=>[r[0],r[1],r[2],r[3],Math.round(r[4]*100)/100])};await volver();const url=S+'#venc1816='+encodeURIComponent(JSON.stringify(d));const w=window.open(url,'_blank');if(!w)location.href=url}catch(e){await volver();alert('No se pudo leer la tabla de 1816: '+e.message)}})()`;
+  return 'javascript:' + encodeURIComponent(code);
+}
+function infTesoroCats(por, hoy) {
+  const y0 = +hoy.slice(0, 4), m0 = +hoy.slice(5, 7) - 1, cats = [];
+  if (por === 'anio') { for (let i = 0; i < 10; i++) cats.push(i === 9 ? (y0 + 9) + ' en adelante' : String(y0 + i)); return { cats, idx: d => Math.min(9, +d.slice(0, 4) - y0) }; }
+  if (por === 'trim') { const q0 = y0 * 4 + Math.floor(m0 / 3); for (let i = 0; i < 12; i++) { const q = q0 + i; cats.push((q % 4 + 1) + 'T ' + String(Math.floor(q / 4)).slice(2)); } return { cats, idx: d => { const i = +d.slice(0, 4) * 4 + Math.floor((+d.slice(5, 7) - 1) / 3) - q0; return i < 12 ? i : -1; } }; }
+  const k0 = y0 * 12 + m0; for (let i = 0; i < 18; i++) { const k = k0 + i; cats.push(MES_CORTO[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2)); }
+  return { cats, idx: d => { const i = +d.slice(0, 4) * 12 + +d.slice(5, 7) - 1 - k0; return i < 18 ? i : -1; } };
+}
+async function infBuildTesoro() {
+  const d = infVenc1816();
+  if (!d) return { kind: 'vacio', msg: 'Todavía no hay vencimientos de 1816 en este navegador. Arrastrá "Traer de 1816" (a la izquierda) a la barra de favoritos y tocalo con la pantalla Vencimientos del Tesoro de 1816 abierta.', notes: [] };
+  const T = { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {}, ...(INF.tesoro || {}) }, hoy = new Date().toISOString().slice(0, 10);
+  const { cats, idx } = infTesoroCats(T.por, hoy), usd = T.moneda === 'usd';
+  const clave = r => T.apilar === 'curva' ? r[2] : r[3];
+  const val = {}, aj = {};
+  for (const r of d.rows) {
+    if (T.excl[r[3]] || r[0] < hoy) continue;
+    const i = idx(r[0]); if (i < 0) continue;
+    const k = clave(r); aj[k] = r[3];
+    (val[k] = val[k] || cats.map(() => 0))[i] += usd ? r[4] / d.fx : r[4] / 1e6;
+  }
+  const orden = INF_AJ.map(x => x[0]);
+  const keys = Object.keys(val).sort((a, b) => (orden.indexOf(aj[a]) - orden.indexOf(aj[b])) || (val[b].reduce((x, y) => x + y, 0) - val[a].reduce((x, y) => x + y, 0)));
+  const pal = [BV.navy, BV.azul, BV.teal, BV.medio, BV.celeste, BV.claro, BV.texto2, '#b9b9cf', '#5a6fa8', '#9fd3ec', '#2f7d9c', '#d4dcf5'];
+  const ser = keys.map((k, i) => ({ k: 'tes_' + k, name: k, vals: val[k], bars: true, color0: T.apilar === 'ajuste' ? (INF_AJ.find(x => x[0] === k) || [0, pal[i % pal.length]])[1] : pal[i % pal.length] })).filter(x => x.vals.some(v => v > 0));
+  if (!ser.length) return { kind: 'vacio', msg: 'No hay vencimientos con esa selección.', notes: [] };
+  const fecha = infDdmmaa(d.asOf), notes = [d.nota || 'Valores nominales de 1816 al ' + fecha, 'Deuda del Tesoro en títulos negociables, en manos públicas y privadas; capital e intereses al valor técnico'];
+  if (usd) notes.push('En dólares al oficial que usa 1816 (' + numAR(d.fx, 2, 2) + ')');
+  const excl = Object.keys(T.excl).filter(k => T.excl[k]); if (excl.length) notes.push('Sin ' + infJoinY(excl));
+  return { kind: 'pagos', cats, ser, units: [usd ? 'US$ millones' : '$ billones'], notes, last: d.asOf,
+    tAuto: 'Vencimientos del Tesoro', bAuto: (usd ? 'US$ millones' : '$ billones') + ', capital e intereses, por ' + ({ mes: 'mes', trim: 'trimestre', anio: 'año' }[T.por]),
+    fAuto: 'Fuente: 1816, con valores nominales hasta la licitación del ' + fecha + '.' };
+}
 async function infBuildPagos() {
   const j = await infSoberanos(), hoy = new Date().toISOString().slice(0, 10), y0 = +hoy.slice(0, 4), notes = [];
   const por = INF.pagosPor === 'sem' ? 'sem' : 'anio', apilar = INF.pagosApilar === 'tipo' ? 'tipo' : 'grupo', inc = INF.pagosInc || {};
@@ -6270,7 +6331,7 @@ function infPlotPagos(ctx, sp, P) {
     sp.ser.forEach(s => { const v = s.vals[i]; if (v <= 0) return; ctx.fillStyle = s.color; const ya = ys(acc), yb = ys(acc + v); ctx.fillRect(xc - bw / 2, yb, bw, Math.max(0.5, ya - yb)); acc += v; });
     ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center';
     const lbl = c.replace(' en adelante', '+'); ctx.fillText(lbl, xc, y1 + 17);
-    if (tot[i] > 0) { ctx.font = `700 11.5px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.fillText(numAR(tot[i], 0, 0), xc, ys(tot[i]) - 6); }
+    if (tot[i] > 0) { const dt = Math.max(...tot) < 100 ? 1 : 0; ctx.font = `700 ${sp.cats.length > 12 ? 10.5 : 11.5}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.fillText(numAR(tot[i], dt, dt), xc, ys(tot[i]) - 6); }
   });
   ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, Math.round(y1) + 0.5); ctx.lineTo(x1, Math.round(y1) + 0.5); ctx.stroke();
   ctx.textAlign = 'left';
@@ -6360,7 +6421,7 @@ function infTsv() {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
-  if (sp.kind === 'pagos') return ['Período\t' + sp.ser.map(s => s.name + ' (US$ millones)').join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
+  if (sp.kind === 'pagos') return ['Período\t' + sp.ser.map(s => s.name + ' (' + sp.units[0] + ')').join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
     return ['Bono\t' + sp.ser.map(s => s.name + ' TIR (%)\t' + s.name + ' duration').join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
@@ -6378,7 +6439,18 @@ function renderInfCtl() {
   P.innerHTML = INF_PRESETS.map(p => '<button type="button" class="inf-preset' + (p.id === INF.preset ? ' on' : '') + '" aria-pressed="' + (p.id === INF.preset) + '" onclick="infPreset(\'' + p.id + '\')">' + p.n + '</button>').join('');
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
   let h = '', cat = '';
-  if (INF.mode === 'pagos') {
+  if (INF.mode === 'tesoro') {
+    const T = { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {}, ...(INF.tesoro || {}) }, d = infVenc1816();
+    const ajs = d ? INF_AJ.map(x => x[0]).filter(a => d.rows.some(r => r[3] === a)) : [];
+    cat = '<div class="inf-lbl inf-lbl-first">Por</div>' + seg([['mes', 'Mes'], ['trim', 'Trimestre'], ['anio', 'Año']], T.por, "infTes.bind(null,'por')")
+      + '<div class="inf-lbl">Apilar</div>' + seg([['ajuste', 'Ajuste'], ['curva', 'Curva']], T.apilar, "infTes.bind(null,'apilar')")
+      + '<div class="inf-lbl">Moneda</div>' + seg([['ars', '$ billones'], ['usd', 'US$ millones']], T.moneda, "infTes.bind(null,'moneda')")
+      + (ajs.length ? '<div class="inf-lbl">Incluir</div><div class="inf-chips">' + ajs.map(a => { const on = !T.excl[a], c = (INF_AJ.find(x => x[0] === a) || [])[1];
+        return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infTesExcl(\'' + a + '\')"><span class="inf-dot" style="background:' + (on ? c : 'transparent') + '"></span>' + a + '</button>'; }).join('') + '</div>' : '')
+      + '<div class="inf-lbl">Datos de 1816</div><div class="inf-tes-datos">' + (d ? 'Licitación del ' + infDdmmaa(d.asOf) + '; traídos el ' + infDdmmaa((d.cargado || d.asOf).slice(0, 10)) + '.' : 'Todavía no hay datos en este navegador.')
+      + '<br>Para actualizarlos, arrastrá este botón a la barra de favoritos y tocalo con Vencimientos del Tesoro abierto en 1816 (Datasets › Macro › Tesoro):</div>'
+      + '<a class="btn btn-ghost inf-fav" href="' + infFavorito1816() + '" onclick="infToast(\'Arrastralo a la barra de favoritos; se usa desde la página de 1816\'); return false;">Traer de 1816</a>';
+  } else if (INF.mode === 'pagos') {
     cat = '<div class="inf-lbl inf-lbl-first">Por</div>' + seg([['anio', 'Año'], ['sem', 'Semestre']], INF.pagosPor, 'infPagosPor')
       + '<div class="inf-lbl">Apilar</div>' + seg([['grupo', 'Por deuda'], ['tipo', 'Capital e intereses']], INF.pagosApilar, 'infPagosApilar')
       + '<div class="inf-lbl">Incluir</div><div class="inf-chips">' + INF_PAGOS_G.map(([k, n]) => { const on = (INF.pagosInc || {})[k] !== false;
@@ -6426,6 +6498,8 @@ function infDesde(d) { INF.desde = d || ''; infUpdate(); }
 function infTrans(t) { INF.trans = t; infUpdate(); }
 function infCurva(c) { INF.curva = c; INF.preset = INF_PRESETS.some(p => p.id === c && p.mode === 'curva') ? c : ''; INF.edit = { t: false, b: false, f: false }; infUpdate(); }
 function infPagosPor(v) { INF.pagosPor = v; infUpdate(); }
+function infTes(k, v) { INF.tesoro = { ...(INF.tesoro || {}), [k]: v }; infUpdate(); }
+function infTesExcl(a) { const t = { ...(INF.tesoro || {}) }; t.excl = { ...(t.excl || {}), [a]: !(t.excl || {})[a] }; INF.tesoro = t; infUpdate(); }
 function infPagosApilar(v) { INF.pagosApilar = v; infUpdate(); }
 function infPagosInc(k) { INF.pagosInc = { ...(INF.pagosInc || {}), [k]: (INF.pagosInc || {})[k] === false }; infUpdate(); }
 function infCmp(k) { INF.cmp[k] = !INF.cmp[k]; infUpdate(); }
@@ -6444,7 +6518,7 @@ async function infUpdate() {
   if (st) st.textContent = 'Cargando datos...';
   if (!infFontsOk && document.fonts && document.fonts.load) { infFontsOk = true; await Promise.all(['900 26px Inter', '800 15px Inter', '400 13px Inter', '700 12px Inter'].map(f => document.fonts.load(f).catch(() => null))); }
   let sp;
-  try { sp = INF.mode === 'curva' ? await infBuildCurva() : INF.mode === 'pagos' ? await infBuildPagos() : await infBuildSerie(); }
+  try { sp = INF.mode === 'curva' ? await infBuildCurva() : INF.mode === 'pagos' ? await infBuildPagos() : INF.mode === 'tesoro' ? await infBuildTesoro() : await infBuildSerie(); }
   catch (e) { sp = { kind: 'vacio', msg: 'No se pudieron bajar los datos: ' + e.message, notes: [] }; }
   if (tok !== infTok) return;
   infSpec = sp; window.infLastSpec = sp; infEstilar(sp);
@@ -6491,6 +6565,7 @@ document.getElementById('srch').addEventListener('input',render);
 document.getElementById('secF').addEventListener('change',render);
 document.getElementById('mcF').addEventListener('change',render);
 loadData();
+if (window._venc1816Nuevo) switchTab('informe');
 
 </script>
 </body>
