@@ -1,0 +1,256 @@
+{
+ "asOf": "2026-10-27T17:45:41.079Z",
+ "respuestas": {
+  "instrumentos_T30J7": {
+   "status": 200,
+   "forma": [
+    {
+     "ticker": "string",
+     "denominacion": "string",
+     "curva": "string",
+     "fechaEmision": "string",
+     "fechaVencimiento": "string",
+     "isinCode": "string",
+     "monedaDenom": "string",
+     "monedaPago": "string",
+     "emisorNombre": "string"
+    }
+   ],
+   "error": null,
+   "message": null
+  },
+  "instrumentos_S30N6": {
+   "status": 200,
+   "forma": [
+    {
+     "ticker": "string",
+     "denominacion": "string",
+     "curva": "string",
+     "fechaEmision": "string",
+     "fechaVencimiento": "string",
+     "isinCode": "string",
+     "monedaDenom": "string",
+     "monedaPago": "string",
+     "emisorNombre": "string"
+    }
+   ],
+   "error": null,
+   "message": null
+  },
+  "instrumentos_TZX27": {
+   "status": 200,
+   "forma": [
+    {
+     "ticker": "string",
+     "denominacion": "string",
+     "curva": "string",
+     "fechaEmision": "string",
+     "fechaVencimiento": "string",
+     "isinCode": "string",
+     "monedaDenom": "string",
+     "monedaPago": "string",
+     "emisorNombre": "string"
+    }
+   ],
+   "error": null,
+   "message": null
+  },
+  "cashflow_T30J7": {
+   "status": 200,
+   "forma": {
+    "ticker": "string",
+    "fechaOperacion": "string",
+    "plazo": "number",
+    "cashflow": [
+     {
+      "cuponNumero": "number",
+      "fechaPagoEfectiva": "string",
+      "flujoAmortizacion": "number",
+      "flujoInteres": "number",
+      "flujoTotal": "number"
+     }
+    ]
+   },
+   "error": null,
+   "message": null
+  },
+  "indicadores_T30J7": {
+   "status": 200,
+   "forma": {
+    "fechaOperacion": "string",
+    "fuente": "string",
+    "plazo": "number",
+    "moneda": "string",
+    "instrumentos": {
+     "T30J7": {
+      "tea": "number"
+     }
+    }
+   },
+   "error": null,
+   "message": null
+  }
+ },
+ "pruebas": {
+  "cashflow:montoCirculante": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:montoCirculante": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:montoResidual": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:montoResidual": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:montoEmitido": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:montoEmitido": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:valorResidual": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:valorResidual": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:vnResidual": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:vnResidual": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:saldo": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:saldo": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:monto": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:monto": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:vencimiento": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:vencimiento": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "cashflow:montoVencimiento": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "indicadores:montoVencimiento": {
+   "status": 400,
+   "error": "invalid_params",
+   "message": "",
+   "forma": null
+  },
+  "ruta:/v1/mercado/vencimientos": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/mercado/deuda": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/mercado/perfil-vencimientos": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/mercado/montos": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/mercado/emisiones": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/mercado/licitaciones": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/deuda/vencimientos": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  },
+  "ruta:/v1/mercado/instrumentos/T30J7": {
+   "status": 404,
+   "error": "not_found",
+   "message": "Recurso no encontrado",
+   "forma": null
+  }
+ },
+ "creditos": {
+  "used": 989,
+  "limit": 100000
+ }
+}
