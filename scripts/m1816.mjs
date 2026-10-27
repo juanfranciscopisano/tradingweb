@@ -1,6 +1,7 @@
 // API de 1816 (módulo mercado). La clave está en el secreto API_1816_KEY del repo: se cambia por un token de 24 h y no
 // se escribe en ningún archivo ni en el log. Límite del plan: 1 pedido por segundo y créditos por día.
 //
+// MODO=diario (el de todos los días): curvas, flujos y montos en soberanos.json.
 // MODO=explora: lista curvas e instrumentos de cada curva y prueba cómo se pasan las listas en la consulta. Guarda solo
 // metadatos (nombres, tickers, vencimientos, monedas) y los códigos de respuesta, nunca precios ni tasas.
 import { writeFile } from "node:fs/promises";
@@ -75,16 +76,96 @@ async function explora(api, log) {
   return out;
 }
 
+// ---- diario: curvas (hoy, hace una semana y hace un mes), flujos de fondos y montos en circulación (BYMA) → soberanos.json
+// Cada curva: los nombres de 1816 que la forman (con el grupo que se muestra), qué tickers entran y en qué moneda se
+// calcula la TIR (los bonos en dólares, con el precio en dólares MEP).
+export const CURVAS_1816 = [
+  { k: "usd", n: "Soberanos en dólares", de: { "Soberanos USD Globales": "Globales", "Soberanos USD Bonares": "Bonares" }, re: /^(GD|AL|AE|AN|AO)\d/, moneda: "mep", flujos: true },
+  { k: "cer", n: "Bonos CER", de: { "Soberanos ARS CER": "CER" }, re: /^(TX|TZX|X\d)/, moneda: "ars" },
+  { k: "bopreal", n: "BOPREAL", de: { "BCRA USD": "BOPREAL" }, re: /^BPO/, moneda: "mep", flujos: true },
+  { k: "linked", n: "Dólar linked", de: { "Soberanos USD Linked": "Dólar linked" }, re: /^(D\d|TZV)/, moneda: "ars" },
+];
+const CAMPOS = ["tea", "durationMod", "paridad"];
+const BYMA_FICHA = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/general";
+export const corrida = (d, n) => { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+const finde = d => [0, 6].includes(new Date(d + "T12:00:00Z").getUTCDay());
+
+// indicadores de una fecha; si es feriado (casi todo vacío) prueba el día hábil anterior, hasta 5 veces
+export async function indicadoresEn(api, tickers, moneda, fecha) {
+  let f = fecha;
+  for (let k = 0; k < 5; k++, f = corrida(f, -1)) {
+    while (finde(f)) f = corrida(f, -1);
+    const datos = {}; let ok = 0, fechaOp = f;
+    for (let i = 0; i < tickers.length; i += 50) {
+      const r = await api.get("/v1/mercado/indicadores", { tickers: tickers.slice(i, i + 50), campos: CAMPOS, moneda, fechaOperacion: f });
+      if (r.status === 402) throw new Error("1816 sin créditos (402)");
+      if (r.status !== 200) continue;
+      if (r.j?.fechaOperacion) fechaOp = r.j.fechaOperacion;
+      for (const [t, x] of Object.entries(r.j?.instrumentos || {})) { datos[t] = [x.tea ?? null, x.durationMod ?? null, x.paridad ?? null]; if (x.tea != null && x.durationMod != null) ok++; }
+    }
+    if (ok >= Math.max(2, tickers.length * 0.4)) return { fecha: fechaOp, datos };
+  }
+  return null;
+}
+
+async function bymaMonto(fetchImpl, t) {
+  try {
+    const r = await fetchImpl(BYMA_FICHA, { method: "POST", headers: { "Content-Type": "application/json", "User-Agent": UA }, body: JSON.stringify({ symbol: t }), signal: AbortSignal.timeout(20000) });
+    const d = ((await r.json()).data || [])[0];
+    return d && +d.montoNominal > 0 ? [+d.montoNominal, +d.montoResidual > 0 ? +d.montoResidual : +d.montoNominal] : null;
+  } catch (e) { return null; }
+}
+
+export async function diario(api, { fetchImpl = fetch, log = console.log, hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10) } = {}) {
+  const out = { asOf: new Date().toISOString(), fuente: "1816 (precios de BYMA, 24 hs)", curvas: {}, flujos: {}, montos: {}, errores: {} };
+  const cur = await api.get("/v1/mercado/curvas");
+  if (cur.status !== 200 || !Array.isArray(cur.j)) throw new Error("curvas: HTTP " + cur.status);
+  for (const C of CURVAS_1816) {
+    try {
+      const grupo = {};
+      for (const [nombre, g] of Object.entries(C.de)) {
+        const c = cur.j.find(x => x.name === nombre); if (!c) { out.errores[C.k] = "no está la curva " + nombre; continue; }
+        const r = await api.get("/v1/mercado/instrumentos", { curvaId: c.id });
+        for (const x of (r.status === 200 && Array.isArray(r.j) ? r.j : [])) if (!x.ticker.includes("@") && C.re.test(x.ticker)) grupo[x.ticker] = g;
+      }
+      const tickers = Object.keys(grupo); if (!tickers.length) continue;
+      const fechas = {}, datos = {};
+      for (const [k, f] of [["h", hoy], ["s", corrida(hoy, -7)], ["m", corrida(hoy, -30)]]) {
+        const r = await indicadoresEn(api, tickers, C.moneda, f);
+        if (r) { fechas[k] = r.fecha; datos[k] = r.datos; }
+      }
+      out.curvas[C.k] = { n: C.n, moneda: C.moneda, grupo, fechas, datos };
+      log(`1816 ${C.k}: ${tickers.length} bonos, ${Object.entries(fechas).map(([k, f]) => k + " " + f).join(", ")}`);
+      if (C.flujos) for (const t of tickers) {
+        const r = await api.get("/v1/mercado/cashflow/" + t, { campos: ["fechaPagoEfectiva", "fechaPagoTeorica", "flujoAmortizacion", "flujoInteres"] });
+        const fl = (r.j?.cashflow || []).map(x => [x.fechaPagoEfectiva || x.fechaPagoTeorica, +(x.flujoAmortizacion || 0), +(x.flujoInteres || 0)]).filter(x => x[0] && x[0] > hoy);
+        if (fl.length) out.flujos[t] = fl;
+        const m = await bymaMonto(fetchImpl, t); if (m) out.montos[t] = m;
+      }
+    } catch (e) { out.errores[C.k] = String(e.message || e).slice(0, 200); log(`1816 ${C.k}: ${e.message}`); if (/402/.test(e.message)) break; }
+  }
+  out.creditos = (await api.get("/v1/creditos/balance")).j?.daily || null;
+  out.pedidos = api.pedidos;
+  return out;
+}
+
 export async function main({ fetchImpl = fetch, log = console.log, root = new URL("../", import.meta.url) } = {}) {
-  const key = process.env.API_1816_KEY, modo = process.env.MODO || "explora";
-  if (!key) { await writeFile(new URL("m1816-explora.json", root), JSON.stringify({ asOf: new Date().toISOString(), error: "sin API_1816_KEY en los secretos del repo" })); log("sin API_1816_KEY"); return; }
+  const key = process.env.API_1816_KEY, modo = process.env.MODO || "diario";
+  const archivo = modo === "explora" ? "m1816-explora.json" : "soberanos.json";
+  if (!key) { log("sin API_1816_KEY en los secretos del repo"); if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify({ asOf: new Date().toISOString(), error: "sin API_1816_KEY" })); return; }
   const api = cliente({ key, fetchImpl, log });
   try {
     await api.login();
-    if (modo === "explora") await writeFile(new URL("m1816-explora.json", root), JSON.stringify(await explora(api, log), null, 1));
+    if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify(await explora(api, log), null, 1));
+    else {
+      const out = await diario(api, { fetchImpl, log });
+      // si no vino ninguna curva (1816 caído), queda el archivo anterior
+      if (Object.keys(out.curvas).length) await writeFile(new URL(archivo, root), JSON.stringify(out));
+      else log("1816: no vino ninguna curva; queda lo que había");
+    }
   } catch (e) {
     log("1816: " + e.message);
-    await writeFile(new URL("m1816-explora.json", root), JSON.stringify({ asOf: new Date().toISOString(), error: String(e.message).slice(0, 300) }));
+    if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify({ asOf: new Date().toISOString(), error: String(e.message).slice(0, 300) }));
   }
 }
 

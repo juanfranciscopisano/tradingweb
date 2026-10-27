@@ -1,12 +1,14 @@
-name: 1816 (curvas e instrumentos)
+name: 1816 (curvas soberanas y flujos)
 
 on:
+  schedule:
+    - cron: "41 21 * * 1-5"   # 18:41 de Buenos Aires, con el cierre de BYMA
   workflow_dispatch:
     inputs:
       modo:
-        description: "explora: lista curvas e instrumentos"
+        description: "diario: curvas, flujos y montos (soberanos.json); explora: lista curvas e instrumentos"
         required: false
-        default: "explora"
+        default: "diario"
 
 permissions:
   contents: write
@@ -28,13 +30,13 @@ jobs:
         run: node scripts/m1816.mjs
         env:
           API_1816_KEY: ${{ secrets.API_1816_KEY }}
-          MODO: ${{ inputs.modo }}
+          MODO: ${{ inputs.modo || 'diario' }}
       - name: Commit si cambió
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in m1816-explora.json; do [ -f "$f" ] && git add "$f"; done
+          for f in soberanos.json m1816-explora.json; do [ -f "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
-          git commit -m "1816: ${{ inputs.modo }}"
+          git commit -m "1816: ${{ inputs.modo || 'diario' }}"
           git pull --rebase -q
           git push
