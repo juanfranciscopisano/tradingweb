@@ -5907,7 +5907,8 @@ async function infBuildSerie() {
     if (c.flow) { let acc = 0; pts = pts.map(p => ({ d: p.d, t: p.t, v: (acc += p.v) })); }
     let uReal = null;
     if (cer && cer.length && enPesos(k)) {
-      const ult = cer[cer.length - 1];
+      // el CER se publica por adelantado (hasta mediados del mes que viene): la referencia es el de hoy, no el último
+      const ult = valAt(cer, Date.now() / 1000) || cer[cer.length - 1];
       pts = pts.map(p => { const q = valAt(cer, p.t); return q ? { d: p.d, t: p.t, v: p.v * ult.v / q.v } : null; }).filter(Boolean);
       uReal = '$ billones de hoy'; cer.ult = ult;
     }
