@@ -1,7 +1,8 @@
 // Series macro que el navegador no puede bajar directo (el BCRA no habilita CORS en sus planillas) o que no tienen
 // historia pública. El Índice de Tipo de Cambio Real Multilateral (ITCRM) diario y los bilaterales con Brasil, Estados Unidos,
 // China y la Zona Euro, de la planilla ITCRMSerie.xlsx del BCRA (itcrm.json), los cierres del MSCI MERVAL
-// (merval.json) y la caución a 1 día (cauciones.json). Escribe en la raíz del repo.
+// (merval.json), la caución a 1 día (cauciones.json) y los tipos de cambio oficiales de la región (fx.json).
+// Escribe en la raíz del repo.
 //   node scripts/macro.mjs
 import { readFile, writeFile } from "node:fs/promises";
 import { inflateRawSync } from "node:zlib";
@@ -153,7 +154,56 @@ async function caucion({ fetchImpl, root, log, now }) {
   log(`cauciones.json: ${c1.length} días` + (c1.length ? `, último ${c1[c1.length - 1].join(" ")}` : ""));
 }
 
+// Monedas de la región con las fuentes oficiales (el FX de Yahoo para emergentes tiene datos malos: CLP=X marcó 959,6 el
+// 26/10/2026 con el observado en 990,35; PEN=X alterna entre dos niveles 3% separados día por medio):
+//   real: PTAX venta del Banco Central do Brasil (SGS, serie 1)
+//   peso chileno: dólar observado del Banco Central de Chile (vía mindicador.cl)
+//   sol: tipo de cambio interbancario venta del BCRP (PD04638PD)
+//   peso mexicano: tipo de referencia del BCE (USD/MXN cruzado, vía Frankfurter); el FIX de Banxico pide token
+// fx.json: { brl|clp|pen|mxn: [[fecha, valor]] }, 5 años. Si una fuente no responde se queda lo que había.
+const FX_MESES = { Ene: 1, Feb: 2, Mar: 3, Abr: 4, May: 5, Jun: 6, Jul: 7, Ago: 8, Set: 9, Sep: 9, Oct: 10, Nov: 11, Dic: 12 };
+export const FX_FUENTES = {
+  brl: { src: "Banco Central do Brasil (PTAX)", get: async (f, d0, d1) => {
+    const ddmm = d => d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4);
+    const j = await f(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json&dataInicial=${ddmm(d0)}&dataFinal=${ddmm(d1)}`);
+    return j.map(x => { const [dd, mm, yy] = x.data.split("/"); return [`${yy}-${mm}-${dd}`, +x.valor]; });
+  } },
+  clp: { src: "Banco Central de Chile (dólar observado)", get: async (f, d0, d1) => {
+    const out = [];
+    for (let y = +d0.slice(0, 4); y <= +d1.slice(0, 4); y++) { const j = await f(`https://mindicador.cl/api/dolar/${y}`); for (const x of j.serie || []) out.push([new Date(Date.parse(x.fecha) - 3 * 3600000 + 6 * 3600000).toISOString().slice(0, 10), +x.valor]); }
+    return out;
+  } },
+  pen: { src: "Banco Central de Reserva del Perú (interbancario venta)", get: async (f, d0, d1) => {
+    const j = await f(`https://estadisticas.bcrp.gob.pe/estadisticas/series/api/PD04638PD/json/${d0}/${d1}`);
+    return (j.periods || []).map(p => { const m = p.name.match(/^(\d{1,2})\.(\w{3})\.(\d{2})$/), v = +p.values?.[0]; return m && FX_MESES[m[2]] && isFinite(v) && v > 0 ? [`20${m[3]}-${String(FX_MESES[m[2]]).padStart(2, "0")}-${m[1].padStart(2, "0")}`, v] : null; }).filter(Boolean);
+  } },
+  mxn: { src: "Banco Central Europeo (referencia, vía Frankfurter)", get: async (f, d0, d1) => {
+    const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=MXN`);
+    return Object.entries(j.rates || {}).map(([d, r]) => [d, +r.MXN]).filter(x => x[1] > 0);
+  } },
+};
+export function mergeFx(prev, nuevo) {
+  const m = new Map(prev || []); for (const [d, v] of nuevo || []) if (v > 0) m.set(d, +(+v).toFixed(4));
+  return [...m].sort((a, b) => a[0].localeCompare(b[0]));
+}
+async function fxLatam({ fetchImpl, root, log, now }) {
+  let prev = {};
+  try { prev = JSON.parse(await readFile(new URL("fx.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  const d1 = now.toISOString().slice(0, 10), d0 = new Date(now.getTime() - 5.3 * 365.25 * 86400000).toISOString().slice(0, 10);
+  const f = async u => { const r = await fetchImpl(u, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tipos de cambio)", Accept: "application/json" } }); if (!r.ok) throw new Error(u.split("/")[2] + " HTTP " + r.status); return r.json(); };
+  const out = { asOf: now.toISOString(), src: {} };
+  for (const [k, F] of Object.entries(FX_FUENTES)) {
+    // con historia guardada alcanza con los últimos 40 días
+    const desde = (prev[k] || []).length > 200 ? new Date(now.getTime() - 40 * 86400000).toISOString().slice(0, 10) : d0;
+    try { out[k] = mergeFx(prev[k], await F.get(f, desde, d1)); out.src[k] = F.src; }
+    catch (e) { out[k] = prev[k] || []; out.src[k] = prev.src?.[k] || F.src; log(`fx ${k}: ${e.message} (queda lo que había)`); }
+    log(`fx ${k}: ${out[k].length} días` + (out[k].length ? `, último ${out[k][out[k].length - 1].join(" ")}` : ""));
+  }
+  await writeFile(new URL("fx.json", root), JSON.stringify(out));
+}
+
 export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, now = new Date() } = {}) {
+  await fxLatam({ fetchImpl, root, log, now }).catch(e => log("fx: " + e.message));
   // el MSCI MERVAL y la caución no frenan el ITCRM si BYMA no responde
   await msciMerval({ fetchImpl, root, log, now }).catch(e => log("MSCI MERVAL: " + e.message));
   await caucion({ fetchImpl, root, log, now }).catch(e => log("Caución: " + e.message));

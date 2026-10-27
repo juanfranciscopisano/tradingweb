@@ -22,13 +22,13 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Bajar ITCRM (BCRA), MSCI MERVAL y caución (BYMA)
+      - name: Bajar ITCRM (BCRA), MSCI MERVAL y caución (BYMA) y monedas de la región
         run: node scripts/macro.mjs
       - name: Commit si cambió
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in itcrm.json merval.json cauciones.json; do [ -f "$f" ] && git add "$f"; done
+          for f in itcrm.json merval.json cauciones.json fx.json; do [ -f "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
           git commit -m "macro: ITCRM, MSCI MERVAL y caución"
           git pull --rebase -q
