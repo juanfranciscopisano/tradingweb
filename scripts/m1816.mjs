@@ -79,29 +79,31 @@ async function explora(api, log) {
 // ---- diario: curvas (hoy, hace una semana y hace un mes), flujos de fondos y montos en circulación (BYMA) → soberanos.json
 // Cada curva: los nombres de 1816 que la forman (con el grupo que se muestra), qué tickers entran y en qué moneda se
 // calcula la TIR (los bonos en dólares, con el precio en dólares MEP).
+// tna: los bonos con cupón, con capitalización semestral sobre 365 días; las letras (dólar linked), simple al vencimiento
 export const CURVAS_1816 = [
-  { k: "usd", n: "Soberanos en dólares", de: { "Soberanos USD Globales": "Globales", "Soberanos USD Bonares": "Bonares" }, re: /^(GD|AL|AE|AN|AO)\d/, moneda: "mep", flujos: true },
-  { k: "cer", n: "Bonos CER", de: { "Soberanos ARS CER": "CER" }, re: /^(TX|TZX|X\d)/, moneda: "ars" },
-  { k: "bopreal", n: "BOPREAL", de: { "BCRA USD": "BOPREAL" }, re: /^BPO/, moneda: "mep", flujos: true },
-  { k: "linked", n: "Dólar linked", de: { "Soberanos USD Linked": "Dólar linked" }, re: /^(D\d|TZV)/, moneda: "ars" },
+  { k: "usd", n: "Soberanos en dólares", de: { "Soberanos USD Globales": "Globales", "Soberanos USD Bonares": "Bonares" }, re: /^(GD|AL|AE|AN|AO)\d/, moneda: "mep", conv: "180-365", flujos: true },
+  { k: "cer", n: "Bonos CER", de: { "Soberanos ARS CER": "CER" }, re: /^(TX|TZX|X\d)/, moneda: "ars", conv: "180-365" },
+  { k: "bopreal", n: "BOPREAL", de: { "BCRA USD": "BOPREAL" }, re: /^BPO/, moneda: "mep", conv: "180-365", flujos: true },
+  { k: "linked", n: "Dólar linked", de: { "Soberanos USD Linked": "Dólar linked" }, re: /^(D\d|TZV)/, moneda: "ars", conv: "plazo-rem" },
 ];
-const CAMPOS = ["tea", "durationMod", "paridad"];
+// [tea, durationMod, paridad, tna, tem] por bono
+const CAMPOS = ["tea", "durationMod", "paridad", "tna", "tem"];
 const BYMA_FICHA = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/general";
 export const corrida = (d, n) => { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 const finde = d => [0, 6].includes(new Date(d + "T12:00:00Z").getUTCDay());
 
 // indicadores de una fecha; si es feriado (casi todo vacío) prueba el día hábil anterior, hasta 5 veces
-export async function indicadoresEn(api, tickers, moneda, fecha) {
+export async function indicadoresEn(api, tickers, moneda, fecha, conv) {
   let f = fecha;
   for (let k = 0; k < 5; k++, f = corrida(f, -1)) {
     while (finde(f)) f = corrida(f, -1);
     const datos = {}; let ok = 0, fechaOp = f;
     for (let i = 0; i < tickers.length; i += 50) {
-      const r = await api.get("/v1/mercado/indicadores", { tickers: tickers.slice(i, i + 50), campos: CAMPOS, moneda, fechaOperacion: f });
+      const r = await api.get("/v1/mercado/indicadores", { tickers: tickers.slice(i, i + 50), campos: CAMPOS, moneda, fechaOperacion: f, convencionTna: conv });
       if (r.status === 402) throw new Error("1816 sin créditos (402)");
       if (r.status !== 200) continue;
       if (r.j?.fechaOperacion) fechaOp = r.j.fechaOperacion;
-      for (const [t, x] of Object.entries(r.j?.instrumentos || {})) { datos[t] = [x.tea ?? null, x.durationMod ?? null, x.paridad ?? null]; if (x.tea != null && x.durationMod != null) ok++; }
+      for (const [t, x] of Object.entries(r.j?.instrumentos || {})) { datos[t] = [x.tea ?? null, x.durationMod ?? null, x.paridad ?? null, x.tna ?? null, x.tem ?? null]; if (x.tea != null && x.durationMod != null) ok++; }
     }
     if (ok >= Math.max(2, tickers.length * 0.4)) return { fecha: fechaOp, datos };
   }
@@ -122,19 +124,19 @@ export async function diario(api, { fetchImpl = fetch, log = console.log, hoy = 
   if (cur.status !== 200 || !Array.isArray(cur.j)) throw new Error("curvas: HTTP " + cur.status);
   for (const C of CURVAS_1816) {
     try {
-      const grupo = {};
+      const grupo = {}, vto = {};
       for (const [nombre, g] of Object.entries(C.de)) {
         const c = cur.j.find(x => x.name === nombre); if (!c) { out.errores[C.k] = "no está la curva " + nombre; continue; }
         const r = await api.get("/v1/mercado/instrumentos", { curvaId: c.id });
-        for (const x of (r.status === 200 && Array.isArray(r.j) ? r.j : [])) if (!x.ticker.includes("@") && C.re.test(x.ticker)) grupo[x.ticker] = g;
+        for (const x of (r.status === 200 && Array.isArray(r.j) ? r.j : [])) if (!x.ticker.includes("@") && C.re.test(x.ticker)) { grupo[x.ticker] = g; if (x.fechaVencimiento) vto[x.ticker] = x.fechaVencimiento; }
       }
       const tickers = Object.keys(grupo); if (!tickers.length) continue;
       const fechas = {}, datos = {};
       for (const [k, f] of [["h", hoy], ["s", corrida(hoy, -7)], ["m", corrida(hoy, -30)]]) {
-        const r = await indicadoresEn(api, tickers, C.moneda, f);
+        const r = await indicadoresEn(api, tickers, C.moneda, f, C.conv);
         if (r) { fechas[k] = r.fecha; datos[k] = r.datos; }
       }
-      out.curvas[C.k] = { n: C.n, moneda: C.moneda, grupo, fechas, datos };
+      out.curvas[C.k] = { n: C.n, moneda: C.moneda, conv: C.conv, grupo, vto, fechas, datos };
       log(`1816 ${C.k}: ${tickers.length} bonos, ${Object.entries(fechas).map(([k, f]) => k + " " + f).join(", ")}`);
       if (C.flujos) for (const t of tickers) {
         const r = await api.get("/v1/mercado/cashflow/" + t, { campos: ["fechaPagoEfectiva", "fechaPagoTeorica", "flujoAmortizacion", "flujoInteres"] });
