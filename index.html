@@ -44,8 +44,12 @@ button,input,select{font:inherit;color:inherit}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* Informe: gráficos en formato BAVSA (el canvas es siempre blanco; el panel sigue el tema de la página) */
-.inf-body{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:18px;padding:16px var(--side) 28px;align-items:start}
-.inf-panel{background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:14px 14px 16px;display:flex;flex-direction:column}
+.inf-body{display:grid;grid-template-columns:minmax(220px,250px) minmax(250px,290px) minmax(0,1fr);grid-template-areas:"panel cat main";gap:18px;padding:16px var(--side) 28px;align-items:start}
+.inf-panel{grid-area:panel;background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:14px 14px 16px;display:flex;flex-direction:column}
+.inf-cat{grid-area:cat}
+.inf-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 22px}
+#view-informe{--side:max(clamp(16px,3.5vw,64px),calc((100vw - 1880px) / 2))}
+@media (max-width:1599px) and (min-width:901px){.inf-body{grid-template-columns:minmax(220px,250px) minmax(0,1fr);grid-template-areas:"panel main" "panel cat"}}
 .inf-lbl{font-size:12px;font-weight:650;color:var(--muted);margin:14px 0 6px}
 .inf-lbl-first{margin-top:0}
 .inf-presets{display:flex;flex-direction:column;gap:2px}
@@ -55,7 +59,7 @@ button,input,select{font:inherit;color:inherit}
 .inf-grp{margin-bottom:8px}
 .inf-grp-name{font-size:12px;color:var(--faint);margin-bottom:4px}
 .inf-chips{display:flex;flex-wrap:wrap;gap:5px}
-.inf-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surf);border:1px solid var(--line2);border-radius:14px;padding:3px 10px 3px 7px;font-size:12.5px;color:var(--ink2);cursor:pointer;line-height:1.3}
+.inf-chip{display:inline-flex;align-items:center;gap:6px;text-align:left;background:var(--surf);border:1px solid var(--line2);border-radius:14px;padding:3px 10px 3px 7px;font-size:12.5px;color:var(--ink2);cursor:pointer;line-height:1.3}
 .inf-chip:hover{border-color:var(--ink2)}
 .inf-chip.on{background:var(--surf2);border-color:var(--ink2);color:var(--ink);font-weight:600}
 .inf-dot{width:9px;height:9px;border-radius:50%;border:1px solid var(--line2);flex-shrink:0}
@@ -72,7 +76,26 @@ button,input,select{font:inherit;color:inherit}
 .inf-desde input,.inf-field input{background:var(--surf);border:1px solid var(--line2);border-radius:6px;padding:5px 8px;font-size:13px;color:var(--ink)}
 .inf-checks{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px;color:var(--ink2);align-items:center}
 .inf-checks label{display:flex;align-items:center;gap:6px;cursor:pointer}
-.inf-main{min-width:0;display:flex;flex-direction:column;gap:10px}
+.inf-main{grid-area:main;min-width:0;display:flex;flex-direction:column;gap:10px}
+.inf-est{background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:10px 14px 12px;container-type:inline-size}
+.inf-est:empty{display:none}
+.inf-est-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.inf-est-head .inf-lbl{margin:0}
+.inf-est-rows{display:grid;grid-template-columns:fit-content(300px) repeat(6,auto);justify-content:start;gap:8px 14px;align-items:center}
+.inf-est-rows .inf-chip{justify-self:start}
+.inf-est-row{display:contents}
+.inf-est-name{display:flex;align-items:center;gap:8px;min-width:140px;font-size:13px;color:var(--ink)}
+.inf-est-name span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.inf-est-name svg{flex-shrink:0;background:#fff;border-radius:3px;box-shadow:0 0 0 1px var(--line);padding:2px 0;box-sizing:content-box}
+.inf-sw{display:flex;gap:5px}
+.inf-sw button{width:17px;height:17px;border-radius:50%;border:1px solid rgba(128,128,140,.55);padding:0;cursor:pointer}
+.inf-sw button.on{box-shadow:0 0 0 2px var(--surf),0 0 0 4px var(--ink)}
+.inf-sw button:focus-visible,.inf-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.inf-seg-ico button{padding:4px 5px;line-height:0;color:var(--ink2)}
+.inf-seg-ico button:disabled{opacity:.35;cursor:default}
+.inf-x{background:none;border:0;color:var(--muted);font-size:17px;line-height:1;padding:2px 4px;cursor:pointer;border-radius:4px}
+.inf-x:hover{color:var(--ink);background:var(--surf2)}
+@container (max-width:780px){.inf-est-rows{display:flex;flex-direction:column;align-items:stretch;gap:10px}.inf-est-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}.inf-est-row:last-child{border-bottom:0;padding-bottom:0}.inf-est-name{flex:1 1 100%}}
 .inf-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .inf-stage{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;justify-content:center}
 .inf-stage canvas{width:100%;max-width:1200px;height:auto;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -84,7 +107,7 @@ button,input,select{font:inherit;color:inherit}
 .inf-reset{padding:4px 10px;font-size:12.5px;margin-left:auto}
 .inf-toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .inf-toast.on{opacity:1;transform:translate(-50%,0)}
-@media (max-width:900px){.inf-body{grid-template-columns:minmax(0,1fr)}.inf-main{order:-1}.inf-texts{grid-template-columns:1fr}.inf-stage{padding:8px}}
+@media (max-width:900px){.inf-body{grid-template-columns:minmax(0,1fr);grid-template-areas:"main" "panel" "cat"}.inf-texts{grid-template-columns:1fr}.inf-stage{padding:8px}}
 
 /* barra superior */
 .tab-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:0 var(--side);gap:2px;min-height:54px}
@@ -781,6 +804,7 @@ function checkPwd(){
       <div class="inf-presets" id="infPresets"></div>
       <div id="infCtl"></div>
     </aside>
+    <section class="inf-panel inf-cat" id="infCat" aria-label="Series para el gráfico"></section>
     <div class="inf-main">
       <div class="inf-actions">
         <button class="btn" type="button" onclick="infCopyImg()">Copiar imagen</button>
@@ -791,6 +815,7 @@ function checkPwd(){
       </div>
       <div class="inf-stage"><canvas id="infCanvas" width="2400" height="1280" role="img" aria-label="Vista previa del gráfico"></canvas></div>
       <div class="inf-note" id="infNote"></div>
+      <section class="inf-est" id="infEst" aria-label="Estilo de las series del gráfico"></section>
       <div class="inf-texts">
         <label class="inf-field">Título <input id="infT" type="text" oninput="infTxt('t', this.value)"></label>
         <label class="inf-field">Bajada <input id="infB" type="text" oninput="infTxt('b', this.value)"></label>
@@ -5011,6 +5036,8 @@ const METODO = [
       { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile vía mindicador.cl, que sin clave da solo el último mes; el workflow lo va guardando día a día y, para atrás de lo guardado, va Yahoo sin los saltos de un día, con aviso y las dos fuentes al pie. Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
         p: 'El tipo de cambio de Yahoo para estas monedas tiene datos malos: el 26/10/2026 dio 959,6 pesos chilenos por dólar con el observado en 990,35, y el sol alterna entre dos niveles 3% separados día por medio. Si una fuente oficial no responde, se usa Yahoo sacando los saltos de un día (más de 2% contra los dos vecinos que vuelven).' },
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
+      { d: 'Estilo de cada serie: color de la paleta BAVSA (más el gris de texto), cuatro grosores y cuatro trazos (sólida, rayas, puntos, raya y punto). Elegir un color que ya usa otra serie del gráfico las intercambia. Se guarda por serie, no por gráfico.',
+        p: 'Una referencia como el DXY se marca una vez (gris, gruesa y punteada) y sale igual en cualquier gráfico donde aparezca. El intercambio evita dos series del mismo color sin tener que tocar la otra. Las columnas solo toman el color; las demás series siguen la rampa en orden (navy primero) salteando los colores ya elegidos. La leyenda repite el trazo y el grosor.' },
       { d: '"Monedas de la región" trae los pares invertidos y en base 100: arriba de 100, la moneda se apreció contra el dólar.' },
       { d: 'En columnas: cualquier serie elegida. Una columna por día si entran con 5 px de ancho; si no, una por semana o por mes con el último dato de cada una (se aclara abajo del gráfico). El eje de las columnas arranca en cero, y van en tonos claros para que las líneas se lean encima.' },
       { d: 'Caución a 1 día: promedio ponderado por monto (VWAP) de la caución en pesos más corta del día en BYMA (1 día hábil: 3 días corridos un viernes). Del 26/02/2026 al 26/10/2026 sale de una planilla propia; desde el 27/10/2026 la terminal la guarda todas las noches de los datos abiertos de BYMA (cauciones.json).',
@@ -5643,7 +5670,7 @@ const INF_PRESETS = [
 
 let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
-  size: 'ancho', titulos: true, logo: true, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
+  size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
 const infSave = () => { try { const { t, b, f, edit, ...rest } = INF; localStorage.setItem('infState', JSON.stringify(rest)); } catch (e) {} };
 
@@ -5828,9 +5855,7 @@ async function infBuildSerie() {
     if (!ser.length) return { kind: 'vacio', msg: notes.join('. '), notes };
     units = ['base 100'];
   }
-  // colores: las líneas toman la rampa en orden (navy primero); las columnas, los tonos claros, para que las líneas se lean encima
-  let li = 0, bi = 0;
-  ser.forEach(s => { s.color = s.bars ? [BV.claro, BV.celeste, BV.teal][bi++ % 3] : [BV.navy, BV.azul, BV.teal, BV.celeste, BV.claro, BV.medio][li++ % 6]; s.axis = units.indexOf(s.u) === 1 ? 'R' : 'L'; });
+  ser.forEach(s => { s.axis = units.indexOf(s.u) === 1 ? 'R' : 'L'; });   // colores, grosor y trazo: infEstilar
   // columnas: un punto por día si entran (5 px por columna como mínimo); si no, el último dato de cada semana o de cada mes
   const anchoPlot = (INF_SIZES[INF.size] || INF_SIZES.ancho)[0] * 0.78;
   ser.filter(s => s.bars).forEach(s => {
@@ -5906,6 +5931,74 @@ async function infBuildCurva() {
     fAuto: 'Fuente: BYMA (datos abiertos, 20 minutos de demora).', last: new Date().toISOString().slice(0, 10) };
 }
 
+// ---- estilo de cada serie: color, grosor y trazo. Se guarda por serie (las curvas, por fecha: hoy, semana, mes), así
+// el DXY que se marcó grueso y punteado como referencia sale igual en cualquier gráfico donde aparezca
+const INF_COLORES = [['navy', BV.navy], ['azul', BV.azul], ['medio', BV.medio], ['teal', BV.teal], ['celeste', BV.celeste], ['claro', BV.claro], ['gris', BV.texto2]];
+const INF_LINEAS = [BV.navy, BV.azul, BV.teal, BV.celeste, BV.claro, BV.medio, BV.texto2], INF_BARRAS = [BV.claro, BV.celeste, BV.teal, BV.texto2];
+const INF_GROSOR = [['fino', 1.25, 'Fino'], ['normal', 2.25, 'Normal'], ['grueso', 3.5, 'Grueso'], ['xgrueso', 5, 'Muy grueso']];
+const INF_TRAZO = [['solida', 'Línea sólida'], ['rayas', 'Rayas'], ['puntos', 'Puntos'], ['rayapunto', 'Raya y punto']];
+function infDash(tr, w) {
+  const f = Math.max(1, w / 2.25);
+  return tr === 'rayas' ? [8 * f, 5 * f] : tr === 'puntos' ? [0.01, w + 3.5 * f] : tr === 'rayapunto' ? [9 * f, w + 3.5 * f, 0.01, w + 3.5 * f] : [];
+}
+const infCap = tr => tr === 'puntos' || tr === 'rayapunto' ? 'round' : 'butt';
+function infLum(hex) { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+const infEstKey = (sp, s) => (sp.kind === 'curva' ? 'curva:' : '') + s.k;
+// el color elegido manda; si dos eligieron el mismo, el primero. Las demás toman la rampa en orden (navy primero; las
+// columnas, los tonos claros, para que las líneas se lean encima) sin repetir colores ya usados
+function infEstilar(sp) {
+  if (!sp || !sp.ser) return;
+  const est = INF.estilo || {}, usados = new Set();
+  sp.ser.forEach(s => { if (s.color0 == null) s.color0 = s.color || null; const c = (est[infEstKey(sp, s)] || {}).color; s.color = c && !usados.has(c) ? c : null; if (s.color) usados.add(s.color); });
+  const pick = (pal, i0) => { for (let j = 0; j < pal.length; j++) { const c = pal[(i0 + j) % pal.length]; if (!usados.has(c)) return c; } return pal[i0 % pal.length]; };
+  let li = 0, bi = 0;
+  sp.ser.forEach(s => {
+    const lineas = sp.kind !== 'serie' || !(s.bars && s.barPts);
+    if (!s.color) { s.color = sp.kind === 'curva' && s.color0 && !usados.has(s.color0) ? s.color0 : lineas ? pick(INF_LINEAS, li) : pick(INF_BARRAS, bi); usados.add(s.color); }
+    lineas ? li++ : bi++;
+    const e = est[infEstKey(sp, s)] || {}, g = INF_GROSOR.find(x => x[0] === e.grosor);
+    s.w = g ? g[1] : sp.kind === 'curva' ? (s.k === 'h' ? 2.5 : 2) : 2.25;
+    s.trazo = INF_TRAZO.some(x => x[0] === e.trazo) ? e.trazo : sp.kind === 'curva' && s.k === 'm' ? 'rayas' : 'solida';
+    s.grosor = g ? g[0] : 'auto'; s.dash = infDash(s.trazo, s.w); s.cap = infCap(s.trazo);
+    s.ink = infLum(s.color) > 0.3 ? BV.navy : '#ffffff';
+  });
+}
+function infEstSet(key, campo, v) { const e = { ...((INF.estilo || {})[key] || {}) }; if (v == null) delete e[campo]; else e[campo] = v; INF.estilo = { ...(INF.estilo || {}), [key]: e }; }
+// elegir un color que ya usa otra serie del gráfico las intercambia
+function infColor(key, c) {
+  const sp = infSpec; if (!sp || !sp.ser) return;
+  const yo = sp.ser.find(s => infEstKey(sp, s) === key); if (!yo) return;
+  const otro = sp.ser.find(s => s !== yo && s.color === c);
+  if (otro) infEstSet(infEstKey(sp, otro), 'color', yo.color);
+  infEstSet(key, 'color', c); infRestyle();
+}
+function infGrosor(key, g) { infEstSet(key, 'grosor', g); infRestyle(); }
+function infTrazo(key, t) { infEstSet(key, 'trazo', t); infRestyle(); }
+function infEstAuto() { const sp = infSpec; if (!sp || !sp.ser) return; const e = { ...(INF.estilo || {}) }; sp.ser.forEach(s => delete e[infEstKey(sp, s)]); INF.estilo = e; infRestyle(); }
+function infRestyle() { infSave(); infEstilar(infSpec); renderInfCtl(); infPaint(); }
+const infLineSvg = (color, w, tr, len = 26) => '<svg width="' + len + '" height="12" viewBox="0 0 ' + len + ' 12" aria-hidden="true"><line x1="' + (2 + w / 2) + '" y1="6" x2="' + (len - 2 - w / 2) + '" y2="6" stroke="' + color + '" stroke-width="' + w + '" stroke-linecap="' + infCap(tr) + '"' + (infDash(tr, w).length ? ' stroke-dasharray="' + infDash(tr, w).join(' ') + '"' : '') + '/></svg>';
+function renderInfEst() {
+  const E = document.getElementById('infEst'); if (!E) return;
+  const sp = infSpec;
+  if (!sp || !sp.ser || !sp.ser.length || sp.kind === 'vacio') { E.innerHTML = ''; return; }
+  const rows = sp.ser.map(s => {
+    const key = infEstKey(sp, s), q = "'" + key + "'", barras = sp.kind === 'serie' && !!(s.bars && s.barPts), c = sp.kind === 'serie' ? INF_CAT[s.k] : null;
+    const muestra = barras ? '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><rect x="11" y="0" width="12" height="12" fill="' + s.color + '"/></svg>' : infLineSvg(s.color, s.w, s.trazo, 34);
+    let h = '<div class="inf-est-row"><div class="inf-est-name">' + muestra + '<span title="' + s.name.replace(/"/g, '&quot;') + '">' + s.name + '</span></div>';
+    h += '<div class="inf-sw" role="group" aria-label="Color de ' + s.name.replace(/"/g, '&quot;') + '">' + INF_COLORES.map(([n, col]) => '<button type="button" class="' + (col === s.color ? 'on' : '') + '" style="background:' + col + '" title="' + n[0].toUpperCase() + n.slice(1) + '" aria-label="' + n + '" aria-pressed="' + (col === s.color) + '" onclick="infColor(' + q + ', \'' + col + '\')"></button>').join('') + '</div>';
+    h += '<div class="inf-seg inf-seg-ico" role="group" aria-label="Grosor">' + INF_GROSOR.map(([g, w, l]) => '<button type="button" class="' + (s.grosor === g ? 'on' : '') + '" title="' + l + '" aria-label="' + l + '" aria-pressed="' + (s.grosor === g) + '"' + (barras ? ' disabled' : '') + ' onclick="infGrosor(' + q + ', \'' + g + '\')">' + infLineSvg('currentColor', w, 'solida', 22) + '</button>').join('') + '</div>';
+    h += '<div class="inf-seg inf-seg-ico" role="group" aria-label="Trazo">' + INF_TRAZO.map(([t, l]) => '<button type="button" class="' + (s.trazo === t ? 'on' : '') + '" title="' + l + '" aria-label="' + l + '" aria-pressed="' + (s.trazo === t) + '"' + (barras ? ' disabled' : '') + ' onclick="infTrazo(' + q + ', \'' + t + '\')">' + infLineSvg('currentColor', 2, t, 28) + '</button>').join('') + '</div>';
+    // columnas, par invertido y quitar: una celda cada uno, vacía si no corresponde, para que las filas queden alineadas
+    const on = c && !!INF.bars[s.k], inv = c && !!INF.inv[s.k];
+    h += c ? '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infBars(\'' + s.k + '\')"><span class="inf-bar-ico' + (on ? ' on' : '') + '"></span>Columnas</button>' : '<span></span>';
+    h += c && c.par ? '<button type="button" class="inf-chip' + (inv ? ' on' : '') + '" aria-pressed="' + inv + '" title="' + (inv ? 'Volver a ' + c.u : 'Ver en ' + c.par.u) + '" onclick="infInv(\'' + s.k + '\', \'' + (inv ? 'n' : 'i') + '\')">⇄ Invertir</button>' : '<span></span>';
+    h += c ? '<button type="button" class="inf-x" title="Quitar del gráfico" aria-label="Quitar ' + s.name.replace(/"/g, '&quot;') + ' del gráfico" onclick="infToggle(\'' + s.k + '\')">×</button>' : '<span></span>';
+    return h + '</div>';
+  }).join('');
+  const hay = sp.ser.some(s => Object.keys((INF.estilo || {})[infEstKey(sp, s)] || {}).length);
+  E.innerHTML = '<div class="inf-est-head"><div class="inf-lbl">Series del gráfico</div>' + (hay ? '<button class="btn btn-ghost inf-reset" type="button" onclick="infEstAuto()">Estilos automáticos</button>' : '') + '</div><div class="inf-est-rows">' + rows + '</div>';
+}
+
 // ---- dibujo
 let infLogoImg = null, infFontsOk = false;
 const infW = (ctx, t) => (ctx.measureText(t) || {}).width || 0;
@@ -5918,6 +6011,7 @@ function infLogo() {
 let infSpec = null;
 function infPaint() {
   const cv = document.getElementById('infCanvas'), sp = infSpec; if (!cv || !sp) return;
+  infEstilar(sp);
   const [W, H] = INF_SIZES[INF.size] || INF_SIZES.ancho;
   cv.width = W * INF_SCALE; cv.height = H * INF_SCALE;
   const ctx = cv.getContext && cv.getContext('2d'); if (!ctx) return;
@@ -5952,12 +6046,12 @@ function infText(ctx, s, x, y, maxW, track) {
   if (track) try { ctx.letterSpacing = '0px'; } catch (e) {}
 }
 function infLegendItems(sp) {
-  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, dash: s.dash, bars: !!(s.bars && s.barPts) }));
+  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, w: s.w, trazo: s.trazo, bars: !!(s.bars && s.barPts) }));
 }
 function infLegendRows(ctx, sp, maxW) {
   ctx.font = `13px ${BV_SANS}`;
   const rows = [[]]; let w = 0;
-  for (const it of infLegendItems(sp)) { const iw = 26 + infW(ctx, it.name) + 22; if (w + iw > maxW && rows[rows.length - 1].length) { rows.push([]); w = 0; } rows[rows.length - 1].push(it); w += iw; }
+  for (const it of infLegendItems(sp)) { const iw = 30 + infW(ctx, it.name) + 22; if (w + iw > maxW && rows[rows.length - 1].length) { rows.push([]); w = 0; } rows[rows.length - 1].push(it); w += iw; }
   return rows;
 }
 const infLegendHeight = (ctx, sp, maxW) => infLegendRows(ctx, sp, maxW).length * 20 + 8;
@@ -5965,10 +6059,11 @@ function infLegend(ctx, sp, x0, y, maxW) {
   for (const row of infLegendRows(ctx, sp, maxW)) {
     let x = x0;
     for (const it of row) {
-      if (it.bars) { ctx.fillStyle = it.color; ctx.fillRect(x + 3, y - 11, 12, 12); }
-      else { ctx.strokeStyle = it.color; ctx.lineWidth = 3; ctx.setLineDash(it.dash || []); ctx.beginPath(); ctx.moveTo(x, y - 4.5); ctx.lineTo(x + 18, y - 4.5); ctx.stroke(); ctx.setLineDash([]); }
-      ctx.fillStyle = BV.navy; ctx.font = `13px ${BV_SANS}`; ctx.fillText(it.name, x + 26, y);
-      x += 26 + infW(ctx, it.name) + 22;
+      // la muestra repite el trazo de la serie, un poco más gruesa para que se lea a ese tamaño
+      if (it.bars) { ctx.fillStyle = it.color; ctx.fillRect(x + 5, y - 11, 12, 12); }
+      else { const lw = Math.min(Math.max(it.w || 2.25, 2) + 0.75, 5.5); ctx.strokeStyle = it.color; ctx.lineWidth = lw; ctx.lineCap = infCap(it.trazo); ctx.setLineDash(infDash(it.trazo, lw)); ctx.beginPath(); ctx.moveTo(x + lw / 2, y - 4.5); ctx.lineTo(x + 22 - lw / 2, y - 4.5); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt'; }
+      ctx.fillStyle = BV.navy; ctx.font = `13px ${BV_SANS}`; ctx.fillText(it.name, x + 30, y);
+      x += 30 + infW(ctx, it.name) + 22;
     }
     y += 20;
   }
@@ -6027,11 +6122,11 @@ function infPlotSerie(ctx, sp, P) {
   [...sp.ser].reverse().forEach(s => {
     if (s.bars && s.barPts) return;
     const ys = ysOf(axes[s.axis]);
-    ctx.strokeStyle = s.color; ctx.lineWidth = 2.25; ctx.lineJoin = 'round'; ctx.setLineDash(s.dash || []); ctx.beginPath();
-    s.pts.forEach((p, i) => i ? ctx.lineTo(xs(p.t), ys(p.v)) : ctx.moveTo(xs(p.t), ys(p.v))); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2.25; ctx.lineJoin = 'round'; ctx.lineCap = s.cap || 'butt'; ctx.setLineDash(s.dash || []); ctx.beginPath();
+    s.pts.forEach((p, i) => i ? ctx.lineTo(xs(p.t), ys(p.v)) : ctx.moveTo(xs(p.t), ys(p.v))); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
   });
   // último valor en una etiqueta del color de la serie, sin pisarse
-  const tags = sp.ser.map((s, i) => ({ y: ysOf(axes[s.axis])(s.pts[s.pts.length - 1].v), txt: endTxt[i], color: s.color, ink: [BV.claro, BV.celeste].includes(s.color) ? BV.navy : '#ffffff', xe: xs(s.pts[s.pts.length - 1].t) })).sort((a, b) => a.y - b.y);
+  const tags = sp.ser.map((s, i) => ({ y: ysOf(axes[s.axis])(s.pts[s.pts.length - 1].v), txt: endTxt[i], color: s.color, ink: s.ink || '#ffffff', xe: xs(s.pts[s.pts.length - 1].t) })).sort((a, b) => a.y - b.y);
   for (let i = 1; i < tags.length; i++) if (tags[i].y - tags[i - 1].y < 19) tags[i].y = tags[i - 1].y + 19;
   const over = tags.length ? tags[tags.length - 1].y - (y1 - 6) : 0; if (over > 0) tags.forEach(t => { t.y -= over; });
   ctx.font = `700 11.5px ${BV_SANS}`; ctx.textAlign = 'left';
@@ -6081,7 +6176,7 @@ function infPlotCurva(ctx, sp, P) {
   // curvas: de la más vieja a la de hoy, para que la de hoy quede arriba
   [...sp.ser].reverse().forEach(s => {
     const pts = s.pts;
-    ctx.strokeStyle = s.color; ctx.lineWidth = s.k === 'h' ? 2.5 : 2; ctx.setLineDash(s.k === 'm' ? [6, 4] : []);
+    ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2; ctx.lineCap = s.cap || 'butt'; ctx.setLineDash(s.dash || []);
     ctx.beginPath();
     if (sp.curva === 'fija' && INF.ajuste && pts.length >= 3) {   // ajuste logarítmico: tasa = a + b × ln(días)
       const n = pts.length, lx = pts.map(p => Math.log(p.x)), mx = lx.reduce((a, b) => a + b) / n, my = pts.reduce((a, p) => a + p.v, 0) / n;
@@ -6089,8 +6184,8 @@ function infPlotCurva(ctx, sp, P) {
       const xa = pts[0].x, xb = pts[n - 1].x;
       for (let k = 0; k <= 60; k++) { const xv = xa * Math.pow(xb / xa, k / 60), yv = a + b * Math.log(xv); k ? ctx.lineTo(xs(xv), ys(yv)) : ctx.moveTo(xs(xv), ys(yv)); }
     } else pts.forEach((p, i) => i ? ctx.lineTo(xs(p.x), ys(p.v)) : ctx.moveTo(xs(p.x), ys(p.v)));
-    ctx.stroke(); ctx.setLineDash([]);
-    pts.forEach(p => { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(xs(p.x), ys(p.v), s.k === 'h' ? 4.5 : 3.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.25; ctx.stroke(); });
+    ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
+    pts.forEach(p => { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(xs(p.x), ys(p.v), (s.w || 2) * 1.6 + 0.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.25; ctx.stroke(); });
   });
   // tickers (o valores) de la curva de hoy, arriba de cada punto
   const hoy = sp.ser.find(s => s.k === 'h');
@@ -6128,30 +6223,27 @@ function renderInfCtl() {
   const P = document.getElementById('infPresets'); if (!P) return;
   P.innerHTML = INF_PRESETS.map(p => '<button type="button" class="inf-preset' + (p.id === INF.preset ? ' on' : '') + '" aria-pressed="' + (p.id === INF.preset) + '" onclick="infPreset(\'' + p.id + '\')">' + p.n + '</button>').join('');
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
-  let h = '';
+  let h = '', cat = '';
   if (INF.mode === 'serie') {
     h += '<div class="inf-lbl">Período</div>' + seg(INF_PERIODS.map(p => [p[0], p[0]]), INF.desde ? '' : INF.period, 'infPeriod')
       + '<label class="inf-desde">Desde <input type="date" value="' + (INF.desde || '') + '" onchange="infDesde(this.value)"></label>';
     h += '<div class="inf-lbl">Escala</div>' + seg([['nivel', 'Valores'], ['base', 'Base 100']], INF.trans, 'infTrans');
-    const pares = INF.keys.filter(k => INF_CAT[k]?.par);
-    if (pares.length) h += '<div class="inf-lbl">Monedas</div>' + pares.map(k => { const c = INF_CAT[k];
-      return '<div class="inf-par"><span>' + c.par.c + '</span>' + seg([['n', c.u], ['i', c.par.u]], INF.inv[k] ? 'i' : 'n', "infInv.bind(null,'" + k + "')") + '</div>'; }).join('');
-    if (INF.keys.length) h += '<div class="inf-lbl">En columnas</div><div class="inf-chips">' + INF.keys.filter(k => INF_CAT[k]).map(k => { const on = !!INF.bars[k];
-      return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infBars(\'' + k + '\')"><span class="inf-bar-ico' + (on ? ' on' : '') + '"></span>' + (INF.inv[k] && INF_CAT[k].par ? INF_CAT[k].par.n : INF_CAT[k].n) + '</button>'; }).join('') + '</div>';
-    h += '<div class="inf-lbl">Series</div>' + INF_GROUPS.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
+    cat = '<div class="inf-lbl inf-lbl-first">Series</div><div class="inf-cat-grid">' + INF_GROUPS.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
       + Object.entries(INF_CAT).filter(([, c]) => c.g === g).map(([k, c]) => { const i = INF.keys.indexOf(k), on = i >= 0;
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
-      + '</div></div>').join('');
+      + '</div></div>').join('') + '</div>';
   } else {
-    h += '<div class="inf-lbl">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['cau', 'Cauciones']], INF.curva, 'infCurva');
-    if (INF.curva !== 'cau') h += '<div class="inf-lbl">Comparar con</div><div class="inf-chips">'
-      + [['s', 'Hace una semana', BV.azul], ['m', 'Hace un mes', BV.celeste]].map(([k, l, c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
-    if (INF.curva === 'fija') h += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa')
+    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['cau', 'Cauciones']], INF.curva, 'infCurva');
+    if (INF.curva !== 'cau') cat += '<div class="inf-lbl">Comparar con</div><div class="inf-chips">'
+      + [['s', 'Hace una semana', BV.azul], ['m', 'Hace un mes', BV.celeste]].map(([k, l, c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? (infSpec?.kind === 'curva' && infSpec.ser.find(s => s.k === k)?.color) || c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
+    if (INF.curva === 'fija') cat += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa')
       + '<div class="inf-lbl">Eje horizontal</div>' + seg([['dias', 'Días'], ['vto', 'Vencimiento']], INF.ejeX, 'infEjeX')
       + '<div class="inf-checks"><label><input type="checkbox"' + (INF.ajuste ? ' checked' : '') + ' onchange="infSet(\'ajuste\', this.checked)"> Curva ajustada (logarítmica)</label>'
       + '<label><input type="checkbox"' + (INF.tickers ? ' checked' : '') + ' onchange="infSet(\'tickers\', this.checked)"> Tickers</label></div>';
   }
   document.getElementById('infCtl').innerHTML = h;
+  const C = document.getElementById('infCat'); if (C) C.innerHTML = cat;
+  renderInfEst();
   document.getElementById('infSizes').innerHTML = seg(Object.entries(INF_SIZES).map(([k, s]) => [k, s[2]]), INF.size, 'infSize');
   const chk = (id, v) => { const e = document.getElementById(id); if (e) e.checked = v; };
   chk('infTitulos', INF.titulos); chk('infLogoChk', INF.logo);
@@ -6192,7 +6284,7 @@ async function infUpdate() {
   try { sp = INF.mode === 'curva' ? await infBuildCurva() : await infBuildSerie(); }
   catch (e) { sp = { kind: 'vacio', msg: 'No se pudieron bajar los datos: ' + e.message, notes: [] }; }
   if (tok !== infTok) return;
-  infSpec = sp; window.infLastSpec = sp;
+  infSpec = sp; window.infLastSpec = sp; infEstilar(sp);
   renderInfCtl(); infSyncTexts(); infPaint();
   if (st) st.textContent = sp.kind === 'vacio' ? '' : 'Datos al ' + infDdmmaa(sp.last);
   const note = document.getElementById('infNote'); if (note) note.textContent = (sp.notes || []).join('. ') + ((sp.notes || []).length ? '.' : '');
