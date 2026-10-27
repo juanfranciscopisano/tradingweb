@@ -5008,7 +5008,7 @@ const METODO = [
       { d: 'Series con dos unidades van con eje izquierdo y derecho; con más de dos, en base 100. Base 100 toma como base el primer día en que todas las series tienen dato. Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
       { d: 'BCRA y Tesoro (API del BCRA, diaria): depósitos del Tesoro en el BCRA en pesos (serie 1265) y en dólares (1266, que viene en pesos y se pasa con el A3500 del día), adelantos transitorios (1268), BOPREAL y LEDIV en circulación (158, en dólares) y letras del BCRA en pesos (1258).',
         o: 'Las series de pases del BCRA (152 a 154 y 1261) están en cero, y la 76 (pase pasivo en dólares con el exterior) también: el REPO con bancos internacionales (US$ 6.000 millones a septiembre de 2028, SOFR + 4%, según el BCRA del 3/7/2026) no figura en la API.' },
-      { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile (vía mindicador.cl). Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
+      { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile (vía mindicador.cl, que la página lee directo porque no responde a los servidores de GitHub). Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
         p: 'El tipo de cambio de Yahoo para estas monedas tiene datos malos: el 26/10/2026 dio 959,6 pesos chilenos por dólar con el observado en 990,35, y el sol alterna entre dos niveles 3% separados día por medio. Si una fuente oficial no responde, se usa Yahoo sacando los saltos de un día (más de 2% contra los dos vecinos que vuelven).' },
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
       { d: '"Monedas de la región" trae los pares invertidos y en base 100: arriba de 100, la moneda se apreció contra el dólar.' },
@@ -5680,7 +5680,17 @@ function infFx(k, sym) {
   return infOnce('fxjson', () => infJson('fx.json?d=' + new Date().toISOString().slice(0, 10))).catch(() => ({})).then(async j => {
     const rows = j[k] || [];
     if (rows.length >= 20) { const pts = rows.map(([d, v]) => ({ d, t: argT(d), v })); pts.src = (j.src || {})[k]; return pts; }
+    // el dólar observado de Chile: mindicador.cl responde desde el navegador (desde los servidores de GitHub no)
+    if (k === 'clp') try { const pts = await infObservadoChile(); if (pts.length >= 20) { pts.src = 'Banco Central de Chile'; return pts; } } catch (e) {}
     const pts = infSinSaltos(await infYahoo(sym)); pts.src = 'Yahoo Finance'; return pts;
+  });
+}
+function infObservadoChile() {
+  return infOnce('observado', async () => {
+    const y1 = new Date().getUTCFullYear(), y0 = +INF_DESDE().slice(0, 4), out = new Map();
+    const js = await Promise.all(Array.from({ length: y1 - y0 + 1 }, (_, i) => infJson('https://mindicador.cl/api/dolar/' + (y0 + i)).catch(() => ({ serie: [] }))));
+    for (const j of js) for (const x of j.serie || []) { const d = new Date(Date.parse(x.fecha) + 3 * 3600000).toISOString().slice(0, 10); if (x.valor > 0) out.set(d, +x.valor); }
+    return [...out].sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => ({ d, t: argT(d), v }));
   });
 }
 // saca un dato que se aleja más de 2% de los dos vecinos para el mismo lado mientras los vecinos están cerca (un error)
