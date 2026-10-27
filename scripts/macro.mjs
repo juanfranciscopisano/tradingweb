@@ -193,6 +193,11 @@ export const FX_FUENTES = {
     const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=MXN`);
     return Object.entries(j.rates || {}).map(([d, r]) => [d, +r.MXN]).filter(x => x[1] > 0);
   } },
+  // yuan: para pasar a dólares el swap con China en las reservas netas
+  cny: { src: "Banco Central Europeo (referencia, vía Frankfurter)", get: async (f, d0, d1) => {
+    const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=CNY`);
+    return Object.entries(j.rates || {}).map(([d, r]) => [d, +r.CNY]).filter(x => x[1] > 0);
+  } },
 };
 export function mergeFx(prev, nuevo) {
   const m = new Map(prev || []); for (const [d, v] of nuevo || []) if (v > 0) m.set(d, +(+v).toFixed(4));

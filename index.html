@@ -5040,6 +5040,11 @@ const METODO = [
         p: 'La TIR de un bono a días del vencimiento se dispara con cualquier centavo de precio y desarma la curva; 0,15 años deja afuera también a los CER cuyo último cupón ya tiene el índice fijado, que rinden en pesos y no en tasa real. Globales y Bonares van en series separadas porque la diferencia entre las dos legislaciones es parte de lo que se mira. Un workflow consulta 1816 todas las noches (unos 1.000 créditos de los 100.000 diarios del plan) y guarda el resultado en soberanos.json; la clave vive en un secreto de GitHub y nunca llega a la página.' },
       { d: 'Vencimientos en dólares: flujo de fondos de cada bono (1816, por cada 100 de valor nominal) por el monto en circulación de BYMA, más el REPO del BCRA (US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital). Por año (el último junta todo lo que sigue) o por semestre, apilado por deuda o por capital e intereses.',
         p: 'Los flujos de 1816 son por cada 100 del valor nominal original: la amortización que falta suma lo mismo que el residual sobre el emitido (64 en el AL30 y el GD30), así que se multiplica por el emitido. BYMA no publica montos de LECAP, BONCAP, duales ni CER, y Finanzas los publica en un sitio que no se puede leer desde acá, así que los vencimientos en pesos quedan afuera. Los montos de BYMA incluyen lo que tienen el BCRA y el FGS. El REPO no cotiza: va a mano, del comunicado del BCRA del 30/06/2026.' },
+      { d: 'Reservas netas: brutas menos los encajes de los depósitos en dólares (cuentas corrientes en moneda extranjera de los bancos en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día). Todo del BCRA, por día.',
+        p: 'Es la cuenta más común y se puede rehacer con datos públicos. El REPO con bancos (US$ 6.000 millones) vence en septiembre de 2028, a más de un año, y no se resta. No resta los pagos a organismos ni los de BOPREAL a menos de un año, ni los depósitos del Tesoro en dólares; las estimaciones privadas que restan alguno de esos dan menos, y la meta del FMI usa otra definición.' },
+      { d: 'Inflación: mensual e interanual del INDEC (series 27 y 28 del BCRA); la acumulada en el año es el producto de las mensuales desde enero. "Inflación mensual y acumulada" trae la mensual en columnas sobre el eje izquierdo y las acumuladas en el derecho.' },
+      { d: 'Agregados en pesos de hoy: con la opción prendida, cada serie en $ billones (base, M2, depósitos del Tesoro, adelantos, letras, cuenta Otros, préstamos, plazo fijo) se multiplica por el CER de hoy sobre el CER de ese día.',
+        p: 'Para comparar contra tasas hace falta la serie en términos reales: un stock que crece al ritmo de la inflación no está creciendo. El CER es diario y es el mismo índice que ajusta los bonos, aunque va con el IPC de unos 45 días antes; para una serie de años esa demora no cambia la lectura.' },
       { d: 'Estilo de cada serie: color de la paleta BAVSA (más el gris de texto), cuatro grosores y cuatro trazos (sólida, rayas, puntos, raya y punto). Elegir un color que ya usa otra serie del gráfico las intercambia. Se guarda por serie, no por gráfico.',
         p: 'Una referencia como el DXY se marca una vez (gris, gruesa y punteada) y sale igual en cualquier gráfico donde aparezca. El intercambio evita dos series del mismo color sin tener que tocar la otra. Las columnas solo toman el color; las demás series siguen la rampa en orden (navy primero) salteando los colores ya elegidos. La leyenda repite el trazo y el grosor.' },
       { d: '"Monedas de la región" trae los pares invertidos y en base 100: arriba de 100, la moneda se apreció contra el dólar.' },
@@ -5639,6 +5644,8 @@ const INF_CAT = {
   ust2: { n: 'Treasury a 2 años', g: 'Tasas', u: '% anual', src: 'Tesoro de EE.UU.', load: () => infUstSerie('2Y') },
   ust10: { n: 'Treasury a 10 años', g: 'Tasas', u: '% anual', src: 'Tesoro de EE.UU.', load: () => infUstSerie('10Y') },
   reservas: { n: 'Reservas internacionales', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infBcra(1) },
+  resNetas: { n: 'Reservas netas', g: 'BCRA', u: 'US$ millones', src: 'BCRA y BCE', load: () => infReservasNetas() },
+  encajes: { n: 'Encajes en dólares en el BCRA', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infBcra(1243) },
   compras: { n: 'Compras de divisas (acumuladas)', g: 'BCRA', u: 'US$ millones', src: 'BCRA', flow: true, load: () => infBcra(78) },
   base: { n: 'Base monetaria', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(15, 1e-6) },
   m2: { n: 'M2 transaccional privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(197, 1e-6) },
@@ -5650,8 +5657,12 @@ const INF_CAT = {
   otros: { n: 'Cuenta Otros del BCRA', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(198, 1e-6) },
   prestamos: { n: 'Préstamos en pesos al sector privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(117, 1e-6) },
   pfpriv: { n: 'Plazo fijo privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(96, 1e-6) },
+  ipcM: { n: 'Inflación mensual', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => infBcra(27) },
+  ipcYtd: { n: 'Inflación acumulada en el año', g: 'Inflación', u: '%', src: 'INDEC', load: () => infIpcAnio() },
+  ipcA: { n: 'Inflación interanual', g: 'Inflación', u: '%', src: 'INDEC', load: () => infBcra(28) },
+  cer: { n: 'CER', g: 'Inflación', u: 'índice 2/2/02 = 1', src: 'BCRA', load: () => infBcra(30) },
 };
-const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Tasas', 'BCRA'];
+const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Tasas', 'Inflación', 'BCRA'];
 const INF_GROUP_N = { BCRA: 'BCRA y Tesoro' };
 
 // gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo
@@ -5671,6 +5682,8 @@ const INF_PRESETS = [
   { id: 'tesoroDep', n: 'Depósitos del Tesoro en el BCRA', mode: 'serie', keys: ['tesoro', 'tesoroUsd'], trans: 'nivel', period: '1A', t: 'Depósitos del Tesoro en el BCRA' },
   { id: 'bcraUsd', n: 'Reservas y BOPREAL', mode: 'serie', keys: ['reservas', 'bopreal'], trans: 'nivel', period: '1A', bars: { bopreal: true }, t: 'Reservas y deuda del BCRA en dólares' },
   { id: 'reservas', n: 'Reservas y compras del BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
+  { id: 'inflacion', n: 'Inflación mensual y acumulada', mode: 'serie', keys: ['ipcM', 'ipcYtd', 'ipcA'], trans: 'nivel', period: '2A', bars: { ipcM: true }, t: 'Inflación mensual, acumulada en el año e interanual' },
+  { id: 'netas', n: 'Reservas brutas y netas', mode: 'serie', keys: ['reservas', 'resNetas'], trans: 'nivel', period: '2A', t: 'Reservas internacionales brutas y netas' },
   { id: 'dinero', n: 'Base monetaria y M2', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
@@ -5678,7 +5691,7 @@ const INF_PRESETS = [
 let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
   pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, bopreal: true, repo: true },
-  size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
+  real: false, size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
 const infSave = () => { try { const { t, b, f, edit, ...rest } = INF; localStorage.setItem('infState', JSON.stringify(rest)); } catch (e) {} };
 
@@ -5765,6 +5778,30 @@ function infCaucion() {
   });
 }
 // saldo del BCRA en moneda extranjera que la API da en pesos: pasado a dólares con el A3500 del mismo día
+// inflación acumulada en el año: producto de las mensuales desde enero (el dato de cada mes, a fin de mes)
+async function infIpcAnio() {
+  const m = await infBcra(27), out = []; let y = null, acc = 1;
+  for (const p of m) { const yy = p.d.slice(0, 4); if (yy !== y) { y = yy; acc = 1; } acc *= 1 + p.v / 100; out.push({ d: p.d, t: p.t, v: (acc - 1) * 100 }); }
+  return out;
+}
+// reservas netas: brutas menos los encajes de los depósitos en dólares (cuentas corrientes en moneda extranjera de los bancos
+// en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día).
+// El REPO con bancos vence en septiembre de 2028, a más de un año, así que no se resta
+const INF_SWAP_CNY = 130000;
+async function infReservasNetas() {
+  const [br, enc, fx] = await Promise.all([infBcra(1), infBcra(1243), infOnce('fxjson', () => infJson('fx.json?d=' + new Date().toISOString().slice(0, 10))).catch(() => ({}))]);
+  const cny = (fx.cny || []).map(([d, v]) => ({ d, t: argT(d), v }));
+  const out = []; let j = 0, k = 0;
+  for (const p of br) {
+    while (j + 1 < enc.length && enc[j + 1].t <= p.t) j++;
+    while (k + 1 < cny.length && cny[k + 1].t <= p.t) k++;
+    const e = enc[j], c = cny[k] || cny[0];
+    if (!e || e.t > p.t || p.t - e.t > 7 * 86400) continue;
+    out.push({ d: p.d, t: p.t, v: p.v - e.v - INF_SWAP_CNY / (c ? c.v : 7.1) });
+  }
+  if (!cny.length) out.src = 'BCRA (swap con China a 7,1 yuanes por dólar)';
+  return out;
+}
 async function infEnDolares(id) {
   const [A, B] = await Promise.all([infBcra(id), infBcra(5)]);
   const out = []; let j = 0;
@@ -5858,19 +5895,30 @@ async function infBuildSerie() {
   if (!keys.length) return { kind: 'vacio', msg: 'Elegí al menos una serie de la lista.' };
   const res = await Promise.allSettled(keys.map(k => INF_CAT[k].load()));
   const since = infSince(), notes = [];
+  // agregados en pesos de hoy: cada dato por CER de hoy / CER de ese día
+  const enPesos = k => INF_CAT[k].u === '$ billones';
+  let cer = null;
+  if (INF.real && keys.some(enPesos)) { try { cer = await infBcra(30); } catch (e) { notes.push('No respondió el CER: van en pesos corrientes'); } }
   let ser = keys.map((k, i) => {
     const c = INF_CAT[k];
     if (res[i].status !== 'fulfilled') { notes.push(c.n + ': no respondió la fuente (' + (res[i].reason?.message || 'error') + ')'); return null; }
     const inv = !!(INF.inv[k] && c.par);   // par invertido: k / valor (el peso en dólares por cada $1.000)
     let pts = res[i].value.filter(p => p.t >= since - 43200).map(p => ({ d: p.d, t: p.t, v: inv ? c.par.k / p.v : p.v }));
     if (c.flow) { let acc = 0; pts = pts.map(p => ({ d: p.d, t: p.t, v: (acc += p.v) })); }
+    let uReal = null;
+    if (cer && cer.length && enPesos(k)) {
+      const ult = cer[cer.length - 1];
+      pts = pts.map(p => { const q = valAt(cer, p.t); return q ? { d: p.d, t: p.t, v: p.v * ult.v / q.v } : null; }).filter(Boolean);
+      uReal = '$ billones de hoy'; cer.ult = ult;
+    }
     if (pts.length < 2) { notes.push(c.n + ': ' + (c.nota ? c.nota + '; todavía no alcanza para el período' : 'sin datos en el período')); return null; }
     if (res[i].value.src && res[i].value.src !== c.src && /Yahoo/.test(res[i].value.src)) notes.push(c.n + ': Yahoo Finance sin los saltos de un día (la fuente oficial no respondió)');
     const mix = res[i].value.mezcla && pts[0].t < res[i].value.mezclaT;   // tramo viejo de Yahoo dentro del período
     if (mix) notes.push(c.n + ': ' + res[i].value.mezcla);
-    return { k, name: inv ? c.par.n : c.n, u: inv ? c.par.u : c.u, src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k] };
+    return { k, name: inv ? c.par.n : c.n, u: uReal || (inv ? c.par.u : c.u), src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k] };
   }).filter(Boolean);
   if (!ser.length) return { kind: 'vacio', msg: notes.join('. ') || 'Sin datos.' };
+  if (cer && cer.ult && ser.some(s => s.u === '$ billones de hoy')) { notes.push('Pesos de hoy: ajustados por CER al ' + infDdmmaa(cer.ult.d)); ser.forEach(s => { if (s.u === '$ billones de hoy' && !/BCRA/.test(s.src)) s.src += ' y BCRA'; }); }
   let trans = INF.trans, units = [...new Set(ser.map(s => s.u))];
   if (trans === 'nivel' && units.length > 2) { trans = 'base'; notes.push('Más de dos unidades distintas: van en base 100'); }
   let base0 = null;
@@ -6338,6 +6386,7 @@ function renderInfCtl() {
     h += '<div class="inf-lbl">Período</div>' + seg(INF_PERIODS.map(p => [p[0], p[0]]), INF.desde ? '' : INF.period, 'infPeriod')
       + '<label class="inf-desde">Desde <input type="date" value="' + (INF.desde || '') + '" onchange="infDesde(this.value)"></label>';
     h += '<div class="inf-lbl">Escala</div>' + seg([['nivel', 'Valores'], ['base', 'Base 100']], INF.trans, 'infTrans');
+    if (INF.keys.some(k => INF_CAT[k]?.u === '$ billones')) h += '<div class="inf-checks"><label><input type="checkbox"' + (INF.real ? ' checked' : '') + ' onchange="infSet(\'real\', this.checked)"> Agregados en pesos de hoy (CER)</label></div>';
     cat = '<div class="inf-lbl inf-lbl-first">Series</div><div class="inf-cat-grid">' + INF_GROUPS.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
       + Object.entries(INF_CAT).filter(([, c]) => c.g === g).map(([k, c]) => { const i = INF.keys.indexOf(k), on = i >= 0;
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
