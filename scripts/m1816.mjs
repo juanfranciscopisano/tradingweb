@@ -149,14 +149,41 @@ export async function diario(api, { fetchImpl = fetch, log = console.log, hoy = 
   return out;
 }
 
+// ---- campos: qué devuelve de verdad cada endpoint (nombres de campos y mensajes de error, sin valores) y si acepta
+// campos que la documentación no lista (montos en circulación, vencimientos)
+const forma = v => Array.isArray(v) ? (v.length ? [forma(v[0])] : []) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, forma(x)])) : typeof v;
+async function campos(api) {
+  const out = { asOf: new Date().toISOString(), respuestas: {}, pruebas: {} };
+  const ver = async (n, path, params) => { const r = await api.get(path, params); out.respuestas[n] = { status: r.status, forma: forma(r.j), error: r.j?.error || null, message: r.j?.message || null }; return r; };
+  await ver("instrumentos_T30J7", "/v1/mercado/instrumentos", { texto: "T30J7" });
+  await ver("instrumentos_S30N6", "/v1/mercado/instrumentos", { texto: "S30N6" });
+  await ver("instrumentos_TZX27", "/v1/mercado/instrumentos", { texto: "TZX27" });
+  await ver("cashflow_T30J7", "/v1/mercado/cashflow/T30J7", { campos: ["fechaPagoEfectiva", "flujoAmortizacion", "flujoInteres", "flujoTotal"] });
+  await ver("indicadores_T30J7", "/v1/mercado/indicadores", { tickers: ["T30J7"], campos: ["tea"] });
+  for (const c of ["montoCirculante", "montoResidual", "montoEmitido", "valorResidual", "vnResidual", "saldo", "monto", "vencimiento", "montoVencimiento"]) {
+    for (const [ep, extra] of [["/v1/mercado/cashflow/T30J7", {}], ["/v1/mercado/indicadores", { tickers: ["T30J7"] }]]) {
+      const r = await api.get(ep, { ...extra, campos: [c] });
+      out.pruebas[ep.split("/")[3] + ":" + c] = { status: r.status, error: r.j?.error || null, message: (r.j?.message || "").slice(0, 600), forma: r.status === 200 ? forma(r.j) : null };
+    }
+  }
+  // rutas que no están en la documentación
+  for (const path of ["/v1/mercado/vencimientos", "/v1/mercado/deuda", "/v1/mercado/perfil-vencimientos", "/v1/mercado/montos", "/v1/mercado/emisiones", "/v1/mercado/licitaciones", "/v1/deuda/vencimientos", "/v1/mercado/instrumentos/T30J7"]) {
+    const r = await api.get(path, {});
+    out.pruebas["ruta:" + path] = { status: r.status, error: r.j?.error || null, message: (r.j?.message || "").slice(0, 300), forma: r.status === 200 ? forma(r.j) : null };
+  }
+  out.creditos = (await api.get("/v1/creditos/balance")).j?.daily || null;
+  return out;
+}
+
 export async function main({ fetchImpl = fetch, log = console.log, root = new URL("../", import.meta.url) } = {}) {
   const key = process.env.API_1816_KEY, modo = process.env.MODO || "diario";
-  const archivo = modo === "explora" ? "m1816-explora.json" : "soberanos.json";
+  const archivo = modo === "explora" ? "m1816-explora.json" : modo === "campos" ? "m1816-campos.json" : "soberanos.json";
   if (!key) { log("sin API_1816_KEY en los secretos del repo"); if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify({ asOf: new Date().toISOString(), error: "sin API_1816_KEY" })); return; }
   const api = cliente({ key, fetchImpl, log });
   try {
     await api.login();
     if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify(await explora(api, log), null, 1));
+    else if (modo === "campos") await writeFile(new URL(archivo, root), JSON.stringify(await campos(api), null, 1));
     else {
       const out = await diario(api, { fetchImpl, log });
       // si no vino ninguna curva (1816 caído), queda el archivo anterior
