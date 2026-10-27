@@ -149,7 +149,7 @@ async function caucion({ fetchImpl, root, log, now }) {
   let prev = { c1: [] };
   try { prev = JSON.parse(await readFile(new URL("cauciones.json", root), "utf8")); } catch (e) { /* primera vez */ }
   const c1 = addCaucion(prev.c1 || [], Array.isArray(j) ? j : j.data || [], now);
-  await writeFile(new URL("cauciones.json", root), JSON.stringify({ asOf: now.toISOString(), src: "BYMA, datos abiertos (cauciones en pesos)", cols: ["fecha", "dias", "tna_vwap", "monto_millones"], c1 }));
+  await writeFile(new URL("cauciones.json", root), JSON.stringify({ asOf: now.toISOString(), src: prev.src || "BYMA, datos abiertos (cauciones en pesos)", cols: ["fecha", "dias", "tna_vwap", "monto_millones"], c1 }));
   log(`cauciones.json: ${c1.length} días` + (c1.length ? `, último ${c1[c1.length - 1].join(" ")}` : ""));
 }
 

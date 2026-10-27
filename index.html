@@ -5006,9 +5006,11 @@ const METODO = [
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
         o: 'En una slide del template el título va en la slide: conviene destildar "Título y bajada en la imagen".' },
       { d: 'Series con dos unidades van con eje izquierdo y derecho; con más de dos, en base 100. Base 100 toma como base el primer día en que todas las series tienen dato. Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
-      { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece.' },
+      { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real, pesos chileno y mexicano y sol peruano: Yahoo Finance (cierre de cada día). "Monedas de la región" las trae invertidas y en base 100: arriba de 100, la moneda se apreció contra el dólar.' },
       { d: 'En columnas: cualquier serie elegida. Una columna por día si entran con 5 px de ancho; si no, una por semana o por mes con el último dato de cada una (se aclara abajo del gráfico). El eje de las columnas arranca en cero, y van en tonos claros para que las líneas se lean encima.' },
-      { d: 'Caución a 1 día: promedio ponderado de la más corta del día (1 día, o 3 un viernes) en pesos. BYMA no publica la historia: la terminal la guarda todas las noches desde el 27/10/2026 (cauciones.json). Para atrás, la serie del BCRA de pases entre terceros a 1 día.' },
+      { d: 'Caución a 1 día: promedio ponderado por monto (VWAP) de la caución en pesos más corta del día en BYMA (1 día hábil: 3 días corridos un viernes). Del 26/02/2026 al 26/10/2026 sale de una planilla propia; desde el 27/10/2026 la terminal la guarda todas las noches de los datos abiertos de BYMA (cauciones.json).',
+        p: 'No hay una serie histórica pública: BYMA calcula su Índice de Caución (el mismo VWAP a 1 día) pero no lo publica en sus datos abiertos, y A3 publica cada día su tasa de caución a 1 día (mediana ponderada por volumen) sin historia descargable.',
+        o: 'Antes de febrero de 2026, la referencia es la tasa del BCRA de pases entre terceros a 1 día: entre febrero y octubre de 2026 tuvo una correlación de 0,9 con la caución, que quedó 44 bps abajo en promedio con un desvío diario de 64 bps. Es parecida, no la misma.' },
       { d: 'Curva de tasa fija: LECAP y BONCAP que lista argentinadatos (sin duales ni bonos con cupón), con los cierres a 24 hs de BYMA. El pago final sale de la TNA y el precio de hoy, F = precio × (1 + TNA × días / 365), y con F se calcula la tasa de cada fecha con su precio y los días desde la liquidación (día hábil siguiente). TEA = (F / precio)^(365 / días) − 1; TEM = (1 + TEA)^(1/12) − 1.',
         p: 'BYMA no publica la curva histórica ni los pagos finales; argentinadatos sí tiene la TNA de hoy. Con el pago final fijo, los precios de cierre de BYMA dan la tasa de cualquier día con la misma convención que la de hoy.',
         o: 'Fuera los que vencen en menos de 7 días: la tasa es ruido. Por vencimiento (lo que viene elegido) cada instrumento queda en su lugar y se ve cuánto se movió; por días al vencimiento, cada fecha es la curva de ese día. La curva ajustada es tasa = a + b × ln(días), por mínimos cuadrados.' },
@@ -5580,6 +5582,9 @@ const INF_CAT = {
   ccl: { n: 'Dólar CCL', g: 'Tipo de cambio', u: '$ por US$', src: 'argentinadatos', load: () => infDolar('contadoconliqui'), par: { k: 1000, n: 'Peso CCL (US$ por $1.000)', u: 'US$ por $1.000', c: 'CCL' } },
   dxy: { n: 'DXY', g: 'Tipo de cambio', u: 'índice DXY', src: 'Yahoo Finance', load: () => infYahoo('DX-Y.NYB') },
   brl: { n: 'Real (R$ por US$)', g: 'Tipo de cambio', u: 'R$ por US$', src: 'Yahoo Finance', load: () => infYahoo('BRL=X'), par: { k: 1, n: 'Real (US$ por R$)', u: 'US$ por R$', c: 'Real' } },
+  clp: { n: 'Peso chileno (CLP por US$)', g: 'Tipo de cambio', u: 'CLP por US$', src: 'Yahoo Finance', load: () => infYahoo('CLP=X'), par: { k: 1000, n: 'Peso chileno (US$ por CLP 1.000)', u: 'US$ por CLP 1.000', c: 'Chile' } },
+  mxn: { n: 'Peso mexicano (MXN por US$)', g: 'Tipo de cambio', u: 'MXN por US$', src: 'Yahoo Finance', load: () => infYahoo('MXN=X'), par: { k: 1, n: 'Peso mexicano (US$ por MXN)', u: 'US$ por MXN', c: 'México' } },
+  pen: { n: 'Sol peruano (S/ por US$)', g: 'Tipo de cambio', u: 'S/ por US$', src: 'Yahoo Finance', load: () => infYahoo('PEN=X'), par: { k: 1, n: 'Sol peruano (US$ por S/)', u: 'US$ por S/', c: 'Perú' } },
   itcrm: { n: 'ITCRM', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(1) },
   tcrBr: { n: 'TCR bilateral con Brasil', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(2) },
   tcrUs: { n: 'TCR bilateral con EE.UU.', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(3) },
@@ -5588,7 +5593,7 @@ const INF_CAT = {
   msci: { n: 'MSCI MERVAL (desde 19/10/26)', g: 'Acciones', u: 'puntos MSCI MERVAL', src: 'BYMA', load: () => infMsci() },
   spx: { n: 'S&P 500', g: 'Acciones', u: 'puntos S&P 500', src: 'Yahoo Finance', load: () => infYahoo('^GSPC') },
   ibov: { n: 'Bovespa', g: 'Acciones', u: 'puntos Bovespa', src: 'Yahoo Finance', load: () => infYahoo('^BVSP') },
-  cau1: { n: 'Caución a 1 día (promedio ponderado)', g: 'Tasas', u: '% TNA', src: 'BYMA', load: () => infCaucion(), nota: 'la terminal la guarda todos los días desde el 27/10/2026 (BYMA no publica historia)' },
+  cau1: { n: 'Caución a 1 día (promedio ponderado)', g: 'Tasas', u: '% TNA', src: 'BYMA', load: () => infCaucion(), nota: 'hay historia desde el 26/02/2026 (BYMA no la publica)' },
   pases1d: { n: 'Pases entre terceros a 1 día', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(150) },
   baibar: { n: 'BAIBAR (call a 1 día)', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(146) },
   tamar: { n: 'TAMAR', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(44) },
@@ -5614,6 +5619,7 @@ const INF_PRESETS = [
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust' },
   { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau' },
   { id: 'fx', n: 'Dólar, DXY, real e ITCRM', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', t: 'Dólar oficial, DXY, real e ITCRM' },
+  { id: 'latam', n: 'Monedas de la región', mode: 'serie', keys: ['a3500', 'brl', 'clp', 'mxn', 'pen'], trans: 'base', period: '1A', inv: { a3500: true, brl: true, clp: true, mxn: true, pen: true }, t: 'Monedas de la región contra el dólar' },
   { id: 'merval', n: 'Merval en pesos y en dólares', mode: 'serie', keys: ['merval', 'mervalUsd'], trans: 'nivel', period: '1A', t: 'Merval en pesos y en dólares' },
   { id: 'tasas1d', n: 'Tasas a 1 día', mode: 'serie', keys: ['cau1', 'pases1d', 'baibar'], trans: 'nivel', period: '6M', t: 'Tasas a 1 día' },
   { id: 'otros', n: 'Tasas y cuenta Otros del BCRA', mode: 'serie', keys: ['tamar', 'pases1d', 'cau1', 'otros'], trans: 'nivel', period: '1A', bars: { otros: true }, t: 'Tasas y cuenta Otros del BCRA' },
@@ -5642,7 +5648,7 @@ function infDolar(casa) {
     return a.filter(x => x.fecha >= lim && x.venta > 0).map(x => ({ d: x.fecha, t: argT(x.fecha), v: +x.venta })).filter(x => new Date(x.t * 1000).getUTCDay() % 6 !== 0);
   });
 }
-const INF_YH = ['DX-Y.NYB', 'BRL=X', '^MERV', '^GSPC', '^BVSP'];
+const INF_YH = ['DX-Y.NYB', 'BRL=X', 'CLP=X', 'MXN=X', 'PEN=X', '^MERV', '^GSPC', '^BVSP'];
 function infYahooAll() {
   return infOnce('yahoo', async () => {
     const get = range => infJson(BASE_URL + '/api/spark?symbols=' + encodeURIComponent(INF_YH.join(',')) + '&range=' + range + '&interval=1d');
@@ -5770,7 +5776,7 @@ async function infBuildSerie() {
   }
   // colores: las líneas toman la rampa en orden (navy primero); las columnas, los tonos claros, para que las líneas se lean encima
   let li = 0, bi = 0;
-  ser.forEach(s => { s.color = s.bars ? [BV.claro, BV.celeste, BV.teal][bi++ % 3] : [BV.navy, BV.azul, BV.teal, BV.celeste, BV.medio][li++ % 5]; s.axis = units.indexOf(s.u) === 1 ? 'R' : 'L'; });
+  ser.forEach(s => { s.color = s.bars ? [BV.claro, BV.celeste, BV.teal][bi++ % 3] : [BV.navy, BV.azul, BV.teal, BV.celeste, BV.claro, BV.medio][li++ % 6]; s.axis = units.indexOf(s.u) === 1 ? 'R' : 'L'; });
   // columnas: un punto por día si entran (5 px por columna como mínimo); si no, el último dato de cada semana o de cada mes
   const anchoPlot = (INF_SIZES[INF.size] || INF_SIZES.ancho)[0] * 0.78;
   ser.filter(s => s.bars).forEach(s => {
@@ -5783,7 +5789,8 @@ async function infBuildSerie() {
   const preset = INF_PRESETS.find(p => p.id === INF.preset);
   const unitTxt = u => u === 'base 100' ? 'base 100 = ' + infDdmmaa(new Date(base0 * 1000).toISOString().slice(0, 10)) : u;
   const periodo = INF.desde ? 'desde el ' + infDdmmaa(INF.desde) : { '1M': 'último mes', '3M': 'últimos 3 meses', '6M': 'últimos 6 meses', 'YTD': 'en lo que va del año', '1A': 'último año', '2A': 'últimos 2 años', '5A': 'últimos 5 años' }[INF.period];
-  const tAuto = (preset && preset.t && sameKeys(preset.keys, keys) && !ser.some(s => s.inv)) ? preset.t : infJoinY(ser.map(s => s.name.replace(/ \(.*\)$/, '')));
+  const invIgual = ser.every(s => !!s.inv === !!(preset?.inv || {})[s.k]);   // el título del gráfico armado vale si los pares están como los trae
+  const tAuto = (preset && preset.t && sameKeys(preset.keys, keys) && invIgual) ? preset.t : infJoinY(ser.map(s => s.name.replace(/ \(.*\)$/, '')));
   const bAuto = (units.length === 2 ? unitTxt(units[0]) + ' (eje izq.) y ' + unitTxt(units[1]) + ' (eje der.)' : unitTxt(units[0])) + ', ' + periodo;
   const srcs = [...new Set(ser.flatMap(s => s.src.split(' y ')))];
   const fAuto = 'Fuente: ' + (srcs.length > 1 ? srcs.slice(0, -1).join(', ') + ' y ' + srcs[srcs.length - 1] : srcs[0]) + '.';
