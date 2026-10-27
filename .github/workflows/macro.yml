@@ -24,6 +24,8 @@ jobs:
           node-version: 22
       - name: Bajar ITCRM (BCRA), MSCI MERVAL y caución (BYMA) y monedas de la región
         run: node scripts/macro.mjs
+        env:
+          CMF_KEY: ${{ secrets.CMF_KEY }}
       - name: Commit si cambió
         run: |
           git config user.name "github-actions[bot]"

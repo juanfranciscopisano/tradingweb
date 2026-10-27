@@ -168,10 +168,20 @@ export const FX_FUENTES = {
     const j = await f(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json&dataInicial=${ddmm(d0)}&dataFinal=${ddmm(d1)}`);
     return j.map(x => { const [dd, mm, yy] = x.data.split("/"); return [`${yy}-${mm}-${dd}`, +x.valor]; });
   } },
+  // dólar observado: con clave de la CMF (gratis, secreto CMF_KEY del repo) de su API; sin clave, mindicador.cl, que desde
+  // los servidores de GitHub no suele responder
   clp: { src: "Banco Central de Chile (dólar observado)", get: async (f, d0, d1) => {
-    const out = [];
-    for (let y = +d0.slice(0, 4); y <= +d1.slice(0, 4); y++) { const j = await f(`https://mindicador.cl/api/dolar/${y}`); for (const x of j.serie || []) out.push([new Date(Date.parse(x.fecha) - 3 * 3600000 + 6 * 3600000).toISOString().slice(0, 10), +x.valor]); }
-    return out;
+    const out = [], key = process.env.CMF_KEY;
+    for (let y = +d0.slice(0, 4); y <= +d1.slice(0, 4); y++) {
+      if (key) {
+        const j = await f(`https://api.cmfchile.cl/api-sbifv3/recursos_api/dolar/${y}?apikey=${encodeURIComponent(key)}&formato=json`);
+        for (const x of j.Dolares || []) out.push([x.Fecha, +String(x.Valor).replace(/\./g, "").replace(",", ".")]);
+      } else {
+        const j = await f(`https://mindicador.cl/api/dolar/${y}`);
+        for (const x of j.serie || []) out.push([new Date(Date.parse(x.fecha) + 3 * 3600000).toISOString().slice(0, 10), +x.valor]);
+      }
+    }
+    return out.filter(x => x[1] > 0);
   } },
   pen: { src: "Banco Central de Reserva del Perú (interbancario venta)", get: async (f, d0, d1) => {
     const j = await f(`https://estadisticas.bcrp.gob.pe/estadisticas/series/api/PD04638PD/json/${d0}/${d1}`);
