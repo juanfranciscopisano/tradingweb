@@ -5042,6 +5042,8 @@ const METODO = [
         p: 'La TIR de un bono a días del vencimiento se dispara con cualquier centavo de precio y desarma la curva; 0,15 años deja afuera también a los CER cuyo último cupón ya tiene el índice fijado, que rinden en pesos y no en tasa real. Globales y Bonares van en series separadas porque la diferencia entre las dos legislaciones es parte de lo que se mira. Un workflow consulta 1816 todas las noches (unos 1.000 créditos de los 100.000 diarios del plan) y guarda el resultado en soberanos.json; la clave vive en un secreto de GitHub y nunca llega a la página.' },
       { d: 'Vencimientos en dólares: flujo de fondos de cada bono (1816, por cada 100 de valor nominal) por el monto en circulación de BYMA, más el REPO del BCRA (US$ 6.000 millones a SOFR + 4%, vence en septiembre de 2028; solo capital). Por año (el último junta todo lo que sigue) o por semestre, apilado por deuda o por capital e intereses.',
         p: 'Los flujos de 1816 son por cada 100 del valor nominal original: la amortización que falta suma lo mismo que el residual sobre el emitido (64 en el AL30 y el GD30), así que se multiplica por el emitido. BYMA no publica montos de LECAP, BONCAP, duales ni CER, y Finanzas los publica en un sitio que no se puede leer desde acá, así que los vencimientos en pesos quedan afuera. Los montos de BYMA incluyen lo que tienen el BCRA y el FGS. El REPO no cotiza: va a mano, del comunicado del BCRA del 30/06/2026.' },
+      { d: 'Curvas: tasa en TNA 365, TEA o TEM; eje por días al vencimiento, por vencimiento o por duration modificada; tramo corto, medio, largo o toda la curva. Los cortes van por días al vencimiento: tasa fija hasta 90 y 270 días; dólares hasta 3 y 9 años; CER hasta 1 y 3 años; dólar linked hasta 6 y 18 meses; BOPREAL hasta 1 y 2 años; Treasuries hasta 1 y 7 años.',
+        p: 'En las curvas de 1816 la TNA es la que calcula 1816 sobre 365 días: con capitalización semestral en los bonos con cupón (dólares, CER, BOPREAL) y simple al vencimiento en las letras dólar linked. En tasa fija la TNA es simple al vencimiento y la duration modificada de una letra es plazo / (1 + TEA). Los cortes de cada tramo cambian por curva porque los plazos también: lo corto de los bonos en dólares es más largo que toda la curva de LECAP.' },
       { d: 'Vencimientos del Tesoro (1816): capital e intereses de toda la deuda en títulos negociables, por día e instrumento, de la pantalla Vencimientos del Tesoro de 1816 (Datasets › Macro › Tesoro), con los valores nominales actualizados hasta la última licitación. Por mes, trimestre o año, apilado por ajuste (tasa fija, CER, TAMAR, BADLAR, duales, dólar linked, dólares, euros) o por curva, en $ billones o en US$ millones al oficial que usa 1816.',
         p: 'Esa tabla no está en la API de 1816 (el módulo de mercado no tiene montos), así que la trae un favorito del navegador que la lee de la web de 1816 con la sesión de quien la tiene abierta y abre el Informe con los datos. Quedan guardados en ese navegador y no en el repositorio, que es público. Hay que tocar el favorito después de cada licitación.' },
       { d: 'Reservas netas: brutas menos los encajes de los depósitos en dólares (cuentas corrientes en moneda extranjera de los bancos en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día). Todo del BCRA, por día.',
@@ -5671,11 +5673,11 @@ const INF_GROUP_N = { BCRA: 'BCRA y Tesoro' };
 
 // gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo
 const INF_PRESETS = [
-  { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true } },
+  { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna' },
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
   { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau' },
-  { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true } },
-  { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true } },
+  { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true }, tasa: 'tea' },
+  { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true }, tasa: 'tea' },
   { id: 'venc', n: 'Vencimientos en dólares', mode: 'pagos' },
   { id: 'tesoro', n: 'Vencimientos del Tesoro (1816)', mode: 'tesoro' },
   { id: 'fx', n: 'Dólar, DXY, real e ITCRM', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', t: 'Dólar oficial, DXY, real e ITCRM' },
@@ -5697,7 +5699,7 @@ let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'],
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
   pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, bopreal: true, repo: true },
   tesoro: { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {} },
-  real: false, size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
+  real: false, tramo: 'toda', ejeX16: 'dm', size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
 const infSave = () => { try { const { t, b, f, edit, ...rest } = INF; localStorage.setItem('infState', JSON.stringify(rest)); } catch (e) {} };
 // vencimientos del Tesoro de 1816: los trae el favorito "Traer de 1816" (lee la tabla de la web de 1816 con la sesión de
@@ -5838,6 +5840,16 @@ async function infRatio(a, b) {
 function infUst() { return infOnce('ust', () => infJson(BASE_URL + '/api/ust')); }
 // curvas soberanas, flujos de fondos y montos en circulación: los baja todas las noches el workflow de 1816 (soberanos.json)
 function infSoberanos() { return infOnce('soberanos', () => infJson('soberanos.json?d=' + new Date().toISOString().slice(0, 10))); }
+// tramos de cada curva, por días al vencimiento: [fin del corto, fin del medio]
+const INF_TRAMOS = { fija: [90, 270], usd: [3 * 365, 9 * 365], cer: [365, 3 * 365], linked: [182, 547], bopreal: [365, 730], ust: [365, 7 * 365] };
+const infDiasTxt = d => d % 365 === 0 ? (d / 365 === 1 ? '1 año' : d / 365 + ' años') : d >= 365 ? numAR(d / 365, 1, 1) + ' años' : d + ' días';
+const infTramoTxt = c => { const t = INF_TRAMOS[c]; return t ? 'Corto: hasta ' + infDiasTxt(t[0]) + '. Medio: hasta ' + infDiasTxt(t[1]) + '. Largo: más.' : ''; };
+function infEnTramo(c, dias) {
+  const t = INF_TRAMOS[c], tr = INF.tramo || 'toda'; if (!t || tr === 'toda' || dias == null) return true;
+  return tr === 'corto' ? dias <= t[0] : tr === 'medio' ? dias > t[0] && dias <= t[1] : dias > t[1];
+}
+const INF_TRAMO_N = { corto: 'tramo corto', medio: 'tramo medio', largo: 'tramo largo' };
+const INF_TASA_N = { tna: 'TNA 365', tea: 'TEA', tem: 'TEM' };
 const INF_C1816 = {
   usd: { b: 'Curva', t: 'Curva soberana en dólares', baj: 'TIR por duration modificada, precios en dólares MEP' },
   cer: { b: 'CER', t: 'Curva CER', baj: 'Tasa real (TIR sobre CER) por duration modificada' },
@@ -5894,7 +5906,7 @@ function infFijaAt(x, d, tasa) {
   if (dias < 7) return null;   // a menos de una semana la tasa es ruido
   const r = x.F / c.p, tea = Math.pow(r, 365 / dias) - 1;
   const v = tasa === 'tea' ? tea * 100 : tasa === 'tem' ? (Math.pow(1 + tea, 1 / 12) - 1) * 100 : (r - 1) * 365 / dias * 100;
-  return { x: dias, v, tk: x.tk, vto: x.vto };
+  return { x: dias, v, tk: x.tk, vto: x.vto, dm: dias / 365 / (1 + tea) };
 }
 const UST_TENORS = [['1M', '1M', 1 / 12], ['2M', '2M', 2 / 12], ['3M', '3M', .25], ['4M', '4M', 4 / 12], ['6M', '6M', .5], ['1Y', '1A', 1], ['2Y', '2A', 2], ['3Y', '3A', 3], ['5Y', '5A', 5], ['7Y', '7A', 7], ['10Y', '10A', 10], ['20Y', '20A', 20], ['30Y', '30A', 30]];
 
@@ -6017,7 +6029,7 @@ async function infBuildTesoro() {
   const pal = [BV.navy, BV.azul, BV.teal, BV.medio, BV.celeste, BV.claro, BV.texto2, '#b9b9cf', '#5a6fa8', '#9fd3ec', '#2f7d9c', '#d4dcf5'];
   const ser = keys.map((k, i) => ({ k: 'tes_' + k, name: k, vals: val[k], bars: true, color0: T.apilar === 'ajuste' ? (INF_AJ.find(x => x[0] === k) || [0, pal[i % pal.length]])[1] : pal[i % pal.length] })).filter(x => x.vals.some(v => v > 0));
   if (!ser.length) return { kind: 'vacio', msg: 'No hay vencimientos con esa selección.', notes: [] };
-  const fecha = infDdmmaa(d.asOf), notes = [d.nota || 'Valores nominales de 1816 al ' + fecha, 'Deuda del Tesoro en títulos negociables, en manos públicas y privadas; capital e intereses al valor técnico'];
+  const fecha = infDdmmaa(d.asOf), notes = [(d.nota || 'Valores nominales de 1816 al ' + fecha).replace(/\.\s*$/, ''), 'Deuda del Tesoro en títulos negociables, en manos públicas y privadas; capital e intereses al valor técnico'];
   if (usd) notes.push('En dólares al oficial que usa 1816 (' + numAR(d.fx, 2, 2) + ')');
   const excl = Object.keys(T.excl).filter(k => T.excl[k]); if (excl.length) notes.push('Sin ' + infJoinY(excl));
   return { kind: 'pagos', cats, ser, units: [usd ? 'US$ millones' : '$ billones'], notes, last: d.asOf,
@@ -6059,16 +6071,26 @@ async function infBuildCurva() {
     if (!C || !C.fechas || !C.fechas.h) return { kind: 'vacio', msg: '1816 todavía no trajo esta curva.' };
     const grupos = [...new Set(Object.values(C.grupo))];
     const pal = [[BV.navy, BV.azul], [BV.teal, BV.celeste], [BV.medio, BV.claro]];
+    // tasa: TEA, TNA (365) o TEM, como las calcula 1816; si el archivo todavía no las trae, TEA
+    const iT = { tea: 0, tna: 3, tem: 4 }[INF.tasa] ?? 0, hayT = Object.values(C.datos.h || {}).some(v => v[iT] != null);
+    const iv = hayT ? iT : 0, tasa = hayT ? INF.tasa : 'tea';
+    if (!hayT) notes.push('1816 todavía no trajo la ' + INF_TASA_N[INF.tasa] + ': va la TEA');
+    const vto = C.vto || {}, hayV = Object.keys(vto).length > 0, eje = INF.ejeX16 === 'dias' && hayV ? 'dias' : 'dm';
+    const dias = (t, d) => vto[t] ? Math.round((Date.parse(vto[t]) - Date.parse(d)) / 86400000) : null;
+    if (!hayV && (INF.ejeX16 === 'dias' || (INF.tramo || 'toda') !== 'toda')) notes.push('1816 todavía no trajo los vencimientos: sin días ni tramos');
     const ser = [];
     [['h'], ['s'], ['m']].filter(([k]) => (k === 'h' || INF.cmp[k]) && C.fechas[k]).forEach(([k], i) => grupos.forEach((g, gi) => {
       // fuera los que vencen enseguida (la TIR de un bono a días no dice nada) y las TIR absurdas
-      const pts = Object.entries(C.datos[k] || {}).filter(([t, v]) => C.grupo[t] === g && v[0] != null && v[1] != null && v[1] >= 0.15 && Math.abs(v[0]) < 1.5)
-        .map(([t, v]) => ({ x: v[1], v: v[0] * 100, tk: t, par: v[2] })).sort((a, b) => a.x - b.x);
-      if (pts.length >= 2) ser.push({ name: (grupos.length > 1 ? g + ' al ' : 'Al ') + infDdmmaa(C.fechas[k]) + (k === 'h' ? '' : ' (' + cmpTxt[k] + ')'), d: C.fechas[k], k: k + (gi ? String(gi) : ''), pts, color: pal[i][gi % 2] });
+      const pts = Object.entries(C.datos[k] || {}).filter(([t, v]) => C.grupo[t] === g && v[iv] != null && v[1] != null && v[1] >= 0.15 && Math.abs(v[0]) < 1.5 && infEnTramo(INF.curva, dias(t, C.fechas.h)))
+        .map(([t, v]) => ({ x: eje === 'dias' ? dias(t, C.fechas[k]) : v[1], v: v[iv] * 100, tk: t, par: v[2] })).filter(p => p.x > 0).sort((a, b) => a.x - b.x);
+      // en un tramo puede quedar un solo bono de un grupo (el GD29 en el corto): va como punto
+      if (pts.length >= ((INF.tramo || 'toda') === 'toda' ? 2 : 1)) ser.push({ name: (grupos.length > 1 ? g + ' al ' : 'Al ') + infDdmmaa(C.fechas[k]) + (k === 'h' ? '' : ' (' + cmpTxt[k] + ')'), d: C.fechas[k], k: k + (gi ? String(gi) : ''), pts, color: pal[i][gi % 2] });
     }));
-    if (!ser.length) return { kind: 'vacio', msg: 'Faltan precios para armar la curva.' };
+    if (!ser.length) return { kind: 'vacio', msg: 'No hay bonos con precio en ese tramo.', notes };
     notes.push('Fuera los bonos con menos de 0,15 años de duration');
-    return { kind: 'curva', curva: INF.curva, ser, xNum: true, xU: 'años', yU: '%', notes, tAuto: D.t, bAuto: D.baj,
+    const tr = INF_TRAMO_N[INF.tramo];
+    return { kind: 'curva', curva: INF.curva, ser, xNum: true, xU: eje === 'dias' ? 'días' : 'años', xLbl: eje === 'dias' ? 'días al vencimiento' : 'duration modificada (años)', tasa, yU: '%', notes, tAuto: D.t,
+      bAuto: INF_TASA_N[tasa] + ' por ' + (eje === 'dias' ? 'días al vencimiento' : 'duration modificada') + (C.moneda === 'mep' ? ', precios en dólares MEP' : '') + (tr ? ', ' + tr : ''),
       fAuto: 'Fuente: 1816, con precios de cierre de BYMA (24 hs).', last: C.fechas.h };
   }
   if (INF.curva === 'fija') {
@@ -6080,27 +6102,28 @@ async function infBuildCurva() {
     // fechas y se ve cuánto se movió su tasa; por días al vencimiento, cada fecha con sus propios días (la curva de ese día)
     const set0 = argNextHabil(lastD), diasHoy = vto => Math.round((Date.parse(vto) - Date.parse(set0)) / 86400000);
     const ser = dates.map(([k, d], i) => {
-      const pts = L.map(x => infFijaAt(x, d, INF.tasa)).filter(Boolean).map(p => INF.ejeX === 'vto' ? { ...p, x: diasHoy(p.vto) } : p).filter(p => p.x >= 7).sort((a, b) => a.x - b.x);
+      const pts = L.map(x => infFijaAt(x, d, INF.tasa)).filter(p => p && infEnTramo('fija', diasHoy(p.vto)))
+        .map(p => INF.ejeX === 'vto' ? { ...p, x: diasHoy(p.vto) } : INF.ejeX === 'dm' ? { ...p, x: p.dm } : p).filter(p => p.x > 0).sort((a, b) => a.x - b.x);
       return { name: k === 'h' ? 'Al ' + infDdmmaa(d) : 'Al ' + infDdmmaa(d) + ' (' + cmpTxt[k] + ')', d, k, pts, color: [BV.navy, BV.azul, BV.celeste][i] };
     }).filter(s => s.pts.length >= 2);
-    if (!ser.length) return { kind: 'vacio', msg: 'Faltan precios para armar la curva.' };
+    if (!ser.length) return { kind: 'vacio', msg: 'No hay al menos dos letras con precio en ese tramo.', notes };
     const sinPrecio = L.filter(x => !x.closes.length).map(x => x.tk);
     if (sinPrecio.length) notes.push('BYMA no devolvió cierres de ' + sinPrecio.join(', '));
-    const tasaTxt2 = { tna: 'TNA', tea: 'TEA', tem: 'TEM' }[INF.tasa];
-    return { kind: 'curva', curva: 'fija', ser, xNum: true, xDate: INF.ejeX === 'vto', yU: '%', notes,
-      tAuto: 'Curva de tasa fija en pesos', bAuto: tasaTxt2 + ' de LECAP y BONCAP por ' + (INF.ejeX === 'vto' ? 'vencimiento' : 'días al vencimiento'),
+    const tasaTxt2 = INF_TASA_N[INF.tasa], trF = INF_TRAMO_N[INF.tramo];
+    return { kind: 'curva', curva: 'fija', ser, xNum: true, xDate: INF.ejeX === 'vto', xU: INF.ejeX === 'dm' ? 'años' : null, xLbl: INF.ejeX === 'dm' ? 'duration modificada (años)' : 'días al vencimiento', yU: '%', notes,
+      tAuto: 'Curva de tasa fija en pesos', bAuto: tasaTxt2 + ' de LECAP y BONCAP por ' + ({ vto: 'vencimiento', dm: 'duration modificada' }[INF.ejeX] || 'días al vencimiento') + (trF ? ', ' + trF : ''),
       fAuto: 'Fuente: BYMA y argentinadatos. Precios de cierre a 24 hs.', last: lastD };
   }
   if (INF.curva === 'ust') {
     const rows = (await infUst()).cmt || [];
     if (!rows.length) return { kind: 'vacio', msg: 'El Tesoro de EE.UU. no respondió.' };
     const lastD = rows[rows.length - 1].date, at = d => { let r = null; for (const x of rows) { if (x.date <= d) r = x; else break; } return r; };
-    const tenors = UST_TENORS.filter(([k]) => rows[rows.length - 1][k] != null);
+    const tenors = UST_TENORS.filter(([k, , y]) => rows[rows.length - 1][k] != null && infEnTramo('ust', Math.round(y * 365)));
     const dates = [['h', lastD], ['s', infShift(lastD, 7)], ['m', infShift(lastD, 30)]].filter(([k]) => k === 'h' || INF.cmp[k]);
     const ser = dates.map(([k, d], i) => { const r = at(d); return r && { name: 'Al ' + infDdmmaa(r.date) + (k === 'h' ? '' : ' (' + cmpTxt[k] + ')'), d: r.date, k,
       pts: tenors.map(([key, lbl], j) => r[key] != null ? { x: j, v: r[key], tk: lbl } : null).filter(Boolean), color: [BV.navy, BV.azul, BV.celeste][i] }; }).filter(Boolean);
     return { kind: 'curva', curva: 'ust', ser, xCat: tenors.map(t => t[1]), yU: '%', notes,
-      tAuto: 'Curva de Treasuries', bAuto: 'Rendimiento por plazo, % anual', fAuto: 'Fuente: Departamento del Tesoro de EE.UU. (curva oficial, cierre diario).', last: lastD };
+      tAuto: 'Curva de Treasuries', bAuto: 'Rendimiento por plazo, % anual' + (INF_TRAMO_N[INF.tramo] ? ', ' + INF_TRAMO_N[INF.tramo] : ''), fAuto: 'Fuente: Departamento del Tesoro de EE.UU. (curva oficial, cierre diario).', last: lastD };
   }
   // cauciones: hoy contra el cierre anterior (BYMA no da más historia)
   const C = await cauciones();
@@ -6364,7 +6387,7 @@ function infPlotCurva(ctx, sp, P) {
   } else {
     // por duration, el eje arranca cerca del bono más corto (no en cero)
     const xv = sp.ser.flatMap(s => s.pts.map(p => p.x)), xmx = Math.max(...xv), xmn = Math.min(...xv);
-    const lo = sp.xU ? Math.max(0, Math.floor((xmn - (xmx - xmn) * 0.06) * 2) / 2) : 0, hi = sp.xU ? xmx + (xmx - lo) * 0.04 : xmx * 1.05;
+    const lo = sp.xU === 'años' ? Math.max(0, Math.floor((xmn - (xmx - xmn) * 0.06) * 2) / 2) : sp.xU === 'días' ? Math.max(0, xmn - (xmx - xmn) * 0.06) : 0, hi = sp.xU ? xmx + (xmx - lo) * 0.04 : xmx * 1.05;
     xs = v => x0 + (v - lo) / (hi - lo) * (x1 - x0);
     if (sp.xDate) {   // eje de vencimientos: el primero de cada mes
       const base = sp.last, out = [];
@@ -6378,7 +6401,7 @@ function infPlotCurva(ctx, sp, P) {
   ay.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmtY(v), x0 - 8, yy + 4); });
   ctx.textAlign = 'center'; ctx.fillStyle = BV.texto2;
   xTicks.forEach(([v, l]) => ctx.fillText(l, xs(v), y1 + 17));
-  if (!sp.xCat && !sp.xDate && (sp.curva === 'fija' || sp.xU)) { ctx.textAlign = 'right'; ctx.fillText(sp.xU ? 'duration modificada (años)' : 'días al vencimiento', x1, y1 + 34 > P.y1 + 10 ? y1 - 6 : y1 + 34); }
+  if (!sp.xCat && !sp.xDate && (sp.curva === 'fija' || sp.xLbl)) { ctx.textAlign = 'right'; ctx.fillText(sp.xLbl || 'días al vencimiento', x1, y1 + 34 > P.y1 + 10 ? y1 - 6 : y1 + 34); }
   // curvas: de la más vieja a la de hoy, para que la de hoy quede arriba; recortadas al área del gráfico (el ajuste
   // logarítmico puede salirse en las puntas)
   ctx.save(); ctx.beginPath(); ctx.rect(x0 - 6, P.y0 - 4, x1 - x0 + 12, y1 - P.y0 + 4); ctx.clip();
@@ -6424,7 +6447,7 @@ function infTsv() {
   if (sp.kind === 'pagos') return ['Período\t' + sp.ser.map(s => s.name + ' (' + sp.units[0] + ')').join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
-    return ['Bono\t' + sp.ser.map(s => s.name + ' TIR (%)\t' + s.name + ' duration').join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
+    return ['Bono\t' + sp.ser.map(s => s.name + ' ' + INF_TASA_N[sp.tasa || 'tea'] + ' (%)\t' + s.name + ' ' + (sp.xU === 'días' ? 'días' : 'duration')).join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
   }
   const keys = [...new Set(sp.ser.flatMap(s => s.pts.map(p => sp.curva === 'cau' ? p.x : p.tk)))];
   const head = sp.curva === 'fija' ? 'Instrumento\tVencimiento' : sp.curva === 'ust' ? 'Plazo' : 'Días';
@@ -6468,8 +6491,11 @@ function renderInfCtl() {
     cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['cau', 'Cauciones'], ['usd', 'Dólares'], ['cer', 'CER'], ['linked', 'Dólar linked'], ['bopreal', 'BOPREAL']], INF.curva, 'infCurva');
     if (INF.curva !== 'cau') cat += '<div class="inf-lbl">Comparar con</div><div class="inf-chips">'
       + [['s', 'Hace una semana', BV.azul], ['m', 'Hace un mes', BV.celeste]].map(([k, l, c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? (infSpec?.kind === 'curva' && infSpec.ser.find(s => s.k === k)?.color) || c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
-    if (INF.curva === 'fija') cat += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa')
-      + '<div class="inf-lbl">Eje horizontal</div>' + seg([['dias', 'Días'], ['vto', 'Vencimiento']], INF.ejeX, 'infEjeX');
+    if (INF.curva === 'fija' || INF_C1816[INF.curva]) cat += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA 365'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa');
+    if (INF.curva === 'fija') cat += '<div class="inf-lbl">Eje horizontal</div>' + seg([['dias', 'Días'], ['vto', 'Vencimiento'], ['dm', 'Duration mod.']], INF.ejeX, 'infEjeX');
+    if (INF_C1816[INF.curva]) cat += '<div class="inf-lbl">Eje horizontal</div>' + seg([['dm', 'Duration mod.'], ['dias', 'Días al vto.']], INF.ejeX16, 'infEjeX16');
+    if (INF_TRAMOS[INF.curva]) cat += '<div class="inf-lbl">Tramo</div>' + seg([['toda', 'Toda'], ['corto', 'Corto'], ['medio', 'Medio'], ['largo', 'Largo']], INF.tramo || 'toda', 'infTramo')
+      + '<div class="inf-tes-datos">' + infTramoTxt(INF.curva) + '</div>';
     if (INF.curva === 'fija' || INF_C1816[INF.curva]) cat += '<div class="inf-checks"><label><input type="checkbox"' + (INF.ajuste ? ' checked' : '') + ' onchange="infSet(\'ajuste\', this.checked)"> Curva ajustada (logarítmica)</label>'
       + '<label><input type="checkbox"' + (INF.tickers ? ' checked' : '') + ' onchange="infSet(\'tickers\', this.checked)"> Tickers</label></div>';
   }
@@ -6487,7 +6513,7 @@ function infSyncTexts() {
 function infPreset(id) {
   const p = INF_PRESETS.find(x => x.id === id); if (!p) return;
   INF.preset = id; INF.mode = p.mode; INF.edit = { t: false, b: false, f: false }; INF.desde = '';
-  if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; }
+  if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; INF.tramo = 'toda'; if (p.tasa) INF.tasa = p.tasa; }
   infUpdate();
 }
 function infToggle(k) { INF.keys = INF.keys.includes(k) ? INF.keys.filter(x => x !== k) : [...INF.keys, k]; infUpdate(); }
@@ -6505,6 +6531,8 @@ function infPagosInc(k) { INF.pagosInc = { ...(INF.pagosInc || {}), [k]: (INF.pa
 function infCmp(k) { INF.cmp[k] = !INF.cmp[k]; infUpdate(); }
 function infTasa(t) { INF.tasa = t; infUpdate(); }
 function infEjeX(x) { INF.ejeX = x; infUpdate(); }
+function infEjeX16(x) { INF.ejeX16 = x; infUpdate(); }
+function infTramo(x) { INF.tramo = x; infUpdate(); }
 function infSet(k, v) { INF[k] = v; infUpdate(); }
 function infSize(s) { INF.size = s; infUpdate(); }
 function infTxt(k, v) { INF[k] = v; INF.edit[k] = true; infPaint(); }
