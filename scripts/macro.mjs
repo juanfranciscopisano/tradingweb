@@ -190,13 +190,24 @@ async function fxLatam({ fetchImpl, root, log, now }) {
   let prev = {};
   try { prev = JSON.parse(await readFile(new URL("fx.json", root), "utf8")); } catch (e) { /* primera vez */ }
   const d1 = now.toISOString().slice(0, 10), d0 = new Date(now.getTime() - 5.3 * 365.25 * 86400000).toISOString().slice(0, 10);
-  const f = async u => { const r = await fetchImpl(u, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tipos de cambio)", Accept: "application/json" } }); if (!r.ok) throw new Error(u.split("/")[2] + " HTTP " + r.status); return r.json(); };
-  const out = { asOf: now.toISOString(), src: {} };
+  // hasta 3 intentos de 30 segundos (mindicador a veces tarda)
+  const f = async u => {
+    let err;
+    for (let k = 0; k < 3; k++) {
+      try {
+        const r = await fetchImpl(u, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tipos de cambio)", Accept: "application/json" }, signal: AbortSignal.timeout(30000) });
+        if (!r.ok) throw new Error(u.split("/")[2] + " HTTP " + r.status);
+        return await r.json();
+      } catch (e) { err = e; await new Promise(res => setTimeout(res, 2000 * (k + 1))); }
+    }
+    throw err;
+  };
+  const out = { asOf: now.toISOString(), src: {}, errores: {} };
   for (const [k, F] of Object.entries(FX_FUENTES)) {
     // con historia guardada alcanza con los últimos 40 días
     const desde = (prev[k] || []).length > 200 ? new Date(now.getTime() - 40 * 86400000).toISOString().slice(0, 10) : d0;
     try { out[k] = mergeFx(prev[k], await F.get(f, desde, d1)); out.src[k] = F.src; }
-    catch (e) { out[k] = prev[k] || []; out.src[k] = prev.src?.[k] || F.src; log(`fx ${k}: ${e.message} (queda lo que había)`); }
+    catch (e) { out[k] = prev[k] || []; out.src[k] = prev.src?.[k] || F.src; out.errores[k] = String(e.message || e).slice(0, 200); log(`fx ${k}: ${e.message} (queda lo que había)`); }
     log(`fx ${k}: ${out[k].length} días` + (out[k].length ? `, último ${out[k][out[k].length - 1].join(" ")}` : ""));
   }
   await writeFile(new URL("fx.json", root), JSON.stringify(out));
