@@ -5006,6 +5006,8 @@ const METODO = [
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
         o: 'En una slide del template el título va en la slide: conviene destildar "Título y bajada en la imagen".' },
       { d: 'Series con dos unidades van con eje izquierdo y derecho; con más de dos, en base 100. Base 100 toma como base el primer día en que todas las series tienen dato. Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
+      { d: 'BCRA y Tesoro (API del BCRA, diaria): depósitos del Tesoro en el BCRA en pesos (serie 1265) y en dólares (1266, que viene en pesos y se pasa con el A3500 del día), adelantos transitorios (1268), BOPREAL y LEDIV en circulación (158, en dólares) y letras del BCRA en pesos (1258).',
+        o: 'Las series de pases del BCRA (152 a 154 y 1261) están en cero, y la 76 (pase pasivo en dólares con el exterior) también: el REPO con bancos internacionales (US$ 6.000 millones a septiembre de 2028, SOFR + 4%, según el BCRA del 3/7/2026) no figura en la API.' },
       { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real, pesos chileno y mexicano y sol peruano: Yahoo Finance (cierre de cada día). "Monedas de la región" las trae invertidas y en base 100: arriba de 100, la moneda se apreció contra el dólar.' },
       { d: 'En columnas: cualquier serie elegida. Una columna por día si entran con 5 px de ancho; si no, una por semana o por mes con el último dato de cada una (se aclara abajo del gráfico). El eje de las columnas arranca en cero, y van en tonos claros para que las líneas se lean encima.' },
       { d: 'Caución a 1 día: promedio ponderado por monto (VWAP) de la caución en pesos más corta del día en BYMA (1 día hábil: 3 días corridos un viernes). Del 26/02/2026 al 26/10/2026 sale de una planilla propia; desde el 27/10/2026 la terminal la guarda todas las noches de los datos abiertos de BYMA (cauciones.json).',
@@ -5606,12 +5608,17 @@ const INF_CAT = {
   compras: { n: 'Compras de divisas (acumuladas)', g: 'BCRA', u: 'US$ millones', src: 'BCRA', flow: true, load: () => infBcra(78) },
   base: { n: 'Base monetaria', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(15, 1e-6) },
   m2: { n: 'M2 transaccional privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(197, 1e-6) },
-  tesoro: { n: 'Depósitos del Tesoro en el BCRA', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1265, 1e-6) },
+  tesoro: { n: 'Depósitos del Tesoro en el BCRA en pesos', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1265, 1e-6) },
+  tesoroUsd: { n: 'Depósitos del Tesoro en el BCRA en dólares', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infEnDolares(1266) },
+  adelantos: { n: 'Adelantos transitorios al Tesoro', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1268, 1e-6) },
+  bopreal: { n: 'BOPREAL y LEDIV en circulación', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infBcra(158) },
+  letrasBcra: { n: 'Letras del BCRA en pesos', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1258, 1e-6) },
   otros: { n: 'Cuenta Otros del BCRA', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(198, 1e-6) },
   prestamos: { n: 'Préstamos en pesos al sector privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(117, 1e-6) },
   pfpriv: { n: 'Plazo fijo privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(96, 1e-6) },
 };
 const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Tasas', 'BCRA'];
+const INF_GROUP_N = { BCRA: 'BCRA y Tesoro' };
 
 // gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo
 const INF_PRESETS = [
@@ -5624,6 +5631,8 @@ const INF_PRESETS = [
   { id: 'tasas1d', n: 'Tasas a 1 día', mode: 'serie', keys: ['cau1', 'pases1d', 'baibar'], trans: 'nivel', period: '6M', t: 'Tasas a 1 día' },
   { id: 'otros', n: 'Tasas y cuenta Otros del BCRA', mode: 'serie', keys: ['tamar', 'pases1d', 'cau1', 'otros'], trans: 'nivel', period: '1A', bars: { otros: true }, t: 'Tasas y cuenta Otros del BCRA' },
   { id: 'tasasRef', n: 'TAMAR, BADLAR y plazo fijo', mode: 'serie', keys: ['tamar', 'badlar', 'pf30'], trans: 'nivel', period: '1A', t: 'Tasas de referencia' },
+  { id: 'tesoroDep', n: 'Depósitos del Tesoro en el BCRA', mode: 'serie', keys: ['tesoro', 'tesoroUsd'], trans: 'nivel', period: '1A', t: 'Depósitos del Tesoro en el BCRA' },
+  { id: 'bcraUsd', n: 'Reservas y BOPREAL', mode: 'serie', keys: ['reservas', 'bopreal'], trans: 'nivel', period: '1A', bars: { bopreal: true }, t: 'Reservas y deuda del BCRA en dólares' },
   { id: 'reservas', n: 'Reservas y compras del BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
   { id: 'dinero', n: 'Base monetaria y M2', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
@@ -5685,6 +5694,13 @@ function infCaucion() {
     try { const C = await cauciones(), c = C.find(x => x.vwap > 0 && x.monto > 0); if (c) { const hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10); if (!map.has(hoy)) map.set(hoy, +c.vwap.toFixed(2)); } } catch (e) {}
     return [...map].sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => ({ d, t: argT(d), v }));
   });
+}
+// saldo del BCRA en moneda extranjera que la API da en pesos: pasado a dólares con el A3500 del mismo día
+async function infEnDolares(id) {
+  const [A, B] = await Promise.all([infBcra(id), infBcra(5)]);
+  const out = []; let j = 0;
+  for (const p of A) { while (j + 1 < B.length && B[j + 1].t <= p.t) j++; const q = B[j]; if (q && q.t <= p.t && p.t - q.t <= 5 * 86400) out.push({ d: p.d, t: p.t, v: p.v / q.v }); }
+  return out;
 }
 // cociente día por día (Merval en dólares): el divisor del mismo día o el último anterior, con hasta 5 días de diferencia
 async function infRatio(a, b) {
@@ -6078,7 +6094,7 @@ function renderInfCtl() {
       return '<div class="inf-par"><span>' + c.par.c + '</span>' + seg([['n', c.u], ['i', c.par.u]], INF.inv[k] ? 'i' : 'n', "infInv.bind(null,'" + k + "')") + '</div>'; }).join('');
     if (INF.keys.length) h += '<div class="inf-lbl">En columnas</div><div class="inf-chips">' + INF.keys.filter(k => INF_CAT[k]).map(k => { const on = !!INF.bars[k];
       return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infBars(\'' + k + '\')"><span class="inf-bar-ico' + (on ? ' on' : '') + '"></span>' + (INF.inv[k] && INF_CAT[k].par ? INF_CAT[k].par.n : INF_CAT[k].n) + '</button>'; }).join('') + '</div>';
-    h += '<div class="inf-lbl">Series</div>' + INF_GROUPS.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + g + '</div><div class="inf-chips">'
+    h += '<div class="inf-lbl">Series</div>' + INF_GROUPS.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
       + Object.entries(INF_CAT).filter(([, c]) => c.g === g).map(([k, c]) => { const i = INF.keys.indexOf(k), on = i >= 0;
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
       + '</div></div>').join('');
