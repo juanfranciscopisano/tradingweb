@@ -1,0 +1,3698 @@
+{
+ "asOf": "2026-10-27T17:24:21.460Z",
+ "pruebas": {
+  "indicadores_repetido": {
+   "status": 200,
+   "tickers": [
+    "TX26",
+    "T30J7"
+   ],
+   "campos": [
+    "tea",
+    "duration",
+    "ultimoCuponEvaluadoATasaFija"
+   ],
+   "error": null
+  },
+  "indicadores_coma": {
+   "status": 400,
+   "tickers": [],
+   "campos": [],
+   "error": "invalid_params"
+  },
+  "cashflow": {
+   "status": 429,
+   "ticker": "TX26",
+   "cupones": 0,
+   "error": null
+  }
+ },
+ "balanceAntes": {
+  "module": "mercado",
+  "daily": {
+   "used": 0,
+   "limit": 100000
+  },
+  "monthly": {
+   "used": 0,
+   "limit": 3100000
+  }
+ },
+ "curvas": [
+  {
+   "id": 24,
+   "name": "BCRA USD",
+   "convencionTna": "180-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "BPO27",
+     "2027-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPO28",
+     "2028-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOA7",
+     "2027-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOA8",
+     "2028-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOA8 @AFIP",
+     "2028-04-30",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOB7",
+     "2027-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOB8",
+     "2028-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOC7",
+     "2027-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOC7 @AFIP",
+     "2027-04-30",
+     "USD",
+     "USD",
+     "BCRA"
+    ],
+    [
+     "BPOD7",
+     "2027-10-31",
+     "USD",
+     "USD",
+     "BCRA"
+    ]
+   ]
+  },
+  {
+   "id": 4,
+   "name": "Corporativos ARS Badlar",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "AB1BP",
+     "2028-06-16",
+     "ARS",
+     "ARS",
+     "Agro Biciuffa"
+    ],
+    [
+     "AHC2P",
+     "2027-01-27",
+     "ARS",
+     "ARS",
+     "Ricardo Almar e Hijos"
+    ],
+    [
+     "BO1AP",
+     "2027-02-10",
+     "ARS",
+     "ARS",
+     "Prochem Bio"
+    ],
+    [
+     "BQ1AP",
+     "2027-03-20",
+     "ARS",
+     "ARS",
+     "Biamaq"
+    ],
+    [
+     "BQ1BP",
+     "2030-03-20",
+     "ARS",
+     "ARS",
+     "Biamaq"
+    ],
+    [
+     "BUC2O",
+     "2029-03-31",
+     "ARS",
+     "ARS",
+     "B. Columbia"
+    ],
+    [
+     "CA2AP",
+     "2026-10-30",
+     "ARS",
+     "ARS",
+     "Caiman"
+    ],
+    [
+     "CB1BP",
+     "2028-04-21",
+     "ARS",
+     "ARS",
+     "Credes Las Breñas"
+    ],
+    [
+     "ELS1P",
+     "2026-12-27",
+     "ARS",
+     "ARS",
+     "Termoelectrica"
+    ],
+    [
+     "ENC6P",
+     "2026-12-23",
+     "ARS",
+     "ARS",
+     "Asoc. Civil Sumatoria"
+    ],
+    [
+     "EP3AP",
+     "2026-12-26",
+     "ARS",
+     "ARS",
+     "Tresnal"
+    ],
+    [
+     "FN1BP",
+     "2028-03-22",
+     "ARS",
+     "ARS",
+     "Ferreteria del Norte"
+    ],
+    [
+     "FPS1P",
+     "2027-04-01",
+     "ARS",
+     "ARS",
+     "Depósito Fiscal Córdoba"
+    ],
+    [
+     "GK1BP",
+     "2029-08-29",
+     "ARS",
+     "ARS",
+     "Gualok"
+    ],
+    [
+     "HA11P",
+     "2026-12-05",
+     "ARS",
+     "ARS",
+     "Madero Harbour"
+    ],
+    [
+     "IC2BP",
+     "2028-06-08",
+     "ARS",
+     "ARS",
+     "Insuga Chaco"
+    ],
+    [
+     "IT1BP",
+     "2028-10-12",
+     "ARS",
+     "ARS",
+     "Italar"
+    ],
+    [
+     "KR1BP",
+     "2029-09-05",
+     "ARS",
+     "ARS",
+     "Bisordi-Kremar"
+    ],
+    [
+     "KYS1P",
+     "2026-12-27",
+     "ARS",
+     "ARS",
+     "Milkynet"
+    ],
+    [
+     "LA21P",
+     "2026-12-10",
+     "ARS",
+     "ARS",
+     "Latitud 45"
+    ],
+    [
+     "LLS1P",
+     "2027-01-16",
+     "ARS",
+     "ARS",
+     "Collins"
+    ],
+    [
+     "MZ1BP",
+     "2028-02-17",
+     "ARS",
+     "ARS",
+     "Miguel Ramirez"
+    ],
+    [
+     "NLCDO",
+     "2027-12-16",
+     "ARS",
+     "ARS",
+     "Angel Estrada"
+    ],
+    [
+     "NV12P",
+     "2026-10-29",
+     "ARS",
+     "ARS",
+     "Navarro"
+    ],
+    [
+     "OC12P",
+     "2026-10-31",
+     "ARS",
+     "ARS",
+     "Cloronor"
+    ],
+    [
+     "OL1AP",
+     "2027-02-27",
+     "ARS",
+     "ARS",
+     "Los Nogales"
+    ],
+    [
+     "OL1BP",
+     "2030-02-27",
+     "ARS",
+     "ARS",
+     "Los Nogales"
+    ],
+    [
+     "OV1BP",
+     "2027-12-23",
+     "ARS",
+     "ARS",
+     "Ozog Vial"
+    ],
+    [
+     "PG1BP",
+     "2028-03-29",
+     "ARS",
+     "ARS",
+     "Puente Nogueira"
+    ],
+    [
+     "ROS2P",
+     "2026-11-28",
+     "ARS",
+     "ARS",
+     "Radiadores Prats"
+    ],
+    [
+     "SAT11",
+     "2026-12-06",
+     "ARS",
+     "ARS",
+     "SAT Financial Planning"
+    ],
+    [
+     "SG1BP",
+     "2028-03-08",
+     "ARS",
+     "ARS",
+     "Sugla"
+    ],
+    [
+     "SN8BP",
+     "2027-06-30",
+     "ARS",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "SZ22P",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "Agro de Souza"
+    ],
+    [
+     "UES1P",
+     "2026-12-05",
+     "ARS",
+     "ARS",
+     "Droguería Central"
+    ],
+    [
+     "VM1BP",
+     "2027-08-21",
+     "ARS",
+     "ARS",
+     "Estacion 25 de mayo"
+    ],
+    [
+     "WI1BP",
+     "2027-12-28",
+     "ARS",
+     "ARS",
+     "Win"
+    ],
+    [
+     "ZZ11P",
+     "2026-12-04",
+     "ARS",
+     "ARS",
+     "Transporte Peduzzi"
+    ]
+   ]
+  },
+  {
+   "id": 30,
+   "name": "Corporativos ARS Caución",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "SNS5M",
+     "2027-10-10",
+     "ARS",
+     "ARS",
+     "Sion"
+    ]
+   ]
+  },
+  {
+   "id": 25,
+   "name": "Corporativos ARS Fijo",
+   "convencionTna": "90-360",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 5,
+   "name": "Corporativos ARS Inflación",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "BCIUO",
+     "2028-03-05",
+     "UVA",
+     "ARS",
+     "B. Ciudad"
+    ],
+    [
+     "BCIUP",
+     "2029-03-05",
+     "UVA",
+     "ARS",
+     "B. Ciudad"
+    ],
+    [
+     "BJC1O",
+     "2032-03-11",
+     "UVA",
+     "ARS",
+     "B. del Sol"
+    ],
+    [
+     "BVCWO",
+     "2028-07-15",
+     "UVA",
+     "ARS",
+     "BST"
+    ],
+    [
+     "CNQ2O",
+     "2029-03-16",
+     "UVA",
+     "ARS",
+     "CFA"
+    ],
+    [
+     "COC5O",
+     "2028-08-10",
+     "UVA",
+     "ARS",
+     "B. de Córdoba"
+    ],
+    [
+     "EOC2O",
+     "2028-08-28",
+     "UVA",
+     "ARS",
+     "EPEC"
+    ],
+    [
+     "FTL1O",
+     "2027-05-29",
+     "UVA",
+     "ARS",
+     "FCA"
+    ],
+    [
+     "FTM1O",
+     "2027-05-30",
+     "UVA",
+     "ARS",
+     "FCA"
+    ],
+    [
+     "FTN1O",
+     "2028-02-24",
+     "UVA",
+     "ARS",
+     "FCA"
+    ],
+    [
+     "GMCGO",
+     "2028-01-28",
+     "UVA",
+     "ARS",
+     "GEMSA"
+    ],
+    [
+     "GMCJO",
+     "2028-11-28",
+     "UVA",
+     "ARS",
+     "GEMSA"
+    ],
+    [
+     "LA23P",
+     "2026-12-10",
+     "UVA",
+     "ARS",
+     "Latitud 45"
+    ],
+    [
+     "NZC3O",
+     "2028-05-11",
+     "UVA",
+     "ARS",
+     "BNA"
+    ],
+    [
+     "NZC6O",
+     "2028-07-14",
+     "UVA",
+     "ARS",
+     "BNA"
+    ],
+    [
+     "PS34O",
+     "2027-12-19",
+     "UVA",
+     "ARS",
+     "PSA"
+    ],
+    [
+     "PSSXO",
+     "2027-02-28",
+     "UVA",
+     "ARS",
+     "PSA"
+    ],
+    [
+     "PZCEO",
+     "2027-06-07",
+     "UVA",
+     "ARS",
+     "Plaza Logistica"
+    ],
+    [
+     "RB60O",
+     "2027-01-31",
+     "UVA",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "RB66O",
+     "2027-12-17",
+     "UVA",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "SNHBO",
+     "2035-11-03",
+     "UVA",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "SNSDP",
+     "2026-11-02",
+     "UVA",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "SNSEP",
+     "2027-01-18",
+     "UVA",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "TLCJO",
+     "2027-11-17",
+     "UVA",
+     "ARS",
+     "Telecom Argentina"
+    ],
+    [
+     "TY36O",
+     "2027-05-26",
+     "UVA",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "TY41O",
+     "2028-06-22",
+     "UVA",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "VWCFO",
+     "2027-12-11",
+     "UVA",
+     "ARS",
+     "Volkswagen FS"
+    ],
+    [
+     "ZI12P",
+     "2027-12-15",
+     "UVA",
+     "ARS",
+     "Spazios Inmuebles"
+    ],
+    [
+     "ZPC4O",
+     "2029-03-04",
+     "UVA",
+     "ARS",
+     "Plaza Logistica"
+    ]
+   ]
+  },
+  {
+   "id": 26,
+   "name": "Corporativos ARS Tamar",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "ADS1L",
+     "2028-09-29",
+     "ARS",
+     "ARS",
+     "Datastar"
+    ],
+    [
+     "AFCNO",
+     "2027-04-17",
+     "ARS",
+     "ARS",
+     "B. Comafi"
+    ],
+    [
+     "AKS1L",
+     "2028-03-06",
+     "ARS",
+     "ARS",
+     "Armoraut"
+    ],
+    [
+     "AKS2L",
+     "2028-09-30",
+     "ARS",
+     "ARS",
+     "Armoraut"
+    ],
+    [
+     "ALC2L",
+     "2028-06-10",
+     "ARS",
+     "ARS",
+     "Alpargatas Textil"
+    ],
+    [
+     "ASS1L",
+     "2028-08-12",
+     "ARS",
+     "ARS",
+     "Agropecuaria Sur"
+    ],
+    [
+     "AWS1L",
+     "2027-12-16",
+     "ARS",
+     "ARS",
+     "Arbitra"
+    ],
+    [
+     "BDCKO",
+     "2026-11-14",
+     "ARS",
+     "ARS",
+     "BACS"
+    ],
+    [
+     "BDCLO",
+     "2027-10-23",
+     "ARS",
+     "ARS",
+     "BACS"
+    ],
+    [
+     "BF38O",
+     "2026-11-20",
+     "ARS",
+     "ARS",
+     "BBVA Argentina"
+    ],
+    [
+     "BF41O",
+     "2027-03-04",
+     "ARS",
+     "ARS",
+     "BBVA Argentina"
+    ],
+    [
+     "BF46O",
+     "2027-05-21",
+     "ARS",
+     "ARS",
+     "BBVA Argentina"
+    ],
+    [
+     "BF47O",
+     "2027-06-10",
+     "ARS",
+     "ARS",
+     "BBVA Argentina"
+    ],
+    [
+     "BNCXO",
+     "2027-04-28",
+     "ARS",
+     "ARS",
+     "B. Santander"
+    ],
+    [
+     "BNCYO",
+     "2027-06-23",
+     "ARS",
+     "ARS",
+     "B. Santander"
+    ],
+    [
+     "BVCTO",
+     "2027-01-15",
+     "ARS",
+     "ARS",
+     "BST"
+    ],
+    [
+     "BYY1O",
+     "2027-06-05",
+     "ARS",
+     "ARS",
+     "B. Galicia"
+    ],
+    [
+     "CCS1L",
+     "2028-06-26",
+     "ARS",
+     "ARS",
+     "Calico"
+    ],
+    [
+     "CFS9O",
+     "2026-12-12",
+     "ARS",
+     "ARS",
+     "CFN"
+    ],
+    [
+     "CFSAO",
+     "2027-05-18",
+     "ARS",
+     "ARS",
+     "CFN"
+    ],
+    [
+     "CHS1L",
+     "2028-07-27",
+     "ARS",
+     "ARS",
+     "Cheek"
+    ],
+    [
+     "COC3O",
+     "2027-08-10",
+     "ARS",
+     "ARS",
+     "B. de Córdoba"
+    ],
+    [
+     "CVS3V",
+     "2026-12-18",
+     "ARS",
+     "ARS",
+     "Cooperativa Unicred"
+    ],
+    [
+     "CVS4V",
+     "2027-03-20",
+     "ARS",
+     "ARS",
+     "Cooperativa Unicred"
+    ],
+    [
+     "CVS5V",
+     "2027-09-24",
+     "ARS",
+     "ARS",
+     "Cooperativa Unicred"
+    ],
+    [
+     "CXCXO",
+     "2027-06-19",
+     "ARS",
+     "ARS",
+     "Crédito Directo"
+    ],
+    [
+     "CZ11L",
+     "2028-02-24",
+     "ARS",
+     "ARS",
+     "Castro"
+    ],
+    [
+     "DDS1L",
+     "2029-01-16",
+     "ARS",
+     "ARS",
+     "3D Latinoamericana"
+    ],
+    [
+     "DDS1P",
+     "2027-08-13",
+     "ARS",
+     "ARS",
+     "3D Latinoamericana"
+    ],
+    [
+     "DEC3O",
+     "2027-07-03",
+     "ARS",
+     "ARS",
+     "Edesa"
+    ],
+    [
+     "DHSIO",
+     "2026-11-20",
+     "ARS",
+     "ARS",
+     "Credicuotas Consumo"
+    ],
+    [
+     "DHSLO",
+     "2027-05-28",
+     "ARS",
+     "ARS",
+     "Credicuotas Consumo"
+    ],
+    [
+     "DHSNO",
+     "2027-08-18",
+     "ARS",
+     "ARS",
+     "Credicuotas Consumo"
+    ],
+    [
+     "DJS1L",
+     "2028-03-09",
+     "ARS",
+     "ARS",
+     "DeRentas"
+    ],
+    [
+     "DJS2L",
+     "2028-09-25",
+     "ARS",
+     "ARS",
+     "DeRentas"
+    ],
+    [
+     "DM11L",
+     "2028-08-27",
+     "ARS",
+     "ARS",
+     "Demagro"
+    ],
+    [
+     "DTS1L",
+     "2028-09-29",
+     "ARS",
+     "ARS",
+     "Dietrich"
+    ],
+    [
+     "EBS1L",
+     "2028-04-13",
+     "ARS",
+     "ARS",
+     "Ebucar"
+    ],
+    [
+     "EF11L",
+     "2028-09-21",
+     "ARS",
+     "ARS",
+     "Ecofactory"
+    ],
+    [
+     "EF12L",
+     "2029-09-21",
+     "ARS",
+     "ARS",
+     "Ecofactory"
+    ],
+    [
+     "EH11M",
+     "2028-03-20",
+     "ARS",
+     "ARS",
+     "Hector A. Bertone"
+    ],
+    [
+     "EN72L",
+     "2027-08-21",
+     "ARS",
+     "ARS",
+     "Asoc. Civil Sumatoria"
+    ],
+    [
+     "ENC8P",
+     "2027-12-19",
+     "ARS",
+     "ARS",
+     "Asoc. Civil Sumatoria"
+    ],
+    [
+     "ENC9L",
+     "2028-08-21",
+     "ARS",
+     "ARS",
+     "Asoc. Civil Sumatoria"
+    ],
+    [
+     "EP4AP",
+     "2027-07-14",
+     "ARS",
+     "ARS",
+     "Tresnal"
+    ],
+    [
+     "ERS1L",
+     "2028-08-28",
+     "ARS",
+     "ARS",
+     "Entre"
+    ],
+    [
+     "ESS1P",
+     "2027-06-12",
+     "ARS",
+     "ARS",
+     "Asserca"
+    ],
+    [
+     "EXS1P",
+     "2027-07-10",
+     "ARS",
+     "ARS",
+     "Expreso Lancioni"
+    ],
+    [
+     "FB1AL",
+     "2028-03-09",
+     "ARS",
+     "ARS",
+     "Boglich"
+    ],
+    [
+     "FDS1L",
+     "2028-06-25",
+     "ARS",
+     "ARS",
+     "Autoferro"
+    ],
+    [
+     "FQS1L",
+     "2028-09-24",
+     "ARS",
+     "ARS",
+     "Famiq"
+    ],
+    [
+     "FSS1L",
+     "2027-12-04",
+     "ARS",
+     "ARS",
+     "AFS"
+    ],
+    [
+     "FTN3O",
+     "2027-02-24",
+     "ARS",
+     "ARS",
+     "FCA"
+    ],
+    [
+     "GBS1L",
+     "2027-11-28",
+     "ARS",
+     "ARS",
+     "Gruas San Blas"
+    ],
+    [
+     "GE11L",
+     "2028-07-12",
+     "ARS",
+     "ARS",
+     "Georgalos"
+    ],
+    [
+     "GES2L",
+     "2028-08-23",
+     "ARS",
+     "ARS",
+     "Georgalos"
+    ],
+    [
+     "GMS1L",
+     "2029-03-10",
+     "ARS",
+     "ARS",
+     "Gimetal"
+    ],
+    [
+     "GP39O",
+     "2027-10-09",
+     "ARS",
+     "ARS",
+     "GPAT"
+    ],
+    [
+     "HA11L",
+     "2027-10-16",
+     "ARS",
+     "ARS",
+     "Madero Harbour"
+    ],
+    [
+     "HBCBO",
+     "2026-11-20",
+     "ARS",
+     "ARS",
+     "B. Hipotecario"
+    ],
+    [
+     "HBCEO",
+     "2027-02-23",
+     "ARS",
+     "ARS",
+     "B. Hipotecario"
+    ],
+    [
+     "HLS1L",
+     "2028-09-29",
+     "ARS",
+     "ARS",
+     "Halpern"
+    ],
+    [
+     "HN11L",
+     "2028-02-11",
+     "ARS",
+     "ARS",
+     "Ratto Hnos."
+    ],
+    [
+     "HYS1L",
+     "2027-10-13",
+     "ARS",
+     "ARS",
+     "Hogar y Tecnología"
+    ],
+    [
+     "HYS2L",
+     "2027-12-22",
+     "ARS",
+     "ARS",
+     "Hogar y Tecnología"
+    ],
+    [
+     "ICC4O",
+     "2026-11-28",
+     "ARS",
+     "ARS",
+     "B. ICBC"
+    ],
+    [
+     "ICC5O",
+     "2027-03-11",
+     "ARS",
+     "ARS",
+     "B. ICBC"
+    ],
+    [
+     "ICC7O",
+     "2027-06-17",
+     "ARS",
+     "ARS",
+     "B. ICBC"
+    ],
+    [
+     "ICC8O",
+     "2027-08-28",
+     "ARS",
+     "ARS",
+     "B. ICBC"
+    ],
+    [
+     "IF12L",
+     "2027-01-17",
+     "ARS",
+     "ARS",
+     "Inclusion Financiera Integral"
+    ],
+    [
+     "IF22L",
+     "2027-09-17",
+     "ARS",
+     "ARS",
+     "Inclusion Financiera Integral"
+    ],
+    [
+     "IN21L",
+     "2028-03-25",
+     "ARS",
+     "ARS",
+     "Interconnect"
+    ],
+    [
+     "INS1L",
+     "2027-06-26",
+     "ARS",
+     "ARS",
+     "Interconnect"
+    ],
+    [
+     "IP11P",
+     "2027-04-28",
+     "ARS",
+     "ARS",
+     "Procesos Industriales Metallo"
+    ],
+    [
+     "JOS1P",
+     "2027-09-29",
+     "ARS",
+     "ARS",
+     "Alberto Olivero"
+    ],
+    [
+     "LJC1L",
+     "2028-08-25",
+     "ARS",
+     "ARS",
+     "Lodiser"
+    ],
+    [
+     "LLS1L",
+     "2027-10-23",
+     "ARS",
+     "ARS",
+     "Collins"
+    ],
+    [
+     "LMS1P",
+     "2027-06-06",
+     "ARS",
+     "ARS",
+     "BLM Desarrollos"
+    ],
+    [
+     "LNS3P",
+     "2027-04-30",
+     "ARS",
+     "ARS",
+     "Liliana"
+    ],
+    [
+     "LR7AO",
+     "2026-12-10",
+     "ARS",
+     "ARS",
+     "Laboratorios Richmond"
+    ],
+    [
+     "LR8AO",
+     "2028-07-31",
+     "ARS",
+     "ARS",
+     "Laboratorios Richmond"
+    ],
+    [
+     "LTS1L",
+     "2027-07-08",
+     "ARS",
+     "ARS",
+     "Latamly"
+    ],
+    [
+     "LTS2L",
+     "2028-07-17",
+     "ARS",
+     "ARS",
+     "Latamly"
+    ],
+    [
+     "MIC7O",
+     "2027-09-11",
+     "ARS",
+     "ARS",
+     "Mirgor"
+    ],
+    [
+     "MKS1L",
+     "2027-12-22",
+     "ARS",
+     "ARS",
+     "Materia"
+    ],
+    [
+     "MR39P",
+     "2027-03-17",
+     "ARS",
+     "ARS",
+     "Meranol"
+    ],
+    [
+     "MTC3O",
+     "2027-06-22",
+     "ARS",
+     "ARS",
+     "Mastellone"
+    ],
+    [
+     "MXC4O",
+     "2028-05-10",
+     "ARS",
+     "ARS",
+     "Morixe"
+    ],
+    [
+     "MXS1P",
+     "2027-02-28",
+     "ARS",
+     "ARS",
+     "Maximia"
+    ],
+    [
+     "NHC1O",
+     "2026-12-09",
+     "ARS",
+     "ARS",
+     "Nuevo B. del Chaco"
+    ],
+    [
+     "NLCJO",
+     "2027-05-29",
+     "ARS",
+     "ARS",
+     "Angel Estrada"
+    ],
+    [
+     "NZC1O",
+     "2027-05-11",
+     "ARS",
+     "ARS",
+     "BNA"
+    ],
+    [
+     "NZC4O",
+     "2027-07-14",
+     "ARS",
+     "ARS",
+     "BNA"
+    ],
+    [
+     "OCS1L",
+     "2028-10-09",
+     "ARS",
+     "ARS",
+     "Cloronor"
+    ],
+    [
+     "ONS1P",
+     "2027-06-12",
+     "ARS",
+     "ARS",
+     "Cre Nor"
+    ],
+    [
+     "OR3AP",
+     "2027-05-29",
+     "ARS",
+     "ARS",
+     "Agronorte"
+    ],
+    [
+     "PDS2P",
+     "2027-05-26",
+     "ARS",
+     "ARS",
+     "Proseind"
+    ],
+    [
+     "PECJO",
+     "2030-08-25",
+     "ARS",
+     "ARS",
+     "Tango Energy Argentina"
+    ],
+    [
+     "PECLO",
+     "2032-08-25",
+     "ARS",
+     "ARS",
+     "Tango Energy Argentina"
+    ],
+    [
+     "PES1L",
+     "2027-11-26",
+     "ARS",
+     "ARS",
+     "Pedrolga"
+    ],
+    [
+     "PES2L",
+     "2028-09-07",
+     "ARS",
+     "ARS",
+     "Pedrolga"
+    ],
+    [
+     "PG11L",
+     "2027-06-24",
+     "ARS",
+     "ARS",
+     "Prigioni Agro"
+    ],
+    [
+     "PGS2L",
+     "2028-10-16",
+     "ARS",
+     "ARS",
+     "Prigioni Agro"
+    ],
+    [
+     "PI11L",
+     "2028-09-03",
+     "ARS",
+     "ARS",
+     "Pimiento"
+    ],
+    [
+     "PJS1L",
+     "2028-02-06",
+     "ARS",
+     "ARS",
+     "Pallets Jauregui"
+    ],
+    [
+     "PS35O",
+     "2026-12-19",
+     "ARS",
+     "ARS",
+     "PSA"
+    ],
+    [
+     "PS37O",
+     "2027-05-26",
+     "ARS",
+     "ARS",
+     "PSA"
+    ],
+    [
+     "PVC4O",
+     "2026-11-25",
+     "ARS",
+     "ARS",
+     "BPBA"
+    ],
+    [
+     "PVC6O",
+     "2027-06-08",
+     "ARS",
+     "ARS",
+     "BPBA"
+    ],
+    [
+     "PVC7O",
+     "2027-09-16",
+     "ARS",
+     "ARS",
+     "BPBA"
+    ],
+    [
+     "PVS1L",
+     "2028-05-11",
+     "ARS",
+     "ARS",
+     "El Paso del Virrey"
+    ],
+    [
+     "PWC1O",
+     "2027-09-17",
+     "ARS",
+     "ARS",
+     "Payway"
+    ],
+    [
+     "PXS1L",
+     "2028-09-23",
+     "ARS",
+     "ARS",
+     "Pamisa"
+    ],
+    [
+     "RAS4P",
+     "2027-10-15",
+     "ARS",
+     "ARS",
+     "Agroideas"
+    ],
+    [
+     "RB61O",
+     "2026-12-25",
+     "ARS",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "RB64O",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "RB67O",
+     "2027-10-17",
+     "ARS",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "RB69O",
+     "2027-09-25",
+     "ARS",
+     "ARS",
+     "Rombo"
+    ],
+    [
+     "RC3CO",
+     "2026-12-15",
+     "ARS",
+     "ARS",
+     "Arcor"
+    ],
+    [
+     "RC4CO",
+     "2027-02-25",
+     "ARS",
+     "ARS",
+     "Arcor"
+    ],
+    [
+     "RC6CO",
+     "2027-08-21",
+     "ARS",
+     "ARS",
+     "Arcor"
+    ],
+    [
+     "RC8CO",
+     "2028-04-05",
+     "ARS",
+     "ARS",
+     "Arcor"
+    ],
+    [
+     "RD31L",
+     "2028-08-24",
+     "ARS",
+     "ARS",
+     "RDA Renting"
+    ],
+    [
+     "RD32L",
+     "2029-08-24",
+     "ARS",
+     "ARS",
+     "RDA Renting"
+    ],
+    [
+     "RDS1L",
+     "2027-06-11",
+     "ARS",
+     "ARS",
+     "RDA Renting"
+    ],
+    [
+     "RDS2L",
+     "2027-10-20",
+     "ARS",
+     "ARS",
+     "RDA Renting"
+    ],
+    [
+     "RES1L",
+     "2027-09-30",
+     "ARS",
+     "ARS",
+     "Recard"
+    ],
+    [
+     "RES2L",
+     "2028-07-21",
+     "ARS",
+     "ARS",
+     "Recard"
+    ],
+    [
+     "RT11L",
+     "2028-03-11",
+     "ARS",
+     "ARS",
+     "Rafaela Alimentos"
+    ],
+    [
+     "RVS1O",
+     "2027-02-27",
+     "ARS",
+     "ARS",
+     "Club Atletico River Plate"
+    ],
+    [
+     "RWS1L",
+     "2027-07-21",
+     "ARS",
+     "ARS",
+     "Rowing"
+    ],
+    [
+     "RZS1L",
+     "2027-06-30",
+     "ARS",
+     "ARS",
+     "Matías Ruiz"
+    ],
+    [
+     "SA1AP",
+     "2027-07-24",
+     "ARS",
+     "ARS",
+     "Agronea Producciones"
+    ],
+    [
+     "SA1BP",
+     "2030-07-24",
+     "ARS",
+     "ARS",
+     "Agronea Producciones"
+    ],
+    [
+     "SES1L",
+     "2028-10-08",
+     "ARS",
+     "ARS",
+     "Establecimientos Lacteos Silvia"
+    ],
+    [
+     "SF1AL",
+     "2028-03-06",
+     "ARS",
+     "ARS",
+     "San Antonio Oil & Gas"
+    ],
+    [
+     "SF1BL",
+     "2029-03-06",
+     "ARS",
+     "ARS",
+     "San Antonio Oil & Gas"
+    ],
+    [
+     "SNS1M",
+     "2026-12-04",
+     "ARS",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "SNS2M",
+     "2027-01-16",
+     "ARS",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "SNS4M",
+     "2027-04-17",
+     "ARS",
+     "ARS",
+     "Sion"
+    ],
+    [
+     "SQS1L",
+     "2028-07-31",
+     "ARS",
+     "ARS",
+     "S.O.S."
+    ],
+    [
+     "STCGO",
+     "2027-02-18",
+     "ARS",
+     "ARS",
+     "Grupo ST"
+    ],
+    [
+     "STCHO",
+     "2027-01-21",
+     "ARS",
+     "ARS",
+     "Grupo ST"
+    ],
+    [
+     "SXC3O",
+     "2027-02-23",
+     "ARS",
+     "ARS",
+     "Mercado Pago"
+    ],
+    [
+     "SXC5O",
+     "2026-11-18",
+     "ARS",
+     "ARS",
+     "Mercado Pago"
+    ],
+    [
+     "SXC6O",
+     "2027-05-18",
+     "ARS",
+     "ARS",
+     "Mercado Pago"
+    ],
+    [
+     "SXC8O",
+     "2027-08-24",
+     "ARS",
+     "ARS",
+     "Mercado Pago"
+    ],
+    [
+     "SYS1L",
+     "2027-07-31",
+     "ARS",
+     "ARS",
+     "Yacopini Sud"
+    ],
+    [
+     "T661O",
+     "2026-11-30",
+     "ARS",
+     "ARS",
+     "Tarjeta Naranja"
+    ],
+    [
+     "T671O",
+     "2027-05-22",
+     "ARS",
+     "ARS",
+     "Tarjeta Naranja"
+    ],
+    [
+     "TFS1L",
+     "2028-03-05",
+     "ARS",
+     "ARS",
+     "Trefelt Argentina"
+    ],
+    [
+     "TJC1L",
+     "2028-04-30",
+     "ARS",
+     "ARS",
+     "PS Anesthesia"
+    ],
+    [
+     "TO1AL",
+     "2028-03-05",
+     "ARS",
+     "ARS",
+     "Sanatorio Chaco"
+    ],
+    [
+     "TO1BL",
+     "2029-03-05",
+     "ARS",
+     "ARS",
+     "Sanatorio Chaco"
+    ],
+    [
+     "TPS1L",
+     "2028-10-19",
+     "ARS",
+     "ARS",
+     "Taraborelli"
+    ],
+    [
+     "TUS1L",
+     "2028-03-25",
+     "ARS",
+     "ARS",
+     "Transportes Bogdan"
+    ],
+    [
+     "TY34O",
+     "2027-02-26",
+     "ARS",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "TY37O",
+     "2027-11-06",
+     "ARS",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "TY39O",
+     "2028-03-22",
+     "ARS",
+     "ARS",
+     "Toyota Financiera"
+    ],
+    [
+     "TZS1L",
+     "2028-06-10",
+     "ARS",
+     "ARS",
+     "Tostex"
+    ],
+    [
+     "UES1L",
+     "2027-10-13",
+     "ARS",
+     "ARS",
+     "Urbano Express Argentina"
+    ],
+    [
+     "UFS1L",
+     "2027-12-19",
+     "ARS",
+     "ARS",
+     "Segufer"
+    ],
+    [
+     "UTC3P",
+     "2027-03-13",
+     "ARS",
+     "ARS",
+     "Ruta 3 Automotores"
+    ],
+    [
+     "UTS1L",
+     "2028-09-08",
+     "ARS",
+     "ARS",
+     "Ruta 3 Automotores"
+    ],
+    [
+     "VAS1L",
+     "2028-05-22",
+     "ARS",
+     "ARS",
+     "Vitalcan"
+    ],
+    [
+     "VWCDO",
+     "2026-12-11",
+     "ARS",
+     "ARS",
+     "Volkswagen FS"
+    ],
+    [
+     "VWCGO",
+     "2027-06-18",
+     "ARS",
+     "ARS",
+     "Volkswagen FS"
+    ],
+    [
+     "VX11M",
+     "2028-01-13",
+     "ARS",
+     "ARS",
+     "Tecnovax"
+    ],
+    [
+     "WNCOO",
+     "2027-05-12",
+     "ARS",
+     "ARS",
+     "Newsan"
+    ],
+    [
+     "XRS1O",
+     "2028-05-08",
+     "ARS",
+     "ARS",
+     "Bramix"
+    ],
+    [
+     "YIS1L",
+     "2027-06-22",
+     "ARS",
+     "ARS",
+     "Yacopini Mirai"
+    ],
+    [
+     "YSS1L",
+     "2026-11-27",
+     "ARS",
+     "ARS",
+     "C&C Medical's"
+    ],
+    [
+     "YSS2L",
+     "2028-04-16",
+     "ARS",
+     "ARS",
+     "C&C Medical's"
+    ],
+    [
+     "ZF3AP",
+     "2027-07-18",
+     "ARS",
+     "ARS",
+     "Zafra"
+    ],
+    [
+     "ZI11P",
+     "2027-12-15",
+     "ARS",
+     "ARS",
+     "Spazios Inmuebles"
+    ],
+    [
+     "ZPC1O",
+     "2026-12-02",
+     "ARS",
+     "ARS",
+     "Plaza Logistica"
+    ],
+    [
+     "ZZS1L",
+     "2028-06-08",
+     "ARS",
+     "ARS",
+     "Transporte Peduzzi"
+    ]
+   ]
+  },
+  {
+   "id": 23,
+   "name": "Corporativos ARS TPM",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": []
+  },
+  {
+   "id": 16,
+   "name": "Corporativos USD",
+   "convencionTna": "180-360",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 3,
+   "name": "Corporativos USD Linked",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "AER5O",
+     "2032-02-21",
+     "USD",
+     "ARS",
+     "AA 2000"
+    ],
+    [
+     "AG22P",
+     "2026-12-14",
+     "USD",
+     "ARS",
+     "Argensun"
+    ],
+    [
+     "APS1L",
+     "2028-05-20",
+     "USD",
+     "ARS",
+     "Automotores Pampeanos"
+    ],
+    [
+     "AVC2P",
+     "2031-08-20",
+     "USD",
+     "ARS",
+     "Alto Real Viñedos"
+    ],
+    [
+     "CAC4O",
+     "2027-02-27",
+     "USD",
+     "ARS",
+     "Capex"
+    ],
+    [
+     "CAC7O",
+     "2027-09-07",
+     "USD",
+     "ARS",
+     "Capex"
+    ],
+    [
+     "CACAO",
+     "2027-07-05",
+     "USD",
+     "ARS",
+     "Capex"
+    ],
+    [
+     "CP23O",
+     "2031-09-17",
+     "USD",
+     "ARS",
+     "CGC"
+    ],
+    [
+     "CP27O",
+     "2029-06-07",
+     "USD",
+     "ARS",
+     "CGC"
+    ],
+    [
+     "CP39O",
+     "2027-03-29",
+     "USD",
+     "ARS",
+     "CGC"
+    ],
+    [
+     "CS40O",
+     "2026-12-21",
+     "USD",
+     "ARS",
+     "Cresud"
+    ],
+    [
+     "CS46O",
+     "2027-07-18",
+     "USD",
+     "ARS",
+     "Cresud"
+    ],
+    [
+     "CWC7O",
+     "2027-07-11",
+     "USD",
+     "ARS",
+     "Crown Point"
+    ],
+    [
+     "CWC9O",
+     "2029-01-30",
+     "USD",
+     "ARS",
+     "Crown Point"
+    ],
+    [
+     "CWCBO",
+     "2029-03-03",
+     "USD",
+     "ARS",
+     "Crown Point"
+    ],
+    [
+     "DM12L",
+     "2028-08-27",
+     "USD",
+     "ARS",
+     "Demagro"
+    ],
+    [
+     "EAC2O",
+     "2033-10-12",
+     "USD",
+     "ARS",
+     "MSU Green Energy"
+    ],
+    [
+     "EH12M",
+     "2027-09-20",
+     "USD",
+     "ARS",
+     "Hector A. Bertone"
+    ],
+    [
+     "EL31P",
+     "2027-10-02",
+     "USD",
+     "ARS",
+     "Termoelectrica"
+    ],
+    [
+     "EP4BP",
+     "2027-07-14",
+     "USD",
+     "ARS",
+     "Tresnal"
+    ],
+    [
+     "FO4BO",
+     "2027-01-20",
+     "USD",
+     "ARS",
+     "Futuros y Opciones"
+    ],
+    [
+     "GE22P",
+     "2027-02-22",
+     "USD",
+     "ARS",
+     "Georgalos"
+    ],
+    [
+     "GMCHO",
+     "2032-07-28",
+     "USD",
+     "ARS",
+     "GEMSA"
+    ],
+    [
+     "GMCIO",
+     "2028-11-28",
+     "USD",
+     "ARS",
+     "GEMSA"
+    ],
+    [
+     "GMCKO",
+     "2035-05-28",
+     "USD",
+     "ARS",
+     "GEMSA"
+    ],
+    [
+     "GN36O",
+     "2031-12-23",
+     "USD",
+     "ARS",
+     "Genneia"
+    ],
+    [
+     "GN37O",
+     "2026-11-11",
+     "USD",
+     "ARS",
+     "Genneia"
+    ],
+    [
+     "GN38O",
+     "2033-02-10",
+     "USD",
+     "ARS",
+     "Genneia"
+    ],
+    [
+     "GN39O",
+     "2028-07-14",
+     "USD",
+     "ARS",
+     "Genneia"
+    ],
+    [
+     "GN42O",
+     "2027-05-16",
+     "USD",
+     "ARS",
+     "Genneia"
+    ],
+    [
+     "GOC1O",
+     "2029-09-28",
+     "USD",
+     "ARS",
+     "Generación Litoral"
+    ],
+    [
+     "GOC3O",
+     "2036-03-28",
+     "USD",
+     "ARS",
+     "Generación Litoral"
+    ],
+    [
+     "GPS1M",
+     "2027-01-31",
+     "USD",
+     "ARS",
+     "Gente de la Pampa"
+    ],
+    [
+     "GYC3O",
+     "2032-03-08",
+     "USD",
+     "ARS",
+     "360 Energy Solar"
+    ],
+    [
+     "HA12L",
+     "2027-10-16",
+     "USD",
+     "ARS",
+     "Madero Harbour"
+    ],
+    [
+     "HIS1P",
+     "2027-09-08",
+     "USD",
+     "ARS",
+     "Silo Chico"
+    ],
+    [
+     "LMS6O",
+     "2028-04-27",
+     "USD",
+     "ARS",
+     "Aluar"
+    ],
+    [
+     "LR8CO",
+     "2028-07-31",
+     "USD",
+     "ARS",
+     "Laboratorios Richmond"
+    ],
+    [
+     "LUC3O",
+     "2032-05-05",
+     "USD",
+     "ARS",
+     "Luz de Tres Picos"
+    ],
+    [
+     "MGCEO",
+     "2027-12-19",
+     "USD",
+     "ARS",
+     "Pampa Energia"
+    ],
+    [
+     "MR37P",
+     "2027-06-17",
+     "USD",
+     "ARS",
+     "Meranol"
+    ],
+    [
+     "MR43O",
+     "2036-06-30",
+     "USD",
+     "ARS",
+     "GEMSA-CTR"
+    ],
+    [
+     "MR49O",
+     "2034-12-31",
+     "USD",
+     "ARS",
+     "GEMSA-CTR"
+    ],
+    [
+     "MR50O",
+     "2036-06-30",
+     "USD",
+     "ARS",
+     "GEMSA-CTR"
+    ],
+    [
+     "MSSBO",
+     "2026-11-14",
+     "USD",
+     "ARS",
+     "MSU"
+    ],
+    [
+     "MSSDO",
+     "2032-11-14",
+     "USD",
+     "ARS",
+     "MSU"
+    ],
+    [
+     "NUS1P",
+     "2026-11-07",
+     "USD",
+     "ARS",
+     "Nuevas Tierras"
+    ],
+    [
+     "NV11P",
+     "2026-10-29",
+     "USD",
+     "ARS",
+     "Navarro"
+    ],
+    [
+     "OLC2O",
+     "2028-06-09",
+     "USD",
+     "ARS",
+     "Oleoductos del Valle"
+    ],
+    [
+     "OLC3O",
+     "2027-07-10",
+     "USD",
+     "ARS",
+     "Oleoductos del Valle"
+    ],
+    [
+     "OM1BL",
+     "2027-11-20",
+     "USD",
+     "ARS",
+     "Maquinas Agricolas Ombu"
+    ],
+    [
+     "OW11L",
+     "2027-04-30",
+     "USD",
+     "ARS",
+     "Hitcowork"
+    ],
+    [
+     "PECKO",
+     "2030-08-25",
+     "USD",
+     "ARS",
+     "Tango Energy Argentina"
+    ],
+    [
+     "PECMO",
+     "2032-08-25",
+     "USD",
+     "ARS",
+     "Tango Energy Argentina"
+    ],
+    [
+     "PNECO",
+     "2031-07-12",
+     "USD",
+     "ARS",
+     "Pan American Energy"
+    ],
+    [
+     "PNICO",
+     "2032-02-07",
+     "USD",
+     "ARS",
+     "Pan American Energy"
+    ],
+    [
+     "PNJCO",
+     "2027-02-07",
+     "USD",
+     "ARS",
+     "Pan American Energy"
+    ],
+    [
+     "PNRCO",
+     "2028-08-07",
+     "USD",
+     "ARS",
+     "Pan American Energy"
+    ],
+    [
+     "PNZCO",
+     "2027-07-04",
+     "USD",
+     "ARS",
+     "Pan American Energy"
+    ],
+    [
+     "PQCKO",
+     "2026-12-07",
+     "USD",
+     "ARS",
+     "PCR"
+    ],
+    [
+     "PQCOO",
+     "2027-09-22",
+     "USD",
+     "ARS",
+     "PCR"
+    ],
+    [
+     "PQCQO",
+     "2027-07-16",
+     "USD",
+     "ARS",
+     "PCR"
+    ],
+    [
+     "RT12L",
+     "2028-03-11",
+     "USD",
+     "ARS",
+     "Rafaela Alimentos"
+    ],
+    [
+     "RZ8BO",
+     "2029-09-03",
+     "USD",
+     "ARS",
+     "Rizobacter"
+    ],
+    [
+     "RZAAO",
+     "2029-09-03",
+     "USD",
+     "ARS",
+     "Rizobacter"
+    ],
+    [
+     "RZBAO",
+     "2029-09-03",
+     "USD",
+     "ARS",
+     "Rizobacter"
+    ],
+    [
+     "SB12L",
+     "2027-07-04",
+     "USD",
+     "ARS",
+     "San Bautista del Sur"
+    ],
+    [
+     "SNEAO",
+     "2029-07-14",
+     "USD",
+     "ARS",
+     "San Miguel"
+    ],
+    [
+     "SPC2O",
+     "2032-06-27",
+     "USD",
+     "ARS",
+     "SCC Power San Pedro"
+    ],
+    [
+     "SZ12P",
+     "2027-05-21",
+     "USD",
+     "ARS",
+     "Agro de Souza"
+    ],
+    [
+     "TLCDO",
+     "2027-03-09",
+     "USD",
+     "ARS",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCFO",
+     "2028-02-10",
+     "USD",
+     "ARS",
+     "Telecom Argentina"
+    ],
+    [
+     "TLCKO",
+     "2026-11-17",
+     "USD",
+     "ARS",
+     "Telecom Argentina"
+    ],
+    [
+     "VSCDO",
+     "2031-08-27",
+     "USD",
+     "ARS",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCIO",
+     "2026-12-06",
+     "USD",
+     "ARS",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCJO",
+     "2027-03-03",
+     "USD",
+     "ARS",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCKO",
+     "2028-03-03",
+     "USD",
+     "ARS",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCMO",
+     "2028-08-11",
+     "USD",
+     "ARS",
+     "Vista Energy Argentina"
+    ],
+    [
+     "VSCQO",
+     "2028-07-08",
+     "USD",
+     "ARS",
+     "Vista Energy Argentina"
+    ],
+    [
+     "YFCAO",
+     "2032-02-03",
+     "USD",
+     "ARS",
+     "YPF Luz"
+    ],
+    [
+     "YFCFO",
+     "2027-02-27",
+     "USD",
+     "ARS",
+     "YPF Luz"
+    ],
+    [
+     "YMCLO",
+     "2032-07-22",
+     "USD",
+     "ARS",
+     "YPF"
+    ],
+    [
+     "YMCPO",
+     "2027-04-25",
+     "USD",
+     "ARS",
+     "YPF"
+    ],
+    [
+     "YMCRO",
+     "2028-09-12",
+     "USD",
+     "ARS",
+     "YPF"
+    ],
+    [
+     "ZF3BP",
+     "2027-07-18",
+     "USD",
+     "ARS",
+     "Zafra"
+    ],
+    [
+     "ZUS2P",
+     "2027-07-17",
+     "USD",
+     "ARS",
+     "Zuamar"
+    ]
+   ]
+  },
+  {
+   "id": 15,
+   "name": "Provinciales ARS Badlar",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "BDC28",
+     "2028-02-22",
+     "ARS",
+     "ARS",
+     "CABA"
+    ],
+    [
+     "BDC31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "CABA"
+    ],
+    [
+     "CA31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Catamarca"
+    ],
+    [
+     "CH31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "CT31P",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Corrientes"
+    ],
+    [
+     "ERM31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Entre Rios"
+    ],
+    [
+     "JUM31",
+     "2031-02-15",
+     "ARS",
+     "ARS",
+     "Jujuy"
+    ],
+    [
+     "MIM31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Misiones"
+    ],
+    [
+     "ND31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Neuquen"
+    ],
+    [
+     "PBM31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PMM31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Mendoza"
+    ],
+    [
+     "PUM31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "RIM31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "La Rioja"
+    ],
+    [
+     "RMJ28",
+     "2028-06-26",
+     "ARS",
+     "ARS",
+     "Muni Rosario"
+    ],
+    [
+     "SA31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Salta"
+    ],
+    [
+     "SE31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Santiago del Estero"
+    ],
+    [
+     "SFN27",
+     "2027-11-25",
+     "ARS",
+     "ARS",
+     "Santa Fe"
+    ],
+    [
+     "SJ31",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "San Juan"
+    ],
+    [
+     "ST31P",
+     "2031-03-15",
+     "ARS",
+     "ARS",
+     "Santa Cruz"
+    ]
+   ]
+  },
+  {
+   "id": 21,
+   "name": "Provinciales ARS Fijo",
+   "convencionTna": "plazo-rem",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 19,
+   "name": "Provinciales ARS Inflación",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "CO3D7",
+     "2027-12-05",
+     "ARS",
+     "ARS",
+     "Cordoba"
+    ],
+    [
+     "COD7P",
+     "2027-12-05",
+     "ARS",
+     "ARS",
+     "Cordoba"
+    ],
+    [
+     "COY27",
+     "2027-05-24",
+     "ARS",
+     "ARS",
+     "Cordoba"
+    ],
+    [
+     "PB2J7",
+     "2027-06-24",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBA28",
+     "2028-04-28",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PMA28",
+     "2028-04-10",
+     "ARS",
+     "ARS",
+     "Mendoza"
+    ],
+    [
+     "PMA29",
+     "2029-04-10",
+     "ARS",
+     "ARS",
+     "Mendoza"
+    ],
+    [
+     "PMM27",
+     "2027-03-14",
+     "ARS",
+     "ARS",
+     "Mendoza"
+    ],
+    [
+     "XBF27",
+     "2027-02-18",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "XBM27",
+     "2027-03-18",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "XBN26",
+     "2026-11-19",
+     "ARS",
+     "ARS",
+     "PBA"
+    ]
+   ]
+  },
+  {
+   "id": 27,
+   "name": "Provinciales ARS Tamar",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "BAF27",
+     "2027-02-13",
+     "ARS",
+     "ARS",
+     "Muni Cordoba"
+    ],
+    [
+     "BAM27",
+     "2027-03-26",
+     "ARS",
+     "ARS",
+     "Muni Cordoba"
+    ],
+    [
+     "BAO27",
+     "2027-10-01",
+     "ARS",
+     "ARS",
+     "Muni Cordoba"
+    ],
+    [
+     "BAS27",
+     "2027-09-03",
+     "ARS",
+     "ARS",
+     "Muni Cordoba"
+    ],
+    [
+     "BBA27",
+     "2027-04-22",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "BBD26",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "BBY27",
+     "2027-05-20",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "BGD26",
+     "2026-12-03",
+     "ARS",
+     "ARS",
+     "Rio Negro"
+    ],
+    [
+     "BGS27",
+     "2027-09-24",
+     "ARS",
+     "ARS",
+     "Rio Negro"
+    ],
+    [
+     "BL2E7",
+     "2027-01-15",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLA27",
+     "2027-04-16",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLD26",
+     "2026-12-11",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLE27",
+     "2027-01-30",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLG27",
+     "2027-08-13",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLL27",
+     "2027-07-16",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BLM27",
+     "2027-03-12",
+     "ARS",
+     "ARS",
+     "Chaco"
+    ],
+    [
+     "BRA27",
+     "2027-04-24",
+     "ARS",
+     "ARS",
+     "Muni Rio Cuarto"
+    ],
+    [
+     "BU2M7",
+     "2027-03-29",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BU2N6",
+     "2026-11-09",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BU3N6",
+     "2026-11-09",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BU4N6",
+     "2026-11-30",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BU5N6",
+     "2026-11-30",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BUE27",
+     "2027-01-12",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BUM27",
+     "2027-03-29",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "BUN26",
+     "2026-11-29",
+     "ARS",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "CO2D7",
+     "2027-12-05",
+     "ARS",
+     "ARS",
+     "Cordoba"
+    ],
+    [
+     "ERE27",
+     "2027-01-17",
+     "ARS",
+     "ARS",
+     "Entre Rios"
+    ],
+    [
+     "ISG29",
+     "2029-08-18",
+     "ARS",
+     "ARS",
+     "Muni San Isidro"
+    ],
+    [
+     "PBA27",
+     "2027-04-30",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBD26",
+     "2026-12-17",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBJ28",
+     "2028-06-23",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBM27",
+     "2027-03-18",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBM28",
+     "2028-03-30",
+     "ARS",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PMD26",
+     "2026-12-20",
+     "ARS",
+     "ARS",
+     "Mendoza"
+    ]
+   ]
+  },
+  {
+   "id": 29,
+   "name": "Provinciales Duales",
+   "convencionTna": "32-365",
+   "status": 200,
+   "instrumentos": []
+  },
+  {
+   "id": 18,
+   "name": "Provinciales USD",
+   "convencionTna": "180-360",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 20,
+   "name": "Provinciales USD Linked",
+   "convencionTna": "180-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "PBN27",
+     "2027-11-18",
+     "USD",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBN28",
+     "2028-11-18",
+     "USD",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBN29",
+     "2029-11-18",
+     "USD",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PBN30",
+     "2030-11-18",
+     "USD",
+     "ARS",
+     "PBA"
+    ],
+    [
+     "PU2N0",
+     "2030-11-18",
+     "USD",
+     "ARS",
+     "Chubut"
+    ],
+    [
+     "RIE27",
+     "2027-01-20",
+     "USD",
+     "ARS",
+     "La Rioja"
+    ],
+    [
+     "RIL32",
+     "2032-07-20",
+     "USD",
+     "ARS",
+     "La Rioja"
+    ]
+   ]
+  },
+  {
+   "id": 1,
+   "name": "Soberanos ARS Badlar",
+   "convencionTna": "90-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "PR17",
+     "2029-05-02",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TB27",
+     "2027-11-23",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TB31P",
+     "2031-08-17",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TD26",
+     "2026-12-22",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 10,
+   "name": "Soberanos ARS Botes",
+   "convencionTna": "180-360",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 7,
+   "name": "Soberanos ARS CER",
+   "convencionTna": "180-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "CUAP",
+     "2045-12-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "DICP",
+     "2033-12-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "DIP0",
+     "2033-12-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "PAP0",
+     "2038-12-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "PARP",
+     "2038-12-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TX26",
+     "2026-11-09",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TX28",
+     "2028-11-09",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TX31",
+     "2031-11-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZX27",
+     "2027-06-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZX28",
+     "2028-06-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXA7",
+     "2027-04-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXD6",
+     "2026-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXD7",
+     "2027-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXD8",
+     "2028-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXM7",
+     "2027-03-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXM8",
+     "2028-03-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXM9",
+     "2029-03-28",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXO6",
+     "2026-10-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXO7",
+     "2027-10-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXS7",
+     "2027-09-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXS8",
+     "2028-09-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZXY7",
+     "2027-05-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "X29E7",
+     "2027-01-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "X30N6",
+     "2026-11-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 13,
+   "name": "Soberanos ARS Letras CER",
+   "convencionTna": "plazo-rem",
+   "status": 200,
+   "instrumentos": []
+  },
+  {
+   "id": 28,
+   "name": "Soberanos ARS Tamar",
+   "convencionTna": "32-365",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 9,
+   "name": "Soberanos ARS tasa fija",
+   "convencionTna": "plazo-rem",
+   "status": 200,
+   "instrumentos": [
+    [
+     "S13N6",
+     "2026-11-13",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "S29E7",
+     "2027-01-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "S30N6",
+     "2026-11-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "S30O6",
+     "2026-10-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "T15E7",
+     "2027-01-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "T30A7",
+     "2027-04-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "T30J7",
+     "2027-06-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "T31Y7",
+     "2027-05-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 14,
+   "name": "Soberanos Duales",
+   "convencionTna": "32-365",
+   "status": 200,
+   "instrumentos": [
+    [
+     "TMVE8",
+     "2028-01-31",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TMVE8 @TAMAR",
+     "2028-01-31",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TMVE8 @USD-L",
+     "2028-01-31",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TTD26",
+     "2026-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TTD26 @BONCAP",
+     "2026-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TTD26 @TAMAR",
+     "2026-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMD8",
+     "2028-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMD8 @CER",
+     "2028-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMD8 @TAMAR",
+     "2028-12-15",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMD9",
+     "2029-12-14",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMD9 @CER",
+     "2029-12-14",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMD9 @TAMAR",
+     "2029-12-14",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ0",
+     "2030-06-28",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ0 @CER",
+     "2030-06-28",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ0 @TAMAR",
+     "2030-06-28",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ8",
+     "2028-06-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ8 @CER",
+     "2028-06-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ8 @TAMAR",
+     "2028-06-30",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ9",
+     "2029-06-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ9 @CER",
+     "2029-06-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TXMJ9 @TAMAR",
+     "2029-06-29",
+     "ARS",
+     "ARS",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 31,
+   "name": "Soberanos EUR Globales",
+   "convencionTna": "180-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "GE29",
+     "2029-07-09",
+     "EUR",
+     "EUR",
+     "Argentina"
+    ],
+    [
+     "GE30",
+     "2030-07-09",
+     "EUR",
+     "EUR",
+     "Argentina"
+    ],
+    [
+     "GE35",
+     "2035-07-09",
+     "EUR",
+     "EUR",
+     "Argentina"
+    ],
+    [
+     "GE38",
+     "2038-01-09",
+     "EUR",
+     "EUR",
+     "Argentina"
+    ],
+    [
+     "GE41",
+     "2041-07-09",
+     "EUR",
+     "EUR",
+     "Argentina"
+    ],
+    [
+     "GE46",
+     "2046-07-09",
+     "EUR",
+     "EUR",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 8,
+   "name": "Soberanos USD Bonares",
+   "convencionTna": "180-360",
+   "status": 429,
+   "instrumentos": []
+  },
+  {
+   "id": 11,
+   "name": "Soberanos USD Globales",
+   "convencionTna": "180-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "GD29",
+     "2029-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "GD30",
+     "2030-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "GD35",
+     "2035-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "GD38",
+     "2038-01-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "GD41",
+     "2041-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "GD46",
+     "2046-07-09",
+     "USD",
+     "USD",
+     "Argentina"
+    ],
+    [
+     "PAY0",
+     "2038-12-31",
+     "USD",
+     "USD",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 12,
+   "name": "Soberanos USD Linked",
+   "convencionTna": "180-360",
+   "status": 200,
+   "instrumentos": [
+    [
+     "D10Y7",
+     "2027-05-10",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "D15E7",
+     "2027-01-15",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "D30N6",
+     "2026-11-30",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "D30O6",
+     "2026-10-30",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "D31M7",
+     "2027-03-31",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZV27",
+     "2027-06-30",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZV28",
+     "2028-06-30",
+     "USD",
+     "ARS",
+     "Argentina"
+    ],
+    [
+     "TZVD8",
+     "2028-12-15",
+     "USD",
+     "ARS",
+     "Argentina"
+    ]
+   ]
+  },
+  {
+   "id": 17,
+   "name": "Soberanos USD Linked Lelink",
+   "convencionTna": "180-360",
+   "status": 429,
+   "instrumentos": []
+  }
+ ],
+ "balanceDespues": {
+  "module": "mercado",
+  "daily": {
+   "used": 25,
+   "limit": 100000
+  },
+  "monthly": {
+   "used": 25,
+   "limit": 3100000
+  }
+ },
+ "pedidos": 35
+}
