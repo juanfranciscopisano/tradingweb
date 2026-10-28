@@ -60,61 +60,132 @@ async function todas(api, path, body, max = 15000) {
   }
   return { rows, meta };
 }
-const r2 = v => v == null ? null : Math.round(v * 100) / 100, r6 = v => v == null ? null : +(+v).toPrecision(6);
-const VENT = ["lastDay", "7d", "mtd", "30d", "90d", "ytd", "1y", "2y", "5y"];
+const r0 = v => v == null ? null : Math.round(v), r6 = v => v == null ? null : +(+v).toPrecision(6);
+export const VENT = ["lastDay", "7d", "mtd", "30d", "90d", "ytd", "1y", "2y", "5y"];
+const MONEDAS = ["ars", "cer", "a3500", "usd"];
+const mesDe = d => d.slice(0, 8) + "01";
+const masMeses = (m, n) => { const t = new Date(m.slice(0, 7) + "-01T12:00:00Z"); t.setUTCMonth(t.getUTCMonth() + n); return t.toISOString().slice(0, 10); };
+const dif = (a, b) => Math.round((Date.parse(a + "T12:00:00Z") - Date.parse(b + "T12:00:00Z")) / 864e5);
+const menosAnios = (d, n) => { const x = (+d.slice(0, 4) - n) + d.slice(4); return isNaN(Date.parse(x)) || d.slice(5) === "02-29" ? x.slice(0, 5) + "02-28" : x; };
+// las filas desde `desde` se reemplazan por las que vinieron (la consulta trae todo ese tramo) y se ordena por fecha
+const reemplazar = (arr, desde, nuevas) => (arr || []).filter(r => r[0] < desde).concat(nuevas).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+const series = (api, body) => todas(api, "/v1/fci/series", body);
 
-export async function diario(api, { log = console.log, hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10) } = {}) {
-  const out = { asOf: new Date().toISOString(), fuente: "1816 (datos diarios de la CAFCI)", errores: {} };
-  const paso = async (k, f) => { try { await f(); } catch (e) { out.errores[k] = String(e.message || e).slice(0, 200); log(`fci ${k}: ${e.message}`); if (/402/.test(e.message)) throw e; } };
-  const ini5 = corrida(hoy, -5 * 366).slice(0, 8) + "01", ini2 = corrida(hoy, -2 * 366).slice(0, 8) + "01", ini120 = corrida(hoy, -120);
-  // industria por tipo: mensual 5 años y diario 120 días, en las cuatro monedas
-  out.tipos = {}; out.tiposDia = {};
-  for (const cur of ["ars", "cer", "a3500", "usd"]) {
-    await paso("tipos_" + cur, async () => {
-      const { rows, meta } = await todas(api, "/v1/fci/series", { fields: ["aum", "netinflows"], group: "fundType", dateCompression: "month", dateStart: ini5, currency: cur });
-      out.tipos[cur] = rows.map(x => [x.date, x.fundType, r2(x.aum), r2(x.netinflows)]); out.fechaDatos = meta?.dateEnd || out.fechaDatos;
-    });
-    await paso("tiposDia_" + cur, async () => {
-      const { rows } = await todas(api, "/v1/fci/series", { fields: ["aum", "netinflows"], group: "fundType", dateCompression: "day", dateStart: ini120, currency: cur });
-      out.tiposDia[cur] = rows.map(x => [x.date, x.fundType, r2(x.aum), r2(x.netinflows)]);
-    });
-  }
-  // gerentes: patrimonio, suscripciones, facturación y fee promedio por mes, 2 años, en pesos (las otras monedas salen
-  // del cociente de la industria por tipo, que viene en las cuatro)
-  out.gerentes = {};
-  for (const cur of ["ars"]) await paso("gerentes_" + cur, async () => {
-    const { rows } = await todas(api, "/v1/fci/series", { fields: ["aum", "netinflows", "feeRevenueTotal", "feeRevenueManagement", "feeTotal"], group: "managerName", dateCompression: "month", dateStart: ini2, currency: cur });
-    out.gerentes[cur] = rows.map(x => [x.date, x.managerName, r2(x.aum), r2(x.netinflows), r2(x.feeRevenueTotal), r2(x.feeRevenueManagement), r6(x.feeTotal)]);
-  });
-  // gerentes por tipo de fondo, el mes en curso (para el market share dentro de cada tipo)
-  await paso("gerentesTipo", async () => {
-    const tipos = [...new Set((out.tipos.ars || []).map(x => x[1]))];
-    out.gerentesTipo = {};
-    for (const t of tipos) {
-      const { rows } = await todas(api, "/v1/fci/series", { fields: ["aum", "netinflows", "feeTotal"], group: "managerName", dateCompression: "month", dateStart: hoy.slice(0, 8) + "01", currency: "ars", filter: { fundType: [t] } });
-      out.gerentesTipo[t] = rows.map(x => [x.managerName, r2(x.aum), r2(x.netinflows), r6(x.feeTotal)]);
+// días de cada ventana de rendimiento para anualizar: los de 1816 (7, 30, 90, desde fin del mes y del año anterior, 1, 2 y
+// 5 años corridos), salvo el de un día, que va desde el último día hábil (1816 anualiza con un día también los lunes)
+export function diasVentanas(fecha, totalArs) {
+  let ant = null; for (const r of totalArs || []) if (r[0] < fecha && r[2]) ant = r[0];
+  return [ant ? dif(fecha, ant) : 1, 7, +fecha.slice(8, 10), 30, 90, dif(fecha, (+fecha.slice(0, 4) - 1) + "-12-31"), dif(fecha, menosAnios(fecha, 1)), dif(fecha, menosAnios(fecha, 2)), dif(fecha, menosAnios(fecha, 5))];
+}
+
+// Corrida diaria incremental: lo ya bajado queda en fondos.json y cada corrida baja desde lo último que había. Cada paso
+// mira antes el saldo del día (10.000 créditos) y, si no alcanza, queda pendiente para la corrida siguiente.
+export async function diario(api, { log = console.log, prev = null, hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10), margen = 300 } = {}) {
+  const v2 = prev && prev.v === 2;
+  const o = v2 ? prev : { v: 2, total: {}, totalMes: {}, tiposDia: [], tipos: [], flujosTipo: {}, gerentes: [], flujosGerente: {}, fondos: [], flujosFondo: {}, rend: {}, clases: {} };
+  const pendAntes = v2 ? (prev.pendiente || []) : [];
+  o.asOf = new Date().toISOString(); o.fuente = "1816 (datos diarios de la CAFCI)"; o.errores = {}; o.pendiente = [];
+  const saldo = async () => { const d = (await api.get("/v1/creditos/balance")).j?.daily; return d && d.limit != null ? d.limit - d.used : Infinity; };
+  let libre = await saldo();
+  const paso = async (k, est, f) => {
+    if (est > libre - margen) { o.pendiente.push(k); log(`fci ${k}: queda pendiente (necesita unos ${est} créditos y quedan ${libre})`); return; }
+    try { await f(); } catch (e) { o.errores[k] = String(e.message || e).slice(0, 200); log(`fci ${k}: ${e.message}`); if (/402/.test(e.message)) throw e; }
+    libre = await saldo();
+  };
+
+  // 1. ¿hay datos nuevos? El total de la industria en pesos desde tres días antes del último que había
+  const ult = (o.total.ars || []).at(-1)?.[0];
+  const desdeT = ult ? corrida(ult, -3) : corrida(hoy, -120);
+  const { rows: tA } = await series(api, { fields: ["aum", "netinflows"], group: "total", dateCompression: "day", dateStart: desdeT, currency: "ars" });
+  const fecha = tA.map(x => x.date).sort().at(-1);
+  if (!fecha) { log("1816 FCI: no vino el total de la industria"); return null; }
+  if (v2 && fecha === prev.fecha && !pendAntes.length) { log("1816 FCI: sin datos nuevos (último " + fecha + ")"); return null; }
+  o.total.ars = reemplazar(o.total.ars, desdeT, tA.map(x => [x.date, r0(x.aum), r0(x.netinflows)])).filter(r => r[0] >= corrida(fecha, -400));
+  const mesF = mesDe(fecha), mesAnt = v2 && prev.fecha ? mesDe(prev.fecha) : mesF;
+  libre = await saldo();
+
+  // 2. la industria en las otras monedas (de ahí sale el cociente para pasar lo que viene en pesos)
+  await paso("totalMonedas", o.total.cer?.length ? 30 : 400, async () => {
+    for (const cur of MONEDAS.slice(1)) {
+      const d = o.total[cur]?.length ? corrida(o.total[cur].at(-1)[0], -3) : o.total.ars[0][0];
+      const { rows } = await series(api, { fields: ["aum"], group: "total", dateCompression: "day", dateStart: d, currency: cur });
+      o.total[cur] = reemplazar(o.total[cur], d, rows.map(x => [x.date, r0(x.aum)])).filter(r => r[0] >= corrida(fecha, -400));
     }
   });
-  // fondos: el último día de cada fondo (patrimonio, fee, tipo, gerente) y suscripciones netas por ventana
-  await paso("fondos", async () => {
-    const { rows } = await todas(api, "/v1/fci/series", { fields: ["aum", "feeTotal", "fundType", "fundSubType", "fundCurrency", "managerName", "custodyName", "fundCnvCode"], group: "fundName", dateCompression: "day", dateStart: corrida(hoy, -6), currency: "ars" });
-    const ult = {}; for (const x of rows) if (!ult[x.fundName] || x.date > ult[x.fundName].date) ult[x.fundName] = x;
-    out.fondos = Object.values(ult).map(x => [x.fundName, x.fundType, x.fundSubType, x.fundCurrency, x.managerName, x.custodyName, r2(x.aum), r6(x.feeTotal), x.date]);
+  await paso("totalMes", o.totalMes.ars?.length ? 20 : 320, async () => {
+    for (const cur of MONEDAS) {
+      const d = o.totalMes[cur]?.length ? o.totalMes[cur].at(-1)[0] : masMeses(mesF, -60);
+      const f = cur === "ars" ? ["aum", "netinflows"] : ["aum"];
+      const { rows } = await series(api, { fields: f, group: "total", dateCompression: "month", dateStart: d, currency: cur });
+      o.totalMes[cur] = reemplazar(o.totalMes[cur], d, rows.map(x => cur === "ars" ? [x.date, r0(x.aum), r0(x.netinflows)] : [x.date, r0(x.aum)]));
+    }
   });
-  await paso("flujosFondo", async () => {
-    const { rows } = await todas(api, "/v1/fci/net-inflows/ranking", { group: "fundName", currency: "ars" });
-    out.flujosFondo = Object.fromEntries(rows.map(x => [x.fundName, VENT.map(k => r2(x[k]))]));
+  // 3. industria por tipo, en pesos: patrimonio diario (200 días) y patrimonio y suscripciones por mes (5 años)
+  await paso("tiposDia", o.tiposDia.length ? 7 * (dif(fecha, o.tiposDia.at(-1)[0]) + 4) : 900, async () => {
+    const d = o.tiposDia.length ? corrida(o.tiposDia.at(-1)[0], -3) : corrida(fecha, -120);
+    const { rows } = await series(api, { fields: ["aum"], group: "fundType", dateCompression: "day", dateStart: d });
+    o.tiposDia = reemplazar(o.tiposDia, d, rows.map(x => [x.date, x.fundType, r0(x.aum)])).filter(r => r[0] >= corrida(fecha, -200));
   });
-  // rendimientos de la cuota de referencia de cada fondo: TNA (para money market y renta fija de corto) y directo,
-  // en pesos y en dólares A3500 (los fondos en dólares se miran en dólares)
-  out.rend = {};
-  for (const [k, tipo, cur] of [["tna", "tna", "ars"], ["directo", "direct", "ars"], ["directoUsd", "direct", "a3500"]]) await paso("rend_" + k, async () => {
-    const { rows } = await todas(api, "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true }, navReturnType: tipo, currency: cur });
-    out.rend[k] = Object.fromEntries(rows.map(x => [x.fundName, VENT.map(w => r6(x[w]))]));
-    if (k === "tna") out.clases = Object.fromEntries(rows.map(x => [x.fundName, x.className]));
+  await paso("tipos", o.tipos.length ? 30 : 900, async () => {
+    const d = o.tipos.length ? o.tipos.at(-1)[0] : masMeses(mesF, -60);
+    const { rows } = await series(api, { fields: ["aum", "netinflows"], group: "fundType", dateCompression: "month", dateStart: d });
+    o.tipos = reemplazar(o.tipos, d, rows.map(x => [x.date, x.fundType, r0(x.aum), r0(x.netinflows)]));
   });
-  out.creditos = (await api.get("/v1/creditos/balance")).j || null;
-  return out;
+  // suscripciones netas por ventana: el ranking cobra una fila por tipo o gerente, con todas las ventanas, en cada moneda
+  await paso("flujosTipo", 40, async () => {
+    for (const cur of MONEDAS) { const { rows } = await todas(api, "/v1/fci/net-inflows/ranking", { group: "fundType", currency: cur, date: fecha }); o.flujosTipo[cur] = Object.fromEntries(rows.map(x => [x.fundType, VENT.map(k => r0(x[k]))])); }
+  });
+
+  // 4. fondos: tipo, gerente y suscripciones (del ranking), patrimonio del último día y fee (una vez por mes)
+  const nF = Object.keys(o.flujosFondo).length || 1600, porNombre = new Map(o.fondos.map(f => [f[0], f]));
+  const fila = n => { if (!porNombre.has(n)) porNombre.set(n, [n, null, null, null, null, null, null, null]); return porNombre.get(n); };
+  await paso("flujosFondo", nF, async () => {
+    const { rows } = await todas(api, "/v1/fci/net-inflows/ranking", { group: "fundName", currency: "ars", date: fecha });
+    o.flujosFondo = {};
+    for (const x of rows) { const f = fila(x.fundName); [f[1], f[2], f[3], f[4], f[5]] = [x.fundType, x.fundSubType, x.fundCurrency, x.managerName, x.custodyName]; o.flujosFondo[x.fundName] = VENT.map(k => r0(x[k])); }
+  });
+  await paso("patrimonioFondo", nF, async () => {
+    const { rows } = await series(api, { fields: ["aum"], group: "fundName", dateCompression: "day", dateStart: fecha, dateEnd: fecha });
+    for (const f of porNombre.values()) f[6] = null;
+    for (const x of rows) fila(x.fundName)[6] = r0(x.aum);
+    o.fondosFecha = fecha;
+  });
+  if (o.feeMes !== mesF.slice(0, 7)) await paso("feeFondo", nF, async () => {
+    const { rows } = await series(api, { fields: ["feeTotal"], group: "fundName", dateCompression: "month", dateStart: mesF });
+    for (const x of rows) fila(x.fundName)[7] = r6(x.feeTotal);
+    o.feeMes = mesF.slice(0, 7);
+  });
+  o.fondos = [...porNombre.values()].filter(f => f[6] > 0 && f[1]);
+  for (const n of Object.keys(o.flujosFondo)) if (!porNombre.get(n) || !(porNombre.get(n)[6] > 0)) delete o.flujosFondo[n];
+
+  // 5. rendimientos directos de la cuota de referencia (en pesos; los fondos en dólares también en dólares). TNA y TEA
+  // se calculan en la página con los días de cada ventana
+  await paso("rend", (Object.keys(o.rend.directo || {}).length || 1300) + 320, async () => {
+    const { rows, meta } = await todas(api, "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true }, navReturnType: "direct", currency: "ars", date: fecha });
+    const { rows: u } = await todas(api, "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true, fundCurrency: ["usd", "usb"] }, navReturnType: "direct", currency: "a3500", date: fecha });
+    o.rend = { directo: Object.fromEntries(rows.map(x => [x.fundName, VENT.map(k => r6(x[k]))])), directoUsd: Object.fromEntries(u.map(x => [x.fundName, VENT.map(k => r6(x[k]))])) };
+    o.clases = Object.fromEntries(rows.map(x => [x.fundName, x.className]));
+    o.rendFecha = meta?.date || fecha; o.rendDias = diasVentanas(o.rendFecha, o.total.ars);
+  });
+
+  // 6. gerentes: el mes en curso (y el anterior si cambió) completo; la historia de 2 años, solo patrimonio y facturación
+  await paso("gerentes", 600, async () => {
+    const { rows } = await series(api, { fields: ["aum", "feeRevenueTotal", "feeRevenueManagement", "feeTotal"], group: "managerName", dateCompression: "month", dateStart: mesAnt });
+    o.gerentes = reemplazar(o.gerentes, mesAnt, rows.map(x => [x.date, x.managerName, r0(x.aum), r0(x.feeRevenueTotal), r0(x.feeRevenueManagement), r6(x.feeTotal)]));
+  });
+  await paso("flujosGerente", 300, async () => {
+    for (const cur of MONEDAS) { const { rows } = await todas(api, "/v1/fci/net-inflows/ranking", { group: "managerName", currency: cur, date: fecha }); o.flujosGerente[cur] = Object.fromEntries(rows.map(x => [x.managerName, VENT.map(k => r0(x[k]))])); }
+  });
+  if (!o.gerentesHist) await paso("gerentesHist", 24 * 70 * 2, async () => {
+    const desde = masMeses(mesF, -24), hasta = corrida(mesAnt, -1);
+    const { rows } = await series(api, { fields: ["aum", "feeRevenueTotal"], group: "managerName", dateCompression: "month", dateStart: desde, dateEnd: hasta });
+    o.gerentes = o.gerentes.filter(r => r[0] >= mesAnt).concat(rows.map(x => [x.date, x.managerName, r0(x.aum), r0(x.feeRevenueTotal), null, null])).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+    o.gerentesHist = true;
+  });
+  o.gerentes = o.gerentes.filter(r => r[0] >= masMeses(mesF, -36));
+  o.fecha = fecha;
+  o.creditos = libre === Infinity ? null : { libresHoy: libre };
+  return o;
 }
 
 export async function main({ fetchImpl = fetch, log = console.log, root = new URL("../", import.meta.url) } = {}) {
@@ -127,10 +198,9 @@ export async function main({ fetchImpl = fetch, log = console.log, root = new UR
     if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify(await explora(api, log), null, 1));
     else if (modo === "cuenta") await writeFile(new URL(archivo, root), JSON.stringify(await cuenta(api, log), null, 1));
     else {
-      const out = await diario(api, { log });
-      // si no vino nada (1816 caído o sin créditos), queda el archivo anterior
-      if ((out.tipos.ars || []).length || (out.fondos || []).length) await writeFile(new URL(archivo, root), JSON.stringify(out));
-      else log("1816 FCI: no vino nada; queda lo que había");
+      let prev = null; try { prev = JSON.parse(await readFile(new URL(archivo, root), "utf8")); } catch (e) {}
+      const out = await diario(api, { log, prev });
+      if (out) { await writeFile(new URL(archivo, root), JSON.stringify(out)); log("1816 FCI: datos al " + out.fecha + (out.pendiente.length ? "; pendiente: " + out.pendiente.join(", ") : "") + "; quedan " + (out.creditos?.libresHoy ?? "?") + " créditos hoy"); }
     }
   } catch (e) {
     log("1816 FCI: " + e.message);
