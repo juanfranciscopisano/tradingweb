@@ -21,7 +21,7 @@ export function qs(params, estilo = "repetido") {
   return s ? "?" + s : "";
 }
 
-export function cliente({ key, fetchImpl = fetch, log = console.log, espera = +(process.env.ESPERA ?? 1100) }) {
+export function cliente({ key, fetchImpl = fetch, log = console.log, espera = +(process.env.ESPERA ?? 1100), modulo = "mercado" }) {
   let token = null, ultimo = 0, pedidos = 0;
   const llamar = async (metodo, path, { query, body, auth = true } = {}) => {
     const falta = ultimo + espera - Date.now(); if (falta > 0) await pausa(falta);
@@ -40,11 +40,12 @@ export function cliente({ key, fetchImpl = fetch, log = console.log, espera = +(
   return {
     get pedidos() { return pedidos; },
     async login() {
-      const r = await llamar("POST", "/v1/auth/token", { body: { apiKey: key, module: "mercado" }, auth: false });
+      const r = await llamar("POST", "/v1/auth/token", { body: { apiKey: key, module: modulo }, auth: false });
       if (r.status !== 200 || !r.j?.token) throw new Error("1816 no dio el token: HTTP " + r.status + (r.j?.error ? " " + r.j.error : ""));
       token = r.j.token; log("1816: token por " + Math.round((r.j.expiresIn || 0) / 3600) + " h, módulo " + r.j.module);
     },
     get: (path, params, estilo) => llamar("GET", path, { query: qs(params || {}, estilo) }),
+    post: (path, body) => llamar("POST", path, { body: body || {} }),
   };
 }
 
