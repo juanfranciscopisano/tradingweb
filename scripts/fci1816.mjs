@@ -28,6 +28,28 @@ async function explora(api, log) {
   return out;
 }
 
+// MODO=cuenta: cuántas filas trae cada consulta (con páginas de pocas filas, para gastar poco) y una muestra de los valores
+async function cuenta(api, log) {
+  const out = { asOf: new Date().toISOString(), balanceAntes: (await api.get("/v1/creditos/balance")).j };
+  const hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10), mes = hoy.slice(0, 8) + "01";
+  const q = async (k, path, body) => { const r = await api.post(path, body); out[k] = { status: r.status, total: r.j?.pagination?.total ?? null, metadata: r.j?.metadata || null, muestra: filas(r.j), error: r.j?.message || r.j?.error || null }; };
+  await q("rankRef", "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true }, navReturnType: "tna", currency: "ars", pageSize: 4 });
+  await q("rankClases", "/v1/fci/nav-return/ranking", { navReturnType: "direct", currency: "ars", pageSize: 1 });
+  await q("rankUsd", "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true, fundCurrency: ["usd", "usb"] }, navReturnType: "direct", currency: "a3500", pageSize: 2 });
+  await q("rankBavsa", "/v1/fci/nav-return/ranking", { filter: { managerName: ["BAVSA"] }, navReturnType: "tna", currency: "ars", pageSize: 30 });
+  await q("fondosMes", "/v1/fci/series", { fields: ["aum", "feeTotal"], group: "fundName", dateCompression: "month", dateStart: mes, currency: "ars", pageSize: 3 });
+  await q("fondosDia", "/v1/fci/series", { fields: ["aum"], group: "fundName", dateCompression: "day", dateStart: corrida(hoy, -6), currency: "ars", pageSize: 1 });
+  await q("gerentesMes", "/v1/fci/series", { fields: ["aum", "feeTotal", "feeRevenueTotal"], group: "managerName", dateCompression: "month", dateStart: mes, currency: "ars", pageSize: 3 });
+  await q("totalDia", "/v1/fci/series", { fields: ["aum", "netinflows"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -10), currency: "ars", pageSize: 20 });
+  await q("totalDiaUsd", "/v1/fci/series", { fields: ["aum"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -10), currency: "a3500", pageSize: 20 });
+  await q("totalDiaCer", "/v1/fci/series", { fields: ["aum"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -10), currency: "cer", pageSize: 20 });
+  await q("tiposHist", "/v1/fci/series", { fields: ["aum"], group: "fundType", dateCompression: "month", dateStart: "2000-01-01", currency: "ars", pageSize: 2 });
+  await q("flujosFondo", "/v1/fci/net-inflows/ranking", { group: "fundName", currency: "ars", pageSize: 2 });
+  out.balanceDespues = (await api.get("/v1/creditos/balance")).j;
+  log("1816 FCI cuenta: " + JSON.stringify(out.balanceDespues));
+  return out;
+}
+
 // todas las páginas de una consulta
 async function todas(api, path, body, max = 15000) {
   const rows = []; let page = 1, total = null, meta = null;
@@ -102,12 +124,13 @@ export async function diario(api, { log = console.log, hoy = new Date(Date.now()
 
 export async function main({ fetchImpl = fetch, log = console.log, root = new URL("../", import.meta.url) } = {}) {
   const key = process.env.API_1816_FCI_KEY, modo = process.env.MODO || "diario";
-  const archivo = modo === "explora" ? "m1816-fci-explora.json" : "fondos.json";
+  const archivo = modo === "explora" ? "m1816-fci-explora.json" : modo === "cuenta" ? "m1816-fci-cuenta.json" : "fondos.json";
   if (!key) { log("sin API_1816_FCI_KEY en los secretos del repo"); if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify({ asOf: new Date().toISOString(), error: "sin API_1816_FCI_KEY" })); return; }
   const api = cliente({ key, fetchImpl, log, modulo: "fci" });
   try {
     await api.login();
     if (modo === "explora") await writeFile(new URL(archivo, root), JSON.stringify(await explora(api, log), null, 1));
+    else if (modo === "cuenta") await writeFile(new URL(archivo, root), JSON.stringify(await cuenta(api, log), null, 1));
     else {
       const out = await diario(api, { log });
       // si no vino nada (1816 caído o sin créditos), queda el archivo anterior

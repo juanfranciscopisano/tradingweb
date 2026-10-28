@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "diario: lo de la pestaña Fondos (fondos.json); explora: dimensiones, filtros y créditos"
+        description: "diario: lo de la pestaña Fondos (fondos.json); explora: dimensiones, filtros y créditos; cuenta: filas y muestras"
         required: false
         default: "diario"
 
@@ -36,7 +36,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in fondos.json m1816-fci-explora.json; do [ -f "$f" ] && git add "$f"; done
+          for f in fondos.json m1816-fci-explora.json m1816-fci-cuenta.json; do [ -f "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
           git commit -m "1816 FCI: ${{ inputs.modo || 'diario' }}"
           git pull --rebase -q
