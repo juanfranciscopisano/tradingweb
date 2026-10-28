@@ -33,13 +33,10 @@ async function cuenta(api, log) {
   const out = { asOf: new Date().toISOString(), balanceAntes: (await api.get("/v1/creditos/balance")).j };
   const hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10), mes = hoy.slice(0, 8) + "01";
   const q = async (k, path, body) => { const r = await api.post(path, body); out[k] = { status: r.status, total: r.j?.pagination?.total ?? null, metadata: r.j?.metadata || null, muestra: filas(r.j), error: r.j?.message || r.j?.error || null }; };
-  // convención de días de la TNA: los tres tipos de rendimiento para dos fondos, un martes y un lunes
-  const f = { isReferenceClass: true, fundName: ["BAVSA Ahorro", "1810 Ahorro"] };
-  for (const d of ["2026-10-27", "2026-10-26", "2026-10-01"]) for (const t of ["direct", "tna", "tea"]) await q("rend_" + d + "_" + t, "/v1/fci/nav-return/ranking", { filter: f, navReturnType: t, currency: "ars", date: d });
-  await q("flujosTipo", "/v1/fci/net-inflows/ranking", { group: "fundType", currency: "ars" });
-  await q("flujosTipoUsd", "/v1/fci/net-inflows/ranking", { group: "fundType", currency: "a3500" });
-  await q("flujosGerente", "/v1/fci/net-inflows/ranking", { group: "managerName", currency: "ars", pageSize: 2 });
-  await q("ultimo", "/v1/fci/series", { fields: ["aum"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -3), currency: "ars" });
+  // rendimiento de los fondos en dólares: en dólar A3500 y en dólar implícito, y el valor de la cuotaparte en cada moneda
+  const f = { isReferenceClass: true, fundName: ["BAVSA Ahorro Dólar", "Superfondo Estrategico"] };
+  for (const cur of ["a3500", "usd"]) for (const d of ["2026-10-27", "2026-10-23"]) await q("rendUsd_" + cur + "_" + d, "/v1/fci/nav-return/ranking", { filter: f, navReturnType: "direct", currency: cur, date: d });
+  for (const cur of ["ars", "a3500", "usd"]) await q("nav_" + cur, "/v1/fci/series", { fields: ["nav"], group: "className", dateCompression: "day", dateStart: "2026-10-21", filter: { className: ["BAVSA Ahorro Dólar B"] }, currency: cur });
   out.balanceDespues = (await api.get("/v1/creditos/balance")).j;
   log("1816 FCI cuenta: " + JSON.stringify(out.balanceDespues));
   return out;
