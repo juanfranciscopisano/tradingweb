@@ -2,7 +2,8 @@ name: 1816 FCI (fondos)
 
 on:
   schedule:
-    - cron: "47 10 * * 1-5"   # 7:47 de Buenos Aires: el día anterior suele estar cargado temprano
+    - cron: "47 9 * * 1-5"    # 6:47 de Buenos Aires: 1816 publica su informe del día anterior a las 6:30
+    - cron: "47 10 * * 1-5"   # 7:47 (el punteo de las 9:28 usa fondos.json)
     - cron: "47 11 * * 1-5"   # 8:47
     - cron: "17 13 * * 1-5"   # 10:17
     - cron: "17 22 * * 1-5"   # 19:17, por si llegó tarde
