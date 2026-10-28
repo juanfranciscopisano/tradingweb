@@ -5761,6 +5761,7 @@ const fciMonto = v => v == null ? '–' : numAR(v / (fciUsd() ? 1e6 : 1e9), 0, M
 const fciRev = v => v == null ? '–' : numAR(v / 1e6, 0, Math.abs(v / 1e6) < 10 ? 1 : 0);
 const fciPct = (v, d = 1) => v == null || !isFinite(v) ? '–' : numAR(v, d, d) + '%';
 const fciMesMas = (m, n) => { const t = new Date(m.slice(0, 7) + '-01T12:00:00Z'); t.setUTCMonth(t.getUTCMonth() + n); return t.toISOString().slice(0, 10); };
+const FCI_PASOS = { totalMonedas: 'la industria en otras monedas', totalMes: 'la industria por mes', tiposDia: 'los tipos por día', tipos: 'los tipos por mes', flujosTipo: 'las suscripciones por tipo', flujosFondo: 'las suscripciones por fondo', patrimonioFondo: 'el patrimonio por fondo', feeFondo: 'el fee por fondo', rend: 'los rendimientos', gerentes: 'los gerentes del mes', flujosGerente: 'las suscripciones por gerente', gerentesHist: 'la historia de los gerentes (cambio de 12 meses y facturación anterior)' };
 const fciMesTxt = m => m ? MES_CORTO[+m.slice(5, 7) - 1].toLowerCase() + ' ' + m.slice(0, 4) : '';
 async function loadFondos() {
   const st = document.getElementById('fciStatus'); if (st) st.textContent = 'Cargando...';
@@ -5798,7 +5799,7 @@ function renderFondos() {
   document.getElementById('fciAumSeg').innerHTML = seg([['mes', '5 años, por mes'], ['dia', '120 días']], fciAum, 'fciSetAum');
   fciIndustria(); fciFlujos(); fciRanking(); fciGerentes(); fciFees();
   const errs = Object.keys(FCI.errores || {}), pend = FCI.pendiente || [];
-  document.getElementById('fciNota').textContent = 'Patrimonio por mes: promedio diario; el mes en curso, hasta el último dato. ' + (fciMon === 'ars' ? '' : 'Lo que se baja en pesos se pasa a ' + FCI_MON.find(x => x[0] === fciMon)[1].toLowerCase() + ' con el cociente de la industria total del mismo día o mes. ') + (pend.length ? 'Se completa en la próxima corrida: ' + pend.join(', ') + '. ' : '') + (errs.length ? 'No vinieron: ' + errs.join(', ') + '.' : '');
+  document.getElementById('fciNota').textContent = 'Patrimonio por mes: promedio diario; el mes en curso, hasta el último dato. ' + (fciMon === 'ars' ? '' : 'Lo que se baja en pesos se pasa a ' + FCI_MON.find(x => x[0] === fciMon)[1].toLowerCase() + ' con el cociente de la industria total del mismo día o mes. ') + (pend.length ? 'Se completa en la próxima corrida: ' + pend.map(k => FCI_PASOS[k] || k).join(', ') + '. ' : '') + (errs.length ? 'No vinieron: ' + errs.join(', ') + '.' : '');
 }
 function fciSetMon(m) { fciMon = m; try { localStorage.setItem('fciMon', m); } catch (e) {} renderFondos(); }
 function fciSetAum(m) { fciAum = m; renderFondos(); }
@@ -5947,7 +5948,7 @@ function fciFees() {
   const por = {}; for (const r of G) { const o = por[r[1]] = por[r[1]] || { g: r[1], mes: null, gm: null, y: 0, fee: null }; const v = fciConv(r[3], r[0], true); if (u12.includes(r[0])) o.y += v || 0; if (r[0] === um) { o.mes = v; o.gm = fciConv(r[4], r[0], true); o.fee = r[5] != null ? r[5] * 100 : null; } }
   const rows = Object.values(por).filter(r => r.mes != null).sort((a, b) => b.y - a.y || b.mes - a.mes), totY = rows.reduce((s, r) => s + r.y, 0);
   const top = rows.slice(0, 20), bav = rows.findIndex(r => fciEsBavsa(r.g)); if (bav >= 20) top.push(rows[bav]);
-  const nm = u12.length === 12 ? '12 meses' : u12.length + (u12.length === 1 ? ' mes' : ' meses');
+  const nm = u12.length === 12 || !u12.length ? '12 meses' : u12.length + (u12.length === 1 ? ' mes' : ' meses');
   let h = '<div class="fci-scroll"><table class="ov-tbl arg-tbl fci-tbl"><thead><tr><th class="rk">#</th><th class="tx">Gerente</th><th>Del mes</th><th>De la gerente</th><th>' + nm + '</th><th>% industria</th><th>Fee</th></tr></thead><tbody>';
   top.forEach(r => { h += '<tr' + (fciEsBavsa(r.g) ? ' class="fci-bavsa"' : '') + '><td class="rk">' + (rows.indexOf(r) + 1) + '</td><td class="tx fci-n">' + r.g + '</td><td>' + fciRev(r.mes) + '</td><td>' + fciRev(r.gm) + '</td><td>' + (u12.length ? fciRev(r.y) : '–') + '</td><td>' + (totY ? fciPct(r.y / totY * 100, 2) : '–') + '</td><td>' + fciPct(r.fee, 2) + '</td></tr>'; });
   h += '</tbody></table></div><div class="arg-note">Facturación de gerente más depositaria (y la parte de la gerente), en ' + (fciUsd() ? 'US$ millones' : '$ millones') + '. Del mes: ' + fciMesTxt(um) + ' hasta el último dato; ' + nm + ': los cerrados' + (u12.length ? ' (' + fciMesTxt(u12[0]) + ' a ' + fciMesTxt(u12[u12.length - 1]) + ')' : '') + '. Fee: anual, promedio del mes.</div>';

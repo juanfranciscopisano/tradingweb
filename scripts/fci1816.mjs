@@ -87,7 +87,9 @@ export async function diario(api, { log = console.log, prev = null, hoy = new Da
   o.asOf = new Date().toISOString(); o.fuente = "1816 (datos diarios de la CAFCI)"; o.errores = {}; o.pendiente = [];
   const saldo = async () => { const d = (await api.get("/v1/creditos/balance")).j?.daily; return d && d.limit != null ? d.limit - d.used : Infinity; };
   let libre = await saldo();
+  let solo = null;   // sin día nuevo: solo lo que quedó pendiente
   const paso = async (k, est, f) => {
+    if (solo && !solo.has(k)) return;
     if (est > libre - margen) { o.pendiente.push(k); log(`fci ${k}: queda pendiente (necesita unos ${est} créditos y quedan ${libre})`); return; }
     try { await f(); } catch (e) { o.errores[k] = String(e.message || e).slice(0, 200); log(`fci ${k}: ${e.message}`); if (/402/.test(e.message)) throw e; }
     libre = await saldo();
@@ -100,6 +102,7 @@ export async function diario(api, { log = console.log, prev = null, hoy = new Da
   const fecha = tA.map(x => x.date).sort().at(-1);
   if (!fecha) { log("1816 FCI: no vino el total de la industria"); return null; }
   if (v2 && fecha === prev.fecha && !pendAntes.length) { log("1816 FCI: sin datos nuevos (último " + fecha + ")"); return null; }
+  if (v2 && fecha === prev.fecha) solo = new Set(pendAntes);
   o.total.ars = reemplazar(o.total.ars, desdeT, tA.map(x => [x.date, r0(x.aum), r0(x.netinflows)])).filter(r => r[0] >= corrida(fecha, -400));
   const mesF = mesDe(fecha), mesAnt = v2 && prev.fecha ? mesDe(prev.fecha) : mesF;
   libre = await saldo();
@@ -182,6 +185,7 @@ export async function diario(api, { log = console.log, prev = null, hoy = new Da
     o.gerentes = o.gerentes.filter(r => r[0] >= mesAnt).concat(rows.map(x => [x.date, x.managerName, r0(x.aum), r0(x.feeRevenueTotal), null, null])).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
     o.gerentesHist = true;
   });
+  if (solo && o.pendiente.length === pendAntes.length && !Object.keys(o.errores).length) { log("1816 FCI: sigue pendiente " + o.pendiente.join(", ")); return null; }
   o.gerentes = o.gerentes.filter(r => r[0] >= masMeses(mesF, -36));
   o.fecha = fecha;
   o.creditos = libre === Infinity ? null : { libresHoy: libre };
