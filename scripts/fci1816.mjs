@@ -158,11 +158,11 @@ export async function diario(api, { log = console.log, prev = null, hoy = new Da
   o.fondos = [...porNombre.values()].filter(f => f[6] > 0 && f[1]);
   for (const n of Object.keys(o.flujosFondo)) if (!porNombre.get(n) || !(porNombre.get(n)[6] > 0)) delete o.flujosFondo[n];
 
-  // 5. rendimientos directos de la cuota de referencia (en pesos; los fondos en dólares también en dólares). TNA y TEA
-  // se calculan en la página con los días de cada ventana
+  // 5. rendimientos directos de la cuota de referencia (en pesos; los fondos en dólares también en dólar implícito, que
+  // es el tipo de cambio de cada fondo y da su rendimiento en dólares). TNA y TEA se calculan en la página
   await paso("rend", (Object.keys(o.rend.directo || {}).length || 1300) + 320, async () => {
     const { rows, meta } = await todas(api, "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true }, navReturnType: "direct", currency: "ars", date: fecha });
-    const { rows: u } = await todas(api, "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true, fundCurrency: ["usd", "usb"] }, navReturnType: "direct", currency: "a3500", date: fecha });
+    const { rows: u } = await todas(api, "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true, fundCurrency: ["usd", "usb"] }, navReturnType: "direct", currency: "usd", date: fecha });
     o.rend = { directo: Object.fromEntries(rows.map(x => [x.fundName, VENT.map(k => r6(x[k]))])), directoUsd: Object.fromEntries(u.map(x => [x.fundName, VENT.map(k => r6(x[k]))])) };
     o.clases = Object.fromEntries(rows.map(x => [x.fundName, x.className]));
     o.rendFecha = meta?.date || fecha; o.rendDias = diasVentanas(o.rendFecha, o.total.ars);
