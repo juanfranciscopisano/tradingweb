@@ -62,9 +62,10 @@ export async function diario(api, { log = console.log, hoy = new Date(Date.now()
       out.tiposDia[cur] = rows.map(x => [x.date, x.fundType, r2(x.aum), r2(x.netinflows)]);
     });
   }
-  // gerentes: patrimonio, suscripciones, facturación y fee promedio por mes, 2 años, en pesos y en dólares A3500
+  // gerentes: patrimonio, suscripciones, facturación y fee promedio por mes, 2 años, en pesos (las otras monedas salen
+  // del cociente de la industria por tipo, que viene en las cuatro)
   out.gerentes = {};
-  for (const cur of ["ars", "a3500"]) await paso("gerentes_" + cur, async () => {
+  for (const cur of ["ars"]) await paso("gerentes_" + cur, async () => {
     const { rows } = await todas(api, "/v1/fci/series", { fields: ["aum", "netinflows", "feeRevenueTotal", "feeRevenueManagement", "feeTotal"], group: "managerName", dateCompression: "month", dateStart: ini2, currency: cur });
     out.gerentes[cur] = rows.map(x => [x.date, x.managerName, r2(x.aum), r2(x.netinflows), r2(x.feeRevenueTotal), r2(x.feeRevenueManagement), r6(x.feeTotal)]);
   });

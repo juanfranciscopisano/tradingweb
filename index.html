@@ -510,6 +510,27 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .arg-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .arg-chip-dot{width:8px;height:8px;border-radius:50%}
 .arg-chart-box{position:relative;height:300px}
+.fci-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.fci-bars-box{position:relative;height:260px}
+.fci-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:10px}
+.fci-ctl select,.fci-ctl input{background:var(--surf);border:1px solid var(--line2);border-radius:6px;padding:5px 8px;font:inherit;font-size:12.5px;color:var(--ink)}
+.fci-ctl label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.fci-tbl th.fci-sort{cursor:pointer}
+.fci-tbl th.fci-sort:hover{color:var(--ink)}
+.fci-tbl th[aria-sort] {color:var(--ink)}
+.fci-tbl tbody td:first-child{white-space:normal;line-height:1.3}
+.fci-tbl th.tx,.fci-tbl td.tx{text-align:left;white-space:normal;line-height:1.3}
+.fci-tbl td.tx.fci-n{font-weight:600;color:var(--ink);min-width:200px}
+.fci-tbl th.rk,.fci-tbl td.rk{width:28px;text-align:left;color:var(--faint);font-weight:400;padding-left:0}
+.fci-grid2.fci-ancha{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+.fci-tbl .fci-sub{display:block;font-weight:400;font-size:11px;color:var(--faint)}
+.fci-tbl tr.fci-bavsa td{background:var(--accent-soft)}
+.fci-tbl tr.fci-bavsa td:first-child{box-shadow:inset 3px 0 0 var(--accent);padding-left:6px}
+@media (max-width:1100px){.fci-grid2.fci-ancha{grid-template-columns:minmax(0,1fr)}}
+.fci-tbl td.neg{color:var(--neg,#c0392b)}
+.fci-scroll{max-height:560px;overflow:auto}
+.fci-scroll thead th{position:sticky;top:0;background:var(--surf);z-index:1}
+@media (max-width:1100px){.fci-grid2{grid-template-columns:minmax(0,1fr)}}
 .sect-body{display:flex;flex-direction:column;gap:18px;padding:20px var(--side)}
 .sect-tbl tbody tr{cursor:pointer}
 .sect-tbl tbody tr:hover td{background:var(--surf2)}
@@ -648,6 +669,7 @@ function checkPwd(){
   </div>
   <div class="tab" id="tab-overview" onclick="switchTab('overview')">Resumen</div>
   <div class="tab" id="tab-arg" onclick="switchTab('arg')">Argentina</div>
+  <div class="tab" id="tab-fondos" onclick="switchTab('fondos')">Fondos</div>
   <div class="tab active" id="tab-screener" onclick="switchTab('screener')">Screener</div>
   <div class="tab" id="tab-chart" onclick="switchTab('chart')">Gráfico</div>
   <div class="tab" id="tab-compare" onclick="switchTab('compare')">Comparar</div>
@@ -661,6 +683,65 @@ function checkPwd(){
   <div class="tab-spacer"></div>
   <span class="hdr-time" id="lastUpd">&mdash;</span>
   <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">Modo oscuro</button>
+</div>
+
+<div class="view view-scroll" id="view-fondos">
+  <div class="ov-clock-bar">
+    <span class="arg-title">Fondos comunes de inversión</span>
+    <span class="arg-status">Datos diarios de la CAFCI, vía 1816</span>
+    <div class="cs"></div>
+    <span class="arg-status" id="fciStatus">—</span>
+    <div class="inf-seg" id="fciMonSeg" role="group" aria-label="Moneda"></div>
+  </div>
+  <div class="arg-body">
+    <div class="fci-grid2">
+      <section class="ov-card">
+        <div class="ov-card-title">Industria por tipo de fondo <span id="fciIndSub"></span></div>
+        <div id="fciInd"><div class="ov-loading">Cargando...</div></div>
+      </section>
+      <section class="ov-card">
+        <div class="arg-chart-top"><div class="ov-card-title">Patrimonio por tipo <span id="fciAumSub">promedio mensual</span></div><div class="cs"></div><div class="inf-seg" id="fciAumSeg"></div></div>
+        <div class="arg-chips" id="fciAumChips"></div>
+        <div class="arg-chart-box"><canvas id="fciAumCanvas"></canvas><div class="pebg-tooltip" id="fciAumCanvasTip"></div></div>
+      </section>
+    </div>
+    <section class="ov-card">
+      <div class="arg-chart-top"><div class="ov-card-title">Suscripciones netas por tipo <span id="fciFlowSub">por mes</span></div></div>
+      <div class="fci-bars-box"><canvas id="fciFlowCanvas"></canvas><div class="pebg-tooltip" id="fciFlowCanvasTip"></div></div>
+      <div class="arg-cau-leg" id="fciFlowLeg"></div>
+    </section>
+    <section class="ov-card">
+      <div class="arg-chart-top"><div class="ov-card-title">Ranking por categoría <span id="fciRankSub"></span></div></div>
+      <div class="fci-ctl" id="fciRankCtl"></div>
+      <div id="fciRank"><div class="ov-loading">Cargando...</div></div>
+    </section>
+    <div class="fci-grid2 fci-ancha">
+      <section class="ov-card">
+        <div class="arg-chart-top"><div class="ov-card-title">Market share por sociedad gerente <span id="fciGerSub"></span></div></div>
+        <div class="fci-ctl" id="fciGerCtl"></div>
+        <div id="fciGer"><div class="ov-loading">Cargando...</div></div>
+      </section>
+      <section class="ov-card">
+        <div class="arg-chart-top"><div class="ov-card-title">Participación en el patrimonio <span>% de la industria, por mes</span></div></div>
+        <div class="arg-chips" id="fciShareChips"></div>
+        <div class="arg-chart-box"><canvas id="fciShareCanvas"></canvas><div class="pebg-tooltip" id="fciShareCanvasTip"></div></div>
+      </section>
+    </div>
+    <div class="fci-grid2 fci-ancha">
+      <section class="ov-card">
+        <div class="ov-card-title">Fees y facturación por gerente <span id="fciFeeSub"></span></div>
+        <div id="fciFee"><div class="ov-loading">Cargando...</div></div>
+      </section>
+      <section class="ov-card">
+        <div class="ov-card-title">Fee promedio por tipo de fondo <span>ponderado por patrimonio, gerente más depositaria</span></div>
+        <div id="fciFeeTipo"></div>
+        <div class="arg-chart-top" style="margin-top:14px"><div class="ov-card-title">Facturación mensual <span>gerente más depositaria</span></div></div>
+        <div class="arg-chips" id="fciRevChips"></div>
+        <div class="arg-chart-box"><canvas id="fciRevCanvas"></canvas><div class="pebg-tooltip" id="fciRevCanvasTip"></div></div>
+      </section>
+    </div>
+    <div class="arg-note" id="fciNota"></div>
+  </div>
 </div>
 
 <div class="view view-scroll" id="view-arg">
@@ -1380,6 +1461,7 @@ function switchTab(t) {
   if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
   if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
+  if(t==='fondos') { if(!FCI) loadFondos(); else renderFondos(); }
   if(t==='sect') { if(!MULT) loadSect(); else renderSect(); }
   if(t==='calendar') initCalendar();
   if(t==='informe') initInforme();
@@ -4801,8 +4883,9 @@ const METODO = [
         p: 'S&P no publica la composición gratis. Wikipedia se actualiza el día de cada cambio, y el CIK permite cruzar cada empresa con la SEC sin depender del ticker.' },
       { d: 'Tasas y Fed: curva oficial del Tesoro, Yahoo para los plazos con dato intradiario, la Fed de Nueva York para la EFFR y el rango objetivo, y FRED como respaldo.' },
       { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar.' },
+      { d: 'Fondos: la API de FCI de 1816, con los datos diarios que publica la CAFCI (patrimonio, suscripciones netas, fees, facturación y valor de la cuotaparte de cada clase).' },
       { d: 'Cuándo se actualiza cada cosa.',
-        p: 'Los fundamentals (market cap, Fw P/E, P/BV) se bajan cada día hábil a las 18:47 de Buenos Aires; los múltiplos y el EPS por empresa, a las 19:17. GitHub a veces demora las corridas programadas un par de horas. En la página, el Resumen se refresca cada minuto, y el backend guarda los precios entre 45 y 60 segundos, P/E histórico 30 minutos y lo de la SEC 12 horas.' },
+        p: 'Los fondos se bajan cada día hábil a las 10:17 y a las 19:17 de Buenos Aires (la CAFCI publica el día anterior a la mañana). Los fundamentals (market cap, Fw P/E, P/BV) se bajan cada día hábil a las 18:47 de Buenos Aires; los múltiplos y el EPS por empresa, a las 19:17. GitHub a veces demora las corridas programadas un par de horas. En la página, el Resumen se refresca cada minuto, y el backend guarda los precios entre 45 y 60 segundos, P/E histórico 30 minutos y lo de la SEC 12 horas.' },
     ] },
 
   { id: 'eps', t: 'Cómo se arma el EPS de cada empresa',
@@ -5106,6 +5189,20 @@ const METODO = [
       { d: 'Las elecciones de domingo van el lunes siguiente, que es cuando reacciona el mercado. La leyenda prende y apaga cada categoría.' },
       { d: 'Balances: el próximo de las Magníficas 7 y de cada empresa de la lista de la pestaña Cartera, con la fecha de Yahoo (fecha de Nueva York), si es antes de la apertura o después del cierre (por la hora de la conferencia) y el EPS esperado. "A confirmar" es la fecha que Yahoo estima antes de que la empresa la anuncie. Se actualiza todas las noches con fundamentals.',
         p: 'Yahoo solo da el próximo balance; los que ya pasaron quedan porque el archivo guarda cada fecha confirmada cuando Yahoo pasa a la siguiente. Por eso los balances anteriores a la primera corrida (27/10/2026) no están.' },
+    ] },
+
+  { id: 'fondos', t: 'Fondos',
+    items: [
+      { d: 'Todo sale de la API de FCI de 1816 (datos diarios de la CAFCI). Un proceso la consulta dos veces por día hábil y deja el resultado en fondos.json; la clave del módulo de fondos está en los secretos del repositorio y nunca llega a la página.' },
+      { d: 'Industria por tipo: patrimonio del último día por tipo de fondo, su participación y su variación contra el último dato de 30 días antes. Las suscripciones netas de 7 y 30 días son la suma de los días. El gráfico va con el patrimonio promedio de cada mes (5 años) o el diario (120 días); las columnas, con las suscripciones netas de cada mes.' },
+      { d: 'Monedas: 1816 da la industria por tipo en pesos, pesos de hoy (CER), dólares A3500 y dólar implícito. Lo que se baja solo en pesos (cada fondo, cada gerente, la facturación) se pasa con el cociente de la industria total del mismo día, o del mismo mes para los promedios mensuales.',
+        p: 'El cociente de la industria es el tipo de cambio (o el CER) que usó 1816 ese día, así que para un día el pasaje es el mismo. Para un mes es el cociente de los promedios, que se aparta poco del promedio de los cocientes. Bajar todo en las cuatro monedas multiplicaría los créditos por cuatro.' },
+      { d: 'Ranking: un fondo por fila, con los rendimientos de la clase de referencia que marca 1816, en TNA o directos (los fondos en dólares, en dólares). Fee: gerente más depositaria, anual. Se ordena por cualquier columna y arranca en Mercado de Dinero.',
+        p: 'Con todas las clases el mismo fondo aparecería varias veces con rendimientos que solo difieren por el fee de cada clase.' },
+      { d: 'Market share: patrimonio promedio del mes por sociedad gerente y su cambio en puntos contra el mismo mes de un año antes; por tipo de fondo, el mes en curso. Van las 20 más grandes y BAVSA aunque esté más abajo.' },
+      { d: 'Fees y facturación: lo que facturan gerente y depositaria (y la parte de la gerente) en el mes en curso y en los 12 meses cerrados anteriores, y el fee promedio del mes. El fee por tipo de la industria está ponderado por patrimonio.' },
+      { d: 'BAVSA se reconoce por el nombre de la gerente (BAVSA o Buenos Aires Valores): va resaltado en las tablas y con el azul de la marca en los gráficos.' },
+      { d: 'Si 1816 manda rendimientos o fees en decimales (0,30 por 30%), se pasan a porcentaje mirando la mediana de todos los fondos.' },
     ] },
 
   { id: 'lim', t: 'Lo que todavía no está resuelto',
@@ -5644,6 +5741,221 @@ function drawLines(id, series, fmt, hoverT) {
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(); const t = t0 + (e.clientX - r.left - P.l) / (W - P.l - P.r) * (t1 - t0); drawLines(id, series, fmt, Math.max(t0, Math.min(t1, t))); };
   cv.onpointerleave = () => drawLines(id, series, fmt);
 }
+
+// ── FONDOS: industria de FCI (datos diarios de la CAFCI vía la API de FCI de 1816, fondos.json) ──
+// Lo que no viene en las cuatro monedas (gerentes, fondos, flujos por ventana) se pasa con el cociente de la industria
+// por tipo, que 1816 sí da en pesos, pesos de hoy, dólar A3500 y dólar implícito: el mismo tipo de cambio que usa 1816.
+let FCI = null, fciMon = 'ars', fciAum = 'mes', fciRankTipo = null, fciRankSub = '', fciRankQ = '', fciRendT = 'tna', fciSort = { k: 'aum', asc: false }, fciGerTipo = 'total', fciAumOn = null, fciShareOn = null, fciRevOn = null;
+try { fciMon = localStorage.getItem('fciMon') || 'ars'; } catch (e) {}
+const FCI_MON = [['ars', 'Pesos'], ['cer', 'Pesos de hoy'], ['a3500', 'US$ A3500'], ['usd', 'US$ implícito']];
+const FCI_VENT = ['lastDay', '7d', 'mtd', '30d', '90d', 'ytd', '1y', '2y', '5y'];
+const fciEsBavsa = m => /bavsa|buenos aires valores/i.test(m || '');
+// colores de las series: BAVSA siempre en el azul de la marca; el resto, la paleta de la página en orden
+const fciColores = nombres => { let i = 0; return Object.fromEntries(nombres.map(n => [n, fciEsBavsa(n) ? BV.azul : cssVar(ARG_COLORS[i++ % ARG_COLORS.length])])); };
+const fciUsd = () => fciMon === 'a3500' || fciMon === 'usd';
+const fciUnidad = () => fciUsd() ? 'US$ millones' : '$ miles de millones';
+const fciMonto = v => v == null ? '–' : numAR(v / (fciUsd() ? 1e6 : 1e9), 0, Math.abs(v / (fciUsd() ? 1e6 : 1e9)) < 10 ? 1 : 0);
+const fciPct = (v, d = 1) => v == null || !isFinite(v) ? '–' : numAR(v, d, d) + '%';
+const fciEsc = (h, c) => '<' + h + '>' + c + '</' + h.split(' ')[0] + '>';
+async function loadFondos() {
+  const st = document.getElementById('fciStatus'); if (st) st.textContent = 'Cargando...';
+  try { FCI = await (await fetch('fondos.json?d=' + new Date().toISOString().slice(0, 10))).json(); }
+  catch (e) { FCI = { error: 'Todavía no están los datos de fondos (fondos.json): falta correr el proceso de 1816 FCI.' }; }
+  fciPrep(); renderFondos();
+}
+// factores de conversión: pesos / moneda elegida, por día (últimos 120) y por mes, de la industria por tipo
+function fciPrep() {
+  if (!FCI || FCI.error) return;
+  const fac = (arr, key) => { const out = {}; const sum = rows => { const m = {}; for (const r of rows || []) m[r[0]] = (m[r[0]] || 0) + (r[2] || 0); return m; };
+    const a = sum(arr.ars); for (const [cur] of FCI_MON) { const b = sum(arr[cur]); out[cur] = {}; for (const d in a) if (b[d] > 0) out[cur][d] = a[d] / b[d]; } return out; };
+  FCI._fd = fac(FCI.tiposDia || {}); FCI._fm = fac(FCI.tipos || {});
+  const dias = Object.keys((FCI._fd.ars || {})).sort(); FCI._ult = dias[dias.length - 1] || null;
+  // escala de los rendimientos y fees: si vienen en decimales (0,30 = 30%) se pasan a %
+  const med = a => { const v = a.filter(x => x != null && isFinite(x)).map(Math.abs).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const tnas = Object.values((FCI.rend || {}).tna || {}).map(x => x[3]); const mt = med(tnas);
+  FCI._kRend = mt != null && mt < 2 ? 100 : 1;
+  const fees = (FCI.fondos || []).map(x => x[7]); const mf = med(fees);
+  FCI._kFee = mf != null && mf < 0.5 ? 100 : 1;
+}
+// pesos → moneda elegida: con el factor del día (o del mes) más cercano anterior
+function fciConv(v, fecha, mensual) {
+  if (v == null || fciMon === 'ars' || !FCI || FCI.error) return v;
+  const tab = (mensual ? FCI._fm : FCI._fd)[fciMon] || {}, ks = Object.keys(tab).sort();
+  if (!ks.length) return v;
+  let k = ks[ks.length - 1]; if (fecha) for (let i = ks.length - 1; i >= 0; i--) if (ks[i] <= fecha) { k = ks[i]; break; }
+  return v / tab[k];
+}
+function renderFondos() {
+  const seg = (opts, cur, fn) => opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('');
+  document.getElementById('fciMonSeg').innerHTML = seg(FCI_MON, fciMon, 'fciSetMon');
+  const st = document.getElementById('fciStatus');
+  if (!FCI || FCI.error) { ['fciInd', 'fciRank', 'fciGer', 'fciFee'].forEach(id => { const e = document.getElementById(id); if (e) e.innerHTML = '<div class="ov-loading">' + ((FCI && FCI.error) || 'Sin datos') + '</div>'; }); if (st) st.textContent = ''; return; }
+  if (st) st.textContent = 'Datos al ' + (FCI._ult ? infDdmmaa(FCI._ult) : (FCI.fechaDatos ? infDdmmaa(FCI.fechaDatos) : '—'));
+  document.getElementById('fciAumSeg').innerHTML = seg([['mes', '5 años, por mes'], ['dia', '120 días']], fciAum, 'fciSetAum');
+  fciIndustria(); fciFlujos(); fciRanking(); fciGerentes(); fciFees();
+  const errs = Object.keys(FCI.errores || {});
+  document.getElementById('fciNota').textContent = 'Patrimonio: promedio diario del período. El último mes va hasta el último dato (parcial). ' + (fciMon === 'ars' ? '' : 'Lo que 1816 no da en ' + FCI_MON.find(x => x[0] === fciMon)[1].toLowerCase() + ' se pasa con el cociente de la industria del mismo día o mes. ') + (errs.length ? 'No vinieron: ' + errs.join(', ') + '.' : '');
+}
+function fciSetMon(m) { fciMon = m; try { localStorage.setItem('fciMon', m); } catch (e) {} renderFondos(); }
+function fciSetAum(m) { fciAum = m; renderFondos(); }
+// industria: tabla por tipo con el último día, variación de 30 días y suscripciones por ventana
+function fciIndustria() {
+  const D = (FCI.tiposDia || {})[fciMon] || [], fechas = [...new Set(D.map(r => r[0]))].sort(), u = fechas[fechas.length - 1];
+  const hace = fechas.filter(d => d <= infShift(u || '2000-01-01', 30)).pop();
+  const aum = d => { const m = {}; for (const r of D) if (r[0] === d) m[r[1]] = r[2]; return m; };
+  const hoy = aum(u), ant = aum(hace), tot = Object.values(hoy).reduce((a, b) => a + (b || 0), 0);
+  // suscripciones netas por ventana: suma de los diarios en la moneda elegida
+  const flujo = (t, dias) => D.filter(r => r[1] === t && r[0] > infShift(u, dias) && r[0] <= u).reduce((a, r) => a + (r[3] || 0), 0);
+  const ytd = t => D.filter(r => r[1] === t && r[0] >= u.slice(0, 4) + '-01-01').reduce((a, r) => a + (r[3] || 0), 0);
+  const tipos = Object.keys(hoy).sort((a, b) => (hoy[b] || 0) - (hoy[a] || 0));
+  const fila = (t, a, b, f7, f30, cls) => '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + t + '</td><td>' + fciMonto(a) + '</td><td>' + fciPct(a / tot * 100) + '</td><td class="' + (b && a < b ? 'neg' : '') + '">' + (b ? fciPct((a / b - 1) * 100) : '–') + '</td><td class="' + (f7 < 0 ? 'neg' : '') + '">' + fciMonto(f7) + '</td><td class="' + (f30 < 0 ? 'neg' : '') + '">' + fciMonto(f30) + '</td></tr>';
+  let h = '<table class="ov-tbl arg-tbl fci-tbl"><thead><tr><th>Tipo</th><th>Patrimonio</th><th>% del total</th><th>Var. 30 días</th><th>Suscr. 7 días</th><th>Suscr. 30 días</th></tr></thead><tbody>';
+  let s7 = 0, s30 = 0, sAnt = 0;
+  for (const t of tipos) { const f7 = flujo(t, 7), f30 = flujo(t, 30); s7 += f7; s30 += f30; sAnt += ant[t] || 0; h += fila(t, hoy[t], ant[t], f7, f30); }
+  h += fila('Total', tot, sAnt, s7, s30, 'arg-total') + '</tbody></table>';
+  h += '<div class="arg-note">' + fciUnidad() + '. Variación del patrimonio contra el ' + (hace ? infDdmmaa(hace) : '–') + '; las suscripciones netas son la suma de los días.</div>';
+  document.getElementById('fciInd').innerHTML = h;
+  document.getElementById('fciIndSub').textContent = u ? 'al ' + infDdmmaa(u) : '';
+  // gráfico de patrimonio por tipo
+  const src = fciAum === 'dia' ? D : ((FCI.tipos || {})[fciMon] || []);
+  if (!fciAumOn) fciAumOn = new Set(tipos.slice(0, 5));
+  document.getElementById('fciAumChips').innerHTML = tipos.map((t, i) => '<button type="button" class="arg-chip' + (fciAumOn.has(t) ? ' on' : '') + '" aria-pressed="' + fciAumOn.has(t) + '" onclick="fciToggle(\'aum\', \'' + t.replace(/'/g, "\\'") + '\')"><span class="arg-chip-dot" style="background:' + cssVar(ARG_COLORS[i % ARG_COLORS.length]) + '"></span>' + t + '</button>').join('');
+  const ser = tipos.map((t, i) => ({ name: t, color: cssVar(ARG_COLORS[i % ARG_COLORS.length]), pts: src.filter(r => r[1] === t && r[2] != null).map(r => ({ t: argT(r[0]), v: r[2] / (fciUsd() ? 1e6 : 1e9) })) })).filter(s => fciAumOn.has(s.name) && s.pts.length > 1);
+  document.getElementById('fciAumSub').textContent = (fciAum === 'dia' ? 'diario' : 'promedio mensual') + ', ' + fciUnidad();
+  drawLines('fciAumCanvas', ser, (v, tip) => numAR(v, tip ? 1 : 0, tip ? 1 : 0));
+}
+function fciToggle(k, t) { const set = k === 'aum' ? fciAumOn : k === 'share' ? fciShareOn : fciRevOn; set.has(t) ? set.delete(t) : set.add(t); renderFondos(); }
+// suscripciones netas por mes y por tipo: columnas apiladas (las positivas arriba de cero, las negativas abajo)
+function fciFlujos() {
+  const M = (FCI.tipos || {})[fciMon] || [], meses = [...new Set(M.map(r => r[0]))].sort().slice(-24);
+  const tipos = [...new Set(M.map(r => r[1]))];
+  const tot = t => M.filter(r => r[1] === t).reduce((a, r) => a + Math.abs(r[3] || 0), 0);
+  tipos.sort((a, b) => tot(b) - tot(a));
+  const k = fciUsd() ? 1e6 : 1e9;
+  const ser = tipos.map((t, i) => ({ name: t, color: cssVar(ARG_COLORS[i % ARG_COLORS.length]), vals: meses.map(m => { const r = M.find(x => x[0] === m && x[1] === t); return r && r[3] != null ? r[3] / k : 0; }) }));
+  fciStackBars('fciFlowCanvas', meses.map(m => MES_CORTO[+m.slice(5, 7) - 1] + ' ' + m.slice(2, 4)), ser);
+  document.getElementById('fciFlowLeg').innerHTML = ser.map(s => '<span><i style="border-top:8px solid ' + s.color + ';width:10px"></i>' + s.name + '</span>').join('');
+  document.getElementById('fciFlowSub').textContent = 'por mes, ' + fciUnidad() + '; el último mes, hasta el último dato';
+}
+function fciStackBars(id, cats, series, hover) {
+  const cv = document.getElementById(id); if (!cv) return;
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1, W = box.clientWidth, H = box.clientHeight; if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const grid = cssVar('--chart-grid'), text = cssVar('--chart-text'), P = { l: 10, r: 64, t: 10, b: 24 };
+  const pos = cats.map((_, i) => series.reduce((a, s) => a + Math.max(0, s.vals[i]), 0)), neg = cats.map((_, i) => series.reduce((a, s) => a + Math.min(0, s.vals[i]), 0));
+  let mx = Math.max(0, ...pos), mn = Math.min(0, ...neg); const pad = (mx - mn) * 0.06 || 1; mx += pad; mn -= mn < 0 ? pad : 0;
+  const ys = v => P.t + (1 - (v - mn) / (mx - mn)) * (H - P.t - P.b), slot = (W - P.l - P.r) / cats.length, bw = Math.max(2, slot * 0.66);
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  niceTicks(mn, mx, 5).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = v === 0 ? text : grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText(numAR(v, 0, 1), W - P.r + 6, y + 4); });
+  cats.forEach((c, i) => {
+    const x = P.l + slot * i + (slot - bw) / 2; let up = 0, dn = 0;
+    series.forEach(s => { const v = s.vals[i]; if (!v) return; ctx.fillStyle = s.color; if (v > 0) { ctx.fillRect(x, ys(up + v), bw, ys(up) - ys(up + v)); up += v; } else { ctx.fillRect(x, ys(dn), bw, ys(dn + v) - ys(dn)); dn += v; } });
+    if (i % Math.ceil(cats.length / Math.max(4, Math.floor((W - P.l - P.r) / 56))) === 0) { ctx.fillStyle = text; ctx.textAlign = 'center'; ctx.fillText(c, x + bw / 2, H - 6); }
+  });
+  const tip = document.getElementById(id + 'Tip');
+  if (hover != null && tip) {
+    const i = hover; ctx.strokeStyle = text; ctx.globalAlpha = 0.35; ctx.strokeRect(P.l + slot * i + 1, P.t, slot - 2, H - P.t - P.b); ctx.globalAlpha = 1;
+    const neto = series.reduce((a, s) => a + s.vals[i], 0);
+    tip.innerHTML = '<div class="pebg-tooltip-date">' + cats[i] + '</div>' + series.filter(s => s.vals[i]).map(s => '<div class="pebg-tooltip-row"><span class="pebg-tooltip-dot" style="background:' + s.color + '"></span>' + s.name + ': ' + numAR(s.vals[i], 1, 1) + '</div>').join('') + '<div class="pebg-tooltip-row"><b>Neto: ' + numAR(neto, 1, 1) + '</b></div>';
+    tip.style.display = 'block'; const xm = P.l + slot * (i + 0.5); tip.style.left = Math.min(W - tip.offsetWidth - 4, Math.max(4, xm + 12)) + 'px'; tip.style.top = '8px';
+  } else if (tip) tip.style.display = 'none';
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); const i = Math.floor((e.clientX - r.left - P.l) / slot); fciStackBars(id, cats, series, i >= 0 && i < cats.length ? i : null); };
+  cv.onpointerleave = () => fciStackBars(id, cats, series);
+}
+// ranking: un fondo por fila (cuota de referencia para los rendimientos), filtrado por tipo y subtipo
+function fciRanking() {
+  const F = FCI.fondos || [], tipos = [...new Set(F.map(x => x[1]).filter(Boolean))].sort((a, b) => F.filter(x => x[1] === b).reduce((s, x) => s + (x[6] || 0), 0) - F.filter(x => x[1] === a).reduce((s, x) => s + (x[6] || 0), 0));
+  if (!fciRankTipo || !tipos.includes(fciRankTipo)) fciRankTipo = tipos.find(t => /dinero/i.test(t)) || tipos[0];
+  const subs = [...new Set(F.filter(x => x[1] === fciRankTipo).map(x => x[2]).filter(Boolean))].sort();
+  if (fciRankSub && !subs.includes(fciRankSub)) fciRankSub = '';
+  document.getElementById('fciRankCtl').innerHTML = '<div class="inf-seg">' + tipos.map(t => '<button type="button" class="' + (t === fciRankTipo ? 'on' : '') + '" aria-pressed="' + (t === fciRankTipo) + '" onclick="fciSetRank(\'tipo\', this.dataset.v)" data-v="' + t.replace(/"/g, '&quot;') + '">' + t + '</button>').join('') + '</div>'
+    + (subs.length > 1 ? '<label>Subtipo <select onchange="fciSetRank(\'sub\', this.value)"><option value="">Todos</option>' + subs.map(x => '<option' + (x === fciRankSub ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label>' : '')
+    + '<div class="inf-seg">' + [['tna', 'TNA'], ['directo', 'Rendimiento directo']].map(([v, l]) => '<button type="button" class="' + (v === fciRendT ? 'on' : '') + '" onclick="fciSetRank(\'rend\', \'' + v + '\')">' + l + '</button>').join('') + '</div>'
+    + '<label>Buscar <input type="search" value="' + fciRankQ.replace(/"/g, '&quot;') + '" oninput="fciSetRank(\'q\', this.value)" placeholder="fondo o gerente"></label>';
+  const R = FCI.rend || {}, kR = FCI._kRend || 1, kF = FCI._kFee || 1, fl = FCI.flujosFondo || {};
+  const q = fciRankQ.trim().toLowerCase();
+  const rows = F.filter(x => x[1] === fciRankTipo && (!fciRankSub || x[2] === fciRankSub) && (!q || (x[0] + ' ' + x[4]).toLowerCase().includes(q))).map(x => {
+    const usd = /usd|d[oó]lar/i.test(x[3] || ''), rr = fciRendT === 'tna' ? (R.tna || {})[x[0]] : (usd ? (R.directoUsd || {})[x[0]] : (R.directo || {})[x[0]]);
+    const r = k => rr && rr[FCI_VENT.indexOf(k)] != null ? rr[FCI_VENT.indexOf(k)] * kR : null;
+    return { n: x[0], cl: (FCI.clases || {})[x[0]] || '', g: x[4], aum: fciConv(x[6], x[8]), fee: x[7] != null ? x[7] * kF : null, d1: r('lastDay'), d7: r('7d'), d30: r('30d'), mtd: r('mtd'), ytd: r('ytd'), y1: r('1y'), f30: fciConv((fl[x[0]] || [])[3] ?? null), usd };
+  });
+  const k = fciSort.k, sg = fciSort.asc ? 1 : -1;
+  rows.sort((a, b) => (a[k] == null) - (b[k] == null) || ((typeof a[k] === 'string' ? a[k].localeCompare(b[k]) : (a[k] - b[k])) * sg));
+  const cols = [['n', 'Fondo'], ['g', 'Gerente'], ['aum', 'Patrimonio'], ['fee', 'Fee'], ['d1', '1 día'], ['d7', '7 días'], ['d30', '30 días'], ['mtd', 'Mes'], ['ytd', 'Año'], ['y1', '1 año'], ['f30', 'Suscr. 30 días']];
+  const th = cols.map(([c, l]) => '<th class="fci-sort' + (c === 'n' || c === 'g' ? ' tx' : '') + '"' + (c === k ? ' aria-sort="' + (fciSort.asc ? 'ascending' : 'descending') + '"' : '') + ' onclick="fciSetSort(\'' + c + '\')">' + l + (c === k ? (fciSort.asc ? ' ▲' : ' ▼') : '') + '</th>').join('');
+  const pc = v => '<td class="' + (v != null && v < 0 ? 'neg' : '') + '">' + fciPct(v, 2) + '</td>';
+  let h = '<div class="fci-scroll"><table class="ov-tbl arg-tbl fci-tbl"><thead><tr><th class="rk">#</th>' + th + '</tr></thead><tbody>';
+  rows.forEach((r, i) => { h += '<tr' + (fciEsBavsa(r.g) ? ' class="fci-bavsa"' : '') + '><td class="rk">' + (i + 1) + '</td><td class="tx fci-n">' + r.n + (r.cl ? '<span class="fci-sub">Clase ' + r.cl + (r.usd ? ', en dólares' : '') + '</span>' : '') + '</td><td class="tx">' + r.g + '</td><td>' + fciMonto(r.aum) + '</td><td>' + fciPct(r.fee, 2) + '</td>' + pc(r.d1) + pc(r.d7) + pc(r.d30) + pc(r.mtd) + pc(r.ytd) + pc(r.y1) + '<td class="' + (r.f30 < 0 ? 'neg' : '') + '">' + fciMonto(r.f30) + '</td></tr>'; });
+  h += '</tbody></table></div><div class="arg-note">' + rows.length + ' fondos. Patrimonio en ' + fciUnidad() + '. Rendimientos de la cuota de referencia ' + (fciRendT === 'tna' ? 'en TNA (anualizado lineal)' : 'directos (variación de la cuotaparte; los fondos en dólares, en dólares)') + '. Fee: gerente más depositaria, anual. BAVSA, resaltado.</div>';
+  document.getElementById('fciRank').innerHTML = h;
+  document.getElementById('fciRankSub').textContent = fciRankTipo + (fciRankSub ? ', ' + fciRankSub : '');
+}
+function fciSetRank(k, v) {
+  if (k === 'tipo') { fciRankTipo = v; fciRankSub = ''; } else if (k === 'sub') fciRankSub = v; else if (k === 'rend') fciRendT = v; else if (k === 'q') fciRankQ = v;
+  fciRanking();
+  if (k === 'q') { const i = document.querySelector('#fciRankCtl input[type=search]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+}
+function fciSetSort(c) { fciSort = { k: c, asc: fciSort.k === c ? !fciSort.asc : (c === 'n' || c === 'g') }; fciRanking(); }
+// market share por gerente: toda la industria (con la historia mensual) o un tipo (el mes en curso)
+function fciGerentes() {
+  const G = (FCI.gerentes || {}).ars || [], meses = [...new Set(G.map(r => r[0]))].sort(), um = meses[meses.length - 1], m12 = meses[Math.max(0, meses.length - 13)];
+  const tiposG = Object.keys(FCI.gerentesTipo || {});
+  document.getElementById('fciGerCtl').innerHTML = '<label>Tipo <select onchange="fciGerTipo = this.value; fciGerentes()"><option value="total">Toda la industria</option>' + tiposG.map(t => '<option' + (t === fciGerTipo ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>';
+  let rows;
+  if (fciGerTipo === 'total') {
+    const por = m => { const o = {}; for (const r of G) if (r[0] === m) o[r[1]] = r; return o; };
+    const a = por(um), b = por(m12), ta = Object.values(a).reduce((s, r) => s + (r[2] || 0), 0), tb = Object.values(b).reduce((s, r) => s + (r[2] || 0), 0);
+    rows = Object.values(a).map(r => ({ g: r[1], aum: fciConv(r[2], um, true), sh: r[2] / ta * 100, d12: b[r[1]] && tb ? r[2] / ta * 100 - b[r[1]][2] / tb * 100 : null, fl: fciConv(r[3], um, true) }));
+  } else {
+    const T = (FCI.gerentesTipo || {})[fciGerTipo] || [], t = T.reduce((s, r) => s + (r[1] || 0), 0);
+    rows = T.map(r => ({ g: r[0], aum: fciConv(r[1]), sh: r[1] / t * 100, d12: null, fl: fciConv(r[2]) }));
+  }
+  rows.sort((a, b) => b.sh - a.sh);
+  const top = rows.slice(0, 20), bav = rows.findIndex(r => fciEsBavsa(r.g));
+  if (bav >= 20) top.push(rows[bav]);
+  let h = '<div class="fci-scroll"><table class="ov-tbl arg-tbl fci-tbl"><thead><tr><th class="rk">#</th><th class="tx">Gerente</th><th>Patrimonio</th><th>Share</th>' + (fciGerTipo === 'total' ? '<th>Cambio 12 meses</th>' : '') + '<th>Suscr. del mes</th></tr></thead><tbody>';
+  top.forEach(r => { const i = rows.indexOf(r); h += '<tr' + (fciEsBavsa(r.g) ? ' class="fci-bavsa"' : '') + '><td class="rk">' + (i + 1) + '</td><td class="tx fci-n">' + r.g + '</td><td>' + fciMonto(r.aum) + '</td><td>' + fciPct(r.sh, 2) + '</td>' + (fciGerTipo === 'total' ? '<td class="' + (r.d12 < 0 ? 'neg' : '') + '">' + (r.d12 == null ? '–' : (r.d12 > 0 ? '+' : '') + numAR(r.d12, 2, 2) + ' pp') + '</td>' : '') + '<td class="' + (r.fl < 0 ? 'neg' : '') + '">' + fciMonto(r.fl) + '</td></tr>'; });
+  h += '</tbody></table></div><div class="arg-note">' + rows.length + ' sociedades gerentes. Patrimonio promedio de ' + (um ? MES_CORTO[+um.slice(5, 7) - 1].toLowerCase() + ' ' + um.slice(0, 4) : 'el mes') + ' (hasta el último dato), en ' + fciUnidad() + (fciGerTipo === 'total' ? '; el cambio es contra el mismo mes de hace un año' : '') + '.</div>';
+  document.getElementById('fciGer').innerHTML = h;
+  document.getElementById('fciGerSub').textContent = fciGerTipo === 'total' ? 'toda la industria' : fciGerTipo;
+  // participación en el tiempo: las 6 más grandes y BAVSA
+  const tot = {}; for (const r of G) tot[r[0]] = (tot[r[0]] || 0) + (r[2] || 0);
+  const ult = {}; for (const r of G) if (r[0] === um) ult[r[1]] = r[2] || 0;
+  const orden = Object.keys(ult).sort((a, b) => ult[b] - ult[a]), cand = orden.slice(0, 8).concat(orden.filter(fciEsBavsa).filter(x => !orden.slice(0, 8).includes(x)));
+  if (!fciShareOn) fciShareOn = new Set(orden.slice(0, 5).concat(orden.filter(fciEsBavsa)));
+  const colS = fciColores(cand);
+  document.getElementById('fciShareChips').innerHTML = cand.map(g => '<button type="button" class="arg-chip' + (fciShareOn.has(g) ? ' on' : '') + '" aria-pressed="' + fciShareOn.has(g) + '" onclick="fciToggle(\'share\', this.dataset.v)" data-v="' + g.replace(/"/g, '&quot;') + '"><span class="arg-chip-dot" style="background:' + colS[g] + '"></span>' + g + '</button>').join('');
+  const ser = cand.map(g => ({ name: g, color: colS[g], pts: G.filter(r => r[1] === g && tot[r[0]]).map(r => ({ t: argT(r[0]), v: (r[2] || 0) / tot[r[0]] * 100 })) })).filter(s => fciShareOn.has(s.name) && s.pts.length > 1);
+  drawLines('fciShareCanvas', ser, (v, tip) => numAR(v, tip ? 2 : 0, tip ? 2 : 1) + '%');
+}
+// fees y facturación: por gerente (último mes y 12 meses) y fee promedio por tipo
+function fciFees() {
+  const G = (FCI.gerentes || {}).ars || [], meses = [...new Set(G.map(r => r[0]))].sort(), um = meses[meses.length - 1], kF = FCI._kFee || 1;
+  // 12 meses cerrados: sin el mes en curso si el último dato diario cae en él
+  const u12 = meses.filter(m => !(m === um && FCI._ult && FCI._ult.slice(0, 7) === um.slice(0, 7))).slice(-12);
+  const por = {}; for (const r of G) { const o = por[r[1]] = por[r[1]] || { g: r[1], mes: null, gm: null, y: 0, fee: null, aum: 0 }; const v = fciConv(r[4], r[0], true); if (u12.includes(r[0])) o.y += v || 0; if (r[0] === um) { o.mes = v; o.gm = fciConv(r[5], r[0], true); o.fee = r[6] != null ? r[6] * kF : null; o.aum = r[2] || 0; } }
+  const rows = Object.values(por).filter(r => r.mes != null).sort((a, b) => b.y - a.y), totY = rows.reduce((s, r) => s + r.y, 0);
+  const top = rows.slice(0, 20), bav = rows.findIndex(r => fciEsBavsa(r.g)); if (bav >= 20) top.push(rows[bav]);
+  let h = '<div class="fci-scroll"><table class="ov-tbl arg-tbl fci-tbl"><thead><tr><th class="rk">#</th><th class="tx">Gerente</th><th>Del mes</th><th>De la gerente</th><th>12 meses</th><th>% industria</th><th>Fee</th></tr></thead><tbody>';
+  top.forEach(r => { h += '<tr' + (fciEsBavsa(r.g) ? ' class="fci-bavsa"' : '') + '><td class="rk">' + (rows.indexOf(r) + 1) + '</td><td class="tx fci-n">' + r.g + '</td><td>' + fciRev(r.mes) + '</td><td>' + fciRev(r.gm) + '</td><td>' + fciRev(r.y) + '</td><td>' + fciPct(r.y / totY * 100, 2) + '</td><td>' + fciPct(r.fee, 2) + '</td></tr>'; });
+  h += '</tbody></table></div><div class="arg-note">Facturación de gerente más depositaria (y la parte de la gerente), en ' + (fciUsd() ? 'US$ millones' : '$ millones') + '; el mes en curso, hasta el último dato; 12 meses, los cerrados. Fee: anual, promedio del mes.</div>';
+  document.getElementById('fciFee').innerHTML = h;
+  document.getElementById('fciFeeSub').textContent = um ? MES_CORTO[+um.slice(5, 7) - 1].toLowerCase() + ' ' + um.slice(0, 4) : '';
+  // fee promedio por tipo, ponderado por patrimonio
+  const T = FCI.gerentesTipo || {};
+  const ft = Object.entries(T).map(([t, rs]) => { const a = rs.reduce((s, r) => s + (r[1] || 0), 0), f = rs.reduce((s, r) => s + (r[1] || 0) * (r[3] || 0), 0); const b = rs.find(r => fciEsBavsa(r[0])); return { t, fee: a ? f / a * kF : null, bav: b && b[3] != null ? b[3] * kF : null, a }; }).sort((x, y) => y.a - x.a);
+  document.getElementById('fciFeeTipo').innerHTML = '<table class="ov-tbl arg-tbl fci-tbl"><thead><tr><th>Tipo</th><th>Industria</th><th>BAVSA</th></tr></thead><tbody>' + ft.map(r => '<tr><td>' + r.t + '</td><td>' + fciPct(r.fee, 2) + '</td><td>' + fciPct(r.bav, 2) + '</td></tr>').join('') + '</tbody></table>';
+  // facturación mensual: las 5 que más facturan y BAVSA
+  const orden = rows.map(r => r.g), cand = orden.slice(0, 6).concat(orden.filter(fciEsBavsa).filter(x => !orden.slice(0, 6).includes(x)));
+  if (!fciRevOn) fciRevOn = new Set(orden.slice(0, 4).concat(orden.filter(fciEsBavsa)));
+  const colR = fciColores(cand);
+  document.getElementById('fciRevChips').innerHTML = cand.map(g => '<button type="button" class="arg-chip' + (fciRevOn.has(g) ? ' on' : '') + '" aria-pressed="' + fciRevOn.has(g) + '" onclick="fciToggle(\'rev\', this.dataset.v)" data-v="' + g.replace(/"/g, '&quot;') + '"><span class="arg-chip-dot" style="background:' + colR[g] + '"></span>' + g + '</button>').join('');
+  const k = 1e6;
+  const ser = cand.map(g => ({ name: g, color: colR[g], pts: G.filter(r => r[1] === g && r[0] !== um).map(r => ({ t: argT(r[0]), v: (fciConv(r[4], r[0], true) || 0) / k })) })).filter(s => fciRevOn.has(s.name) && s.pts.length > 1);
+  drawLines('fciRevCanvas', ser, (v, tip) => numAR(v, tip ? 1 : 0, tip ? 1 : 0));
+}
+const fciRev = v => v == null ? '–' : numAR(v / 1e6, 0, Math.abs(v / 1e6) < 10 ? 1 : 0);
 
 // ── INFORME: gráficos en formato BAVSA para copiar y pegar en un informe ──
 // Todo se dibuja en un canvas blanco al doble de resolución: título, bajada con el subrayado azul, el gráfico, la
