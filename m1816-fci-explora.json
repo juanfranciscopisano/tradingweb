@@ -1,1 +1,366 @@
-{"asOf":"2026-10-28T20:36:50.596Z","error":"sin API_1816_FCI_KEY"}
+{
+ "asOf": "2026-10-28T20:51:13.671Z",
+ "balanceAntes": {
+  "module": "fci",
+  "daily": {
+   "used": 0,
+   "limit": 10000
+  },
+  "monthly": {
+   "used": 0,
+   "limit": 310000
+  }
+ },
+ "groups": {
+  "data": [
+   {
+    "key": "fundName",
+    "label": "Fondo"
+   },
+   {
+    "key": "fundType",
+    "label": "Tipo de fondo"
+   },
+   {
+    "key": "fundSubType",
+    "label": "Sub-tipo del fondo"
+   },
+   {
+    "key": "fundCurrency",
+    "label": "Moneda del fondo"
+   },
+   {
+    "key": "className",
+    "label": "Cuota"
+   },
+   {
+    "key": "classCurrency",
+    "label": "Moneda de la cuota"
+   },
+   {
+    "key": "managerType",
+    "label": "Tipo soc. gerente"
+   },
+   {
+    "key": "managerName",
+    "label": "Soc. gerente"
+   },
+   {
+    "key": "custodyName",
+    "label": "Soc. depositaria"
+   },
+   {
+    "key": "total",
+    "label": "Total"
+   }
+  ]
+ },
+ "filters": {
+  "data": [
+   {
+    "key": "fundName",
+    "label": "Fondo"
+   },
+   {
+    "key": "fundType",
+    "label": "Tipo de fondo"
+   },
+   {
+    "key": "fundSubType",
+    "label": "Sub-tipo del fondo"
+   },
+   {
+    "key": "fundCurrency",
+    "label": "Moneda del fondo"
+   },
+   {
+    "key": "className",
+    "label": "Cuota"
+   },
+   {
+    "key": "classCurrency",
+    "label": "Moneda de la cuota"
+   },
+   {
+    "key": "managerType",
+    "label": "Tipo soc. gerente"
+   },
+   {
+    "key": "managerName",
+    "label": "Soc. gerente"
+   },
+   {
+    "key": "custodyName",
+    "label": "Soc. depositaria"
+   },
+   {
+    "key": "isReferenceClass",
+    "label": "Cuota referencia"
+   }
+  ]
+ },
+ "compresiones": {
+  "data": [
+   {
+    "key": "day",
+    "label": "Diario"
+   },
+   {
+    "key": "week",
+    "label": "Semanal"
+   },
+   {
+    "key": "month",
+    "label": "Mensual"
+   },
+   {
+    "key": "quarter",
+    "label": "Trimestral"
+   },
+   {
+    "key": "semester",
+    "label": "Semestral"
+   },
+   {
+    "key": "year",
+    "label": "Anual"
+   }
+  ]
+ },
+ "opciones": {
+  "status": 200,
+  "j": {
+   "data": {
+    "fundType": [
+     "Destino Esp.",
+     "En liq/Resc especie",
+     "Money Market",
+     "Renta Fija",
+     "Renta Mixta",
+     "Renta Variable",
+     "T+1"
+    ],
+    "fundSubType": [
+     "ASG",
+     "En liq/Resc especie ARS",
+     "En liq/Resc especie USD",
+     "Infraestructura",
+     "Money Market ARS Clásico",
+     "Money Market ARS Dinámico",
+     "Money Market USD Clásico",
+     "PYME",
+     "Renta Fija ARS CER",
+     "Renta Fija ARS Lecap",
+     "Renta Fija ARS discrecional",
+     "Renta Fija Multimoneda corporativo",
+     "Renta Fija Multimoneda discrecional",
+     "Renta Fija USD corporativo local",
+     "Renta Fija USD corto plazo",
+     "Renta Fija USD discrecional",
+     "Renta Fija USD global Ex-Arg",
+     "Renta Fija USD global Inc-Arg",
+     "Renta Fija USD linked",
+     "Renta Mixta y Otros ARS",
+     "Renta Mixta y Otros USD",
+     "Renta Variable Argentina Otros",
+     "Renta Variable Global",
+     "Renta Variable benchmark MERVAL",
+     "Renta Variable benchmark ROFEX 20",
+     "T+1"
+    ],
+    "fundCurrency": [
+     "ars",
+     "usb",
+     "usd"
+    ],
+    "classCurrency": [
+     "ars",
+     "usb",
+     "usd"
+    ],
+    "managerType": [
+     "Bancaria",
+     "Independiente"
+    ],
+    "managerName": [
+     "Adcap",
+     "Allaria",
+     "Argenfunds",
+     "Axis",
+     "BACS",
+     "BAVSA",
+     "BBVA",
+     "BIND",
+     "Balanz",
+     "Bancor",
+     "Bayfe",
+     "BlackToro",
+     "Bull Market",
+     "CMF",
+     "CYC",
+     "Capital Markets",
+     "Chaco",
+     "Chimpay",
+     "Ciclo Nova",
+     "Ciudad",
+     "Cocos",
+     "Cohen",
+     "Comafi",
+     "Cono Sur",
+     "Consultatio",
+     "Deal",
+     "Delta",
+     "Dracma",
+     "First Cap Mkts",
+     "GGAL AM",
+     "GMC",
+     "Galicia",
+     "Galileo",
+     "Grupo SS",
+     "ICBC",
+     "Investis",
+     "Macro",
+     "Mariva",
+     "Max Capital",
+     "MegaQM",
+     "Mercado Pago",
+     "Mercofond",
+     "Mills Capital",
+     "Nativa",
+     "Novus",
+     "Parakeet",
+     "Patagonia",
+     "Pellegrini",
+     "Proahorro",
+     "Provinfondos",
+     "Puente",
+     "Quiron",
+     "SAM Arg",
+     "SBS",
+     "Santander",
+     "Schroder",
+     "StoneX",
+     "Supervielle",
+     "Tandem Capital",
+     "Tango",
+     "Tutelar",
+     "Ualá",
+     "Valiant",
+     "Wise",
+     "Zofingen Inv."
+    ]
+   }
+  }
+ },
+ "series": {
+  "status": 200,
+  "forma": {
+   "data": [
+    {
+     "date": "string",
+     "fundType": "string",
+     "aum": "number",
+     "netinflows": "number"
+    }
+   ],
+   "pagination": {
+    "page": "number",
+    "pageSize": "number",
+    "total": "number"
+   },
+   "metadata": {
+    "dateStart": "string",
+    "dateEnd": "string",
+    "dateCompression": "string",
+    "currency": "string",
+    "group": "string"
+   }
+  },
+  "filas": 21,
+  "error": null,
+  "message": null
+ },
+ "ranking": {
+  "status": 200,
+  "forma": {
+   "data": [
+    {
+     "className": "string",
+     "classCafciId": "number",
+     "classCurrency": "string",
+     "fundName": "string",
+     "fundCnvCode": "number",
+     "fundType": "string",
+     "fundSubType": "string",
+     "fundCurrency": "string",
+     "managerName": "string",
+     "managerType": "string",
+     "custodyName": "string",
+     "isReferenceClass": "boolean",
+     "lastDay": "number",
+     "7d": "number",
+     "mtd": "number",
+     "30d": "number",
+     "90d": "number",
+     "ytd": "number",
+     "1y": "number",
+     "2y": "number",
+     "5y": "number"
+    }
+   ],
+   "pagination": {
+    "page": "number",
+    "pageSize": "number",
+    "total": "number"
+   },
+   "metadata": {
+    "date": "string",
+    "currency": "string",
+    "navReturnType": "string"
+   }
+  },
+  "error": null,
+  "message": null
+ },
+ "flujos": {
+  "status": 200,
+  "forma": {
+   "data": [
+    {
+     "fundType": "string",
+     "lastDay": "number",
+     "7d": "number",
+     "mtd": "number",
+     "30d": "number",
+     "90d": "number",
+     "ytd": "number",
+     "1y": "number",
+     "2y": "number",
+     "5y": "number"
+    }
+   ],
+   "pagination": {
+    "page": "number",
+    "pageSize": "number",
+    "total": "number"
+   },
+   "metadata": {
+    "date": "string",
+    "currency": "string",
+    "group": "string"
+   }
+  },
+  "filas": 7
+ },
+ "balanceDespues": {
+  "module": "fci",
+  "daily": {
+   "used": 61,
+   "limit": 10000
+  },
+  "monthly": {
+   "used": 61,
+   "limit": 310000
+  }
+ }
+}
