@@ -33,18 +33,13 @@ async function cuenta(api, log) {
   const out = { asOf: new Date().toISOString(), balanceAntes: (await api.get("/v1/creditos/balance")).j };
   const hoy = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10), mes = hoy.slice(0, 8) + "01";
   const q = async (k, path, body) => { const r = await api.post(path, body); out[k] = { status: r.status, total: r.j?.pagination?.total ?? null, metadata: r.j?.metadata || null, muestra: filas(r.j), error: r.j?.message || r.j?.error || null }; };
-  await q("rankRef", "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true }, navReturnType: "tna", currency: "ars", pageSize: 4 });
-  await q("rankClases", "/v1/fci/nav-return/ranking", { navReturnType: "direct", currency: "ars", pageSize: 1 });
-  await q("rankUsd", "/v1/fci/nav-return/ranking", { filter: { isReferenceClass: true, fundCurrency: ["usd", "usb"] }, navReturnType: "direct", currency: "a3500", pageSize: 2 });
-  await q("rankBavsa", "/v1/fci/nav-return/ranking", { filter: { managerName: ["BAVSA"] }, navReturnType: "tna", currency: "ars", pageSize: 30 });
-  await q("fondosMes", "/v1/fci/series", { fields: ["aum", "feeTotal"], group: "fundName", dateCompression: "month", dateStart: mes, currency: "ars", pageSize: 3 });
-  await q("fondosDia", "/v1/fci/series", { fields: ["aum"], group: "fundName", dateCompression: "day", dateStart: corrida(hoy, -6), currency: "ars", pageSize: 1 });
-  await q("gerentesMes", "/v1/fci/series", { fields: ["aum", "feeTotal", "feeRevenueTotal"], group: "managerName", dateCompression: "month", dateStart: mes, currency: "ars", pageSize: 3 });
-  await q("totalDia", "/v1/fci/series", { fields: ["aum", "netinflows"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -10), currency: "ars", pageSize: 20 });
-  await q("totalDiaUsd", "/v1/fci/series", { fields: ["aum"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -10), currency: "a3500", pageSize: 20 });
-  await q("totalDiaCer", "/v1/fci/series", { fields: ["aum"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -10), currency: "cer", pageSize: 20 });
-  await q("tiposHist", "/v1/fci/series", { fields: ["aum"], group: "fundType", dateCompression: "month", dateStart: "2000-01-01", currency: "ars", pageSize: 2 });
-  await q("flujosFondo", "/v1/fci/net-inflows/ranking", { group: "fundName", currency: "ars", pageSize: 2 });
+  // convención de días de la TNA: los tres tipos de rendimiento para dos fondos, un martes y un lunes
+  const f = { isReferenceClass: true, fundName: ["BAVSA Ahorro", "1810 Ahorro"] };
+  for (const d of ["2026-10-27", "2026-10-26", "2026-10-01"]) for (const t of ["direct", "tna", "tea"]) await q("rend_" + d + "_" + t, "/v1/fci/nav-return/ranking", { filter: f, navReturnType: t, currency: "ars", date: d });
+  await q("flujosTipo", "/v1/fci/net-inflows/ranking", { group: "fundType", currency: "ars" });
+  await q("flujosTipoUsd", "/v1/fci/net-inflows/ranking", { group: "fundType", currency: "a3500" });
+  await q("flujosGerente", "/v1/fci/net-inflows/ranking", { group: "managerName", currency: "ars", pageSize: 2 });
+  await q("ultimo", "/v1/fci/series", { fields: ["aum"], group: "total", dateCompression: "day", dateStart: corrida(hoy, -3), currency: "ars" });
   out.balanceDespues = (await api.get("/v1/creditos/balance")).j;
   log("1816 FCI cuenta: " + JSON.stringify(out.balanceDespues));
   return out;
