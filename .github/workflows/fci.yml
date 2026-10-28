@@ -2,8 +2,11 @@ name: 1816 FCI (fondos)
 
 on:
   schedule:
-    - cron: "17 13 * * 1-5"   # 10:17 de Buenos Aires: la CAFCI publica el día anterior a la mañana
-    - cron: "17 22 * * 1-5"   # y a la noche por si llegó tarde
+    - cron: "47 10 * * 1-5"   # 7:47 de Buenos Aires: el día anterior suele estar cargado temprano
+    - cron: "47 11 * * 1-5"   # 8:47
+    - cron: "17 13 * * 1-5"   # 10:17
+    - cron: "17 22 * * 1-5"   # 19:17, por si llegó tarde
+    # sin día nuevo, cada corrida gasta un inicio de sesión (50 por día) y unos 8 créditos
   workflow_dispatch:
     inputs:
       modo:
