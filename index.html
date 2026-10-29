@@ -5148,7 +5148,7 @@ const METODO = [
 
   { id: 'informe', t: 'Informe: gráficos en formato BAVSA',
     items: [
-      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal en tasa real e inflación implícita: de 2 a 20 años con la curva que estima la Reserva Federal (Gürkaynak, Sack y Wright, rendimientos par) y a 30 con el plazo constante del Tesoro, que publica la real solo desde 5 años. Por plazo a la última fecha que tienen todos (con el valor de cada parte adentro de la columna y el año en que vencería), el de 10 años con el último dato de cada mes, o la variación de cada parte en bps contra hace 1, 3, 6 y 12 meses al plazo que se elija. Sale de FRED con las series macro.',
+      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal en tasa real e inflación implícita: de 2 a 20 años con la curva que estima la Reserva Federal (Gürkaynak, Sack y Wright, rendimientos par) y a 30 con el plazo constante del Tesoro, que publica la real solo desde 5 años. Por plazo a la última fecha que tienen todos (con el valor de cada parte adentro de la columna y el año en que vencería), el de 10 años con el último dato de cada mes, o de dónde vino el cambio de la tasa nominal contra hace 1, 3, 6 y 12 meses: las dos partes apiladas, en bps, al plazo que se elija. Sale de FRED con las series macro.',
         p: 'Son dos lecturas de la misma tasa y no se suman entre sí: el term premium mezcla prima por plazo real y por inflación, y la inflación implícita de los TIPS incluye la prima por riesgo de inflación. Kim y Wright se publica con unos días de rezago.' },
       { d: 'Cada gráfico se dibuja en un canvas blanco al doble de resolución (2400 px de ancho en "Ancho de página"): título navy, bajada azul en mayúsculas con el subrayado corto, leyenda abajo, fuente en Verdana itálica y el logo de BAVSA Fondos. "Copiar imagen" lo deja en el portapapeles como PNG; "Copiar datos", la tabla para Excel.',
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
@@ -6428,17 +6428,19 @@ async function infBuildTp() {
   const anios = n => n + (n === 1 ? ' año' : ' años');
   const nombres = kw ? ['Tasa corta esperada', 'Term premium'] : ['Tasa real (TIPS)', 'Inflación implícita'];
   if (T.vista === 'cambio') {
-    // cuánto se movió cada parte contra hace 1, 3, 6 y 12 meses (el último dato a esa fecha o antes), en bips
-    const n = plazos.includes(+T.plazo) ? +T.plazo : 10, last = ultimo([n]);
+    // de dónde vino el cambio de la tasa nominal contra hace 1, 3, 6 y 12 meses (último dato a esa fecha o antes), en bps:
+    // las mismas dos partes del gráfico por plazo, apiladas, y la tasa nominal marcada
+    const n = plazos.includes(+T.plazo) ? +T.plazo : 10, last = ultimo([n]), hoy = partes(n, last);
     const menosMeses = (d, m) => { const t = new Date(d + 'T12:00:00Z'), dia = t.getUTCDate(); t.setUTCDate(1); t.setUTCMonth(t.getUTCMonth() - m); t.setUTCDate(Math.min(dia, new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate())); return t.toISOString().slice(0, 10); };
-    const comp = d => { const x = partes(n, d); return x ? (kw ? [x.tot, x.v[0], x.v[1]] : [x.tot, x.v[0], x.v[1]]) : null; };
-    const hoy = comp(last), cats = kw ? ['Rendimiento', 'Tasa corta esperada', 'Term premium'] : ['Tasa nominal', 'Tasa real', 'Inflación implícita'];
-    const H = [['1 mes', 1], ['3 meses', 3], ['6 meses', 6], ['1 año', 12]], cols = [BV.claro, BV.celeste, BV.azul, BV.navy];
-    const ser = H.map(([nm, m], j) => { const antes = comp(menosMeses(last, m)); return { k: 'var' + m, name: 'Contra hace ' + nm, vals: cats.map((_, c) => antes && hoy ? Math.round((hoy[c] - antes[c]) * 100) : 0), bars: true, color0: cols[j] }; });
+    const H = [['1 mes', 1], ['3 meses', 3], ['6 meses', 6], ['1 año', 12]], fechas = H.map(([, m]) => menosMeses(last, m)), antes = fechas.map(d => partes(n, d));
+    // la nominal y la primera parte redondeadas; la segunda, lo que falta, así las dos suman la nominal
+    const dTot = antes.map(x => x && hoy ? Math.round((hoy.tot - x.tot) * 100) : null), d0 = antes.map(x => x && hoy ? Math.round((hoy.v[0] - x.v[0]) * 100) : 0);
+    const ser = nombres.map((nm, j) => ({ k: (kw ? 'kwv' : 'tipsv') + j, name: nm, vals: j ? dTot.map((t, i) => t == null ? 0 : t - d0[i]) : d0, bars: true, color0: j ? BV.celeste : BV.azul }));
     const pct = v => numAR(v, 2, 2) + '%';
-    return { kind: 'pagos', agrupado: true, cats, ser, units: ['bps'], sufijo: ' bps', last, catHdr: 'Variable', decTot: 0,
-      notes: ['Hoy, a ' + anios(n) + ': ' + cats.map((c, i) => c.toLowerCase() + ' ' + pct(hoy[i])).join(', '), 'Contra el último dato a cada fecha o antes'],
-      tAuto: kw ? 'Treasuries: cómo cambiaron la tasa esperada y el term premium' : 'Treasuries: cómo cambiaron la tasa real y la inflación implícita',
+    return { kind: 'pagos', segLbl: true, signo: true, sufijo: ' bps', decTot: 0, cats: H.map(h => h[0]), catSub: fechas.map(d => 'desde el ' + infDdmmaa(d)), ser, units: ['bps'], last, catHdr: 'Contra hace',
+      marca: { name: 'Tasa nominal', color: BV.navy, vals: dTot },
+      notes: ['Hoy, a ' + anios(n) + ': tasa nominal ' + pct(hoy.tot) + ', ' + nombres.map((c, i) => c.replace(' (TIPS)', '').toLowerCase() + ' ' + pct(hoy.v[i])).join(', '), 'Contra el último dato a cada fecha o antes'],
+      tAuto: kw ? 'Treasuries: cuánto del cambio de tasa fue tasa esperada y cuánto term premium' : 'Treasuries: cuánto del cambio de tasa fue tasa real y cuánto inflación',
       bAuto: 'Variación en bps, ' + anios(n) + ', al ' + infDdmmaa(last), fAuto: fuente };
   }
   let cats, filas, last, catSub = null;
@@ -6457,7 +6459,7 @@ async function infBuildTp() {
   if (T.vista === 'plazo') { const i10 = plazos.indexOf(10), x = filas[i10]; if (x) notes.push((kw ? 'A 10 años: tasa corta esperada ' : 'A 10 años: tasa real ') + numAR(x.v[0], 2, 2) + '%, ' + (kw ? 'term premium ' : 'inflación implícita ') + numAR(x.v[1], 2, 2) + '%'); }
   const errs = Object.keys(J.errores || {}); if (errs.length) notes.push('Sin actualizar: ' + errs.join(', '));
   return { kind: 'pagos', segLbl: T.vista === 'plazo', cats, catSub, ser, units: ['% anual'], notes, last, catHdr: T.vista === 'plazo' ? 'Plazo' : 'Mes', decTot: 2,
-    marca: { name: kw ? 'Rendimiento cupón cero' : 'Tasa nominal', color: BV.navy, vals: tot },
+    marca: { name: 'Tasa nominal', color: BV.navy, vals: tot },
     tAuto: kw ? 'Treasuries: tasa esperada y term premium' : 'Treasuries: tasa real e inflación implícita',
     bAuto: '% anual, ' + (T.vista === 'plazo' ? 'por plazo, al ' + infDdmmaa(last) : '10 años, último dato de cada mes'), fAuto: fuente };
 }
@@ -6807,32 +6809,8 @@ function infPlotSerie(ctx, sp, P) {
   tags.forEach(t => { const w = infW(ctx, t.txt) + 12; ctx.fillStyle = t.color; infRound(ctx, x1 + 6, t.y - 9, w, 18, 3); ctx.fill(); ctx.fillStyle = t.ink; ctx.fillText(t.txt, x1 + 12, t.y + 4); });
   ctx.textAlign = 'left';
 }
-// columnas lado a lado (una por serie) con su valor arriba o abajo, para variaciones que pueden ser negativas
-function infPlotGrupos(ctx, sp, P) {
-  const n = sp.cats.length, m = sp.ser.length, vs = sp.ser.flatMap(s => s.vals), mn = Math.min(0, ...vs), mx = Math.max(0, ...vs);
-  const pad = (mx - mn) * 0.12 || 1, a = infAxis(mn < 0 ? mn - pad : 0, mx > 0 ? mx + pad : 0, 8);
-  const st = a.tk.length > 1 ? a.tk[1] - a.tk[0] : 1, fmt = v => numAR(v, infDecs(st), infDecs(st));
-  ctx.font = `12px ${BV_SANS}`;
-  const wL = Math.max(...a.tk.map(v => infW(ctx, fmt(v)))) + 10, x0 = P.x0 + wL, x1 = P.x1, y0 = P.y0 + (INF.titulos ? 16 : 22), y1 = P.y1 - 22;
-  const ys = v => y0 + (1 - (v - a.lo) / (a.hi - a.lo)) * (y1 - y0), slot = (x1 - x0) / n, bw = Math.min(46, slot * 0.78 / m);
-  ctx.lineWidth = 1;
-  a.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = v === 0 ? BV.texto2 : BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmt(v), x0 - 8, yy + 4); });
-  if (!INF.titulos) { ctx.font = `600 11.5px ${BV_SANS}`; ctx.textAlign = 'left'; ctx.fillText(sp.units[0], P.x0, P.y0 + 4); }
-  sp.cats.forEach((c, i) => {
-    const xc = x0 + slot * (i + 0.5);
-    sp.ser.forEach((s, j) => {
-      const v = s.vals[i], xb = xc - bw * m / 2 + bw * j + 1, y = ys(Math.max(0, v)), h = Math.max(1, Math.abs(ys(v) - ys(0)));
-      ctx.fillStyle = s.color; ctx.fillRect(xb, y, bw - 2, h);
-      ctx.font = `700 ${m > 3 ? 11 : 12}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center';
-      ctx.fillText((v > 0 ? '+' : v < 0 ? '−' : '') + numAR(Math.abs(v), sp.decTot ?? 0, sp.decTot ?? 0) + (sp.sufijo || ''), xb + (bw - 2) / 2, v >= 0 ? ys(v) - 6 : ys(v) + 15);
-    });
-    ctx.font = `600 12.5px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center'; ctx.fillText(c, xc, Math.max(ys(a.lo), y1) + 17);
-  });
-  ctx.textAlign = 'left';
-}
 const infTxtSobre = c => { const h = String(c || '').replace('#', ''); if (h.length !== 6) return '#fff'; const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? BV.navy : '#fff'; };
 function infPlotPagos(ctx, sp, P) {
-  if (sp.agrupado) return infPlotGrupos(ctx, sp, P);
   const n = sp.cats.length, sum = f => sp.cats.map((_, i) => sp.ser.reduce((a, s) => a + f(s.vals[i] || 0), 0));
   const pos = sum(v => Math.max(0, v)), neg = sum(v => Math.min(0, v)), tot = sum(v => v), marca = sp.marca ? sp.marca.vals : null;
   const mn = Math.min(0, ...neg), mx = Math.max(...pos, ...(marca || []).filter(v => v != null));
@@ -6854,7 +6832,12 @@ function infPlotPagos(ctx, sp, P) {
       if (v > 0) { yt = ys(up + v); yb = ys(up); ctx.fillRect(xc - bw / 2, yt, bw, Math.max(0.5, yb - yt)); up += v; }
       else { yt = ys(dn); yb = ys(dn + v); ctx.fillRect(xc - bw / 2, yt, bw, Math.max(0.5, yb - yt)); dn += v; }
       // el valor de cada parte adentro de la columna, si entra
-      if (sp.segLbl && n <= 12 && yb - yt >= 17) { ctx.font = `600 ${n > 8 ? 11 : 12}px ${BV_SANS}`; ctx.fillStyle = infTxtSobre(s.color); ctx.textAlign = 'center'; ctx.fillText(numAR(v, sp.decTot ?? 1, sp.decTot ?? 1), xc, (yt + yb) / 2 + 4); } });
+      if (sp.segLbl && n <= 12) {
+        const dd = sp.decTot ?? 1, txt = (sp.signo ? (v > 0 ? '+' : '−') + numAR(Math.abs(v), dd, dd) : numAR(v, dd, dd));
+        ctx.font = `600 ${n > 8 ? 11 : 12}px ${BV_SANS}`;
+        if (yb - yt >= 17) { ctx.fillStyle = infTxtSobre(s.color); ctx.textAlign = 'center'; ctx.fillText(txt, xc, (yt + yb) / 2 + 4); }
+        else if (sp.signo) { ctx.fillStyle = s.color === BV.celeste ? BV.teal : s.color; ctx.textAlign = 'left'; ctx.fillText(txt, xc + bw / 2 + 8, (yt + yb) / 2 + 4); }
+      } });
     if (i % paso === 0) {
       ctx.textAlign = 'center';
       if (sp.catSub) { ctx.font = `700 ${n > 8 ? 13 : 14}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.fillText(c, xc, y1 + 19); ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.fillText(sp.catSub[i], xc, y1 + 35); }
@@ -6862,7 +6845,13 @@ function infPlotPagos(ctx, sp, P) {
     }
     const tv = marca ? marca[i] : tot[i];
     if (marca && conTot && tv != null) { ctx.strokeStyle = sp.marca.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xc - bw / 2 - 5, ys(tv)); ctx.lineTo(xc + bw / 2 + 5, ys(tv)); ctx.stroke(); ctx.lineWidth = 1; }
-    if (conTot && tv != null && (marca || tv > 0)) { ctx.font = `700 ${n > 12 ? 10.5 : 11.5}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center'; ctx.fillText(numAR(tv, dt, dt), xc, Math.min(ys(tv), ys(up)) - 7); }
+    if (conTot && tv != null && (marca || tv > 0)) {
+      ctx.font = `700 ${n > 12 ? 10.5 : sp.signo ? 13 : 11.5}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center';
+      const txt = (sp.signo ? (tv > 0 ? '+' : tv < 0 ? '−' : '') + numAR(Math.abs(tv), dt, dt) : numAR(tv, dt, dt)) + (sp.sufijo || '');
+      // en la variación, el total va a la izquierda de su marca (las partes pueden ir para lados distintos)
+      if (sp.signo) { ctx.textAlign = 'right'; ctx.fillText(txt, xc - bw / 2 - 10, ys(tv) + 5); }
+      else ctx.fillText(txt, xc, Math.min(ys(tv), ys(up)) - 7);
+    }
   });
   // con muchas columnas, la tasa total va como línea
   if (marca && !conTot) { ctx.strokeStyle = sp.marca.color; ctx.lineWidth = 2.5; ctx.beginPath(); let on = false;
@@ -6955,7 +6944,6 @@ function infTsv() {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
-  if (sp.kind === 'pagos' && sp.agrupado) return [sp.catHdr + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t'))].join('\n');
   if (sp.kind === 'pagos') return [(sp.catHdr || 'Período') + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\t' + (sp.marca ? sp.marca.name : 'Total'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.marca ? sp.marca.vals[i] : sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
