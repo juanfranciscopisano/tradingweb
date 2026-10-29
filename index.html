@@ -5148,7 +5148,7 @@ const METODO = [
 
   { id: 'informe', t: 'Informe: gráficos en formato BAVSA',
     items: [
-      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal de 5 a 30 años en tasa real e inflación implícita. Por plazo a la última fecha que tienen todos (con el valor de cada parte adentro de la columna), el de 10 años con el último dato de cada mes, o la variación de cada parte en bips contra hace 1, 3, 6 y 12 meses al plazo que se elija. Sale de FRED con las series macro.',
+      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal de 5 a 30 años en tasa real e inflación implícita. Por plazo a la última fecha que tienen todos (con el valor de cada parte adentro de la columna), el de 10 años con el último dato de cada mes, o la variación de cada parte en bps contra hace 1, 3, 6 y 12 meses al plazo que se elija. Sale de FRED con las series macro.',
         p: 'Son dos lecturas de la misma tasa y no se suman entre sí: el term premium mezcla prima por plazo real y por inflación, y la inflación implícita de los TIPS incluye la prima por riesgo de inflación. Kim y Wright se publica con unos días de rezago.' },
       { d: 'Cada gráfico se dibuja en un canvas blanco al doble de resolución (2400 px de ancho en "Ancho de página"): título navy, bajada azul en mayúsculas con el subrayado corto, leyenda abajo, fuente en Verdana itálica y el logo de BAVSA Fondos. "Copiar imagen" lo deja en el portapapeles como PNG; "Copiar datos", la tabla para Excel.',
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
@@ -6426,10 +6426,10 @@ async function infBuildTp() {
     const H = [['1 mes', 1], ['3 meses', 3], ['6 meses', 6], ['1 año', 12]], cols = [BV.claro, BV.celeste, BV.azul, BV.navy];
     const ser = H.map(([nm, m], j) => { const antes = comp(menosMeses(last, m)); return { k: 'var' + m, name: 'Contra hace ' + nm, vals: cats.map((_, c) => antes && hoy ? Math.round((hoy[c] - antes[c]) * 100) : 0), bars: true, color0: cols[j] }; });
     const pct = v => numAR(v, 2, 2) + '%';
-    return { kind: 'pagos', agrupado: true, cats, ser, units: ['bips'], last, catHdr: 'Variable', decTot: 0,
+    return { kind: 'pagos', agrupado: true, cats, ser, units: ['bps'], sufijo: ' bps', last, catHdr: 'Variable', decTot: 0,
       notes: ['Hoy, a ' + n + (n === 1 ? ' año' : ' años') + ': ' + cats.map((c, i) => c.toLowerCase() + ' ' + pct(hoy[i])).join(', '), 'Contra el último dato a cada fecha o antes'],
       tAuto: kw ? 'Treasuries: cómo cambiaron la tasa esperada y el term premium' : 'Treasuries: cómo cambiaron la tasa real y la inflación implícita',
-      bAuto: 'Variación en bips, ' + n + (n === 1 ? ' año' : ' años') + ', al ' + infDdmmaa(last),
+      bAuto: 'Variación en bps, ' + n + (n === 1 ? ' año' : ' años') + ', al ' + infDdmmaa(last),
       fAuto: kw ? 'Fuente: Reserva Federal (modelo de Kim y Wright), vía FRED.' : 'Fuente: Tesoro de EE.UU., vía FRED.' };
   }
   let cats, filas, last;
@@ -6815,7 +6815,7 @@ function infPlotGrupos(ctx, sp, P) {
       const v = s.vals[i], xb = xc - bw * m / 2 + bw * j + 1, y = ys(Math.max(0, v)), h = Math.max(1, Math.abs(ys(v) - ys(0)));
       ctx.fillStyle = s.color; ctx.fillRect(xb, y, bw - 2, h);
       ctx.font = `700 ${m > 3 ? 11 : 12}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center';
-      ctx.fillText((v > 0 ? '+' : v < 0 ? '−' : '') + numAR(Math.abs(v), sp.decTot ?? 0, sp.decTot ?? 0), xb + (bw - 2) / 2, v >= 0 ? ys(v) - 6 : ys(v) + 15);
+      ctx.fillText((v > 0 ? '+' : v < 0 ? '−' : '') + numAR(Math.abs(v), sp.decTot ?? 0, sp.decTot ?? 0) + (sp.sufijo || ''), xb + (bw - 2) / 2, v >= 0 ? ys(v) - 6 : ys(v) + 15);
     });
     ctx.font = `600 12.5px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center'; ctx.fillText(c, xc, Math.max(ys(a.lo), y1) + 17);
   });
