@@ -4896,6 +4896,7 @@ const METODO = [
   { id: 'eps', t: 'Cómo se arma el EPS de cada empresa',
     i: 'Es el mismo EPS en P/E histórico, Cartera, el screener y los múltiplos del índice, así que el P/E de una empresa da igual en todas las pestañas.',
     items: [
+      { d: 'Valuación de tenencias: con base operativa, lo que la empresa gana o pierde por la valuación de acciones de otras empresas queda afuera del normalizado sin contarse como ajuste. Cuando contable y normalizado difieren, el aviso la muestra aparte, trimestre por trimestre (en 2026, las de Alphabet en SpaceX y Anthropic: casi toda la diferencia de GOOGL).' },
       { d: 'EPS contable: el diluido por acción de operaciones continuas; si la empresa no lo informa, el diluido total, y si tampoco, el básico.',
         p: 'Lo discontinuado (un negocio vendido, una escisión) ya no está en lo que el precio valúa. Es también la definición de S&P para sus ganancias "as reported". Además, MNST, VRSN y GD informan solo el de operaciones continuas desde hace años, y con el total el sistema se quedaba con datos de 2011, 2013 y 2019.',
         x: 'El EPS total siempre: es el más fácil de conseguir, pero mezcla resultados de negocios que la empresa ya no tiene.' },
@@ -5147,6 +5148,8 @@ const METODO = [
 
   { id: 'informe', t: 'Informe: gráficos en formato BAVSA',
     items: [
+      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal de 5 a 30 años en tasa real e inflación implícita. Por plazo a la última fecha que tienen todos, o el de 10 años con el último dato de cada mes. Sale de FRED con las series macro.',
+        p: 'Son dos lecturas de la misma tasa y no se suman entre sí: el term premium mezcla prima por plazo real y por inflación, y la inflación implícita de los TIPS incluye la prima por riesgo de inflación. Kim y Wright se publica con unos días de rezago.' },
       { d: 'Cada gráfico se dibuja en un canvas blanco al doble de resolución (2400 px de ancho en "Ancho de página"): título navy, bajada azul en mayúsculas con el subrayado corto, leyenda abajo, fuente en Verdana itálica y el logo de BAVSA Fondos. "Copiar imagen" lo deja en el portapapeles como PNG; "Copiar datos", la tabla para Excel.',
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
         o: 'En una slide del template el título va en la slide: conviene destildar "Título y bajada en la imagen".' },
@@ -6040,6 +6043,7 @@ const INF_GROUP_N = { BCRA: 'BCRA y Tesoro' };
 const INF_PRESETS = [
   { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna' },
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
+  { id: 'tpUsa', n: 'Treasuries: tasa esperada, term premium y tasa real', mode: 'tp' },
   { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau', extra: true },
   { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true }, tasa: 'tea' },
   { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true }, tasa: 'tea' },
@@ -6064,7 +6068,7 @@ const INF_PRESETS = [
 let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
   pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, eur: true, bopreal: true, repo: true },
-  tesoro: { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {} },
+  tesoro: { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {} }, tp: { desc: 'kw', vista: 'plazo' },
   real: false, tramo: 'toda', ejeX16: 'dm', size: 'ancho', titulos: true, logo: true, estilo: {}, t: '', b: '', f: '', edit: { t: false, b: false, f: false } };
 try { const s = JSON.parse(localStorage.getItem('infState') || 'null'); if (s && s.preset) INF = { ...INF, ...s, edit: { t: false, b: false, f: false }, t: '', b: '', f: '' }; } catch (e) {}
 const infSave = () => { try { const { t, b, f, edit, ...rest } = INF; localStorage.setItem('infState', JSON.stringify(rest)); } catch (e) {} };
@@ -6398,6 +6402,41 @@ function infTesoroCats(por, hoy) {
   const k0 = y0 * 12 + m0; for (let i = 0; i < 18; i++) { const k = k0 + i; cats.push(MES_CORTO[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2)); }
   return { cats, idx: d => { const i = +d.slice(0, 4) * 12 + +d.slice(5, 7) - 1 - k0; return i < 18 ? i : -1; } };
 }
+// tasas del Tesoro de EE.UU. descompuestas (tasas_usa.json, de FRED): Kim y Wright (Reserva Federal) separa el
+// rendimiento cupón cero en la tasa corta esperada y el term premium; los TIPS, en tasa real e inflación implícita
+let infTasasUsaP = null;
+const infTasasUsa = () => infTasasUsaP || (infTasasUsaP = fetch('tasas_usa.json?d=' + new Date().toISOString().slice(0, 10)).then(r => r.ok ? r.json() : null).catch(() => null));
+async function infBuildTp() {
+  const T = { desc: 'kw', vista: 'plazo', ...(INF.tp || {}) }, J = await infTasasUsa();
+  if (!J || !J.series || !(J.series.THREEFY10 || []).length) return { kind: 'vacio', msg: 'Todavía no están las tasas de EE.UU. (tasas_usa.json): se bajan con las series macro.', notes: [] };
+  const kw = T.desc === 'kw', S = id => J.series[id] || [];
+  const plazos = kw ? [1, 2, 3, 5, 7, 10] : [5, 7, 10, 20, 30];
+  const idTot = n => (kw ? 'THREEFY' : 'DGS') + n, idCmp = n => (kw ? 'THREEFYTP' : 'DFII') + n;
+  const at = (id, d) => { let v = null; for (const [x, y] of S(id)) { if (x <= d) v = y; else break; } return v; };
+  // [tasa corta esperada, term premium] o [tasa real, inflación implícita], y la tasa total
+  const partes = (n, d) => { const a = at(idTot(n), d), b = at(idCmp(n), d); return a == null || b == null ? null : { v: kw ? [a - b, b] : [b, a - b], tot: a }; };
+  const ultimo = ns => ns.flatMap(n => [S(idTot(n)).at(-1)?.[0], S(idCmp(n)).at(-1)?.[0]]).filter(Boolean).sort()[0];
+  let cats, filas, last;
+  if (T.vista === 'plazo') {
+    last = ultimo(plazos); cats = plazos.map(String); filas = plazos.map(n => partes(n, last));
+  } else {
+    last = ultimo([10]);
+    const meses = new Map(); for (const [d] of S(idTot(10))) if (d <= last) meses.set(d.slice(0, 7), d);
+    const ds = [...meses.values()].slice(-60);
+    cats = ds.map(d => MES_CORTO[+d.slice(5, 7) - 1] + ' ' + d.slice(2, 4)); filas = ds.map(d => partes(10, d));
+  }
+  const nombres = kw ? ['Tasa corta esperada', 'Term premium'] : ['Tasa real (TIPS)', 'Inflación implícita'];
+  const ser = nombres.map((nm, j) => ({ k: (kw ? 'kw' : 'tips') + j, name: nm, vals: filas.map(f => f ? +f.v[j].toFixed(4) : 0), bars: true, color0: j ? BV.celeste : BV.azul }));
+  const tot = filas.map(f => f ? f.tot : null), f = filas[filas.length - 1];
+  const notes = [kw ? 'Kim y Wright: la tasa corta esperada es el rendimiento cupón cero ajustado menos el term premium' : 'Rendimientos a plazo constante; la inflación implícita (breakeven) es nominal menos real e incluye la prima por riesgo de inflación'];
+  if (T.vista === 'plazo' && kw) notes.push('Term premium a 10 años: ' + numAR(f.v[1], 2, 2) + '%');
+  const errs = Object.keys(J.errores || {}); if (errs.length) notes.push('Sin actualizar: ' + errs.join(', '));
+  return { kind: 'pagos', cats, ser, units: ['% anual'], notes, last, catHdr: T.vista === 'plazo' ? 'Plazo en años' : 'Mes', decTot: 2,
+    marca: { name: kw ? 'Rendimiento cupón cero' : 'Tasa nominal', color: BV.navy, vals: tot },
+    tAuto: kw ? 'Treasuries: tasa esperada y term premium' : 'Treasuries: tasa real e inflación implícita',
+    bAuto: '% anual, ' + (T.vista === 'plazo' ? 'por plazo en años, al ' + infDdmmaa(last) : '10 años, último dato de cada mes'),
+    fAuto: kw ? 'Fuente: Reserva Federal (modelo de Kim y Wright), vía FRED.' : 'Fuente: Tesoro de EE.UU., vía FRED.' };
+}
 async function infBuildTesoro() {
   const d = infVenc1816();
   if (!d) return { kind: 'vacio', msg: 'Todavía no hay vencimientos de 1816 en este navegador. Arrastrá "Traer de 1816" (a la izquierda) a la barra de favoritos y tocalo con la pantalla Vencimientos del Tesoro de 1816 abierta.', notes: [] };
@@ -6656,7 +6695,8 @@ function infText(ctx, s, x, y, maxW, track) {
   if (track) try { ctx.letterSpacing = '0px'; } catch (e) {}
 }
 function infLegendItems(sp) {
-  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, w: s.w, trazo: s.trazo, bars: infEnBarras(sp, s) }));
+  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, w: s.w, trazo: s.trazo, bars: infEnBarras(sp, s) }))
+    .concat(sp.marca ? [{ name: sp.marca.name, color: sp.marca.color, w: 3, bars: false }] : []);
 }
 function infLegendRows(ctx, sp, maxW) {
   ctx.font = `13px ${BV_SANS}`;
@@ -6744,22 +6784,33 @@ function infPlotSerie(ctx, sp, P) {
   ctx.textAlign = 'left';
 }
 function infPlotPagos(ctx, sp, P) {
-  const tot = sp.cats.map((_, i) => sp.ser.reduce((a, s) => a + s.vals[i], 0)), a = infAxis(0, Math.max(...tot) * 1.08, 8);
-  a.lo = 0; a.tk = a.tk.filter(t => t >= 0);
+  const n = sp.cats.length, sum = f => sp.cats.map((_, i) => sp.ser.reduce((a, s) => a + f(s.vals[i] || 0), 0));
+  const pos = sum(v => Math.max(0, v)), neg = sum(v => Math.min(0, v)), tot = sum(v => v), marca = sp.marca ? sp.marca.vals : null;
+  const mn = Math.min(0, ...neg), mx = Math.max(...pos, ...(marca || []).filter(v => v != null));
+  const a = infAxis(mn < 0 ? mn * 1.08 : 0, mx * 1.08, 8);
+  if (mn >= 0) { a.lo = 0; a.tk = a.tk.filter(t => t >= 0); }
   const st = a.tk.length > 1 ? a.tk[1] - a.tk[0] : 1, fmt = v => numAR(v, infDecs(st), infDecs(st));
   ctx.font = `12px ${BV_SANS}`;
   const wL = Math.max(...a.tk.map(v => infW(ctx, fmt(v)))) + 10, x0 = P.x0 + wL, x1 = P.x1, y0 = P.y0 + (INF.titulos ? 16 : 22), y1 = P.y1 - 22;
-  const ys = v => y0 + (1 - (v - a.lo) / (a.hi - a.lo)) * (y1 - y0), slot = (x1 - x0) / sp.cats.length, bw = Math.min(64, slot * 0.62);
+  const ys = v => y0 + (1 - (v - a.lo) / (a.hi - a.lo)) * (y1 - y0), slot = (x1 - x0) / n, bw = Math.min(64, slot * 0.62);
   ctx.lineWidth = 1;
-  a.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmt(v), x0 - 8, yy + 4); });
+  a.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = v === 0 && mn < 0 ? BV.texto2 : BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmt(v), x0 - 8, yy + 4); });
   if (!INF.titulos) { ctx.font = `600 11.5px ${BV_SANS}`; ctx.textAlign = 'left'; ctx.fillText(sp.units[0], P.x0, P.y0 + 4); }
+  // con muchas columnas, una etiqueta cada tantas y sin el total arriba
+  const paso = Math.ceil(n / Math.max(4, Math.floor((x1 - x0) / 46))), conTot = n <= 24, dt = sp.decTot ?? (Math.max(...tot) < 100 ? 1 : 0);
   sp.cats.forEach((c, i) => {
-    const xc = x0 + slot * (i + 0.5); let acc = 0;
-    sp.ser.forEach(s => { const v = s.vals[i]; if (v <= 0) return; ctx.fillStyle = s.color; const ya = ys(acc), yb = ys(acc + v); ctx.fillRect(xc - bw / 2, yb, bw, Math.max(0.5, ya - yb)); acc += v; });
-    ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center';
-    const lbl = c.replace(' en adelante', '+'); ctx.fillText(lbl, xc, y1 + 17);
-    if (tot[i] > 0) { const dt = Math.max(...tot) < 100 ? 1 : 0; ctx.font = `700 ${sp.cats.length > 12 ? 10.5 : 11.5}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.fillText(numAR(tot[i], dt, dt), xc, ys(tot[i]) - 6); }
+    const xc = x0 + slot * (i + 0.5); let up = 0, dn = 0;
+    sp.ser.forEach(s => { const v = s.vals[i]; if (!v) return; ctx.fillStyle = s.color;
+      if (v > 0) { const ya = ys(up), yb = ys(up + v); ctx.fillRect(xc - bw / 2, yb, bw, Math.max(0.5, ya - yb)); up += v; }
+      else { const ya = ys(dn), yb = ys(dn + v); ctx.fillRect(xc - bw / 2, ya, bw, Math.max(0.5, yb - ya)); dn += v; } });
+    if (i % paso === 0) { ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center'; ctx.fillText(c.replace(' en adelante', '+'), xc, y1 + 17); }
+    const tv = marca ? marca[i] : tot[i];
+    if (marca && conTot && tv != null) { ctx.strokeStyle = sp.marca.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xc - bw / 2 - 5, ys(tv)); ctx.lineTo(xc + bw / 2 + 5, ys(tv)); ctx.stroke(); ctx.lineWidth = 1; }
+    if (conTot && tv != null && (marca || tv > 0)) { ctx.font = `700 ${n > 12 ? 10.5 : 11.5}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center'; ctx.fillText(numAR(tv, dt, dt), xc, Math.min(ys(tv), ys(up)) - 7); }
   });
+  // con muchas columnas, la tasa total va como línea
+  if (marca && !conTot) { ctx.strokeStyle = sp.marca.color; ctx.lineWidth = 2.5; ctx.beginPath(); let on = false;
+    marca.forEach((v, i) => { if (v == null) { on = false; return; } const x = x0 + slot * (i + 0.5); on ? ctx.lineTo(x, ys(v)) : ctx.moveTo(x, ys(v)); on = true; }); ctx.stroke(); ctx.lineWidth = 1; }
   ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, Math.round(y1) + 0.5); ctx.lineTo(x1, Math.round(y1) + 0.5); ctx.stroke();
   ctx.textAlign = 'left';
 }
@@ -6848,7 +6899,7 @@ function infTsv() {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
-  if (sp.kind === 'pagos') return ['Período (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\tTotal', ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
+  if (sp.kind === 'pagos') return [(sp.catHdr || 'Período') + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\t' + (sp.marca ? sp.marca.name : 'Total'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.marca ? sp.marca.vals[i] : sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
     return ['Bono\t' + sp.ser.map(s => s.name + ' ' + INF_TASA_N[sp.tasa || 'tea'] + ' (%)\t' + s.name + ' ' + (sp.xU === 'días' ? 'días' : 'duration')).join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
@@ -6868,7 +6919,12 @@ function renderInfCtl() {
   P.innerHTML = INF_PRESETS.filter(p => !p.extra).map(btn).join('') + (extra.length ? '<details class="inf-extra"' + (abierto ? ' open' : '') + '><summary>Gráficos adicionales</summary>' + extra.map(btn).join('') + '</details>' : '');
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
   let h = '', cat = '';
-  if (INF.mode === 'tesoro') {
+  if (INF.mode === 'tp') {
+    const T = { desc: 'kw', vista: 'plazo', ...(INF.tp || {}) };
+    cat = '<div class="inf-lbl inf-lbl-first">Descomponer</div>' + seg([['kw', 'Tasa esperada y term premium'], ['tips', 'Tasa real e inflación']], T.desc, "infTp.bind(null,'desc')")
+      + '<div class="inf-lbl">Ver</div>' + seg([['plazo', 'Por plazo, hoy'], ['tiempo', '10 años, por mes']], T.vista, "infTp.bind(null,'vista')")
+      + '<div class="inf-tes-datos">' + (T.desc === 'kw' ? 'Modelo de Kim y Wright de la Reserva Federal: el rendimiento cupón cero ajustado se separa en la tasa corta que el mercado espera para el plazo y el term premium, lo que se cobra por quedarse largo. Se actualiza con unos días de rezago.' : 'TIPS: la tasa real es el rendimiento de los bonos ajustados por inflación y la inflación implícita, la diferencia con el nominal del mismo plazo.') + '</div>';
+  } else if (INF.mode === 'tesoro') {
     const T = { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {}, ...(INF.tesoro || {}) }, d = infVenc1816();
     const ajs = d ? INF_AJ.map(x => x[0]).filter(a => d.rows.some(r => r[3] === a)) : [];
     cat = '<div class="inf-lbl inf-lbl-first">Por</div>' + seg([['mes', 'Mes'], ['trim', 'Trimestre'], ['anio', 'Año']], T.por, "infTes.bind(null,'por')")
@@ -6931,6 +6987,7 @@ function infTrans(t) { INF.trans = t; infUpdate(); }
 function infCurva(c) { INF.curva = c; INF.preset = INF_PRESETS.some(p => p.id === c && p.mode === 'curva') ? c : ''; INF.edit = { t: false, b: false, f: false }; infUpdate(); }
 function infPagosPor(v) { INF.pagosPor = v; infUpdate(); }
 function infTes(k, v) { INF.tesoro = { ...(INF.tesoro || {}), [k]: v }; infUpdate(); }
+function infTp(k, v) { INF.tp = { ...(INF.tp || {}), [k]: v }; INF.edit = { t: false, b: false, f: false }; infUpdate(); }
 function infTesExcl(a) { const t = { ...(INF.tesoro || {}) }; t.excl = { ...(t.excl || {}), [a]: !(t.excl || {})[a] }; INF.tesoro = t; infUpdate(); }
 function infPagosApilar(v) { INF.pagosApilar = v; infUpdate(); }
 function infPagosInc(k) { INF.pagosInc = { ...(INF.pagosInc || {}), [k]: (INF.pagosInc || {})[k] === false }; infUpdate(); }
@@ -6952,7 +7009,7 @@ async function infUpdate() {
   if (st) st.textContent = 'Cargando datos...';
   if (!infFontsOk && document.fonts && document.fonts.load) { infFontsOk = true; await Promise.all(['900 26px Inter', '800 15px Inter', '400 13px Inter', '700 12px Inter'].map(f => document.fonts.load(f).catch(() => null))); }
   let sp;
-  try { sp = INF.mode === 'curva' ? await infBuildCurva() : INF.mode === 'pagos' ? await infBuildPagos() : INF.mode === 'tesoro' ? await infBuildTesoro() : await infBuildSerie(); }
+  try { sp = INF.mode === 'curva' ? await infBuildCurva() : INF.mode === 'pagos' ? await infBuildPagos() : INF.mode === 'tesoro' ? await infBuildTesoro() : INF.mode === 'tp' ? await infBuildTp() : await infBuildSerie(); }
   catch (e) { sp = { kind: 'vacio', msg: 'No se pudieron bajar los datos: ' + e.message, notes: [] }; }
   if (tok !== infTok) return;
   infSpec = sp; window.infLastSpec = sp; infEstilar(sp);
