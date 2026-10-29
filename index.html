@@ -5148,7 +5148,7 @@ const METODO = [
 
   { id: 'informe', t: 'Informe: gráficos en formato BAVSA',
     items: [
-      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal de 5 a 30 años en tasa real e inflación implícita. Por plazo a la última fecha que tienen todos, o el de 10 años con el último dato de cada mes. Sale de FRED con las series macro.',
+      { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal de 5 a 30 años en tasa real e inflación implícita. Por plazo a la última fecha que tienen todos (con el valor de cada parte adentro de la columna), el de 10 años con el último dato de cada mes, o la variación de cada parte en bips contra hace 1, 3, 6 y 12 meses al plazo que se elija. Sale de FRED con las series macro.',
         p: 'Son dos lecturas de la misma tasa y no se suman entre sí: el term premium mezcla prima por plazo real y por inflación, y la inflación implícita de los TIPS incluye la prima por riesgo de inflación. Kim y Wright se publica con unos días de rezago.' },
       { d: 'Cada gráfico se dibuja en un canvas blanco al doble de resolución (2400 px de ancho en "Ancho de página"): título navy, bajada azul en mayúsculas con el subrayado corto, leyenda abajo, fuente en Verdana itálica y el logo de BAVSA Fondos. "Copiar imagen" lo deja en el portapapeles como PNG; "Copiar datos", la tabla para Excel.',
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
@@ -6407,7 +6407,7 @@ function infTesoroCats(por, hoy) {
 let infTasasUsaP = null;
 const infTasasUsa = () => infTasasUsaP || (infTasasUsaP = fetch('tasas_usa.json?d=' + new Date().toISOString().slice(0, 10)).then(r => r.ok ? r.json() : null).catch(() => null));
 async function infBuildTp() {
-  const T = { desc: 'kw', vista: 'plazo', ...(INF.tp || {}) }, J = await infTasasUsa();
+  const T = { desc: 'kw', vista: 'plazo', plazo: 10, ...(INF.tp || {}) }, J = await infTasasUsa();
   if (!J || !J.series || !(J.series.THREEFY10 || []).length) return { kind: 'vacio', msg: 'Todavía no están las tasas de EE.UU. (tasas_usa.json): se bajan con las series macro.', notes: [] };
   const kw = T.desc === 'kw', S = id => J.series[id] || [];
   const plazos = kw ? [1, 2, 3, 5, 7, 10] : [5, 7, 10, 20, 30];
@@ -6416,6 +6416,22 @@ async function infBuildTp() {
   // [tasa corta esperada, term premium] o [tasa real, inflación implícita], y la tasa total
   const partes = (n, d) => { const a = at(idTot(n), d), b = at(idCmp(n), d); return a == null || b == null ? null : { v: kw ? [a - b, b] : [b, a - b], tot: a }; };
   const ultimo = ns => ns.flatMap(n => [S(idTot(n)).at(-1)?.[0], S(idCmp(n)).at(-1)?.[0]]).filter(Boolean).sort()[0];
+  const nombres = kw ? ['Tasa corta esperada', 'Term premium'] : ['Tasa real (TIPS)', 'Inflación implícita'];
+  if (T.vista === 'cambio') {
+    // cuánto se movió cada parte contra hace 1, 3, 6 y 12 meses (el último dato a esa fecha o antes), en bips
+    const n = plazos.includes(+T.plazo) ? +T.plazo : 10, last = ultimo([n]);
+    const menosMeses = (d, m) => { const t = new Date(d + 'T12:00:00Z'), dia = t.getUTCDate(); t.setUTCDate(1); t.setUTCMonth(t.getUTCMonth() - m); t.setUTCDate(Math.min(dia, new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate())); return t.toISOString().slice(0, 10); };
+    const comp = d => { const x = partes(n, d); return x ? (kw ? [x.tot, x.v[0], x.v[1]] : [x.tot, x.v[0], x.v[1]]) : null; };
+    const hoy = comp(last), cats = kw ? ['Rendimiento', 'Tasa corta esperada', 'Term premium'] : ['Tasa nominal', 'Tasa real', 'Inflación implícita'];
+    const H = [['1 mes', 1], ['3 meses', 3], ['6 meses', 6], ['1 año', 12]], cols = [BV.claro, BV.celeste, BV.azul, BV.navy];
+    const ser = H.map(([nm, m], j) => { const antes = comp(menosMeses(last, m)); return { k: 'var' + m, name: 'Contra hace ' + nm, vals: cats.map((_, c) => antes && hoy ? Math.round((hoy[c] - antes[c]) * 100) : 0), bars: true, color0: cols[j] }; });
+    const pct = v => numAR(v, 2, 2) + '%';
+    return { kind: 'pagos', agrupado: true, cats, ser, units: ['bips'], last, catHdr: 'Variable', decTot: 0,
+      notes: ['Hoy, a ' + n + (n === 1 ? ' año' : ' años') + ': ' + cats.map((c, i) => c.toLowerCase() + ' ' + pct(hoy[i])).join(', '), 'Contra el último dato a cada fecha o antes'],
+      tAuto: kw ? 'Treasuries: cómo cambiaron la tasa esperada y el term premium' : 'Treasuries: cómo cambiaron la tasa real y la inflación implícita',
+      bAuto: 'Variación en bips, ' + n + (n === 1 ? ' año' : ' años') + ', al ' + infDdmmaa(last),
+      fAuto: kw ? 'Fuente: Reserva Federal (modelo de Kim y Wright), vía FRED.' : 'Fuente: Tesoro de EE.UU., vía FRED.' };
+  }
   let cats, filas, last;
   if (T.vista === 'plazo') {
     last = ultimo(plazos); cats = plazos.map(String); filas = plazos.map(n => partes(n, last));
@@ -6425,13 +6441,12 @@ async function infBuildTp() {
     const ds = [...meses.values()].slice(-60);
     cats = ds.map(d => MES_CORTO[+d.slice(5, 7) - 1] + ' ' + d.slice(2, 4)); filas = ds.map(d => partes(10, d));
   }
-  const nombres = kw ? ['Tasa corta esperada', 'Term premium'] : ['Tasa real (TIPS)', 'Inflación implícita'];
   const ser = nombres.map((nm, j) => ({ k: (kw ? 'kw' : 'tips') + j, name: nm, vals: filas.map(f => f ? +f.v[j].toFixed(4) : 0), bars: true, color0: j ? BV.celeste : BV.azul }));
   const tot = filas.map(f => f ? f.tot : null), f = filas[filas.length - 1];
   const notes = [kw ? 'Kim y Wright: la tasa corta esperada es el rendimiento cupón cero ajustado menos el term premium' : 'Rendimientos a plazo constante; la inflación implícita (breakeven) es nominal menos real e incluye la prima por riesgo de inflación'];
-  if (T.vista === 'plazo' && kw) notes.push('Term premium a 10 años: ' + numAR(f.v[1], 2, 2) + '%');
+  if (T.vista === 'plazo') { const i10 = plazos.indexOf(10), x = filas[i10]; if (x) notes.push((kw ? 'A 10 años: tasa corta esperada ' : 'A 10 años: tasa real ') + numAR(x.v[0], 2, 2) + '%, ' + (kw ? 'term premium ' : 'inflación implícita ') + numAR(x.v[1], 2, 2) + '%'); }
   const errs = Object.keys(J.errores || {}); if (errs.length) notes.push('Sin actualizar: ' + errs.join(', '));
-  return { kind: 'pagos', cats, ser, units: ['% anual'], notes, last, catHdr: T.vista === 'plazo' ? 'Plazo en años' : 'Mes', decTot: 2,
+  return { kind: 'pagos', segLbl: T.vista === 'plazo', cats, ser, units: ['% anual'], notes, last, catHdr: T.vista === 'plazo' ? 'Plazo en años' : 'Mes', decTot: 2,
     marca: { name: kw ? 'Rendimiento cupón cero' : 'Tasa nominal', color: BV.navy, vals: tot },
     tAuto: kw ? 'Treasuries: tasa esperada y term premium' : 'Treasuries: tasa real e inflación implícita',
     bAuto: '% anual, ' + (T.vista === 'plazo' ? 'por plazo en años, al ' + infDdmmaa(last) : '10 años, último dato de cada mes'),
@@ -6783,7 +6798,32 @@ function infPlotSerie(ctx, sp, P) {
   tags.forEach(t => { const w = infW(ctx, t.txt) + 12; ctx.fillStyle = t.color; infRound(ctx, x1 + 6, t.y - 9, w, 18, 3); ctx.fill(); ctx.fillStyle = t.ink; ctx.fillText(t.txt, x1 + 12, t.y + 4); });
   ctx.textAlign = 'left';
 }
+// columnas lado a lado (una por serie) con su valor arriba o abajo, para variaciones que pueden ser negativas
+function infPlotGrupos(ctx, sp, P) {
+  const n = sp.cats.length, m = sp.ser.length, vs = sp.ser.flatMap(s => s.vals), mn = Math.min(0, ...vs), mx = Math.max(0, ...vs);
+  const pad = (mx - mn) * 0.12 || 1, a = infAxis(mn < 0 ? mn - pad : 0, mx > 0 ? mx + pad : 0, 8);
+  const st = a.tk.length > 1 ? a.tk[1] - a.tk[0] : 1, fmt = v => numAR(v, infDecs(st), infDecs(st));
+  ctx.font = `12px ${BV_SANS}`;
+  const wL = Math.max(...a.tk.map(v => infW(ctx, fmt(v)))) + 10, x0 = P.x0 + wL, x1 = P.x1, y0 = P.y0 + (INF.titulos ? 16 : 22), y1 = P.y1 - 22;
+  const ys = v => y0 + (1 - (v - a.lo) / (a.hi - a.lo)) * (y1 - y0), slot = (x1 - x0) / n, bw = Math.min(46, slot * 0.78 / m);
+  ctx.lineWidth = 1;
+  a.tk.forEach(v => { const yy = Math.round(ys(v)) + 0.5; ctx.strokeStyle = v === 0 ? BV.texto2 : BV.borde; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.fillStyle = BV.texto2; ctx.textAlign = 'right'; ctx.fillText(fmt(v), x0 - 8, yy + 4); });
+  if (!INF.titulos) { ctx.font = `600 11.5px ${BV_SANS}`; ctx.textAlign = 'left'; ctx.fillText(sp.units[0], P.x0, P.y0 + 4); }
+  sp.cats.forEach((c, i) => {
+    const xc = x0 + slot * (i + 0.5);
+    sp.ser.forEach((s, j) => {
+      const v = s.vals[i], xb = xc - bw * m / 2 + bw * j + 1, y = ys(Math.max(0, v)), h = Math.max(1, Math.abs(ys(v) - ys(0)));
+      ctx.fillStyle = s.color; ctx.fillRect(xb, y, bw - 2, h);
+      ctx.font = `700 ${m > 3 ? 11 : 12}px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center';
+      ctx.fillText((v > 0 ? '+' : v < 0 ? '−' : '') + numAR(Math.abs(v), sp.decTot ?? 0, sp.decTot ?? 0), xb + (bw - 2) / 2, v >= 0 ? ys(v) - 6 : ys(v) + 15);
+    });
+    ctx.font = `600 12.5px ${BV_SANS}`; ctx.fillStyle = BV.navy; ctx.textAlign = 'center'; ctx.fillText(c, xc, Math.max(ys(a.lo), y1) + 17);
+  });
+  ctx.textAlign = 'left';
+}
+const infTxtSobre = c => { const h = String(c || '').replace('#', ''); if (h.length !== 6) return '#fff'; const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? BV.navy : '#fff'; };
 function infPlotPagos(ctx, sp, P) {
+  if (sp.agrupado) return infPlotGrupos(ctx, sp, P);
   const n = sp.cats.length, sum = f => sp.cats.map((_, i) => sp.ser.reduce((a, s) => a + f(s.vals[i] || 0), 0));
   const pos = sum(v => Math.max(0, v)), neg = sum(v => Math.min(0, v)), tot = sum(v => v), marca = sp.marca ? sp.marca.vals : null;
   const mn = Math.min(0, ...neg), mx = Math.max(...pos, ...(marca || []).filter(v => v != null));
@@ -6801,8 +6841,11 @@ function infPlotPagos(ctx, sp, P) {
   sp.cats.forEach((c, i) => {
     const xc = x0 + slot * (i + 0.5); let up = 0, dn = 0;
     sp.ser.forEach(s => { const v = s.vals[i]; if (!v) return; ctx.fillStyle = s.color;
-      if (v > 0) { const ya = ys(up), yb = ys(up + v); ctx.fillRect(xc - bw / 2, yb, bw, Math.max(0.5, ya - yb)); up += v; }
-      else { const ya = ys(dn), yb = ys(dn + v); ctx.fillRect(xc - bw / 2, ya, bw, Math.max(0.5, yb - ya)); dn += v; } });
+      let yt, yb;
+      if (v > 0) { yt = ys(up + v); yb = ys(up); ctx.fillRect(xc - bw / 2, yt, bw, Math.max(0.5, yb - yt)); up += v; }
+      else { yt = ys(dn); yb = ys(dn + v); ctx.fillRect(xc - bw / 2, yt, bw, Math.max(0.5, yb - yt)); dn += v; }
+      // el valor de cada parte adentro de la columna, si entra
+      if (sp.segLbl && n <= 12 && yb - yt >= 17) { ctx.font = `600 ${n > 8 ? 11 : 12}px ${BV_SANS}`; ctx.fillStyle = infTxtSobre(s.color); ctx.textAlign = 'center'; ctx.fillText(numAR(v, sp.decTot ?? 1, sp.decTot ?? 1), xc, (yt + yb) / 2 + 4); } });
     if (i % paso === 0) { ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center'; ctx.fillText(c.replace(' en adelante', '+'), xc, y1 + 17); }
     const tv = marca ? marca[i] : tot[i];
     if (marca && conTot && tv != null) { ctx.strokeStyle = sp.marca.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xc - bw / 2 - 5, ys(tv)); ctx.lineTo(xc + bw / 2 + 5, ys(tv)); ctx.stroke(); ctx.lineWidth = 1; }
@@ -6899,6 +6942,7 @@ function infTsv() {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
+  if (sp.kind === 'pagos' && sp.agrupado) return [sp.catHdr + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t'))].join('\n');
   if (sp.kind === 'pagos') return [(sp.catHdr || 'Período') + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\t' + (sp.marca ? sp.marca.name : 'Total'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.marca ? sp.marca.vals[i] : sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
@@ -6920,9 +6964,10 @@ function renderInfCtl() {
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
   let h = '', cat = '';
   if (INF.mode === 'tp') {
-    const T = { desc: 'kw', vista: 'plazo', ...(INF.tp || {}) };
+    const T = { desc: 'kw', vista: 'plazo', plazo: 10, ...(INF.tp || {}) }, pls = T.desc === 'kw' ? [1, 2, 3, 5, 7, 10] : [5, 7, 10, 20, 30];
     cat = '<div class="inf-lbl inf-lbl-first">Descomponer</div>' + seg([['kw', 'Tasa esperada y term premium'], ['tips', 'Tasa real e inflación']], T.desc, "infTp.bind(null,'desc')")
-      + '<div class="inf-lbl">Ver</div>' + seg([['plazo', 'Por plazo, hoy'], ['tiempo', '10 años, por mes']], T.vista, "infTp.bind(null,'vista')")
+      + '<div class="inf-lbl">Ver</div>' + seg([['plazo', 'Por plazo, hoy'], ['tiempo', '10 años, por mes'], ['cambio', 'Variación']], T.vista, "infTp.bind(null,'vista')")
+      + (T.vista === 'cambio' ? '<div class="inf-lbl">Plazo</div>' + seg(pls.map(n => [String(n), n + (n === 1 ? ' año' : ' años')]), String(pls.includes(+T.plazo) ? +T.plazo : 10), "infTp.bind(null,'plazo')") : '')
       + '<div class="inf-tes-datos">' + (T.desc === 'kw' ? 'Modelo de Kim y Wright de la Reserva Federal: el rendimiento cupón cero ajustado se separa en la tasa corta que el mercado espera para el plazo y el term premium, lo que se cobra por quedarse largo. Se actualiza con unos días de rezago.' : 'TIPS: la tasa real es el rendimiento de los bonos ajustados por inflación y la inflación implícita, la diferencia con el nominal del mismo plazo.') + '</div>';
   } else if (INF.mode === 'tesoro') {
     const T = { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {}, ...(INF.tesoro || {}) }, d = infVenc1816();
