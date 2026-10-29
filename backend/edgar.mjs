@@ -392,7 +392,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   };
   const allRates = BASE.map(q => etrAt(q.t)).filter(r => r != null);
   const globalRate = allRates.length >= 4 ? median(allRates) : 0.21;
-  const out = [], adj = [], margins = [], rows = [], adjBases = [];
+  const out = [], adj = [], margins = [], rows = [], adjBases = [], nonop = [];
   BASE.forEach((q, i) => {
     const win = BASE.slice(Math.max(0, i - 11), i + 1).map(x => etrAt(x.t)).filter(r => r != null);
     const tax = Math.min(0.35, Math.max(0, win.length >= 4 ? median(win) : globalRate));
@@ -419,6 +419,10 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     const nciW = BASE.slice(Math.max(0, i - 7), i + 1).map(x => nciAt(x.t)).filter(r => r != null);
     let nci = nciW.length ? median(nciW) : 0; const inf = inferredNci(i); if (inf != null && inf > nci + 0.10) nci = inf;
     const pref = at(PREF, q.t) || 0;
+    // con base operativa, la valuación de tenencias (acciones de otras empresas a valor razonable) queda afuera del
+    // normalizado sin ser un ajuste: se informa aparte para explicar la diferencia con el contable
+    const ten = method === "operativo" ? get("EquitySecuritiesFvNiGainLoss", q.t) : undefined;
+    if (ten && sh) nonop.push({ fin: q.end, pre: +(ten / 1e6).toFixed(1), eps: +(ten * (1 - tax) * (1 - nci) / sh).toFixed(3) });
     // importes en millones de US$; eps = lo que le restó (o sumó) al EPS contable: neto de impuestos, o entero si no deduce
     if (items.length) adj.push({ fin: q.end, base: +(base / 1e6).toFixed(1), tasa: +tax.toFixed(3),
       items: items.map(x => ({ ...x, cat: CAT_ES[x.cat] || x.cat, pre: +(x.pre / 1e6).toFixed(1),
@@ -442,7 +446,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
     if (Math.abs(x.m - mu) > Math.max(2.5 * sd, 0.04)) flags.push({ fin: x.end, margen: +(x.m * 100).toFixed(1), media: +(mu * 100).toFixed(1) });
   });
   const armado = method === "operativo" ? { interesesPagadosEnOperativo: inOI.ie, interesesGanadosEnOperativo: inOI.ii, asociadasEnOperativo: inOI.eq, afudc: AF.length > 0 } : (motivo ? { motivo } : null);
-  return { eps: out, method, adj, flags, rows, armado, accionesInformadas: !!repOk };
+  return { eps: out, method, adj, flags, rows, armado, nonop, accionesInformadas: !!repOk };
 }
 
 // ---- Flujo de caja y deuda ----

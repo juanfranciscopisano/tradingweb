@@ -242,7 +242,7 @@ async function edgarEPS(sym, splits = []) {
   try { q = quality(raw, n.rows); } catch (e) { console.log(`pebg ${sym}: calidad ${e.message}`); }
   let ventas = [];
   try { ventas = quarterSeries(raw.rev).map(x => ({ date: Math.floor(x.t / 1000), v: Math.round(x.eps / 1e5) / 10 })); } catch (e) { /* sin ventas */ }
-  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], cd, q, ventas };
+  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], normNonOp: n.nonop || [], cd, q, ventas };
 }
 
 // ---------------------------------------------------------------- EPS cargado a mano
@@ -611,6 +611,8 @@ app.get("/api/pebg", async (req, res) => {
         // extraordinarios sacados del normalizado (trimestre, partida, millones de US$ antes de impuestos, efecto por acción)
         normAdj: normMethod && !manual ? (edgarAll.normAdj || []) : [],
         normFlags: normMethod && !manual ? (edgarAll.normFlags || []) : [],
+        // valuación de tenencias por trimestre (millones antes de impuestos y efecto por acción), que el normalizado operativo no cuenta
+        normNonOp: normMethod && !manual ? (edgarAll.normNonOp || []) : [],
         // flujo de caja de 12 meses y último balance (millones de US$), para P/FCF, EV/EBIT y deuda neta / EBITDA
         cajaDeuda: manual ? null : (edgarAll.cd || null),
         // calidad: ventas, EBIT ajustado, NOPAT, capital invertido y acciones, hoy y hace un año (millones)

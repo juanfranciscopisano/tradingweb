@@ -3703,13 +3703,18 @@ function renderPebgNorm(d) {
     const byCat = new Map();
     inWin.forEach(a => a.items.forEach(x => { if (x.eps != null) byCat.set(x.cat, (byCat.get(x.cat) || 0) + x.eps); }));
     const expl = [...byCat.entries()].filter(([, v]) => Math.abs(v) >= 0.005).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    // valuación de tenencias (acciones de otras empresas): el normalizado operativo no la cuenta, así que resta del contable
+    const ten = (Array.isArray(d.normNonOp) ? d.normNonOp : []).filter(a => { const ts = Date.parse(a.fin + 'T00:00:00Z') / 1000; return ts >= t.from - 10 * 86400 && ts <= t.to + 10 * 86400; });
+    const tenEps = ten.reduce((a, x) => a + (x.eps || 0), 0);
+    if (own && Math.abs(tenEps) >= 0.005) { expl.push(['valuación de tenencias en otras empresas', -tenEps]); expl.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])); }
     const sumExpl = expl.reduce((a, [, v]) => a + v, 0), rest = (t.n - t.g) - sumExpl;
     const gapTxt = gap === Infinity ? 'uno da ganancia y el otro pérdida' : 'el normalizado da ' + Math.abs(gap * 100).toFixed(0) + '% ' + (gap > 0 ? 'más' : 'menos');
-    const restTxt = 'impuestos fuera de la tasa habitual y resultados de abajo de la línea operativa (tenencias, diferencias de cambio, ventas de negocios)';
+    const restTxt = ten.length ? 'impuestos fuera de la tasa habitual y otros resultados de abajo de la línea operativa (diferencias de cambio, bonos, ventas de negocios)' : 'impuestos fuera de la tasa habitual y resultados de abajo de la línea operativa (tenencias, diferencias de cambio, ventas de negocios)';
     const hasRest = own && Math.abs(rest) >= 0.05 * Math.abs(t.n - t.g) && Math.abs(rest) >= 0.01;
     let why = '';
     if (!own) why = ' El normalizado es el ajustado que publica la empresa' + (d.normMethod === 'ajustado' ? ' (vía Finnhub)' : '') + ': el detalle de los ajustes está en su reporte.';
-    else if (expl.length) why = ' Por acción, la diferencia sale de ' + expl.map(([c, v]) => c + ' (' + fSgn(v) + ')').join(', ') + (hasRest ? '; el resto (' + fSgn(rest) + '), de ' + restTxt : '') + '.';
+    else if (expl.length) why = ' Por acción, la diferencia sale de ' + expl.map(([c, v]) => c + ' (' + fSgn(v) + ')').join(', ') + (hasRest ? '; el resto (' + fSgn(rest) + '), de ' + restTxt : '') + '.'
+      + (ten.length ? ' Tenencias, antes de impuestos: ' + ten.filter(x => Math.abs(x.pre) >= 1).map(x => fQd(x.fin) + ' ' + (x.pre > 0 ? '+' : '−') + 'US$ ' + fMill(Math.abs(x.pre)) + ' M').join(', ') + '. El normalizado no las cuenta porque son ganancias o pérdidas por valuación, no del negocio.' : '');
     else if (hasRest) why = ' No hay extraordinarios etiquetados en esos trimestres: la diferencia (' + fSgn(rest) + ' por acción) sale de ' + restTxt + '.';
     alertHtml = '<b>Contable y normalizado difieren:</b> ' + gapTxt + '. EPS de 12 meses ' + fUsd(t.g) + ' contable (P/E ' + pe(t.g) + ') y ' + fUsd(t.n) + ' normalizado (P/E ' + pe(t.n) + ').' + why;
   }

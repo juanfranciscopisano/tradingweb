@@ -230,8 +230,44 @@ async function fxLatam({ fetchImpl, root, log, now }) {
   await writeFile(new URL("fx.json", root), JSON.stringify(out));
 }
 
+// ---- Tasas de EE.UU. descompuestas (tasas_usa.json), de FRED sin clave:
+// - Kim y Wright (Reserva Federal): rendimiento cupón cero ajustado (THREEFYn) y term premium (THREEFYTPn) a 1-10 años;
+//   la tasa corta esperada es la diferencia.
+// - TIPS: rendimiento real a plazo constante (DFIIn) y nominal (DGSn) a 5-30 años; la inflación implícita es la diferencia.
+// Se guarda el último dato de cada mes desde 2006 y los diarios del último año.
+export const TASAS_USA = [1, 2, 3, 5, 7, 10].flatMap(n => ["THREEFY" + n, "THREEFYTP" + n]).concat([5, 7, 10, 20, 30].flatMap(n => ["DFII" + n, "DGS" + n]));
+export function parseFredCsv(txt) {
+  const out = [];
+  for (const l of txt.trim().split(/\r?\n/).slice(1)) { const [d, v] = l.split(","); const x = parseFloat(v); if (/^\d{4}-\d\d-\d\d$/.test(d) && isFinite(x)) out.push([d, x]); }
+  return out;
+}
+export function compactar(serie, desdeDiario) {
+  const mes = new Map();
+  for (const [d, v] of serie) if (d < desdeDiario) mes.set(d.slice(0, 7), [d, v]);
+  return [...mes.values(), ...serie.filter(([d]) => d >= desdeDiario)];
+}
+async function tasasUsa({ fetchImpl, root, log, now }) {
+  let prev = {};
+  try { prev = JSON.parse(await readFile(new URL("tasas_usa.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  const out = { asOf: now.toISOString(), src: { kw: "Reserva Federal, modelo de Kim y Wright (FRED)", tips: "Tesoro de EE.UU., rendimientos a plazo constante (FRED)" }, series: {}, errores: {} };
+  const desdeDiario = new Date(now.getTime() - 400 * 86400000).toISOString().slice(0, 10);
+  for (const id of TASAS_USA) {
+    try {
+      const r = await fetchImpl("https://fred.stlouisfed.org/graph/fredgraph.csv?id=" + id + "&cosd=2006-01-01", { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tasas de EE.UU.)" }, signal: AbortSignal.timeout(30000) });
+      if (!r.ok) throw new Error("FRED HTTP " + r.status);
+      const s = parseFredCsv(await r.text());
+      if (s.length < 100) throw new Error("FRED devolvió " + s.length + " datos");
+      out.series[id] = compactar(s, desdeDiario).map(([d, v]) => [d, +v.toFixed(4)]);
+    } catch (e) { out.series[id] = prev.series?.[id] || []; out.errores[id] = String(e.message || e).slice(0, 120); }
+  }
+  const ult = id => (out.series[id] || []).at(-1)?.join(" ");
+  log(`tasas_usa.json: 10 años ${ult("THREEFY10")}, term premium ${ult("THREEFYTP10")}, TIPS ${ult("DFII10")}` + (Object.keys(out.errores).length ? "; errores: " + Object.keys(out.errores).join(", ") : ""));
+  await writeFile(new URL("tasas_usa.json", root), JSON.stringify(out));
+}
+
 export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, now = new Date() } = {}) {
   await fxLatam({ fetchImpl, root, log, now }).catch(e => log("fx: " + e.message));
+  await tasasUsa({ fetchImpl, root, log, now }).catch(e => log("tasas de EE.UU.: " + e.message));
   // el MSCI MERVAL y la caución no frenan el ITCRM si BYMA no responde
   await msciMerval({ fetchImpl, root, log, now }).catch(e => log("MSCI MERVAL: " + e.message));
   await caucion({ fetchImpl, root, log, now }).catch(e => log("Caución: " + e.message));
