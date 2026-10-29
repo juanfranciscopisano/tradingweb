@@ -235,7 +235,24 @@ async function fxLatam({ fetchImpl, root, log, now }) {
 //   la tasa corta esperada es la diferencia.
 // - TIPS: rendimiento real a plazo constante (DFIIn) y nominal (DGSn) a 5-30 años; la inflación implícita es la diferencia.
 // Se guarda el último dato de cada mes desde 2006 y los diarios del último año.
-export const TASAS_USA = [1, 2, 3, 5, 7, 10].flatMap(n => ["THREEFY" + n, "THREEFYTP" + n]).concat([5, 7, 10, 20, 30].flatMap(n => ["DFII" + n, "DGS" + n]));
+export const TASAS_USA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].flatMap(n => ["THREEFY" + n, "THREEFYTP" + n]).concat([5, 7, 10, 20, 30].flatMap(n => ["DFII" + n, "DGS" + n]));
+// curva real de la Reserva Federal (Gürkaynak, Sack y Wright): rendimiento par real (TIPSPYnn) e inflación implícita par
+// (BKEVENPYnn) de 2 a 20 años; el Tesoro publica la real a plazo constante solo desde 5 años
+export const GSW_URL = "https://www.federalreserve.gov/data/yield-curve-tables/feds200805.csv";
+export const GSW_COLS = [2, 3, 4, 5, 7, 10, 20].flatMap(n => ["TIPSPY" + String(n).padStart(2, "0"), "BKEVENPY" + String(n).padStart(2, "0")]);
+export function parseGsw(txt, cols = GSW_COLS) {
+  const lines = txt.split(/\r?\n/), h = lines.findIndex(l => /^"?date"?\s*,/i.test(l.trim()));
+  if (h < 0) throw new Error("sin encabezado en la curva real de la Fed");
+  const head = lines[h].split(",").map(x => x.trim().replace(/^"|"$/g, "")), idx = cols.map(c => head.indexOf(c)), out = Object.fromEntries(cols.map(c => [c, []]));
+  for (const l of lines.slice(h + 1)) {
+    const v = l.split(","), d0 = (v[0] || "").trim().replace(/^"|"$/g, "");
+    const d = /^\d{4}-\d\d-\d\d$/.test(d0) ? d0 : /^\d\d-\d\d-\d{4}$/.test(d0) ? d0.slice(6) + "-" + d0.slice(3, 5) + "-" + d0.slice(0, 2) : null;
+    if (!d) continue;
+    cols.forEach((c, k) => { const x = parseFloat(v[idx[k]]); if (idx[k] >= 0 && isFinite(x)) out[c].push([d, x]); });
+  }
+  for (const c of cols) out[c].sort((a, b) => a[0] < b[0] ? -1 : 1);
+  return out;
+}
 export function parseFredCsv(txt) {
   const out = [];
   for (const l of txt.trim().split(/\r?\n/).slice(1)) { const [d, v] = l.split(","); const x = parseFloat(v); if (/^\d{4}-\d\d-\d\d$/.test(d) && isFinite(x)) out.push([d, x]); }
@@ -260,8 +277,15 @@ async function tasasUsa({ fetchImpl, root, log, now }) {
       out.series[id] = compactar(s, desdeDiario).map(([d, v]) => [d, +v.toFixed(4)]);
     } catch (e) { out.series[id] = prev.series?.[id] || []; out.errores[id] = String(e.message || e).slice(0, 120); }
   }
+  try {
+    const r = await fetchImpl(GSW_URL, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tasas de EE.UU.)" }, signal: AbortSignal.timeout(60000) });
+    if (!r.ok) throw new Error("Reserva Federal HTTP " + r.status);
+    const g = parseGsw(await r.text());
+    for (const c of GSW_COLS) { if (g[c].length < 100) throw new Error(c + ": " + g[c].length + " datos"); out.series[c] = compactar(g[c].filter(([d]) => d >= "2006-01-01"), desdeDiario).map(([d, v]) => [d, +v.toFixed(4)]); }
+  } catch (e) { for (const c of GSW_COLS) out.series[c] = prev.series?.[c] || []; out.errores.curvaReal = String(e.message || e).slice(0, 120); }
+  out.src.gsw = "Reserva Federal, curva real de Gürkaynak, Sack y Wright";
   const ult = id => (out.series[id] || []).at(-1)?.join(" ");
-  log(`tasas_usa.json: 10 años ${ult("THREEFY10")}, term premium ${ult("THREEFYTP10")}, TIPS ${ult("DFII10")}` + (Object.keys(out.errores).length ? "; errores: " + Object.keys(out.errores).join(", ") : ""));
+  log(`tasas_usa.json: 10 años ${ult("THREEFY10")}, term premium ${ult("THREEFYTP10")}, TIPS ${ult("DFII10")}, real par 2 años ${ult("TIPSPY02")}` + (Object.keys(out.errores).length ? "; errores: " + Object.keys(out.errores).join(", ") : ""));
   await writeFile(new URL("tasas_usa.json", root), JSON.stringify(out));
 }
 
