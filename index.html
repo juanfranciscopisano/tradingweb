@@ -248,9 +248,11 @@ td:nth-child(-n+4){text-align:left}
 .pebg-stat-lbl{font-size:12px;color:var(--muted)}
 .pebg-stat-val{font-size:17px;font-weight:650;color:var(--ink);white-space:nowrap;font-stretch:92%}
 .pebg-stat-sub{font-size:11.5px;color:var(--faint)}
+.amp-cae{color:var(--accent)!important}
 .pebg-stat-cmp{font-size:11.5px;font-weight:500;color:var(--faint);margin-left:7px;font-stretch:100%}
 /* laptops (1280–1600 px): letra y espacio algo menores para que las doce cifras entren en una fila */
 @media (max-width:1599px) and (min-width:769px){.pebg-stat-block{padding:0 8px}.pebg-stat-lbl{font-size:11px}.pebg-stat-val{font-size:15.5px}.pebg-stat-sub{font-size:10.5px}}
+@media (max-width:1439px) and (min-width:769px){.pebg-stat-block{padding:0 6px}.pebg-stat-val{font-size:15px}.pebg-stat-sub{font-size:10px}.pebg-stat-cmp{font-size:10.5px;margin-left:5px}}
 #pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden;margin:14px var(--side);border:1px solid var(--line);border-radius:10px;background:var(--chart-bg)}
 #pebgContainer{flex:1;position:relative;overflow:hidden;background:var(--chart-bg);min-width:0;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
 #pebgMain{flex:1;position:relative;min-height:0;overflow:hidden}
@@ -956,6 +958,7 @@ function checkPwd(){
     <div class="stat"><div class="stat-val" id="sPEn">&mdash;</div><div class="stat-lbl" id="sPEnLbl" title="Capitalización sobre EPS normalizado de 12 meses de la SEC, con precios de ahora. Es el S&amp;P 500 normalizado de la pestaña Sectores: al cierre dan igual.">P/E normalizado</div></div>
     <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" id="sPELbl" title="Capitalización total sobre ganancias contables de 12 meses de la SEC, con precios de ahora. Las pérdidas restan y cada empresa cuenta una vez. Es la misma cuenta que el S&amp;P 500 de la pestaña Sectores y del panel de comparación: al cierre dan igual; durante la rueda este se mueve con los precios.">P/E contable</div></div>
     <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas de los cuatro trimestres que cada empresa va a presentar en el próximo año (consenso por trimestres): el P/E que va a tener el grupo en un año si los precios no se mueven. Las pérdidas esperadas restan, como en el P/E de 12 meses; es el Fw P/E del S&P 500 de Sectores con precios de ahora.">Fw P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sAmp">&mdash;</div><div class="stat-lbl" id="sAmpLbl">En −1σ, 3 años</div></div>
     <div class="stat"><div class="stat-val up" id="sG">&mdash;</div><div class="stat-lbl">Suben hoy</div></div>
     <div class="stat"><div class="stat-val dn" id="sL">&mdash;</div><div class="stat-lbl">Bajan hoy</div></div>
     <div class="stat"><div class="stat-val" id="s1D">&mdash;</div><div class="stat-lbl" title="Retorno de la canasta ponderada por market cap.">1D ponderado</div></div>
@@ -1176,6 +1179,11 @@ function checkPwd(){
       <div class="pebg-stat-lbl" id="psLbl3">Z-score</div>
       <div class="pebg-stat-val" id="psStat3">—</div>
       <div class="pebg-stat-sub" id="psSub3">posici&#243;n</div>
+    </div>
+    <div class="pebg-stat-block" id="psMktBlock">
+      <div class="pebg-stat-lbl">Mercado</div>
+      <div class="pebg-stat-val" id="psStatMkt">—</div>
+      <div class="pebg-stat-sub" id="psSubMkt">amplitud</div>
     </div>
     <div class="pebg-stat-block">
       <div class="pebg-stat-lbl">Precio</div>
@@ -2118,6 +2126,22 @@ function fundFor(sym, livePrice) {
   const n12 = revCo(sym) ? ntmEps(sym) : null, fpe12 = n12 > 0 && px > 0 ? px / n12 : null;
   return { pe: sc(f.pe), fpe, fpe12, e4, fpeSrc: e4 != null ? 'trim' : (f.fpe ? 'yahoo' : null), pb: sc(f.pb), mc: sc(f.mc), name: f.n || null, asOf: f.d || null, stale: !!f.stale };
 }
+// Mercado cayendo: amplitud del S&P 500 (eps_ttm.json, la arma el proceso de múltiplos al cierre). Parte de las empresas
+// con el P/E normalizado (contable si no hay) en −1σ o menos contra su banda móvil de 3 años; desde 30%, el mercado está
+// cayendo. Es el filtro del backtest de señales de P/E: en growth (P/E promedio de 30x o más) la banda de 1 año sirve
+// solo con el mercado cayendo.
+const AMP_UMBRAL = 30;
+function ampInfo() {
+  const a = SEC_AMP; if (!a || a.p1 == null) return null;
+  const fecha = SEC_EPS_AS_OF ? SEC_EPS_AS_OF.slice(8, 10) + '/' + SEC_EPS_AS_OF.slice(5, 7) : '';
+  const cae = a.p1 >= AMP_UMBRAL, dos = (a.bajo || []).filter(x => x[1] <= -2);
+  const lista = dos.slice(0, 8).map(x => x[0] + ' ' + x[1].toFixed(2).replace('.', ',').replace('-', '−')).join(', ');
+  const tip = 'Parte de las empresas del S&P 500 con el P/E normalizado (contable si no tienen) en −1σ o menos contra su banda móvil de 3 años, al cierre'
+    + (fecha ? ' del ' + fecha : '') + ' (' + a.n + ' empresas con banda). Desde ' + AMP_UMBRAL + '%, el mercado está cayendo: es el filtro del backtest de señales de P/E, '
+    + 'donde en growth (P/E promedio de 30x o más) la banda de 1 año sirve solo con el mercado cayendo. En −2σ o menos: ' + a.p2.toFixed(1).replace('.', ',') + '%'
+    + (lista ? ' (' + lista + (dos.length > 8 ? ' y ' + (dos.length - 8) + ' más' : '') + ')' : '') + '.';
+  return { p1: a.p1, p2: a.p2, cae, tip, txt: Math.round(a.p1) + '% en −1σ' };
+}
 function fundAsOfLabel() {
   if(!FUND_AS_OF) return 'Fundamentals sin datos';
   return 'Fundamentals al ' + new Date(FUND_AS_OF).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'});
@@ -2125,11 +2149,11 @@ function fundAsOfLabel() {
 
 // EPS de 12 meses de la SEC por empresa (eps_ttm.json, lo arma el proceso diario de múltiplos):
 // data[sym] = [eps contable, eps normalizado, acciones diluidas, cierre del último trimestre, precio usado]
-let SEC_EPS = null, SEC_EPS_AS_OF = null, secEpsPromise = null, secSpx = null, secSpxN = null;
+let SEC_EPS = null, SEC_EPS_AS_OF = null, secEpsPromise = null, secSpx = null, secSpxN = null, SEC_AMP = null;
 function loadSecEps() {
   if (!secEpsPromise) secEpsPromise = fetch('eps_ttm.json?d=' + new Date().toISOString().slice(0, 10), { cache: 'no-cache' })
     .then(r => r.ok ? r.json() : null)
-    .then(j => { SEC_EPS = (j && j.data) || null; SEC_EPS_AS_OF = (j && j.asOf) || null; secSpx = (j && j.spx) || null; secSpxN = (j && j.spxN) || null; if (!SEC_EPS) secEpsPromise = null; return SEC_EPS; })
+    .then(j => { SEC_EPS = (j && j.data) || null; SEC_EPS_AS_OF = (j && j.asOf) || null; secSpx = (j && j.spx) || null; secSpxN = (j && j.spxN) || null; SEC_AMP = (j && j.amplitud) || null; if (!SEC_EPS) secEpsPromise = null; return SEC_EPS; })
     .catch(() => { secEpsPromise = null; return null; });
   return secEpsPromise;
 }
@@ -2236,6 +2260,9 @@ function updateStats() {
   uRows.forEach(r=>{ const mc=r.marketCap; if(!(mc>0)||!(r.price>0)) return;
     if(r.fwdE!=null){ Mf+=mc; Ef+=mc/r.price*r.fwdE; } else if(r.fwdPE>0){ Mf+=mc; Ef+=mc/r.fwdPE; } });
   sv('sFwd', fmx(Ef>0 ? Mf/Ef : null));
+  { const a = ampInfo(), v = document.getElementById('sAmp'), l = document.getElementById('sAmpLbl');
+    if (v) { v.textContent = a ? Math.round(a.p1) + '%' : '—'; v.classList.toggle('amp-cae', !!(a && a.cae)); }
+    if (l) { l.textContent = a && a.cae ? 'En −1σ: mercado cayendo' : 'En −1σ, 3 años'; l.title = a ? a.tip : 'Sin la amplitud del proceso de múltiplos.'; } }
   sv('sPB', fmx(agg('pb')));
 
   sv('sG', rows.filter(r=>r.ret1d>0).length);
@@ -4101,6 +4128,10 @@ function renderPebg(data) {
     set('psSub3', rank == null ? (last.g == null ? 'faltan 6 años de EPS' : last.g < PEG_MIN_G ? 'crecimiento menor a 3%' : '') : rank < 0.25 ? 'barato' : rank > 0.75 ? 'caro' : 'justo');
     set('psLbl5', 'Crec. EPS 5A'); set('psStat5', last.g != null ? (last.g * 100).toFixed(1) + '%' : '—'); set('psSub5', 'tendencia anual, ' + (norm ? 'normalizado' : 'contable'));
   }
+  { const a = ampInfo(), v = document.getElementById('psStatMkt'), b = document.getElementById('psMktBlock');
+    if (v) { v.textContent = a ? (a.cae ? 'Cayendo' : 'Normal') : '—'; v.classList.toggle('amp-cae', !!(a && a.cae)); }
+    set('psSubMkt', a ? a.txt + ', 3A' : 'sin dato');
+    if (b) b.title = a ? a.tip : 'Sin la amplitud del proceso de múltiplos.'; }
   set('psStat4', fmtP(data.currentPrice || last.close));
   const lastQ = (eps.find(e => e.date === last.q) || eps[eps.length - 1])?.eps;   // el último que entra en el P/E de hoy
   const peAnual = (lastQ && lastQ > 0) ? last.close / (lastQ * 4) : null;
@@ -5120,6 +5151,9 @@ const METODO = [
         p: 'Por eso la serie del índice arranca a mediados de 2009: antes, la SEC no tiene cuatro trimestres en XBRL para suficientes empresas.' },
       { d: 'El EPS de cada empresa entra la semana en que lo presentó a la SEC, con la regla de P/E histórico: desde el día siguiente a la presentación, así que lo presentado hasta el jueves cuenta en el cierre de ese viernes.',
         p: 'Con la fecha de cierre del trimestre, el P/E de fin de año ya usaba el cuarto trimestre, que se conoce entre fines de enero y marzo.' },
+      { d: 'Amplitud (mercado cayendo): parte de las empresas del S&P 500 con el P/E normalizado (contable si no tienen) en −1σ o menos contra su propia banda móvil de 3 años, cada semana. Desde 30%, el mercado está cayendo. Se ve en P/E histórico (Mercado) y en el screener, con las empresas en −2σ al pasar el mouse.',
+        p: 'Es el filtro del backtest de señales de P/E: en growth (P/E promedio de 30x o más) la banda de 1 año solo sirve con el mercado cayendo, y en el resto manda la de 3 años. Cada empresa se mide contra su historia, así una tecnológica cara no pesa distinto que una eléctrica barata. La banda es la móvil de P/E histórico con puntos semanales: 156 semanas, P/E entre 0 y 500 y al menos 60% de las semanas con dato; las empresas sin P/E (con pérdidas) no cuentan. Desde 2011, 30% o más marca 2011, el comienzo de 2016, el fin de 2018, 2020 (hasta 72%), casi todo 2022 (hasta 51%), los sustos de 2023 y mayo y septiembre de 2026; es el 12% de las semanas.',
+        o: 'El umbral de 30% salió de un backtest sobre 103 acciones con datos diarios; sobre el S&P 500 con datos semanales el 30/10/2026 da 26,9%, donde el backtest medía 30%.' },
       { d: 'Puntos semanales, con el de la semana en curso rehecho cada día hábil con el cierre de ese día.',
         p: 'Semanal alcanza para ver ciclos y pesa cinco veces menos que diario.' },
       { d: 'Fw P/E del grupo: suma de capitalizaciones sobre suma de ganancias esperadas, con el EPS del Fw P/E de cada empresa (los cuatro trimestres que va a presentar en el año).',
