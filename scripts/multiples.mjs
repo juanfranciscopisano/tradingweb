@@ -353,7 +353,11 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   // revisions.json; sin consenso, la del Fw P/E de Yahoo. Una ganancia esperada negativa resta.
   let rev = {};
   try { rev = JSON.parse(await readFile(new URL("revisions.json", root), "utf8")).data || {}; } catch (e) { log("revisions.json: " + e.message); }
-  const fw4 = sym => next4From(rev[sym], cos[sym]?.lastIn ? cos[sym].lastIn * 1000 : null, now.getTime())?.eps ?? null;
+  // con varias clases de acciones (GOOG y GOOGL), el consenso de la clase con más analistas, como en la página
+  const revCo = {};
+  for (const c of list) { const x = rev[c.s]; if (x && (!revCo[c.cik] || (x.n || 0) > (revCo[c.cik].n || 0))) revCo[c.cik] = x; }
+  const cikOf = Object.fromEntries(list.map(c => [c.s, c.cik]));
+  const fw4 = sym => next4From(revCo[cikOf[sym]] || rev[sym], cos[sym]?.lastIn ? cos[sym].lastIn * 1000 : null, now.getTime())?.eps ?? null;
   const fwOf = syms => { let M = 0, E = 0; for (const s of syms) {
     const f = fund[s]; if (!(f?.mc > 0)) continue;
     const e = fw4(s);
