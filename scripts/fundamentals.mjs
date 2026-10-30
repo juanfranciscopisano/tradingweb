@@ -69,7 +69,9 @@ export function parseTrend(j) {
   // trimestre en curso y siguiente (cierre, EPS esperado) y los últimos EPS informados: para el EPS de 12 meses por trimestres
   const qq = t => { if (!t || !t.endDate) return null; const v = raw(t.epsTrend?.current) ?? raw(t.earningsEstimate?.avg); return v == null ? null : [t.endDate, +v.toFixed(4)]; };
   const hist = (j?.quoteSummary?.result?.[0]?.earningsHistory?.history || []).map(h => [h.quarter?.fmt || null, raw(h.epsActual), raw(h.epsEstimate)]).filter(h => h[0] && h[1] != null);
-  const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1),
+  // crecimiento anual esperado a 5 años (Yahoo, "+5y"): extiende el consenso más allá del ejercicio siguiente (Fw P/E a 2 años)
+  const g5 = raw(per("+5y")?.growth);
+  const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1), ...(g5 != null && isFinite(g5) ? { g5: +g5.toFixed(4) } : {}),
     up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts),
     q0: qq(per("0q")), q1: qq(per("+1q")), h: hist };
   return (e.t0?.[0] != null || e.t1?.[0] != null) ? e : null;
@@ -87,11 +89,25 @@ export function parseTrend(j) {
 // cambia por el de dos años antes (ver abajo). Si falta algo (sin trimestres, sin el informado o la estacionalidad de un
 // trimestre) o un informado que se resta no está en la base del consenso (sorpresa de más de 50%: suele ser contable
 // con un extraordinario), se ponderan los dos ejercicios por tiempo. La misma función está en index.html (ntmFrom).
-export function ntmFrom(r, now) {
+export function ntmFrom(r, now, k = 1) {
   if (!r) return null;
-  const DAYMS = 86400000, T = now, T1 = now + 365 * DAYMS, P = s => Date.parse(s + "T00:00:00Z");
+  // k = 1: los 12 meses que arrancan en now; k = 2: los 12 meses siguientes (now es el corte de lo ya informado). Si now
+  // es un fin de mes (el cierre del último trimestre presentado), la ventana va de fin de mes a fin de mes, así no se
+  // pierde un día en los años bisiestos
+  const DAYMS = 86400000, T = now, P = s => Date.parse(s + "T00:00:00Z");
+  const eom = (t, m) => { const d = new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + m + 1, 0); };
+  const atEom = now % DAYMS === 0 && new Date(now + DAYMS).getUTCDate() === 1;
+  const A = atEom ? eom(now, 12 * (k - 1)) : now + (k - 1) * 365 * DAYMS, T1 = atEom ? eom(now, 12 * k) : now + k * 365 * DAYMS;
   const t0 = r.t0 || [], t1 = r.t1 || [];
+  // crecimiento para lo que pasa del ejercicio siguiente (Yahoo no da consenso más allá): el esperado a 5 años de los
+  // analistas (g5, acotado a −10% y +40%); sin ese dato, el del ejercicio siguiente contra el en curso, acotado a 0,8–1,25
+  const g = r.g5 != null && isFinite(r.g5) ? 1 + Math.min(0.4, Math.max(-0.1, r.g5))
+    : r.f0 && t0[0] != null && t0[0] > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / t0[0])) : 1;
   const blend = () => {
+    if (k > 1) {   // segundo año: lo que cae en el ejercicio siguiente con su consenso, lo que pasa con el crecimiento
+      const f1 = r.f1 ? P(r.f1) : null, w1 = f1 ? Math.min(1, Math.max(0, (f1 - A) / (365.25 * DAYMS))) : 0, v = t1[0];
+      return v == null ? null : { eps: w1 * v + (1 - w1) * v * (v > 0 ? g : 1), metodo: "ejercicios" };
+    }
     const f0 = r.f0 ? P(r.f0) : null, w = f0 ? Math.min(1, Math.max(0, (f0 - T) / (365.25 * DAYMS))) : 0;
     if (t0[0] != null && t1[0] != null) return { eps: w * t0[0] + (1 - w) * t1[0], metodo: "ejercicios" };
     const v = t1[0] ?? t0[0]; return v == null ? null : { eps: v, metodo: "ejercicios" };
@@ -151,33 +167,32 @@ export function ntmFrom(r, now) {
     }
     done.push(...qs);
   }
-  // las semanas después del ejercicio siguiente: el mismo trimestre un año antes por el crecimiento del año
-  const last = years[years.length - 1], first = years[0];
-  const g = years.length === 2 && first.E > 0 && last.E > 0 ? Math.min(1.25, Math.max(0.8, last.E / first.E)) : 1;
+  // lo que pasa del ejercicio siguiente: el mismo trimestre un año antes por el crecimiento (g)
+  const last = years[years.length - 1];
   if (T1 > last.f) for (const q of done.filter(q => q.t > last.f - 365 * DAYMS && q.t <= last.f + 10 * DAYMS))
     if (q.v != null) done.push({ t: endOfMonth(q.t, 12), start: endOfMonth(q.start, 12), v: q.v * (q.v > 0 ? g : 1) });
   let sum = 0, covered = 0;
   for (const q of done) {
-    const a = Math.max(q.start, T), b = Math.min(q.t, T1);
+    const a = Math.max(q.start, A), b = Math.min(q.t, T1);
     if (b <= a || q.v == null) continue;
     sum += q.v * (b - a) / (q.t - q.start); covered += b - a;
   }
-  if (covered < 0.85 * (T1 - T)) return blend();
-  return { eps: sum * (T1 - T) / covered, metodo: "trimestres" };
+  if (covered < 0.85 * (T1 - A)) return blend();
+  return { eps: sum * (T1 - A) / covered, metodo: "trimestres" };
 }
 // EPS esperado de los cuatro trimestres que siguen al último presentado (lastQ, en ms; null si no se sabe), que es el EPS
 // del Fw P/E de la terminal: con la regla de fechas del P/E, dentro de un año el EPS de 12 meses va a ser la suma de esos
 // cuatro. Es ntmFrom desde el cierre de ese trimestre, llevado al fin de mes más cercano (ejercicios de 52 semanas). El
 // último presentado es el más reciente entre lastQ y el último que informó Yahoo (r.h); sin ninguno, los 12 meses desde
-// now. Igual que fwQuarters en index.html.
-export function next4From(r, lastQ, now) {
+// now. k = 2: los cuatro siguientes (trimestres 5 a 8), el EPS del Fw P/E a 2 años. Igual que fwQuarters en index.html.
+export function next4From(r, lastQ, now, k = 1) {
   if (!r) return null;
   let t = lastQ > 0 ? lastQ : null;
   const h = r.h && r.h.length ? Date.parse(r.h[r.h.length - 1][0] + "T00:00:00Z") : null;
   if (h != null && !(t >= h)) t = h;
-  if (t == null) return ntmFrom(r, now);
+  if (t == null) return ntmFrom(r, now, k);
   const d = new Date(t), a = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0), b = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0);
-  return ntmFrom(r, Math.abs(a - t) <= Math.abs(t - b) ? a : b);
+  return ntmFrom(r, Math.abs(a - t) <= Math.abs(t - b) ? a : b, k);
 }
 // Estimaciones completas (base de datos propia de consenso): para el trimestre en curso y el siguiente (0q, +1q) y el
 // ejercicio en curso y el siguiente (0y, +1y), EPS y ventas esperados (promedio, mínimo, máximo, el del año anterior,
