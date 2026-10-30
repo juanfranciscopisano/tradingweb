@@ -184,9 +184,10 @@ export const isContinuingTag = t => /ContinuingOperations/.test(t || "");
 // conocía con la vieja). El período de una presentación es el más reciente que trae: el trimestre del 10-Q, el ejercicio
 // del 10-K. Lo anterior que viene en ella son comparativos o la nota de datos trimestrales del 10-K, que no cuentan:
 // un trimestre que solo aparece así es anterior a las primeras presentaciones de la empresa en XBRL o a su salida a la
-// bolsa. Tampoco cuenta una presentación de más de 150 días después del cierre (una empresa atrasada, que ya había
-// anunciado el resultado). En esos casos no hay fecha y se estima (fillPub).
-export const PUB_MAX_DAYS = 150;
+// bolsa. Tampoco cuenta una presentación de más de 105 días después del cierre, el plazo más largo de un 10-K con
+// prórroga: es una empresa atrasada que ya había anunciado el resultado (NVDA presentó en mayo de 2002 el 10-K del
+// ejercicio cerrado en enero, demorado por una reexpresión). En esos casos no hay fecha y se estima (fillPub).
+export const PUB_MAX_DAYS = 105;
 export function pubIndex(raw) {
   const per = new Map();   // presentación (fecha y formulario) → cierre de su período
   for (const k of ["eps", "ni", "pt", "oi", "rev", "sh"]) for (const e of raw?.[k] || []) {

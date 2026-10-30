@@ -264,7 +264,7 @@ try {
 }
 // trimestres de eps_hist anteriores al primero de la serie, ajustados por splits. La fecha de presentación es la del
 // 10-K de donde se copió solo para el trimestre que cierra su ejercicio (el más reciente con esa fecha) y si llegó dentro
-// de los 150 días; los otros salen de la nota de datos trimestrales de ese 10-K o de uno posterior, y se estiman (fillPub)
+// de los 105 días; los otros salen de la nota de datos trimestrales de ese 10-K o de uno posterior, y se estiman (fillPub)
 function histBefore(sym, firstDate, splits) {
   const h = EPS_HIST[sym];
   if (!h || !firstDate) return [];
