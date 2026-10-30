@@ -12,7 +12,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, cashDebt, quality, fillPub, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
-import { yahooSession, ntmFrom } from "./fundamentals.mjs";
+import { yahooSession, next4From } from "./fundamentals.mjs";
 
 const CSV_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -124,6 +124,8 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   // (los trimestres de Yahoo ya se publicaron): el día anterior al último punto, así entran en él
   const today = isFinite(nowS) ? Math.floor(nowS / DAY) * DAY : Infinity;
   const capS = weeks.length ? weekT(weeks[weeks.length - 1], today) - DAY : Infinity;
+  // último trimestre que entra en el punto de la semana en curso (el "último presentado" del Fw P/E y de eps_ttm.json)
+  const lastInOf = qs => { const tl = weeks.length ? weekT(weeks[weeks.length - 1], today) : Infinity, inc = qs.filter(q => pubT(q) <= tl); return inc.length ? inc[inc.length - 1].date : null; };
   // datos que no pueden ser ciertos (EPS de 12 meses mayor que el precio, o una pérdida de más de 3 veces el precio):
   // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
   const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
@@ -138,8 +140,9 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     const fl = shNow ? fillGaps(epsLike, extra) : { q: [], filled: [] };
     if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
     const shMap = new Map(weeks.map(w => [w, shNow]));
-    return { ...base, eG: clean(ttmByWeek(fillPub(fl.q, capS, ni), weeks, today)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null), q: quality(raw, null),
-      lastQ: fl.q[fl.q.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
+    const qN = fillPub(fl.q, capS, ni);
+    return { ...base, eG: clean(ttmByWeek(qN, weeks, today)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null), q: quality(raw, null),
+      lastQ: fl.q[fl.q.length - 1].date, lastIn: lastInOf(qN), filled: fl.filled, fillRejected: !!fl.rejected };
   }
   const normFull = normalizedQuarterly(raw, f, gaap, sym);
   const fl = fillGaps(gaap, extra);
@@ -156,7 +159,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
       .map(e => [e.start, e.end, e.val, e.form, e.filed])])) };
   return { ...base, eG: clean(ttmByWeek(qG, weeks, today)), eN: clean(ttmByWeek(norm, weeks, today)), sh: sharesByWeek(sh, weeks, today), quarters: gaap.length, normDiag,
     cd: cashDebt(raw, normFull.rows), q: quality(raw, normFull.rows), cdTags: Object.fromEntries(Object.entries(raw.cd || {}).map(([t, a]) => [t, a.reduce((m, e) => e.end > m ? e.end : m, "")])),
-    lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
+    lastQ: fl.q[fl.q.length - 1].date, lastIn: lastInOf(qG), lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
 
 // EPS diluido trimestral de Yahoo (fundamentals-timeseries): operaciones continuas y total, por separado
@@ -345,15 +348,15 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   for (const v of Object.values(agg)) { v.g = v.g.slice(first); v.n = v.n.slice(first); }
 
   // 4) fw P/E de hoy por grupo, con fundamentals.json (capitalización / ganancias esperadas)
-  // ganancia esperada de los próximos 12 meses: consenso por trimestres (ntmFrom, con fallback a los dos ejercicios
-  // ponderados por lo que falta del primero) de revisions.json; sin consenso, la del Fw P/E de Yahoo. Una ganancia
-  // esperada negativa resta.
+  // ganancia esperada de cada empresa: la de los cuatro trimestres que siguen al último presentado (next4From, el EPS
+  // del Fw P/E de toda la terminal: consenso por trimestres, con fallback a los dos ejercicios ponderados) de
+  // revisions.json; sin consenso, la del Fw P/E de Yahoo. Una ganancia esperada negativa resta.
   let rev = {};
   try { rev = JSON.parse(await readFile(new URL("revisions.json", root), "utf8")).data || {}; } catch (e) { log("revisions.json: " + e.message); }
-  const ntm = sym => ntmFrom(rev[sym], now.getTime())?.eps ?? null;
+  const fw4 = sym => next4From(rev[sym], cos[sym]?.lastIn ? cos[sym].lastIn * 1000 : null, now.getTime())?.eps ?? null;
   const fwOf = syms => { let M = 0, E = 0; for (const s of syms) {
     const f = fund[s]; if (!(f?.mc > 0)) continue;
-    const e = ntm(s);
+    const e = fw4(s);
     if (e != null && f.p > 0) { M += f.mc; E += f.mc / f.p * e; }
     else if (f.fpe > 0) { M += f.mc; E += f.mc / f.fpe; }
   } return E > 0 ? +(M / E).toFixed(1) : null; };
@@ -391,7 +394,8 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     const s = cos[c.s]; if (!s) continue;
     const e = s.eG.get(lastW), en = s.eN.get(lastW), sh = s.sh.get(lastW), p = s.price.get(lastW);
     if (e == null || !sh) continue;
-    ultimos[c.s] = [+e.toFixed(4), en != null ? +en.toFixed(4) : null, Math.round(sh), s.lastQ ? iso(s.lastQ) : null, p ? +p.toFixed(2) : null, s.filled?.length ? "sec+yahoo" : "sec"];
+    const lq = s.lastIn ?? s.lastQ;
+    ultimos[c.s] = [+e.toFixed(4), en != null ? +en.toFixed(4) : null, Math.round(sh), lq ? iso(lq) : null, p ? +p.toFixed(2) : null, s.filled?.length ? "sec+yahoo" : "sec"];
   }
   // trimestres completados con Yahoo, para que P/E histórico (backend) use exactamente los mismos
   const fill = {};

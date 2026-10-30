@@ -165,6 +165,20 @@ export function ntmFrom(r, now) {
   if (covered < 0.85 * (T1 - T)) return blend();
   return { eps: sum * (T1 - T) / covered, metodo: "trimestres" };
 }
+// EPS esperado de los cuatro trimestres que siguen al último presentado (lastQ, en ms; null si no se sabe), que es el EPS
+// del Fw P/E de la terminal: con la regla de fechas del P/E, dentro de un año el EPS de 12 meses va a ser la suma de esos
+// cuatro. Es ntmFrom desde el cierre de ese trimestre, llevado al fin de mes más cercano (ejercicios de 52 semanas). El
+// último presentado es el más reciente entre lastQ y el último que informó Yahoo (r.h); sin ninguno, los 12 meses desde
+// now. Igual que fwQuarters en index.html.
+export function next4From(r, lastQ, now) {
+  if (!r) return null;
+  let t = lastQ > 0 ? lastQ : null;
+  const h = r.h && r.h.length ? Date.parse(r.h[r.h.length - 1][0] + "T00:00:00Z") : null;
+  if (h != null && !(t >= h)) t = h;
+  if (t == null) return ntmFrom(r, now);
+  const d = new Date(t), a = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0), b = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0);
+  return ntmFrom(r, Math.abs(a - t) <= Math.abs(t - b) ? a : b);
+}
 // Estimaciones completas (base de datos propia de consenso): para el trimestre en curso y el siguiente (0q, +1q) y el
 // ejercicio en curso y el siguiente (0y, +1y), EPS y ventas esperados (promedio, mínimo, máximo, el del año anterior,
 // analistas); y los últimos cuatro trimestres informados con el EPS esperado antes del resultado (earningsHistory).

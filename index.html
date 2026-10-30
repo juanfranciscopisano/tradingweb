@@ -248,6 +248,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-stat-lbl{font-size:12px;color:var(--muted)}
 .pebg-stat-val{font-size:17px;font-weight:650;color:var(--ink);white-space:nowrap;font-stretch:92%}
 .pebg-stat-sub{font-size:11.5px;color:var(--faint)}
+.pebg-stat-cmp{font-size:11.5px;font-weight:500;color:var(--faint);margin-left:7px;font-stretch:100%}
 /* laptops (1280–1600 px): letra y espacio algo menores para que las doce cifras entren en una fila */
 @media (max-width:1599px) and (min-width:769px){.pebg-stat-block{padding:0 8px}.pebg-stat-lbl{font-size:11px}.pebg-stat-val{font-size:15.5px}.pebg-stat-sub{font-size:10.5px}}
 #pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden;margin:14px var(--side);border:1px solid var(--line);border-radius:10px;background:var(--chart-bg)}
@@ -954,7 +955,7 @@ function checkPwd(){
     <div class="stat"><div class="stat-val" id="sN">&mdash;</div><div class="stat-lbl">Empresas</div></div>
     <div class="stat"><div class="stat-val" id="sPEn">&mdash;</div><div class="stat-lbl" id="sPEnLbl" title="Capitalización sobre EPS normalizado de 12 meses de la SEC, con precios de ahora. Es el S&amp;P 500 normalizado de la pestaña Sectores: al cierre dan igual.">P/E normalizado</div></div>
     <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" id="sPELbl" title="Capitalización total sobre ganancias contables de 12 meses de la SEC, con precios de ahora. Las pérdidas restan y cada empresa cuenta una vez. Es la misma cuenta que el S&amp;P 500 de la pestaña Sectores y del panel de comparación: al cierre dan igual; durante la rueda este se mueve con los precios.">P/E contable</div></div>
-    <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas de los próximos 12 meses (consenso por trimestres: el en curso y el siguiente, y el resto de cada ejercicio). Las empresas con ganancia esperada negativa quedan afuera.">Fw P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas de los cuatro trimestres que cada empresa va a presentar en el próximo año (consenso por trimestres): el P/E que va a tener el grupo en un año si los precios no se mueven. Las empresas con ganancia esperada negativa quedan afuera.">Fw P/E agregado</div></div>
     <div class="stat"><div class="stat-val up" id="sG">&mdash;</div><div class="stat-lbl">Suben hoy</div></div>
     <div class="stat"><div class="stat-val dn" id="sL">&mdash;</div><div class="stat-lbl">Bajan hoy</div></div>
     <div class="stat"><div class="stat-val" id="s1D">&mdash;</div><div class="stat-lbl" title="Retorno de la canasta ponderada por market cap.">1D ponderado</div></div>
@@ -1912,23 +1913,50 @@ function ntmFrom(r, now) {
   if (covered < 0.85 * (T1 - T)) return blend();
   return { eps: sum * (T1 - T) / covered, metodo: 'trimestres' };
 }
-// Es la base del Fw P/E en toda la página (Yahoo publica uno contra el próximo ejercicio, que según el mes mira de 2 a
-// 14 meses adelante). null si no hay consenso; si da cero o negativo, la empresa no tiene Fw P/E.
+// EPS de los 12 meses desde hoy: queda como comparación del Fw P/E (es el forward de la convención del mercado; Yahoo
+// publica uno contra el próximo ejercicio, que según el mes mira de 2 a 14 meses adelante). null si no hay consenso.
 // Las revisiones (revOf) siguen con el promedio por ejercicios: de los trimestres no hay historia de 30 y 90 días.
 function ntmEps(sym) { const x = REV && REV[sym] ? ntmFrom(REV[sym], Date.now()) : null; return x ? x.eps : null; }
-// EPS esperado de la proyección a un año: dentro de un año el EPS de 12 meses va a ser el de los cuatro trimestres que
-// siguen al último presentado (lastQ, su cierre en segundos), con la misma regla de fechas que la historia del P/E. Esos
-// cuatro son los 12 meses que arrancan en ese cierre: el consenso por trimestres desde esa fecha (fin de mes más cercano,
-// por los ejercicios de 52 semanas). Un trimestre cerrado y todavía no presentado entra entero. Sin consenso, el del Fw
-// P/E (precio / Fw P/E). Cero o negativo: no hay proyección.
-function fwEpsNext4(sym, lastQ, price, fpe) {
+// Fw P/E de toda la terminal: precio / EPS esperado de los cuatro trimestres que siguen al último presentado. Con la
+// regla de fechas del P/E (cada trimestre cuenta desde que se presenta), dentro de un año el EPS de 12 meses va a ser la
+// suma de esos cuatro: el Fw P/E es el P/E que va a tener la empresa en un año si el precio no se mueve, comparable con
+// su historia, y su EPS es el de la proyección a las bandas. Es el consenso por trimestres de los 12 meses que arrancan
+// al cierre del último presentado, llevado al fin de mes más cercano (ejercicios de 52 semanas); un trimestre cerrado y
+// todavía no presentado entra entero. Si da cero o negativo, la empresa no tiene Fw P/E.
+// Último presentado (en segundos): el más reciente entre q (el de la serie de P/E histórico), el del EPS de 12 meses de la
+// SEC (eps_ttm.json, el del P/E del screener) y el último que informó Yahoo.
+function lastRepQ(sym, q) {
+  let t = q > 0 ? q : null;
+  const se = SEC_EPS && SEC_EPS[sym];
+  if (se && se[3]) { const x = Date.parse(se[3] + 'T00:00:00Z') / 1000; if (!(t >= x)) t = x; }
+  const h = REV && REV[sym] && REV[sym].h;
+  if (h && h.length) { const x = Date.parse(h[h.length - 1][0] + 'T00:00:00Z') / 1000; if (!(t >= x)) t = x; }
+  return t;
+}
+// { eps, metodo, q: cierre del último presentado llevado a fin de mes, en segundos } o null sin consenso. Sin ningún
+// trimestre presentado conocido, los 12 meses desde hoy.
+function fwQuarters(sym, q) {
   const r = REV && REV[sym];
-  if (r && lastQ > 0) {
-    const t = lastQ * 1000, d = new Date(t), a = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0), b = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0);
-    const x = ntmFrom(r, Math.abs(a - t) <= Math.abs(t - b) ? a : b);
-    if (x && x.eps != null) return x.eps > 0 ? x.eps : null;
-  }
+  if (!r) return null;
+  const lq = lastRepQ(sym, q);
+  if (lq == null) { const x = ntmFrom(r, Date.now()); return x ? { ...x, q: null } : null; }
+  const t = lq * 1000, d = new Date(t), a = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0), b = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0);
+  const T = Math.abs(a - t) <= Math.abs(t - b) ? a : b, x = ntmFrom(r, T);
+  return x ? { ...x, q: T / 1000 } : null;
+}
+// EPS del Fw P/E (los cuatro trimestres a presentar); sin consenso, el implícito en el Fw P/E de Yahoo (precio / fpe).
+// Cero o negativo: no hay.
+function fwEpsNext4(sym, lastQ, price, fpe) {
+  const x = fwQuarters(sym, lastQ);
+  if (x && x.eps != null) return x.eps > 0 ? x.eps : null;
   return fpe > 0 && price > 0 ? price / fpe : null;
+}
+// ventana de los cuatro trimestres, para los rótulos: "ago-26 a jul-27"
+function fwWindowTxt(q) {
+  if (!(q > 0)) return '';
+  const M = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const a = new Date(q * 1000 + 86400000), b = new Date(q * 1000);
+  return M[a.getUTCMonth()] + '-' + String(a.getUTCFullYear()).slice(2) + ' a ' + M[b.getUTCMonth()] + '-' + String(b.getUTCFullYear() + 1).slice(2);
 }
 function ntmMethod(sym) { const x = REV && REV[sym] ? ntmFrom(REV[sym], Date.now()) : null; return x ? x.metodo : null; }
 function revOf(sym, lag) { const p = ntmPair(sym, lag); return p && p.past > 0.05 && p.cur > 0 ? p.cur / p.past - 1 : null; }
@@ -2070,10 +2098,12 @@ function fundFor(sym, livePrice) {
   let k = (f.p && livePrice) ? livePrice / f.p : 1;
   if(!(k > 0.5 && k < 2)) k = 1;
   const sc = v => (v != null && isFinite(v) && v > 0) ? v * k : null;
-  // Fw P/E: precio de ahora / EPS de consenso de los próximos 12 meses; sin consenso en revisions.json, el de Yahoo
-  const ntm = REV && Object.keys(REV).length ? ntmEps(sym) : null, px = livePrice || f.p;
-  const fpe = ntm != null && px > 0 ? (ntm > 0 ? px / ntm : null) : sc(f.fpe);
-  return { pe: sc(f.pe), fpe, fpeSrc: ntm != null ? 'ntm' : (f.fpe ? 'yahoo' : null), pb: sc(f.pb), mc: sc(f.mc), name: f.n || null, asOf: f.d || null, stale: !!f.stale };
+  // Fw P/E: precio de ahora / EPS esperado de los cuatro trimestres que siguen al último presentado (fwQuarters); sin
+  // consenso en revisions.json, el de Yahoo. fpe12: con los 12 meses desde hoy, para comparar.
+  const x = REV && Object.keys(REV).length ? fwQuarters(sym) : null, e4 = x ? x.eps : null, px = livePrice || f.p;
+  const fpe = e4 != null && px > 0 ? (e4 > 0 ? px / e4 : null) : sc(f.fpe);
+  const n12 = REV && REV[sym] ? ntmEps(sym) : null, fpe12 = n12 > 0 && px > 0 ? px / n12 : null;
+  return { pe: sc(f.pe), fpe, fpe12, fpeSrc: e4 != null ? 'trim' : (f.fpe ? 'yahoo' : null), pb: sc(f.pb), mc: sc(f.mc), name: f.n || null, asOf: f.d || null, stale: !!f.stale };
 }
 function fundAsOfLabel() {
   if(!FUND_AS_OF) return 'Fundamentals sin datos';
@@ -2151,7 +2181,7 @@ async function loadData() {
     if(se&&px>0){ peSrc='sec'; pe=se[0]>0?px/se[0]:null; }
     rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:px,
       marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, eNSec:se?se[1]:null, shSec:se?se[2]:null, qSec:se?se[3]:null, fSec:se?se[5]:null,
-      fwdPE:f.fpe??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
+      fwdPE:f.fpe??null, fwd12:f.fpe12??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
       ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252),
       rev1m:revOf(sym,'1m'), rev3m:revOf(sym,'3m'), revBr:revBreadth(sym), ...cdRow(sym, px), ...qRow(sym)});
   }
@@ -2265,7 +2295,7 @@ function render() {
   if(!sorted.length){ document.getElementById('tWrap').innerHTML=rows.length===0?'<div class="sc"><div class="sm">Sin datos</div></div>':'<div class="sc"><div class="sm">Sin resultados para el filtro</div></div>'; return; }
   const th=COLS.map(c=>{ const act=sKey===c.k?' active':''; const arr=c.s?'<span class="sa">'+(sKey===c.k?(sDir===-1?'&#9660;':'&#9650;'):'&#8645;')+'</span>':''; const clk=c.s?' onclick="ss(\''+c.k+'\')"':''; return '<th class="'+act+'"'+clk+(c.t?' title="'+c.t+'"':'')+'>'+c.l+arr+'</th>'; }).join('');
   const trs=sorted.map((row,i)=>{
-    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'qg1':case'qg3':case'qm':case'qdm':case'qroic':case'qdroic':case'qsh':{ return '<td title="'+(row.qFin?Q_TIP_FIN:(row.qTip||'Sin ventas de 12 meses en la SEC'))+'">'+(row.qFin?'<span class="na">n/a</span>':c.f(row[c.k])+(row.qStale&&row[c.k]!=null?'<span class="na">*</span>':''))+'</td>'; } case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
+    const cells=COLS.map(c=>{ switch(c.k){ case'_r':return '<td class="rk">'+(i+1)+'</td>'; case'symbol':return '<td class="tk">'+row.symbol+'</td>'; case'name':return '<td class="nm" title="'+row.name.replace(/"/g,'&quot;')+'">'+row.name+'</td>'; case'sector':return '<td>'+fPill(row.sector)+'</td>'; case'pe':return peCell(row); case'qg1':case'qg3':case'qm':case'qdm':case'qroic':case'qdroic':case'qsh':{ return '<td title="'+(row.qFin?Q_TIP_FIN:(row.qTip||'Sin ventas de 12 meses en la SEC'))+'">'+(row.qFin?'<span class="na">n/a</span>':c.f(row[c.k])+(row.qStale&&row[c.k]!=null?'<span class="na">*</span>':''))+'</td>'; } case'pfcf':case'pfcfS':case'capexOcf':case'evEbit':case'ndE':{ const v=row[c.k], f=c.k==='capexOcf'?fPctPlain:c.k==='ndE'?fND:fMult; return '<td title="'+(row.cdFin?CD_TIP_FIN:(row.cdTip||'Sin flujos de 12 meses en la SEC'))+'">'+(row.cdFin?'<span class="na">n/a</span>':f(v)+(row.cdStale&&v!=null?'<span class="na">*</span>':''))+'</td>'; } case'revBr':{ const b=row.revBr; return '<td'+(b?' title="'+b.up+' subieron y '+b.dn+' bajaron, de '+(b.n||'?')+' analistas"':'')+'>'+(b?'<span class="pp">'+b.up+'↑</span> <span class="pn">'+b.dn+'↓</span>':NA)+'</td>'; } case'fwdPE':return '<td'+(row.fwd12!=null?' title="Con el EPS de los 12 meses desde hoy: '+row.fwd12.toFixed(1)+'x"':'')+'>'+c.f(row.fwdPE)+'</td>'; default:return '<td>'+(c.f?c.f(row[c.k]):NA)+'</td>'; } }).join('');
     const sym=row.symbol, nm=row.name.replace(/\\/g,'').replace(/'/g,'&#39;');
     return '<tr onclick="openChart(\''+sym+'\',\''+nm+'\')">'+cells+'</tr>';
   }).join('');
@@ -3461,9 +3491,9 @@ function carteraRow(sym, data) {
   const peAnual = (lastQEps && lastQEps > 0) ? last.close / (lastQEps * 4) : null;
   const impliedAnual = (lastQEps && lastQEps > 0) ? lastQEps * 4 * mu : null;
   const varAnual = impliedAnual != null ? (impliedAnual - last.close) / last.close * 100 : null;
-  // objetivo a un año = EPS esperado de los cuatro trimestres que la empresa va a presentar (fwEpsNext4) x media histórica
-  const fwdPE = data.forwardPE || fundFor(sym, last.close).fpe || null;
-  const fwdEps = fwEpsNext4(sym, last.q, last.close, fwdPE);
+  // Fw P/E y objetivo a un año: el EPS de los cuatro trimestres que la empresa va a presentar (pebgFwInfo) x media histórica
+  const fw = pebgFwInfo({ ...data, symbol: data.symbol || sym });
+  const fwdPE = fw.fpe, fwdEps = fw.eps;
   const impliedFwdPrice = (fwdEps && mu > 0) ? fwdEps * mu : null;
   const varFwd = impliedFwdPrice != null ? (impliedFwdPrice - last.close) / last.close * 100 : null;
   return {
@@ -3674,11 +3704,12 @@ async function loadPebg() {
     const d = await r.json();
     if (req !== pebgReq) return;
     if (d.error) throw new Error(d.error);
-    await Promise.all([loadFund(), loadRev()]);
+    await Promise.all([loadFund(), loadRev(), loadSecEps()]);
     // base propia de estimaciones (estimaciones/<ticker>.json, la arma la Action de fundamentals); si no está, sin panel
     d.est = await fetch('estimaciones/' + encodeURIComponent(sym) + '.json?d=' + new Date().toISOString().slice(0, 10), { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
     if (req !== pebgReq) return;
-    if (d.forwardPE == null) d.forwardPE = fundFor(sym, d.currentPrice).fpe || null;
+    d.fw = pebgFwInfo(d);
+    d.forwardPE = d.fw.fpe;
     pebgData = d;
     renderPebg(d);
     if (pebgPanelOpen) populatePebgPanel(d);
@@ -4053,16 +4084,18 @@ function renderPebg(data) {
   const lastQ = eps[eps.length - 1]?.eps;
   const peAnual = (lastQ && lastQ > 0) ? last.close / (lastQ * 4) : null;
   set('psStatAnual', peAnual != null ? peAnual.toFixed(1) + 'x' : '—');
-  set('psStatFwd', data.forwardPE ? data.forwardPE.toFixed(1) + 'x' : '—');
-  const pxNow = data.currentPrice || last.close, fwEpsS = pebgFwEps(data, pxNow, last.q);
-  const ntmE = data.forwardPE > 0 && pxNow > 0 ? pxNow / data.forwardPE : null;
+  const fw = data.fw || (data.fw = pebgFwInfo(data)), pxNow = data.currentPrice || last.close, fwEpsS = fw.eps;
+  { const el = document.getElementById('psStatFwd');
+    if (el) el.innerHTML = (fw.fpe ? fw.fpe.toFixed(1) + 'x' : '—') + (fw.fpe12 && fw.metodo !== 'yahoo'
+      ? '<span class="pebg-stat-cmp" title="Fw P/E con el EPS de los 12 meses desde hoy ($' + (pxNow / fw.fpe12).toFixed(2) + '), la convención del mercado">12 m: ' + fw.fpe12.toFixed(1) + 'x</span>' : ''); }
   const fwStats = pebgFw && !peg && fwEpsS != null;
   { const b = document.getElementById('pebgFwBtn'); if (b) { b.setAttribute('aria-pressed', pebgFw); b.classList.toggle('is-off', peg || fwEpsS == null);
-    b.title = peg ? 'La proyección es solo para P/E' : fwEpsS == null ? 'Sin EPS esperado de consenso para esta empresa' : 'Precio teórico dentro de un año si se cumple el EPS esperado de los cuatro trimestres que va a presentar (consenso, $' + fwEpsS.toFixed(2) + ') y el P/E vuelve a cada banda'; } }
+    b.title = peg ? 'La proyección es solo para P/E' : fwEpsS == null ? 'Sin EPS esperado de consenso para esta empresa' : 'Precio teórico dentro de un año si se cumple el EPS del Fw P/E (consenso de los cuatro trimestres que va a presentar, $' + fwEpsS.toFixed(2) + ') y el P/E vuelve a cada banda'; } }
   { const sub = document.getElementById('psStatFwd')?.nextElementSibling;
     const rv = revOf(data.symbol, '3m');
-    if (sub) { sub.textContent = (ntmE != null ? 'EPS 12m $' + ntmE.toFixed(2) : 'consenso 12m') + (rv != null ? ', ' + revTxt(rv) + ' 3M' : '');
-      const mt = ntmMethod(data.symbol), mtTxt = mt === 'trimestres' ? 'EPS de consenso de los próximos 12 meses, armado por trimestres (los dos que estima el consenso y el resto de cada ejercicio)' : mt === 'ejercicios' ? 'EPS de consenso de los próximos 12 meses: ejercicio en curso y siguiente ponderados por lo que falta del primero (no hay trimestres para armarlo)' : 'EPS de consenso de los próximos 12 meses';
+    if (sub) { sub.textContent = (fwEpsS != null ? 'EPS 4 trim. $' + fwEpsS.toFixed(2) : 'consenso') + (rv != null ? ', ' + revTxt(rv) + ' 3M' : '');
+      const mt = fw.metodo, win = fwWindowTxt(fw.q), base = 'EPS de consenso de los cuatro trimestres que siguen al último presentado' + (win ? ' (' + win + ')' : '') + ': dentro de un año el P/E va a usar esos cuatro';
+      const mtTxt = mt === 'trimestres' ? base + '. Armado por trimestres: los dos que estima el consenso y el resto de cada ejercicio' : mt === 'ejercicios' ? base + '. Ejercicio en curso y siguiente ponderados por lo que falta del primero (no hay trimestres para armarlo)' : mt === 'yahoo' ? 'Fw P/E de Yahoo: sin consenso por trimestres para esta empresa' : base;
       sub.title = [mtTxt, rv != null ? 'Cambio del EPS esperado de los próximos 12 meses en los últimos 3 meses (1 mes: ' + (revTxt(revOf(data.symbol, '1m')) || '—') + '), con el promedio por ejercicios' : ''].filter(Boolean).join('. '); } }
   ['psStatAnual', 'psStatFwd'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg ? 'none' : ''; });
 
@@ -4101,10 +4134,26 @@ const pebgPtr = new Map();
 let pebgScale = 'lin';
 let pebgLegendOn = true;
 try { if (localStorage.getItem('pebgLegend') === 'off') pebgLegendOn = false; } catch (e) {}
-// proyección con el EPS esperado de los cuatro trimestres que la empresa va a presentar (fwEpsNext4)
+// proyección con el EPS del Fw P/E: el de los cuatro trimestres que la empresa va a presentar (pebgFwInfo)
 let pebgFw = false;
 try { pebgFw = localStorage.getItem('pebgFw') === '1'; } catch (e) {}
-function pebgFwEps(data, price, lastQ) { return data ? fwEpsNext4(data.symbol, lastQ, price, data.forwardPE) : null; }
+function pebgFwEps(data) { return data ? (data.fw || pebgFwInfo(data)).eps : null; }
+// Fw P/E de P/E histórico y de Cartera: el de toda la terminal (fwQuarters), con el último trimestre de la serie contable,
+// que trae los ya anunciados que la SEC todavía no cargó. El mismo número en el Fw P/E, en la proyección a las bandas y
+// en el screener. { eps, fpe, fpe12 (con los 12 meses desde hoy), q, metodo }
+function pebgFwInfo(data) {
+  const sym = data.symbol, pr = data.prices || [], lastBar = pr.length ? pr[pr.length - 1].date : null;
+  const px = data.currentPrice || (pr.length ? pr[pr.length - 1].close : null);
+  let q = null;
+  if (lastBar != null && data.eps && data.eps.length) {
+    const g = epsWithPub(data.eps.slice().sort((a, b) => a.date - b.date), Math.floor(lastBar / 86400) * 86400 - 86400).filter(e => e.pub + 86400 <= lastBar);
+    if (g.length) q = g[g.length - 1].date;
+  }
+  const x = fwQuarters(sym, q), n12 = ntmEps(sym), fpe12 = n12 > 0 && px > 0 ? px / n12 : null;
+  if (x && x.eps != null) { const eps = x.eps > 0 ? x.eps : null; return { eps, fpe: eps && px > 0 ? px / eps : null, fpe12, q: x.q, metodo: x.metodo }; }
+  const y = fundFor(sym, px).fpe || null;   // sin consenso por trimestres: el Fw P/E de Yahoo
+  return { eps: y && px > 0 ? px / y : null, fpe: y, fpe12, q: null, metodo: y ? 'yahoo' : null };
+}
 function togglePebgFw() {
   pebgFw = !pebgFw;
   try { localStorage.setItem('pebgFw', pebgFw ? '1' : '0'); } catch (e) {}
@@ -4397,7 +4446,7 @@ function drawPebgChart(hoverT) {
   }
   // proyección con el EPS esperado (botón EPS fw): un año hacia adelante desde el último dato, si está a la vista
   const lastF = full[full.length - 1];
-  const fwEps = !peg ? pebgFwEps(pebgData, lastF.close, lastF.q) : null;
+  const fwEps = !peg ? pebgFwEps(pebgData) : null;
   const fwOn = pebgFw && fwEps > 0 && !!lastF.band && t1 >= lastF.date - 5 * 86400;
   const tFw = lastF.date + 365 * 86400;
   // en precio, cada banda × EPS fw; en múltiplo las bandas quedan y la línea va al P/E si el precio no se mueve
@@ -4911,10 +4960,10 @@ const METODO = [
       { d: 'Lo que la SEC no tiene se completa con el EPS diluido contable de Yahoo.',
         p: 'Pasa en tres casos: entre el anuncio del resultado y la presentación del 10-Q (los bancos grandes lo presentan dos o tres semanas después), cuando la SEC no cargó una presentación en su base (los 10-Q de fines de julio de 2026 de KO, ABT, V, NEE y PLD, entre otras, no están) y cuando un trimestre no se puede derivar porque el 10-K no trae el EPS en la base, como en las eléctricas que presentan junto con sus controladas. Yahoo tiene dos series, operaciones continuas y total, y se usa la que coincide con la SEC (dentro de 20%) en el último trimestre que tienen los dos; si ninguna coincide no se completa, porque lo más probable es que midan otra cosa. Cuando la SEC carga el trimestre, reemplaza al de Yahoo.',
         x: 'Finnhub como relleno: da el EPS ajustado que miran los analistas, no el contable. Queda como último recurso en P/E histórico, para las empresas que presentan 20-F.' },
-      { d: 'Estimaciones (Fw P/E): EPS de consenso de los próximos 12 meses, armado por trimestres. Cada trimestre del ejercicio en curso y del siguiente pesa por la parte que cae entre hoy y dentro de un año. El trimestre en curso y el siguiente van con su consenso. Lo que queda de cada ejercicio (consenso del año menos los trimestres estimados y los ya informados) se reparte entre los trimestres que faltan con la estacionalidad del mismo trimestre un año antes: proporcional, o sumando lo mismo a cada uno si hay trimestres con pérdida. Las semanas que pasan del ejercicio siguiente van con el mismo trimestre un año antes, por el crecimiento del año. Si falta un dato, por ejercicios: el en curso y el siguiente ponderados por lo que falta del primero. Si Yahoo no tiene consenso, su Fw P/E; si tampoco, Finnhub.',
-        p: 'El Fw P/E que publica Yahoo usa el EPS del próximo ejercicio fiscal, que según el mes del año mira de 2 a 14 meses adelante y no es comparable entre empresas con cierres distintos. Con los próximos 12 meses todas miran el mismo horizonte. Por trimestres no entran los trimestres ya informados del año, que en el promedio por ejercicios pesan aunque ya pasaron (GILD: una I+D comprada en el segundo trimestre de 2026 bajaba el EPS de 12 meses de 9,7 a 8,0), y entra la rampa de una empresa que crece dentro del año. La estacionalidad hace falta: repartir parejo tomaría la de los dos trimestres que estima el consenso y no la del resto (HUM gana en el primer semestre y pierde en el cuarto trimestre; parejo, el EPS de 12 meses daba la mitad). Un trimestre ya cerrado pero todavía no informado pesa cero.',
-        o: 'La estacionalidad sale del EPS que esperaba el consenso antes de cada resultado, no del informado, para que no entren extraordinarios. Un trimestre del año anterior que cayó a menos de 0,4 veces el mismo trimestre dos años antes mientras otro se movió poco se toma como un cargo dentro del consenso y va el de dos años antes por el crecimiento (VRTX: I+D comprada en el consenso del tercer trimestre de 2026); los saltos para arriba se dejan, porque suelen ser compras de empresas. Si un trimestre es casi cero (menos de un cuarto del promedio, como en una empresa que sale de un piso), el resto se suma parejo en vez de repartirse proporcional. Sin el de dos años antes, una pérdida entre tres trimestres positivos y parejos del mismo año también se toma como extraordinario y va el promedio de los otros tres. Se vuelve al cálculo por ejercicios si falta un trimestre informado o su estacionalidad, o si un informado que se resta del año tiene una sorpresa de más de 50% (suele ser contable, con un extraordinario, contra un consenso ajustado). El método de cada empresa está en el título del Fw P/E de P/E histórico.',
-        x: 'El Fw P/E de Yahoo tal cual: es lo que se usaba antes; mezcla horizontes. Solo por ejercicios (I/B/E/S y Yardeni lo hacen así): es el respaldo; pesa trimestres ya informados y no ve la rampa. Por trimestres repartiendo parejo el resto del año: toma la estacionalidad a medias y sesga a las estacionales (minoristas, aseguradoras, eléctricas, cruceros).' },
+      { d: 'Estimaciones (Fw P/E): precio sobre el EPS de consenso de los cuatro trimestres que siguen al último presentado, armado por trimestres. Son los 12 meses que arrancan al cierre del último trimestre presentado (el más reciente entre el de la SEC y el último que informó Yahoo). El trimestre en curso y el siguiente van con su consenso. Lo que queda de cada ejercicio (consenso del año menos los trimestres estimados y los ya informados) se reparte entre los trimestres que faltan con la estacionalidad del mismo trimestre un año antes: proporcional, o sumando lo mismo a cada uno si hay trimestres con pérdida. Lo que pasa del ejercicio siguiente va con el mismo trimestre un año antes, por el crecimiento del año. Si falta un dato, por ejercicios: el en curso y el siguiente ponderados por lo que falta del primero. Si Yahoo no tiene consenso, su Fw P/E; si tampoco, Finnhub. Al lado, más chico, el Fw P/E con los 12 meses desde hoy.',
+        p: 'Con la regla de fechas del P/E, dentro de un año el EPS de 12 meses va a ser la suma de esos cuatro trimestres: el Fw P/E es el P/E que va a tener la empresa en un año si el precio no se mueve, se compara directo con su historia y sus bandas, y su EPS es el de la proyección. Un trimestre ya cerrado y todavía no presentado entra entero. Por trimestres no entran los ya informados del año, que en el promedio por ejercicios pesan aunque ya pasaron (GILD: una I+D comprada en el segundo trimestre de 2026 bajaba el EPS de 12 meses de 9,7 a 8,0), y entra la rampa de una empresa que crece dentro del año. La estacionalidad hace falta: repartir parejo tomaría la de los dos trimestres que estima el consenso y no la del resto (HUM gana en el primer semestre y pierde en el cuarto trimestre; parejo, el EPS de 12 meses daba la mitad).',
+        x: 'Los 12 meses desde hoy, el forward que usa el mercado (FactSet, por ejemplo): pone a todas las empresas en la misma ventana, pero incluye un trimestre que dentro de un año todavía no se va a conocer y no se puede comparar con el P/E de la historia. Para NVDA, el 30/10/2026, daba 14,7x contra 16,9x: el trimestre a octubre de 2027, que presenta en noviembre, pesaba $4,33 contra $2,47 el de octubre de 2026. El Fw P/E de Yahoo, contra el próximo ejercicio fiscal, que según el mes mira de 2 a 14 meses adelante y no es comparable entre empresas con cierres distintos.',
+        o: 'En temporada de balances, las empresas que ya presentaron miran una ventana que arranca hasta tres meses después que las que no; es la misma diferencia que tiene el P/E de 12 meses. La estacionalidad sale del EPS que esperaba el consenso antes de cada resultado, no del informado, para que no entren extraordinarios. Un trimestre del año anterior que cayó a menos de 0,4 veces el mismo trimestre dos años antes mientras otro se movió poco se toma como un cargo dentro del consenso y va el de dos años antes por el crecimiento (VRTX: I+D comprada en el consenso del tercer trimestre de 2026); los saltos para arriba se dejan, porque suelen ser compras de empresas. Si un trimestre es casi cero (menos de un cuarto del promedio, como en una empresa que sale de un piso), el resto se suma parejo en vez de repartirse proporcional. Sin el de dos años antes, una pérdida entre tres trimestres positivos y parejos del mismo año también se toma como extraordinario y va el promedio de los otros tres. Se vuelve al cálculo por ejercicios si falta un trimestre informado o su estacionalidad, o si un informado que se resta del año tiene una sorpresa de más de 50% (suele ser contable, con un extraordinario, contra un consenso ajustado). El método y la ventana de cada empresa están en el título del Fw P/E de P/E histórico.' },
       { d: 'Revisiones del EPS (columnas opcionales): cambio del EPS de consenso de 12 meses en 1 y 3 meses, y analistas que lo subieron menos los que lo bajaron en 30 días, sobre los que cubren la empresa.',
         p: 'Yahoo da el consenso de hace 7, 30, 60 y 90 días solo por ejercicio, no por trimestre. El cambio se mide con los dos ejercicios ponderados con los pesos de hoy, para que el paso del tiempo (más peso al ejercicio siguiente) no cuente como revisión.',
         o: 'Por eso el EPS de 12 meses del Fw P/E (por trimestres) y el de la revisión (por ejercicios) pueden diferir unos puntos; la revisión es un cambio porcentual y no depende del nivel.' },
@@ -5017,8 +5066,8 @@ const METODO = [
         p: 'Los umbrales son una convención para leer rápido. Un P/E que pasó dos años por encima de la media puede seguir ahí, sobre todo si el crecimiento cambió.' },
       { d: 'Medición entre dos puntos: variación del precio (anualizada si el tramo es de un mes o más) y cuánto vino del EPS y cuánto del P/E.',
         p: 'La descomposición es en logaritmos, porque el log del cambio de precio es exactamente la suma del log del cambio de EPS y el del cambio de P/E: las dos partes suman 100% sin término cruzado. Se muestra si el precio se movió 2% o más, ya que con movimientos chicos las proporciones explotan, y como el precio no incluye dividendos, la variación es solo de precio. El cuadro se ubica solo, dentro del gráfico, donde tapa menos línea; los valores de inicio y fin aparecen al pasar el mouse por cada fila. Clic derecho, Esc o la cruz borran la medición.' },
-      { d: 'Proyección con el EPS esperado (botón EPS fw): el precio teórico dentro de un año es el múltiplo de cada banda por el EPS de consenso de los cuatro trimestres que siguen al último presentado.',
-        p: 'Con la regla de fechas del P/E, dentro de un año el EPS de 12 meses va a ser la suma de esos cuatro trimestres, que son los que la empresa presenta en el año. Es el consenso de los 12 meses que arrancan al cierre del último trimestre presentado, armado por trimestres como el del Fw P/E, y un trimestre cerrado y todavía no presentado entra entero. Por eso puede diferir algo del EPS que hay debajo del Fw P/E, que mira los 12 meses desde hoy: en una empresa que crece, el de la proyección es un poco menor. Sin consenso por trimestres, el del Fw P/E. Las tarjetas de precio pasan a ese cálculo, con la diferencia contra el precio de hoy. En la vista de precio, la línea punteada es el precio si el P/E de hoy se mantiene; en la de múltiplo, el P/E al que llega si el precio no se mueve. Sirve más en empresas con ganancias previsibles, porque supone que el consenso acierta y que el múltiplo vuelve a su historia.',
+      { d: 'Proyección con el EPS esperado (botón EPS fw): el precio teórico dentro de un año es el múltiplo de cada banda por el EPS del Fw P/E, el de los cuatro trimestres que siguen al último presentado.',
+        p: 'Dentro de un año el EPS de 12 meses va a ser la suma de esos cuatro trimestres, que son los que la empresa presenta en el año, así que el múltiplo de la banda se aplica a lo mismo que mide la historia. Las tarjetas de precio pasan a ese cálculo, con la diferencia contra el precio de hoy. En la vista de precio, la línea punteada es el precio si el P/E de hoy se mantiene; en la de múltiplo, el P/E al que llega si el precio no se mueve, que es el Fw P/E. Sirve más en empresas con ganancias previsibles, porque supone que el consenso acierta y que el múltiplo vuelve a su historia.',
         o: 'El consenso suele estar en la base ajustada que guía cada empresa (sin la compensación en acciones, las amortizaciones de compras ni los cargos puntuales), y las bandas salen del EPS de la SEC. Donde esos ajustes pesan, sobre todo en tecnológicas, el EPS esperado queda arriba del contable y la proyección exagera; con el EPS normalizado la distancia es menor, aunque el normalizado sí descuenta la compensación en acciones. El horizonte es exacto: dentro de un año el P/E va a usar esos cuatro trimestres.' },
       { d: 'Resultados y estimaciones (desplegable debajo de los números): los últimos ocho trimestres con ventas y EPS contable de la SEC, EPS informado y esperado antes del resultado con la sorpresa, y el consenso de los próximos dos trimestres y dos ejercicios contra el año anterior. Abajo, cómo cambió el consenso de EPS y de ventas de cada ejercicio.',
         p: 'Junta en un lugar lo que pasó y lo que se espera, en las dos bases: la contable (la del P/E de la terminal) y la ajustada (la que miran los analistas y contra la que se mide la sorpresa).' },
@@ -5052,8 +5101,8 @@ const METODO = [
         p: 'Con la fecha de cierre del trimestre, el P/E de fin de año ya usaba el cuarto trimestre, que se conoce entre fines de enero y marzo.' },
       { d: 'Puntos semanales, con el de la semana en curso rehecho cada día hábil con el cierre de ese día.',
         p: 'Semanal alcanza para ver ciclos y pesa cinco veces menos que diario.' },
-      { d: 'Fw P/E del grupo: suma de capitalizaciones sobre suma de ganancias esperadas (capitalización / Fw P/E de cada empresa).',
-        p: 'Las empresas sin Fw P/E en Yahoo, que son las que tienen pérdida esperada, quedan afuera, así que con muchas pérdidas esperadas da algo bajo.' },
+      { d: 'Fw P/E del grupo: suma de capitalizaciones sobre suma de ganancias esperadas, con el EPS del Fw P/E de cada empresa (los cuatro trimestres que va a presentar en el año).',
+        p: 'Es el P/E que va a tener el grupo en un año si los precios no se mueven, comparable con su historia. Una ganancia esperada negativa resta; sin consenso por trimestres va el Fw P/E de Yahoo, y las que no tienen ninguno quedan afuera.' },
       { d: 'Validación: contra el P/E "as reported" de S&P que publica multpl.com, la serie da 25,7 hoy contra 26,5 (estimado al 21/10/2026).',
         p: 'multpl asigna cada EPS al trimestre en que se ganó, así que en diciembre ya cuenta el cuarto trimestre, que se presenta entre fines de enero y marzo. La comparación de fin de año se hizo por eso con el EPS fechado al cierre del trimestre: 2014, 20,0 contra 20,0; 2016, 23,5 contra 23,6; 2018, 19,3 contra 19,6; 2019, 23,8 contra 24,9; 2024, 28,5 contra 28,2; 2025, 29,3 contra 28,0. Las diferencias grandes son 2020 (40,2 contra 36,0) y 2021 (25,2 contra 23,1). Mi lectura es que ahí pesa el sesgo de supervivencia, porque hoy están en el índice empresas que en 2020 perdían plata y ya valían mucho, como UBER, PLTR o DASH, y que entonces no estaban. Con la fecha de presentación, la serie de fin de año usa el EPS hasta septiembre y se separa de multpl donde el cuarto trimestre se movió mucho: 2019 da 25,6, 2021 28,6 y 2024 30,1; 2014 baja a 19,0 (el cuarto trimestre de 2014 tuvo los cargos por la caída del petróleo).' },
       { d: 'Normalizado: la misma fórmula con el EPS normalizado.',
@@ -5155,7 +5204,7 @@ const METODO = [
         p: 'Es una vista rápida para el día a día; para ventanas largas está P/E histórico.' },
       { d: 'P/E anualizado: precio sobre el EPS del último trimestre por cuatro.',
         p: 'Detecta un cambio de tendencia que el de 12 meses todavía no muestra, aunque en negocios estacionales mete ruido porque el último trimestre no representa al año.' },
-      { d: 'Var. a μ: cuánto se movería el precio si el P/E volviera a la media del año con el EPS de hoy. La versión fw usa el EPS esperado de los cuatro trimestres que la empresa va a presentar en el año, el mismo de la proyección de P/E histórico.' },
+      { d: 'Var. a μ: cuánto se movería el precio si el P/E volviera a la media del año con el EPS de hoy. La versión fw usa el EPS del Fw P/E: el de los cuatro trimestres que la empresa va a presentar en el año, el mismo de la proyección de P/E histórico.' },
     ] },
 
   { id: 'res', t: 'Resumen',
