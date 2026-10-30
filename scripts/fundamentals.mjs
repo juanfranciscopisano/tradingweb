@@ -97,23 +97,42 @@ export function ntmFrom(r, now, k = 1) {
   const atEom = now % DAYMS === 0 && new Date(now + DAYMS).getUTCDate() === 1;
   const A = atEom ? eom(now, 12 * (k - 1)) : now + (k - 1) * 365 * DAYMS, T1 = atEom ? eom(now, 12 * k) : now + k * 365 * DAYMS;
   const t0 = r.t0 || [], t1 = r.t1 || [];
+  const near = (a, b) => Math.abs(a - b) <= 20 * DAYMS, find = (L, t) => L.find(x => near(x.t, t));
+  const known = [r.q0, r.q1].filter(q => q && q[1] != null).map(q => ({ t: P(q[0]), v: q[1] }));
+  const hist = (r.h || []).map(h => ({ t: P(h[0]), v: h[1], e: h[2] ?? null }));
+  // un trimestre informado que se apartó más de 50% de lo esperado trae algo que el consenso no tenía (un extraordinario)
+  const odd = h => h.e != null && Math.abs(h.v - h.e) > Math.max(0.5 * Math.abs(h.e), 0.1);
+  // el ejercicio en curso sin los extraordinarios ya informados (GOOGL y AMZN tienen en 2026 la valuación de sus
+  // tenencias). Solo si el consenso del ejercicio los incluye, lo que se ve en lo que le deja a los trimestres sin
+  // informar: con ellos adentro, algo parecido a un trimestre normal; algunos (VICI, BXP) dan el ejercicio sin ellos. Las
+  // sorpresas normales quedan: lo esperado justo antes de un resultado es un número para superar, y contra él el
+  // crecimiento se infla (el mediano del S&P 500 pasaba de 10% a 14%)
+  let e0 = r.f0 ? t0[0] : null;
+  if (e0 != null) {
+    let D = 0, R = e0, n = 0; const base = [];
+    for (const m of [-9, -6, -3, 0]) {
+      const t = eom(P(r.f0), m), kq = find(known, t), h = find(hist, t);
+      if (kq) { R -= kq.v; base.push(kq.v); }
+      else if (h && h.t <= T) { R -= h.v; base.push(h.e ?? h.v); if (odd(h)) D += h.v - h.e; }
+      else n++;
+    }
+    const mq = base.length ? base.reduce((a, b) => a + b, 0) / base.length : 0;
+    if (D && Math.abs(R - n * mq) <= Math.abs(R + D - n * mq)) e0 -= D;
+  }
   // crecimiento para lo que pasa del ejercicio siguiente (Yahoo no da consenso más allá ni el esperado a 5 años): el del
   // ejercicio siguiente contra el en curso, acotado a 0,8–1,25
-  const g = r.f0 && t0[0] != null && t0[0] > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / t0[0])) : 1;
+  const g = e0 != null && e0 > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / e0)) : 1;
   const blend = () => {
     if (k > 1) {   // segundo año: lo que cae en el ejercicio siguiente con su consenso, lo que pasa con el crecimiento
       const f1 = r.f1 ? P(r.f1) : null, w1 = f1 ? Math.min(1, Math.max(0, (f1 - A) / (365.25 * DAYMS))) : 0, v = t1[0];
-      return v == null ? null : { eps: w1 * v + (1 - w1) * v * (v > 0 ? g : 1), metodo: "ejercicios" };
+      return v == null ? null : { eps: w1 * v + (1 - w1) * v * (v > 0 ? g : 1), metodo: "ejercicios", g, ext: 4 * (1 - w1) };
     }
     const f0 = r.f0 ? P(r.f0) : null, w = f0 ? Math.min(1, Math.max(0, (f0 - T) / (365.25 * DAYMS))) : 0;
-    if (t0[0] != null && t1[0] != null) return { eps: w * t0[0] + (1 - w) * t1[0], metodo: "ejercicios" };
+    if (e0 != null && t1[0] != null) return { eps: w * e0 + (1 - w) * t1[0], metodo: "ejercicios" };
     const v = t1[0] ?? t0[0]; return v == null ? null : { eps: v, metodo: "ejercicios" };
   };
   if (!r.f1 || t1[0] == null || !(r.q0 || r.q1)) return blend();
   const endOfMonth = (t, m) => { const d = new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + m + 1, 0); };
-  const near = (a, b) => Math.abs(a - b) <= 20 * DAYMS, find = (L, t) => L.find(x => near(x.t, t));
-  const known = [r.q0, r.q1].filter(q => q && q[1] != null).map(q => ({ t: P(q[0]), v: q[1] }));
-  const hist = (r.h || []).map(h => ({ t: P(h[0]), v: h[1], e: h[2] ?? null }));
   const done = [];   // trimestres ya resueltos, para la estacionalidad del ejercicio siguiente
   const shape = t => { const k = find(known, t); if (k) return k.v; const h = find(hist, t); if (h) return h.e ?? h.v; const c = find(done, t); return c ? c.v : null; };
   // proporcional si todos son positivos y ninguno es casi cero (menos de un cuarto del promedio: un piso que se recupera,
@@ -135,7 +154,7 @@ export function ntmFrom(r, now, k = 1) {
         const h = find(hist, q.t);
         if (!h) { missingPast = true; continue; }
         q.v = h.v; rest -= h.v;
-        if (h.e != null && Math.abs(h.v - h.e) > Math.max(0.5 * Math.abs(h.e), 0.1)) suspect = true;
+        if (odd(h)) suspect = true;
         continue;
       }
       unk.push(q);
@@ -167,15 +186,17 @@ export function ntmFrom(r, now, k = 1) {
   // lo que pasa del ejercicio siguiente: el mismo trimestre un año antes por el crecimiento (g)
   const last = years[years.length - 1];
   if (T1 > last.f) for (const q of done.filter(q => q.t > last.f - 365 * DAYMS && q.t <= last.f + 10 * DAYMS))
-    if (q.v != null) done.push({ t: endOfMonth(q.t, 12), start: endOfMonth(q.start, 12), v: q.v * (q.v > 0 ? g : 1) });
-  let sum = 0, covered = 0;
+    if (q.v != null) done.push({ t: endOfMonth(q.t, 12), start: endOfMonth(q.start, 12), v: q.v * (q.v > 0 ? g : 1), x: 1 });
+  // ext: cuántos de los cuatro trimestres de la ventana van extendidos con g
+  let sum = 0, covered = 0, ext = 0;
   for (const q of done) {
     const a = Math.max(q.start, A), b = Math.min(q.t, T1);
     if (b <= a || q.v == null) continue;
     sum += q.v * (b - a) / (q.t - q.start); covered += b - a;
+    if (q.x) ext += (b - a) / (q.t - q.start);
   }
   if (covered < 0.85 * (T1 - A)) return blend();
-  return { eps: sum * (T1 - A) / covered, metodo: "trimestres" };
+  return { eps: sum * (T1 - A) / covered, metodo: "trimestres", g, ext };
 }
 // EPS esperado de los cuatro trimestres que siguen al último presentado (lastQ, en ms; null si no se sabe), que es el EPS
 // del Fw P/E de la terminal: con la regla de fechas del P/E, dentro de un año el EPS de 12 meses va a ser la suma de esos
