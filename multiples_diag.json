@@ -24,7 +24,7 @@
     "JPM M 387 E 32.1 En 30.6 pe 12.0",
     "JNJ M 376 E 14.6 En 18.6 pe 25.8",
     "XOM M 327 E 18.5 En 19.7 pe 17.7",
-    "V M 326 E 11.1 En undefined pe 29.3",
+    "V M 324 E 11.1 En undefined pe 29.1",
     "WMT M 319 E 8.3 En 12.8 pe 38.5"
    ],
    "E": [
@@ -32,8 +32,8 @@
     "MSFT M 1035 E 34.8 En 32.2 pe 29.8",
     "JPM M 387 E 32.1 En 30.6 pe 12.0",
     "BAC M 303 E 28.1 En 25.1 pe 10.8",
-    "GOOG M 757 E 27.9 En 28.7 pe 27.1",
     "GOOGL M 759 E 27.9 En 28.7 pe 27.2",
+    "GOOG M 757 E 27.9 En 28.7 pe 27.1",
     "BRK-B M 456 E 26.8 En undefined pe 17.0",
     "WFC M 231 E 22.1 En 20.6 pe 10.5",
     "GE M 92 E -20.9 En 0.4 pe -4.4",
@@ -46,8 +46,8 @@
     "AAPL M 938 E 56.3 En 50.2 pe 16.6",
     "MSFT M 1035 E 34.8 En 32.2 pe 29.8",
     "JPM M 387 E 32.1 En 30.6 pe 12.0",
-    "GOOG M 757 E 27.9 En 28.7 pe 27.1",
     "GOOGL M 759 E 27.9 En 28.7 pe 27.2",
+    "GOOG M 757 E 27.9 En 28.7 pe 27.1",
     "BAC M 303 E 28.1 En 25.1 pe 10.8",
     "META M 552 E 19.2 En 21.7 pe 28.7",
     "WFC M 231 E 22.1 En 20.6 pe 10.5",
@@ -69,13 +69,13 @@
     "NVDA M 515 E 5.3 En 5.0 pe 96.6",
     "JPM M 493 E 47.4 En 48.1 pe 10.4",
     "JNJ M 451 E 15.1 En 15.6 pe 29.9",
-    "V M 448 E 10.9 En undefined pe 41.2"
+    "V M 446 E 10.9 En undefined pe 41.1"
    ],
    "E": [
     "BRK-B M 598 E 105.8 En undefined pe 5.6",
     "AAPL M 2341 E 85.5 En 84.2 pe 27.4",
-    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
+    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "MSFT M 2114 E 61.3 En 57.6 pe 34.5",
     "JPM M 493 E 47.4 En 48.1 pe 10.4",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
@@ -88,8 +88,8 @@
    "En": [
     "AAPL M 2341 E 85.5 En 84.2 pe 27.4",
     "MSFT M 2114 E 61.3 En 57.6 pe 34.5",
-    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "GOOGL M 1706 E 62.7 En 53.7 pe 27.2",
+    "GOOG M 1753 E 62.7 En 53.7 pe 27.9",
     "JPM M 493 E 47.4 En 48.1 pe 10.4",
     "META M 1021 E 38.8 En 37.6 pe 26.3",
     "AMZN M 1797 E 29.4 En 24.1 pe 61.1",
@@ -118,8 +118,8 @@
    "E": [
     "AAPL M 3254 E 99.3 En 98.7 pe 32.8",
     "MSFT M 3335 E 86.2 En 85.4 pe 38.7",
-    "GOOG M 2296 E 81.6 En 81.2 pe 28.1",
     "GOOGL M 2280 E 81.6 En 81.2 pe 27.9",
+    "GOOG M 2296 E 81.6 En 81.2 pe 28.1",
     "BRK-B M 871 E 73.4 En undefined pe 11.9",
     "JPM M 611 E 50.1 En 52.2 pe 12.2",
     "META M 1324 E 45.7 En 44.5 pe 29.0",
@@ -132,8 +132,8 @@
    "En": [
     "AAPL M 3254 E 99.3 En 98.7 pe 32.8",
     "MSFT M 3335 E 86.2 En 85.4 pe 38.7",
-    "GOOG M 2296 E 81.6 En 81.2 pe 28.1",
     "GOOGL M 2280 E 81.6 En 81.2 pe 27.9",
+    "GOOG M 2296 E 81.6 En 81.2 pe 28.1",
     "JPM M 611 E 50.1 En 52.2 pe 12.2",
     "NVDA M 3064 E 42.4 En 45.3 pe 72.2",
     "META M 1324 E 45.7 En 44.5 pe 29.0",
@@ -160,8 +160,8 @@
     "WMT M 783 E 18.9 En 20.3 pe 41.4"
    ],
    "E": [
-    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
+    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
     "AAPL M 3020 E 96.4 En 106.1 pe 31.3",
     "BRK-B M 1040 E 80.9 En undefined pe 12.9",
@@ -175,8 +175,8 @@
    ],
    "En": [
     "AAPL M 3020 E 96.4 En 106.1 pe 31.3",
-    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "GOOGL M 2194 E 110.1 En 101.5 pe 19.9",
+    "GOOG M 2191 E 110.1 En 101.5 pe 19.9",
     "MSFT M 3701 E 96.6 En 98.3 pe 38.3",
     "NVDA M 3897 E 76.8 En 77.7 pe 50.7",
     "AMZN M 2405 E 66.1 En 62.2 pe 36.4",
@@ -192,325 +192,275 @@
  "yahoo": {
   "AAPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ABNB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ACGL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "ABT": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "ADP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ADM": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "ABBV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AEE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "AIG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "AEP": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "ABT": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "ACGL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "ADM": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "ADP": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "AES": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AEE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AEP": "continuas 0, total 5 (2025-06-30 a 2026-09-30)",
+  "AIG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AJG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AIZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AKAM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AJG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ALGN": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "ALB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ALGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMCR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ANET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AMGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "AME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AMZN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "AOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "APO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "AMGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "APD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ANET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "APP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "APTV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ARES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ATO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "AVY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "AXON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BAC": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "BDX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "BAX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BKNG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "BALL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "BEN": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "BMY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BKNG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "BLK": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "BR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BRK-B": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "BNY": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "BRK-B": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "BSX": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "CAH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "C": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "CARR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "BXP": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "CAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CBOE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "BX": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "CDW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "BXP": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "C": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "CAT": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "CAH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CBOE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "CEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CCI": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "CDW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CHD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CHRW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CHTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CHTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CLX": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
-  "CMG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CMI": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "CMS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "CNP": "continuas 0, total 5 (2025-06-30 a 2026-09-30)",
-  "CMI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "COIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "COHR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COF": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "COHR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "COR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CPAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CRH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CPT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CRL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CTSH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CPT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CPAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "CVX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "D": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DASH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "CVS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "CVS": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "DDOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DECK": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "DD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "D": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DLR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DHI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DOW": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "DOC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "DTE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "DVA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "DOW": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "DVN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "DXCM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EBAY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ECHO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "DUK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ECL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "EG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ECHO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "ED": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EIX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "EL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EME": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EIX": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "EOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EMR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ERIE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ETN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ES": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ESS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "ETR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EVRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "EW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "EXPD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EXC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "EXPD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EXPE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "EXR": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "F": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "FCX": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "FDXF": "continuas 0, total 1 (2025-11-30 a 2025-11-30)",
-  "FDX": "continuas 0, total 5 (2025-05-31 a 2026-05-31)",
+  "FDX": "continuas 0, total 5 (2025-11-30 a 2026-09-30)",
   "FANG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FDXF": "continuas 0, total 1 (2025-11-30 a 2025-11-30)",
   "FERG": "continuas 0, total 5 (2025-07-31 a 2026-06-30)",
-  "FE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "FFIV": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "FICO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FE": "continuas 0, total 5 (2025-06-30 a 2026-09-30)",
+  "FIS": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "FFIV": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "FISV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FLEX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FOXA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "FOX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FTNT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FOXA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FLEX": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "FITB": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "FRT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "FTNT": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "GD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GDDY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GEN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "FSLR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "GILD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GLW": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "GL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "GOOG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GILD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "GPN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "GNRC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GOOGL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "HAL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "GS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "GWW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "GPN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HAL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "HAS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "HCA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HII": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HSIC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HSY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "HUM": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "IBKR": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "ICE": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "IDXX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "HWM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IFF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "INTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "INVH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "INCY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ILMN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "IT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IFF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IDXX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IP": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "INTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IRM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "J": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "IVZ": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "JCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "JKHY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "J": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "IT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "JPM": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "JKHY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KDP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "JCI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KHC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KIM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KLAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "KKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KEY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KIM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "KKR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "KVUE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LDOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LHX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LH": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "L": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "LIN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LNT": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
+  "LDOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LH": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "LITE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "LYV": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "MA": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "LNT": "continuas 0, total 5 (2025-03-31 a 2026-03-31)",
   "LYB": "continuas 0, total 4 (2025-03-31 a 2026-06-30)",
   "MAA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MCD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "LYV": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "MAR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MCD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MCHP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MCK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MDLZ": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MLM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MO": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "MET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MNST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MPC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MRNA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MLM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MPWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MET": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MOS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MPC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MRNA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "MTB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "MTD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "MSI": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "NCLH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "MTB": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "MTD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NEE": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "NRG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "NTRS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "NUE": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "NVR": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "NWSA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "NWS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "NWSA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ODFL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "O": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "OTIS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ON": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "OXY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PCG": "continuas 0, total 5 (2025-06-30 a 2026-09-30)",
   "ORLY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PFE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PFG": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PEG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PCG": "continuas 0, total 5 (2025-06-30 a 2026-09-30)",
+  "PFE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PGR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PLD": "continuas 0, total 5 (2025-06-30 a 2026-09-30)",
-  "PKG": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "PNC": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "PGR": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "PLTR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PNW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PKG": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "PODD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PNW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "PNC": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "PPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PRU": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "PWR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "PTC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RDDT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "QCOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "Q": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RJF": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "REGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RF": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "REG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "Q": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "REGN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "QCOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RF": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "RL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ROK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "RSG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RJF": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "RMD": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ROP": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "SBUX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SCHW": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "SBAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "RSG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "RVTY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SBUX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SKYD": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "SNDK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SOLV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SBAC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SCHW": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "SMCI": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
+  "SNDK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SPG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SOLV": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SRE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "STE": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "STX": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "SWKS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "SYY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SW": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "SWK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TDG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "SYK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TECH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TDG": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "SYY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TER": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "TEL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TECH": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TMO": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "TEL": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "TRGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TKO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "TPL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TRMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TROW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TPR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TRGP": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TSCO": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "TSN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TTWO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TRMB": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TPR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TSCO": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "TWLO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "TXT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "TTWO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UDR": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "UBER": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "UHS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "UNH": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "V": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "USB": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "UHS": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "V": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
   "UPS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "URI": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "VMC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "VMRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "USB": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
+  "VLTO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VRSK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "VMRK": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VRTX": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VST": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "VTRS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "VYLR": "continuas 0, total 2 (2025-03-31 a 2026-03-31)",
-  "VZ": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "VLTO": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WAT": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WMB": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "WEC": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WST": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WTW": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WMB": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
   "WRB": "continuas 0, total 5 (2025-09-30 a 2026-09-30)",
-  "XEL": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "WY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "XOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "WYNN": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "YUM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "WY": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "XYZ": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "ZTS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
   "ZBRA": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
-  "ZBH": "continuas 0, total 5 (2025-03-31 a 2026-06-30)",
-  "XOM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)"
+  "ZTS": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "YUM": "continuas 0, total 5 (2025-06-30 a 2026-06-30)",
+  "ZBH": "continuas 0, total 5 (2025-03-31 a 2026-06-30)"
  },
  "cajaDeuda": {
   "ADP": {
@@ -711,36 +661,36 @@
    }
   },
   "BAX": {
-   "falta": "inversión",
+   "falta": "inversión, deuda",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-06-30",
-    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2026-06-30",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
+    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2026-09-30",
     "PaymentsToAcquireProductiveAssets": "2025-12-31",
-    "ShareBasedCompensation": "2026-06-30",
-    "DepreciationDepletionAndAmortization": "2026-06-30",
+    "ShareBasedCompensation": "2026-09-30",
+    "DepreciationDepletionAndAmortization": "2026-09-30",
     "DepreciationAndAmortization": "2017-09-30",
-    "Depreciation": "2026-06-30",
-    "AmortizationOfIntangibleAssets": "2026-06-30",
-    "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
+    "Depreciation": "2026-09-30",
+    "AmortizationOfIntangibleAssets": "2026-09-30",
+    "CashAndCashEquivalentsAtCarryingValue": "2026-09-30",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-03-31",
     "ShortTermInvestments": "2016-03-31",
     "LongTermDebtAndCapitalLeaseObligations": "2025-12-31",
     "LongTermDebt": "2025-12-31",
-    "LongTermDebtAndCapitalLeaseObligationsCurrent": "2026-06-30",
-    "ShortTermBorrowings": "2026-06-30",
+    "LongTermDebtAndCapitalLeaseObligationsCurrent": "2026-09-30",
+    "ShortTermBorrowings": "2026-09-30",
     "CommercialPaper": "2019-09-30",
     "OtherShortTermBorrowings": "2015-12-31",
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": "2025-12-31",
-    "PaymentsToAcquireOtherProductiveAssets": "2026-06-30",
+    "PaymentsToAcquireOtherProductiveAssets": "2026-09-30",
     "DebtInstrumentCarryingAmount": "2025-12-31",
-    "MinorityInterest": "2026-06-30",
-    "StockholdersEquity": "2026-06-30",
-    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
-    "AssetsCurrent": "2026-06-30",
-    "LiabilitiesCurrent": "2026-06-30",
-    "PropertyPlantAndEquipmentNet": "2026-06-30",
-    "Goodwill": "2026-06-30",
-    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
+    "MinorityInterest": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2026-09-30",
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-09-30"
    }
   },
   "BKR": {
@@ -803,6 +753,28 @@
     "PropertyPlantAndEquipmentNet": "2026-06-30",
     "Goodwill": "2026-06-30",
     "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
+   }
+  },
+  "CMG": {
+   "falta": "deuda",
+   "etiquetas": {
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
+    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2017-12-31",
+    "PaymentsToAcquirePropertyPlantAndEquipment": "2026-09-30",
+    "ShareBasedCompensation": "2026-09-30",
+    "AllocatedShareBasedCompensationExpense": "2014-06-30",
+    "DepreciationDepletionAndAmortization": "2026-09-30",
+    "CashAndCashEquivalentsAtCarryingValue": "2026-09-30",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-09-30",
+    "MarketableSecuritiesCurrent": "2026-09-30",
+    "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2022-12-31",
+    "LongTermDebt": "2025-12-31",
+    "PreferredStockValue": "2025-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2026-09-30",
+    "Goodwill": "2026-09-30"
    }
   },
   "CMS": {
@@ -892,29 +864,29 @@
   "CRH": {
    "falta": "inversión",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-06-30",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
     "PaymentsToAcquirePropertyPlantAndEquipment": "2025-12-31",
-    "PaymentsToAcquireProductiveAssets": "2026-06-30",
-    "ShareBasedCompensation": "2026-06-30",
+    "PaymentsToAcquireProductiveAssets": "2026-09-30",
+    "ShareBasedCompensation": "2026-09-30",
     "AllocatedShareBasedCompensationExpense": "2025-12-31",
-    "DepreciationDepletionAndAmortization": "2026-06-30",
+    "DepreciationDepletionAndAmortization": "2026-09-30",
     "Depreciation": "2025-12-31",
     "AmortizationOfIntangibleAssets": "2025-12-31",
-    "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
-    "LongTermDebtNoncurrent": "2026-06-30",
-    "LongTermDebt": "2026-06-30",
-    "DebtCurrent": "2026-06-30",
-    "LongTermDebtCurrent": "2026-06-30",
-    "ShortTermBorrowings": "2026-06-30",
-    "MinorityInterest": "2026-06-30",
-    "PreferredStockValue": "2026-06-30",
-    "StockholdersEquity": "2026-06-30",
-    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
-    "AssetsCurrent": "2026-06-30",
-    "LiabilitiesCurrent": "2026-06-30",
-    "PropertyPlantAndEquipmentNet": "2026-06-30",
-    "Goodwill": "2026-06-30",
-    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
+    "CashAndCashEquivalentsAtCarryingValue": "2026-09-30",
+    "LongTermDebtNoncurrent": "2026-09-30",
+    "LongTermDebt": "2026-09-30",
+    "DebtCurrent": "2026-09-30",
+    "LongTermDebtCurrent": "2026-09-30",
+    "ShortTermBorrowings": "2026-09-30",
+    "MinorityInterest": "2026-09-30",
+    "PreferredStockValue": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2026-09-30",
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-09-30"
    }
   },
   "CVNA": {
@@ -1022,28 +994,28 @@
   "DXCM": {
    "falta": "deuda",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-06-30",
-    "PaymentsToAcquirePropertyPlantAndEquipment": "2026-06-30",
-    "ShareBasedCompensation": "2026-06-30",
-    "AllocatedShareBasedCompensationExpense": "2026-06-30",
-    "DepreciationDepletionAndAmortization": "2026-06-30",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
+    "PaymentsToAcquirePropertyPlantAndEquipment": "2026-09-30",
+    "ShareBasedCompensation": "2026-09-30",
+    "AllocatedShareBasedCompensationExpense": "2026-09-30",
+    "DepreciationDepletionAndAmortization": "2026-09-30",
     "DepreciationAndAmortization": "2026-06-30",
     "Depreciation": "2025-12-31",
     "AmortizationOfIntangibleAssets": "2025-12-31",
-    "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
-    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
+    "CashAndCashEquivalentsAtCarryingValue": "2026-09-30",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-09-30",
     "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "2025-03-31",
     "LongTermDebt": "2015-09-30",
     "ConvertibleNotesPayableCurrent": "2025-12-31",
     "LongTermDebtFairValue": "2017-06-30",
     "ConvertibleDebtFairValueDisclosures": "2018-09-30",
-    "StockholdersEquity": "2026-06-30",
+    "StockholdersEquity": "2026-09-30",
     "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2024-12-31",
-    "AssetsCurrent": "2026-06-30",
-    "LiabilitiesCurrent": "2026-06-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
     "PropertyPlantAndEquipmentNet": "2023-03-31",
-    "Goodwill": "2026-06-30",
-    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-09-30"
    }
   },
   "EQIX": {
@@ -1107,22 +1079,22 @@
   "F": {
    "falta": "deuda",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-03-31",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
     "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2018-12-31",
-    "PaymentsToAcquireProductiveAssets": "2026-03-31",
-    "ShareBasedCompensation": "2026-03-31",
-    "DepreciationDepletionAndAmortization": "2026-03-31",
-    "Depreciation": "2026-03-31",
+    "PaymentsToAcquireProductiveAssets": "2026-09-30",
+    "ShareBasedCompensation": "2026-09-30",
+    "DepreciationDepletionAndAmortization": "2026-09-30",
+    "Depreciation": "2026-09-30",
     "AmortizationOfIntangibleAssets": "2014-12-31",
-    "CashAndCashEquivalentsAtCarryingValue": "2026-03-31",
-    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-03-31",
-    "MarketableSecuritiesCurrent": "2026-03-31",
+    "CashAndCashEquivalentsAtCarryingValue": "2026-09-30",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-09-30",
+    "MarketableSecuritiesCurrent": "2026-09-30",
     "LongTermDebtNoncurrent": "2020-12-31",
-    "MinorityInterest": "2026-03-31",
-    "StockholdersEquity": "2026-03-31",
-    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-03-31",
-    "AssetsCurrent": "2026-03-31",
-    "LiabilitiesCurrent": "2026-03-31",
+    "MinorityInterest": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
     "PropertyPlantAndEquipmentNet": "2025-09-30",
     "Goodwill": "2025-12-31"
    }
@@ -1268,27 +1240,27 @@
   "INVH": {
    "falta": "EBIT",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-06-30",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
     "PaymentsToAcquirePropertyPlantAndEquipment": "2018-12-31",
     "PaymentsForCapitalImprovements": "2025-12-31",
-    "ShareBasedCompensation": "2026-06-30",
-    "AllocatedShareBasedCompensationExpense": "2026-06-30",
-    "Depreciation": "2026-06-30",
-    "AmortizationOfIntangibleAssets": "2026-06-30",
-    "CashAndCashEquivalentsAtCarryingValue": "2026-06-30",
-    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-06-30",
-    "LongTermDebt": "2026-06-30",
-    "PaymentsToAcquireOtherProductiveAssets": "2026-06-30",
-    "SeniorNotes": "2026-06-30",
-    "UnsecuredDebt": "2026-06-30",
-    "SecuredDebt": "2026-06-30",
-    "DebtInstrumentCarryingAmount": "2026-06-30",
-    "MinorityInterest": "2026-06-30",
-    "StockholdersEquity": "2026-06-30",
-    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
-    "PropertyPlantAndEquipmentNet": "2026-06-30",
-    "Goodwill": "2026-06-30",
-    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
+    "ShareBasedCompensation": "2026-09-30",
+    "AllocatedShareBasedCompensationExpense": "2026-09-30",
+    "Depreciation": "2026-09-30",
+    "AmortizationOfIntangibleAssets": "2026-09-30",
+    "CashAndCashEquivalentsAtCarryingValue": "2026-09-30",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-09-30",
+    "LongTermDebt": "2026-09-30",
+    "PaymentsToAcquireOtherProductiveAssets": "2026-09-30",
+    "SeniorNotes": "2026-09-30",
+    "UnsecuredDebt": "2026-09-30",
+    "SecuredDebt": "2026-09-30",
+    "DebtInstrumentCarryingAmount": "2026-09-30",
+    "MinorityInterest": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2026-09-30",
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-09-30"
    }
   },
   "ISRG": {
@@ -1856,50 +1828,50 @@
   "TT": {
    "falta": "inversión",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-06-30",
-    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2026-06-30",
-    "PaymentsToAcquirePropertyPlantAndEquipment": "2026-06-30",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-09-30",
+    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2026-09-30",
+    "PaymentsToAcquirePropertyPlantAndEquipment": "2026-09-30",
     "PaymentsToAcquireProductiveAssets": "2025-12-31",
-    "ShareBasedCompensation": "2026-06-30",
-    "AllocatedShareBasedCompensationExpense": "2026-06-30",
+    "ShareBasedCompensation": "2026-09-30",
+    "AllocatedShareBasedCompensationExpense": "2026-09-30",
     "DepreciationDepletionAndAmortization": "2019-12-31",
-    "DepreciationAmortizationAndAccretionNet": "2026-06-30",
+    "DepreciationAmortizationAndAccretionNet": "2026-09-30",
     "DepreciationAndAmortization": "2011-09-30",
     "Depreciation": "2025-12-31",
-    "AmortizationOfIntangibleAssets": "2026-06-30",
+    "AmortizationOfIntangibleAssets": "2026-09-30",
     "CashAndCashEquivalentsAtCarryingValue": "2025-12-31",
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2025-12-31",
-    "LongTermDebtNoncurrent": "2026-06-30",
+    "LongTermDebtNoncurrent": "2026-09-30",
     "LongTermDebt": "2025-12-31",
-    "DebtCurrent": "2026-06-30",
+    "DebtCurrent": "2026-09-30",
     "LongTermDebtCurrent": "2011-03-31",
     "ShortTermBorrowings": "2011-12-31",
     "CommercialPaper": "2018-12-31",
     "OtherShortTermBorrowings": "2011-03-31",
-    "DebtInstrumentFairValue": "2026-06-30",
-    "MinorityInterest": "2026-06-30",
-    "StockholdersEquity": "2026-06-30",
-    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-06-30",
-    "AssetsCurrent": "2026-06-30",
-    "LiabilitiesCurrent": "2026-06-30",
-    "PropertyPlantAndEquipmentNet": "2026-06-30",
-    "Goodwill": "2026-06-30",
-    "IntangibleAssetsNetExcludingGoodwill": "2026-06-30"
+    "DebtInstrumentFairValue": "2026-09-30",
+    "MinorityInterest": "2026-09-30",
+    "StockholdersEquity": "2026-09-30",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "2026-09-30",
+    "AssetsCurrent": "2026-09-30",
+    "LiabilitiesCurrent": "2026-09-30",
+    "PropertyPlantAndEquipmentNet": "2026-09-30",
+    "Goodwill": "2026-09-30",
+    "IntangibleAssetsNetExcludingGoodwill": "2026-09-30"
    }
   },
   "TXT": {
    "falta": "deuda",
    "etiquetas": {
-    "NetCashProvidedByUsedInOperatingActivities": "2026-07-04",
-    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2026-07-04",
-    "PaymentsToAcquireProductiveAssets": "2026-07-04",
+    "NetCashProvidedByUsedInOperatingActivities": "2026-10-03",
+    "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations": "2026-10-03",
+    "PaymentsToAcquireProductiveAssets": "2026-10-03",
     "AllocatedShareBasedCompensationExpense": "2026-04-04",
-    "DepreciationDepletionAndAmortization": "2026-07-04",
+    "DepreciationDepletionAndAmortization": "2026-10-03",
     "Depreciation": "2012-12-29",
     "AmortizationOfIntangibleAssets": "2026-01-03",
     "CashAndCashEquivalentsAtCarryingValue": "2018-06-30",
-    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-07-04",
-    "StockholdersEquity": "2026-07-04",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "2026-10-03",
+    "StockholdersEquity": "2026-10-03",
     "PropertyPlantAndEquipmentNet": "2023-12-30",
     "IntangibleAssetsNetExcludingGoodwill": "2026-01-03"
    }
@@ -2023,14 +1995,14 @@
    }
   }
  },
- "tasaReal": "Tesoro de EE.UU., curva real (10 años): bono del Tesoro indexado por inflación (TIPS) a 10 años, al 2026-10-28",
+ "tasaReal": "Tesoro de EE.UU., curva real (10 años): bono del Tesoro indexado por inflación (TIPS) a 10 años, al 2026-10-29",
  "sinUltimoDato": [
   "BE (último trimestre 2026-09-30)",
   "CLX (último trimestre 2026-03-31, Yahoo: continuas 0, total 5 (2025-03-31 a 2026-03-31))",
   "DLR (último trimestre 2026-03-31, Yahoo no coincide, Yahoo: continuas 0, total 5 (2025-06-30 a 2026-06-30))",
-  "FDX (último trimestre 2026-09-30, Yahoo no coincide, Yahoo: continuas 0, total 5 (2025-05-31 a 2026-05-31))",
+  "FDX (último trimestre 2026-09-30, Yahoo no coincide, Yahoo: continuas 0, total 5 (2025-11-30 a 2026-09-30))",
   "FDXF (sin datos)",
-  "FE (último trimestre 2026-03-31, Yahoo no coincide, Yahoo: continuas 0, total 5 (2025-03-31 a 2026-06-30))",
+  "FE (último trimestre 2026-03-31, Yahoo no coincide, Yahoo: continuas 0, total 5 (2025-06-30 a 2026-09-30))",
   "HONA (último trimestre 2026-09-26)",
   "LNT (último trimestre 2026-03-31, Yahoo: continuas 0, total 5 (2025-03-31 a 2026-03-31))",
   "SKYD (último trimestre 2026-06-30, Yahoo: continuas 0, total 5 (2025-03-31 a 2026-06-30))",
@@ -11968,6 +11940,800 @@
     ]
    }
   },
+  "CARR": {
+   "contable": -2.23,
+   "normalizado": 1.817,
+   "diferencia": "distinto signo",
+   "metodo": "operativo",
+   "armado": {
+    "interesesPagadosEnOperativo": false,
+    "interesesGanadosEnOperativo": false,
+    "asociadasEnOperativo": false,
+    "afudc": false
+   },
+   "accionesInformadas": true,
+   "ajustes": [
+    {
+     "fin": "2025-06-30",
+     "base": 896,
+     "tasa": 0.207,
+     "items": [
+      {
+       "cat": "reestructuración",
+       "pre": 35,
+       "src": "SEC",
+       "tag": "RestructuringCharges",
+       "informado": 47,
+       "habitual": 12,
+       "eps": 0.03
+      }
+     ]
+    },
+    {
+     "fin": "2025-09-30",
+     "base": 514,
+     "tasa": 0.207,
+     "items": [
+      {
+       "cat": "reestructuración",
+       "pre": 36,
+       "src": "SEC",
+       "tag": "RestructuringCharges",
+       "informado": 50,
+       "habitual": 14,
+       "eps": 0.031
+      }
+     ]
+    },
+    {
+     "fin": "2025-12-31",
+     "base": 63,
+     "tasa": 0.207,
+     "items": [
+      {
+       "cat": "reestructuración",
+       "pre": 50,
+       "src": "SEC",
+       "tag": "RestructuringCharges",
+       "informado": 73,
+       "habitual": 23,
+       "eps": 0.035
+      },
+      {
+       "cat": "costos de adquisición",
+       "pre": 16,
+       "src": "SEC",
+       "tag": "BusinessCombinationAcquisitionRelatedCosts",
+       "informado": 23,
+       "habitual": 7,
+       "eps": 0.011
+      }
+     ]
+    },
+    {
+     "fin": "2026-03-31",
+     "base": 205,
+     "tasa": 0.203,
+     "items": [
+      {
+       "cat": "reestructuración",
+       "pre": 79,
+       "src": "SEC",
+       "tag": "RestructuringCharges",
+       "informado": 108,
+       "habitual": 29,
+       "eps": 0.07
+      }
+     ]
+    },
+    {
+     "fin": "2026-06-30",
+     "base": 798,
+     "tasa": 0.203,
+     "items": [
+      {
+       "cat": "deterioro de activos",
+       "pre": 46,
+       "src": "SEC",
+       "tag": "AssetImpairmentCharges",
+       "informado": 46,
+       "habitual": 0,
+       "eps": 0.041
+      }
+     ]
+    },
+    {
+     "fin": "2026-09-30",
+     "base": -2301,
+     "tasa": 0.201,
+     "items": [
+      {
+       "cat": "deterioro de activos",
+       "pre": 3100,
+       "src": "SEC",
+       "tag": "GoodwillAndIntangibleAssetImpairment + GoodwillImpairmentLoss",
+       "informado": 3100,
+       "habitual": 0,
+       "eps": 2.814
+      }
+     ]
+    }
+   ],
+   "margenes": [
+    {
+     "fin": "2022-03-31",
+     "margen": 37.3,
+     "media": 14.8
+    },
+    {
+     "fin": "2022-12-31",
+     "margen": -6.1,
+     "media": 19.9
+    },
+    {
+     "fin": "2025-12-31",
+     "margen": 3.5,
+     "media": 12.5
+    }
+   ],
+   "trimestres": [
+    {
+     "fin": "2025-12-31",
+     "base": 63,
+     "ajuste": 66,
+     "tasa": 0.207,
+     "minoritarios": 0.063,
+     "preferidos": 0,
+     "acciones": 1060,
+     "antesImp": 5,
+     "impuesto": -32,
+     "neto": 53,
+     "ebit": 167
+    },
+    {
+     "fin": "2026-03-31",
+     "base": 205,
+     "ajuste": 79,
+     "tasa": 0.203,
+     "minoritarios": 0.063,
+     "preferidos": 0,
+     "acciones": 842.8,
+     "antesImp": 170,
+     "impuesto": -96,
+     "neto": 238,
+     "ebit": 338
+    },
+    {
+     "fin": "2026-06-30",
+     "base": 798,
+     "ajuste": 46,
+     "tasa": 0.203,
+     "minoritarios": 0.069,
+     "preferidos": 0,
+     "acciones": 836.5,
+     "antesImp": 721,
+     "impuesto": 180,
+     "neto": 501,
+     "ebit": 871
+    },
+    {
+     "fin": "2026-09-30",
+     "base": -2301,
+     "ajuste": 3100,
+     "tasa": 0.201,
+     "minoritarios": 0.066,
+     "preferidos": 0,
+     "acciones": 821.8,
+     "antesImp": -2363,
+     "impuesto": 177,
+     "neto": -2593,
+     "ebit": 827
+    }
+   ],
+   "crudo": {
+    "oi": [
+     [
+      "2024-01-01",
+      "2024-06-30",
+      4191000000,
+      "10-Q",
+      "2024-07-25"
+     ],
+     [
+      "2024-01-01",
+      "2024-06-30",
+      1109000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      3691000000,
+      "10-Q",
+      "2024-07-25"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      724000000,
+      "10-K",
+      "2025-02-11"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      724000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      724000000,
+      "8-K",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      1872000000,
+      "10-Q",
+      "2024-10-25"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      1872000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      763000000,
+      "10-Q",
+      "2024-10-25"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      763000000,
+      "10-K",
+      "2025-02-11"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      763000000,
+      "8-K",
+      "2025-07-29"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      763000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      2646000000,
+      "10-K",
+      "2025-02-11"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      2646000000,
+      "8-K",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      2646000000,
+      "10-K",
+      "2026-02-05"
+     ],
+     [
+      "2024-10-01",
+      "2024-12-31",
+      774000000,
+      "10-K",
+      "2025-02-11"
+     ],
+     [
+      "2024-10-01",
+      "2024-12-31",
+      774000000,
+      "8-K",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      629000000,
+      "10-Q",
+      "2025-05-01"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      629000000,
+      "10-Q",
+      "2026-04-30"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      1532000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      1532000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      903000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      903000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      2071000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      2071000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      539000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      539000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      2172000000,
+      "10-K",
+      "2026-02-05"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      259000000,
+      "10-Q",
+      "2026-04-30"
+     ],
+     [
+      "2026-01-01",
+      "2026-06-30",
+      1083000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      825000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      -1190000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      -2273000000,
+      "10-Q",
+      "2026-10-29"
+     ]
+    ],
+    "pt": [
+     [
+      "2024-01-01",
+      "2024-06-30",
+      3859000000,
+      "10-Q",
+      "2024-07-25"
+     ],
+     [
+      "2024-01-01",
+      "2024-06-30",
+      811000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      3524000000,
+      "10-Q",
+      "2024-07-25"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      567000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      1581000000,
+      "10-Q",
+      "2024-10-25"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      1581000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      770000000,
+      "10-Q",
+      "2024-10-25"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      770000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      2274000000,
+      "10-K",
+      "2025-02-11"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      2274000000,
+      "8-K",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      2274000000,
+      "10-K",
+      "2026-02-05"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      548000000,
+      "10-Q",
+      "2025-05-01"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      548000000,
+      "10-Q",
+      "2026-04-30"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      1360000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      1360000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      812000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      812000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1793000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1793000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      433000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      433000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      1798000000,
+      "10-K",
+      "2026-02-05"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      170000000,
+      "10-Q",
+      "2026-04-30"
+     ],
+     [
+      "2026-01-01",
+      "2026-06-30",
+      890000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      721000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      -1473000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      -2363000000,
+      "10-Q",
+      "2026-10-29"
+     ]
+    ],
+    "ni": [
+     [
+      "2024-01-01",
+      "2024-06-30",
+      2606000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      2337000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      3053000000,
+      "10-Q",
+      "2024-10-25"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      3053000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      447000000,
+      "10-Q",
+      "2024-10-25"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      447000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      5604000000,
+      "10-K",
+      "2025-02-11"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      5604000000,
+      "8-K",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      5604000000,
+      "10-K",
+      "2026-02-05"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      412000000,
+      "10-Q",
+      "2025-05-01"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      412000000,
+      "10-Q",
+      "2026-04-30"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      1003000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      1003000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      591000000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      591000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1431000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1431000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      428000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      428000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      1484000000,
+      "10-K",
+      "2026-02-05"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      238000000,
+      "10-Q",
+      "2026-04-30"
+     ],
+     [
+      "2026-01-01",
+      "2026-06-30",
+      739000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      501000000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      -1854000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      -2593000000,
+      "10-Q",
+      "2026-10-29"
+     ]
+    ]
+   }
+  },
   "CNC": {
    "contable": 2.92,
    "normalizado": 1.2626,
@@ -13280,8 +14046,8 @@
    }
   },
   "COIN": {
-   "contable": -3.75,
-   "normalizado": 1.673,
+   "contable": -2.74,
+   "normalizado": 0.4794,
    "diferencia": "distinto signo",
    "metodo": "operativo",
    "armado": {
@@ -13414,19 +14180,6 @@
    ],
    "trimestres": [
     {
-     "fin": "2025-09-30",
-     "base": 458.8,
-     "ajuste": 0,
-     "tasa": 0.16,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 292,
-     "antesImp": 502.1,
-     "impuesto": 69.6,
-     "neto": 432.6,
-     "ebit": 480.5
-    },
-    {
      "fin": "2025-12-31",
      "base": 251.2,
      "ajuste": 0,
@@ -13464,6 +14217,19 @@
      "impuesto": -35.9,
      "neto": -359.5,
      "ebit": -61.1
+    },
+    {
+     "fin": "2026-09-30",
+     "base": 42.1,
+     "ajuste": 0,
+     "tasa": 0.139,
+     "minoritarios": 0,
+     "preferidos": 0,
+     "acciones": 288,
+     "antesImp": 823.9,
+     "impuesto": 105.2,
+     "neto": 718.7,
+     "ebit": 61.7
     }
    ],
    "crudo": {
@@ -13588,11 +14354,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      1161688000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       480532000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      480532000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -13621,6 +14401,20 @@
       -113488000,
       "10-Q",
       "2026-07-30"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      -73240000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      61669000,
+      "10-Q",
+      "2026-10-29"
      ]
     ],
     "pt": [
@@ -13744,11 +14538,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      2408372000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       502143000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      502143000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -13777,6 +14585,20 @@
       -395411000,
       "10-Q",
       "2026-07-30"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      -36213000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      823903000,
+      "10-Q",
+      "2026-10-29"
      ]
     ],
     "ni": [
@@ -13907,11 +14729,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      1927060000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       432552000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      432552000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -13947,6 +14783,20 @@
       -359468000,
       "10-Q",
       "2026-07-30"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      -34888000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      718697000,
+      "10-Q",
+      "2026-10-29"
      ]
     ]
    }
@@ -25868,687 +26718,6 @@
     ]
    }
   },
-  "GLW": {
-   "contable": 2.47,
-   "normalizado": 1.8276,
-   "diferencia": "-26%",
-   "metodo": "operativo",
-   "armado": {
-    "interesesPagadosEnOperativo": false,
-    "interesesGanadosEnOperativo": false,
-    "asociadasEnOperativo": false,
-    "afudc": false
-   },
-   "accionesInformadas": true,
-   "ajustes": [
-    {
-     "fin": "2023-09-30",
-     "base": 164,
-     "tasa": 0.221,
-     "items": [
-      {
-       "cat": "reestructuración",
-       "pre": 72,
-       "src": "SEC",
-       "tag": "RestructuringSettlementAndImpairmentProvisions",
-       "informado": 72,
-       "habitual": 0,
-       "eps": 0.061
-      },
-      {
-       "cat": "venta de activos fijos",
-       "pre": 49,
-       "src": "SEC",
-       "tag": "GainLossOnDispositionOfAssets1",
-       "informado": 49,
-       "habitual": 0,
-       "eps": 0.041
-      }
-     ]
-    },
-    {
-     "fin": "2023-12-31",
-     "base": 1,
-     "tasa": 0.192,
-     "items": [
-      {
-       "cat": "reestructuración",
-       "pre": 196,
-       "src": "SEC",
-       "tag": "RestructuringSettlementAndImpairmentProvisions",
-       "informado": 196,
-       "habitual": 0,
-       "eps": 0.168
-      },
-      {
-       "cat": "venta de activos fijos",
-       "pre": 83,
-       "src": "SEC",
-       "tag": "GainLossOnDispositionOfAssets1",
-       "informado": 83,
-       "habitual": 0,
-       "eps": 0.071
-      }
-     ]
-    },
-    {
-     "fin": "2024-06-30",
-     "base": 112,
-     "tasa": 0.221,
-     "items": [
-      {
-       "cat": "reestructuración",
-       "pre": 138,
-       "src": "SEC",
-       "tag": "RestructuringSettlementAndImpairmentProvisions",
-       "informado": 138,
-       "habitual": 0,
-       "eps": 0.115
-      }
-     ]
-    },
-    {
-     "fin": "2024-09-30",
-     "base": 231,
-     "tasa": 0.221,
-     "items": [
-      {
-       "cat": "reestructuración",
-       "pre": 134,
-       "src": "SEC",
-       "tag": "RestructuringSettlementAndImpairmentProvisions",
-       "informado": 134,
-       "habitual": 0,
-       "descartado": true,
-       "eps": null
-      },
-      {
-       "cat": "venta de activos fijos",
-       "pre": 9,
-       "src": "SEC",
-       "tag": "GainLossOnDispositionOfAssets1",
-       "informado": 9,
-       "habitual": 0,
-       "eps": 0.008
-      }
-     ]
-    },
-    {
-     "fin": "2024-12-31",
-     "base": 327,
-     "tasa": 0.222,
-     "items": [
-      {
-       "cat": "reestructuración",
-       "pre": 108,
-       "src": "SEC",
-       "tag": "RestructuringSettlementAndImpairmentProvisions",
-       "informado": 144,
-       "habitual": 36,
-       "descartado": true,
-       "eps": null
-      }
-     ]
-    },
-    {
-     "fin": "2025-09-30",
-     "base": 521,
-     "tasa": 0.222,
-     "items": [
-      {
-       "cat": "reestructuración",
-       "pre": -87,
-       "src": "SEC",
-       "tag": "RestructuringSettlementAndImpairmentProvisions",
-       "informado": 16,
-       "habitual": 103,
-       "eps": -0.071
-      }
-     ]
-    }
-   ],
-   "margenes": [
-    {
-     "fin": "2020-03-31",
-     "margen": 6.9,
-     "media": 14.9
-    },
-    {
-     "fin": "2022-12-31",
-     "margen": 6.9,
-     "media": 14.2
-    },
-    {
-     "fin": "2025-06-30",
-     "margen": 14.8,
-     "media": 10.4
-    }
-   ],
-   "trimestres": [
-    {
-     "fin": "2025-09-30",
-     "base": 521,
-     "ajuste": -87,
-     "tasa": 0.222,
-     "minoritarios": 0.087,
-     "preferidos": 0,
-     "acciones": 868,
-     "antesImp": 550,
-     "impuesto": 80,
-     "neto": 430,
-     "ebit": 502
-    },
-    {
-     "fin": "2025-12-31",
-     "base": 590,
-     "ajuste": 0,
-     "tasa": 0.192,
-     "minoritarios": 0.085,
-     "preferidos": 0,
-     "acciones": 871,
-     "antesImp": 678,
-     "impuesto": 91,
-     "neto": 540,
-     "ebit": 672
-    },
-    {
-     "fin": "2026-03-31",
-     "base": 556,
-     "ajuste": 0,
-     "tasa": 0.225,
-     "minoritarios": 0.088,
-     "preferidos": 0,
-     "acciones": 871,
-     "antesImp": 529,
-     "impuesto": 121,
-     "neto": 371,
-     "ebit": 639
-    },
-    {
-     "fin": "2026-06-30",
-     "base": 616,
-     "ajuste": 0,
-     "tasa": 0.192,
-     "minoritarios": 0.085,
-     "preferidos": 0,
-     "acciones": 875,
-     "antesImp": 649,
-     "impuesto": 40,
-     "neto": 559,
-     "ebit": 698
-    }
-   ],
-   "crudo": {
-    "oi": [
-     [
-      "2024-01-01",
-      "2024-06-30",
-      440000000,
-      "10-Q",
-      "2024-08-02"
-     ],
-     [
-      "2024-01-01",
-      "2024-06-30",
-      440000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      186000000,
-      "10-Q",
-      "2024-08-02"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      186000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      742000000,
-      "10-Q",
-      "2024-11-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      742000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      302000000,
-      "10-Q",
-      "2024-11-01"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      302000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      1135000000,
-      "10-K",
-      "2025-02-13"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      1135000000,
-      "10-K",
-      "2026-02-12"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      445000000,
-      "10-Q",
-      "2025-05-02"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      445000000,
-      "10-Q",
-      "2026-05-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      1018000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      1018000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      573000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      573000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2025-01-01",
-      "2025-09-30",
-      1607000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2025-07-01",
-      "2025-09-30",
-      589000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2025-01-01",
-      "2025-12-31",
-      2279000000,
-      "10-K",
-      "2026-02-12"
-     ],
-     [
-      "2026-01-01",
-      "2026-03-31",
-      639000000,
-      "10-Q",
-      "2026-05-01"
-     ],
-     [
-      "2026-01-01",
-      "2026-06-30",
-      1337000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2026-04-01",
-      "2026-06-30",
-      698000000,
-      "10-Q",
-      "2026-07-29"
-     ]
-    ],
-    "pt": [
-     [
-      "2024-01-01",
-      "2024-06-30",
-      468000000,
-      "10-Q",
-      "2024-08-02"
-     ],
-     [
-      "2024-01-01",
-      "2024-06-30",
-      468000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      172000000,
-      "10-Q",
-      "2024-08-02"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      172000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      376000000,
-      "10-Q",
-      "2024-11-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      376000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      -92000000,
-      "10-Q",
-      "2024-11-01"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      -92000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      813000000,
-      "10-K",
-      "2025-02-13"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      813000000,
-      "10-K",
-      "2026-02-12"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      240000000,
-      "10-Q",
-      "2025-05-02"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      240000000,
-      "10-Q",
-      "2026-05-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      824000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      824000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      584000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      584000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2025-01-01",
-      "2025-09-30",
-      1374000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2025-07-01",
-      "2025-09-30",
-      550000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2025-01-01",
-      "2025-12-31",
-      2052000000,
-      "10-K",
-      "2026-02-12"
-     ],
-     [
-      "2026-01-01",
-      "2026-03-31",
-      529000000,
-      "10-Q",
-      "2026-05-01"
-     ],
-     [
-      "2026-01-01",
-      "2026-06-30",
-      1178000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2026-04-01",
-      "2026-06-30",
-      649000000,
-      "10-Q",
-      "2026-07-29"
-     ]
-    ],
-    "ni": [
-     [
-      "2024-01-01",
-      "2024-06-30",
-      313000000,
-      "10-Q",
-      "2024-08-02"
-     ],
-     [
-      "2024-01-01",
-      "2024-06-30",
-      313000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      104000000,
-      "10-Q",
-      "2024-08-02"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      104000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      196000000,
-      "10-Q",
-      "2024-11-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      196000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      -117000000,
-      "10-Q",
-      "2024-11-01"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      -117000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      506000000,
-      "10-K",
-      "2025-02-13"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      506000000,
-      "10-K",
-      "2026-02-12"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      157000000,
-      "10-Q",
-      "2025-05-02"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      157000000,
-      "10-Q",
-      "2026-05-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      626000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      626000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      469000000,
-      "10-Q",
-      "2025-08-01"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      469000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2025-01-01",
-      "2025-09-30",
-      1056000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2025-07-01",
-      "2025-09-30",
-      430000000,
-      "10-Q",
-      "2025-10-31"
-     ],
-     [
-      "2025-01-01",
-      "2025-12-31",
-      1596000000,
-      "10-K",
-      "2026-02-12"
-     ],
-     [
-      "2026-01-01",
-      "2026-03-31",
-      371000000,
-      "10-Q",
-      "2026-05-01"
-     ],
-     [
-      "2026-01-01",
-      "2026-06-30",
-      930000000,
-      "10-Q",
-      "2026-07-29"
-     ],
-     [
-      "2026-04-01",
-      "2026-06-30",
-      559000000,
-      "10-Q",
-      "2026-07-29"
-     ]
-    ]
-   }
-  },
   "GM": {
    "contable": 4.59,
    "normalizado": 9.4121,
@@ -27309,9 +27478,9 @@
    }
   },
   "GOOG": {
-   "contable": 19.91,
-   "normalizado": 10.2149,
-   "diferencia": "-49%",
+   "contable": 19.16,
+   "normalizado": 10.7729,
+   "diferencia": "-44%",
    "metodo": "operativo",
    "armado": {
     "interesesPagadosEnOperativo": false,
@@ -27437,19 +27606,6 @@
    ],
    "trimestres": [
     {
-     "fin": "2025-09-30",
-     "base": 32161,
-     "ajuste": 0,
-     "tasa": 0.17,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 12203,
-     "antesImp": 43987,
-     "impuesto": 9008,
-     "neto": 34979,
-     "ebit": 31228
-    },
-    {
      "fin": "2025-12-31",
      "base": 36845,
      "ajuste": 0,
@@ -27487,6 +27643,19 @@
      "impuesto": 26560,
      "neto": 112193,
      "ebit": 40770
+    },
+    {
+     "fin": "2026-09-30",
+     "base": 41377,
+     "ajuste": 0,
+     "tasa": 0.172,
+     "minoritarios": 0,
+     "preferidos": 298,
+     "acciones": 12368,
+     "antesImp": 32355,
+     "impuesto": 5887,
+     "neto": 26468,
+     "ebit": 40576
     }
    ],
    "crudo": {
@@ -27611,11 +27780,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      93105000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       31228000000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      31228000000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -27644,6 +27827,20 @@
       40770000000,
       "10-Q",
       "2026-07-23"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      121042000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      40576000000,
+      "10-Q",
+      "2026-10-29"
      ]
     ],
     "pt": [
@@ -27767,11 +27964,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      119709000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       43987000000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      43987000000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -27800,6 +28011,20 @@
       138753000000,
       "10-Q",
       "2026-07-23"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      248520000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      32355000000,
+      "10-Q",
+      "2026-10-29"
      ]
     ],
     "ni": [
@@ -27930,11 +28155,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      97715000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       34979000000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      34979000000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -27970,14 +28209,28 @@
       112193000000,
       "10-Q",
       "2026-07-23"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      201239000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      26468000000,
+      "10-Q",
+      "2026-10-29"
      ]
     ]
    }
   },
   "GOOGL": {
-   "contable": 19.91,
-   "normalizado": 10.2149,
-   "diferencia": "-49%",
+   "contable": 19.16,
+   "normalizado": 10.7729,
+   "diferencia": "-44%",
    "metodo": "operativo",
    "armado": {
     "interesesPagadosEnOperativo": false,
@@ -28103,19 +28356,6 @@
    ],
    "trimestres": [
     {
-     "fin": "2025-09-30",
-     "base": 32161,
-     "ajuste": 0,
-     "tasa": 0.17,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 12203,
-     "antesImp": 43987,
-     "impuesto": 9008,
-     "neto": 34979,
-     "ebit": 31228
-    },
-    {
      "fin": "2025-12-31",
      "base": 36845,
      "ajuste": 0,
@@ -28153,6 +28393,19 @@
      "impuesto": 26560,
      "neto": 112193,
      "ebit": 40770
+    },
+    {
+     "fin": "2026-09-30",
+     "base": 41377,
+     "ajuste": 0,
+     "tasa": 0.172,
+     "minoritarios": 0,
+     "preferidos": 298,
+     "acciones": 12368,
+     "antesImp": 32355,
+     "impuesto": 5887,
+     "neto": 26468,
+     "ebit": 40576
     }
    ],
    "crudo": {
@@ -28277,11 +28530,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      93105000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       31228000000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      31228000000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -28310,6 +28577,20 @@
       40770000000,
       "10-Q",
       "2026-07-23"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      121042000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      40576000000,
+      "10-Q",
+      "2026-10-29"
      ]
     ],
     "pt": [
@@ -28433,11 +28714,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      119709000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       43987000000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      43987000000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -28466,6 +28761,20 @@
       138753000000,
       "10-Q",
       "2026-07-23"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      248520000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      32355000000,
+      "10-Q",
+      "2026-10-29"
      ]
     ],
     "ni": [
@@ -28596,11 +28905,25 @@
       "2025-10-30"
      ],
      [
+      "2025-01-01",
+      "2025-09-30",
+      97715000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
       "2025-07-01",
       "2025-09-30",
       34979000000,
       "10-Q",
       "2025-10-30"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      34979000000,
+      "10-Q",
+      "2026-10-29"
      ],
      [
       "2025-01-01",
@@ -28636,6 +28959,20 @@
       112193000000,
       "10-Q",
       "2026-07-23"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      201239000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      26468000000,
+      "10-Q",
+      "2026-10-29"
      ]
     ]
    }
@@ -29776,611 +30113,6 @@
       12971000,
       "10-Q",
       "2026-08-05"
-     ]
-    ]
-   }
-  },
-  "HII": {
-   "contable": 16.78,
-   "normalizado": 13.2588,
-   "diferencia": "-21%",
-   "metodo": "operativo",
-   "armado": {
-    "interesesPagadosEnOperativo": false,
-    "interesesGanadosEnOperativo": false,
-    "asociadasEnOperativo": false,
-    "afudc": false
-   },
-   "accionesInformadas": true,
-   "ajustes": [
-    {
-     "fin": "2011-09-30",
-     "base": -214,
-     "tasa": 0.35,
-     "items": [
-      {
-       "cat": "deterioro de activos",
-       "pre": 300,
-       "src": "SEC",
-       "tag": "GoodwillImpairmentLoss",
-       "informado": 300,
-       "habitual": 0,
-       "eps": 3.988
-      }
-     ]
-    },
-    {
-     "fin": "2015-06-30",
-     "base": 246,
-     "tasa": 0.342,
-     "items": [
-      {
-       "cat": "deterioro de activos",
-       "pre": 59,
-       "src": "SEC",
-       "tag": "GoodwillImpairmentLoss",
-       "informado": 59,
-       "habitual": 0,
-       "descartado": true,
-       "eps": null
-      }
-     ]
-    },
-    {
-     "fin": "2015-12-31",
-     "base": 81,
-     "tasa": 0.343,
-     "items": [
-      {
-       "cat": "deterioro de activos",
-       "pre": 43,
-       "src": "SEC",
-       "tag": "GoodwillImpairmentLoss + ImpairmentOfIntangibleAssetsExcludingGoodwill",
-       "informado": 43,
-       "habitual": 0,
-       "eps": 0.598
-      }
-     ]
-    }
-   ],
-   "margenes": [
-    {
-     "fin": "2015-06-30",
-     "margen": 15.4,
-     "media": 8.9
-    },
-    {
-     "fin": "2020-06-30",
-     "margen": 2.8,
-     "media": 9.9
-    },
-    {
-     "fin": "2023-12-31",
-     "margen": 9.8,
-     "media": 5.3
-    }
-   ],
-   "trimestres": [
-    {
-     "fin": "2025-09-30",
-     "base": 150,
-     "ajuste": 0,
-     "tasa": 0.201,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 39.4,
-     "antesImp": 204,
-     "impuesto": 59,
-     "neto": 145,
-     "ebit": 161
-    },
-    {
-     "fin": "2025-12-31",
-     "base": 159,
-     "ajuste": 0,
-     "tasa": 0.198,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 39.4,
-     "antesImp": 198,
-     "impuesto": 39,
-     "neto": 159,
-     "ebit": 172
-    },
-    {
-     "fin": "2026-03-31",
-     "base": 138,
-     "ajuste": 0,
-     "tasa": 0.198,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 39.3,
-     "antesImp": 188,
-     "impuesto": 39,
-     "neto": 149,
-     "ebit": 155
-    },
-    {
-     "fin": "2026-06-30",
-     "base": 204,
-     "ajuste": 0,
-     "tasa": 0.194,
-     "minoritarios": 0,
-     "preferidos": 0,
-     "acciones": 39.5,
-     "antesImp": 254,
-     "impuesto": 46,
-     "neto": 208,
-     "ebit": 210
-    }
-   ],
-   "crudo": {
-    "oi": [
-     [
-      "2024-01-01",
-      "2024-06-30",
-      343000000,
-      "10-Q",
-      "2024-08-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-06-30",
-      343000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      189000000,
-      "10-Q",
-      "2024-08-01"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      189000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      425000000,
-      "10-Q",
-      "2024-10-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      425000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      82000000,
-      "10-Q",
-      "2024-10-31"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      82000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      535000000,
-      "10-K",
-      "2025-02-06"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      535000000,
-      "10-K",
-      "2026-02-05"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      161000000,
-      "10-Q",
-      "2025-05-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      161000000,
-      "10-Q",
-      "2026-05-05"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      324000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      324000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      163000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      163000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2025-01-01",
-      "2025-09-30",
-      485000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2025-07-01",
-      "2025-09-30",
-      161000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2025-01-01",
-      "2025-12-31",
-      657000000,
-      "10-K",
-      "2026-02-05"
-     ],
-     [
-      "2026-01-01",
-      "2026-03-31",
-      155000000,
-      "10-Q",
-      "2026-05-05"
-     ],
-     [
-      "2026-01-01",
-      "2026-06-30",
-      365000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2026-04-01",
-      "2026-06-30",
-      210000000,
-      "10-Q",
-      "2026-07-30"
-     ]
-    ],
-    "pt": [
-     [
-      "2024-01-01",
-      "2024-06-30",
-      400000000,
-      "10-Q",
-      "2024-08-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-06-30",
-      400000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      216000000,
-      "10-Q",
-      "2024-08-01"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      216000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      512000000,
-      "10-Q",
-      "2024-10-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      512000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      112000000,
-      "10-Q",
-      "2024-10-31"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      112000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      643000000,
-      "10-K",
-      "2025-02-06"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      643000000,
-      "10-K",
-      "2026-02-05"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      187000000,
-      "10-Q",
-      "2025-05-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      187000000,
-      "10-Q",
-      "2026-05-05"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      375000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      375000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      188000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      188000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2025-01-01",
-      "2025-09-30",
-      579000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2025-07-01",
-      "2025-09-30",
-      204000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2025-01-01",
-      "2025-12-31",
-      777000000,
-      "10-K",
-      "2026-02-05"
-     ],
-     [
-      "2026-01-01",
-      "2026-03-31",
-      188000000,
-      "10-Q",
-      "2026-05-05"
-     ],
-     [
-      "2026-01-01",
-      "2026-06-30",
-      442000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2026-04-01",
-      "2026-06-30",
-      254000000,
-      "10-Q",
-      "2026-07-30"
-     ]
-    ],
-    "ni": [
-     [
-      "2024-01-01",
-      "2024-06-30",
-      326000000,
-      "10-Q",
-      "2024-08-01"
-     ],
-     [
-      "2024-01-01",
-      "2024-06-30",
-      326000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      173000000,
-      "10-Q",
-      "2024-08-01"
-     ],
-     [
-      "2024-04-01",
-      "2024-06-30",
-      173000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      427000000,
-      "10-Q",
-      "2024-10-31"
-     ],
-     [
-      "2024-01-01",
-      "2024-09-30",
-      427000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      101000000,
-      "10-Q",
-      "2024-10-31"
-     ],
-     [
-      "2024-07-01",
-      "2024-09-30",
-      101000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      550000000,
-      "10-K",
-      "2025-02-06"
-     ],
-     [
-      "2024-01-01",
-      "2024-12-31",
-      550000000,
-      "10-K",
-      "2026-02-05"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      149000000,
-      "10-Q",
-      "2025-05-01"
-     ],
-     [
-      "2025-01-01",
-      "2025-03-31",
-      149000000,
-      "10-Q",
-      "2026-05-05"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      301000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2025-01-01",
-      "2025-06-30",
-      301000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      152000000,
-      "10-Q",
-      "2025-07-31"
-     ],
-     [
-      "2025-04-01",
-      "2025-06-30",
-      152000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2025-01-01",
-      "2025-09-30",
-      446000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2025-07-01",
-      "2025-09-30",
-      145000000,
-      "10-Q",
-      "2025-10-30"
-     ],
-     [
-      "2025-01-01",
-      "2025-12-31",
-      605000000,
-      "10-K",
-      "2026-02-05"
-     ],
-     [
-      "2026-01-01",
-      "2026-03-31",
-      149000000,
-      "10-Q",
-      "2026-05-05"
-     ],
-     [
-      "2026-01-01",
-      "2026-06-30",
-      357000000,
-      "10-Q",
-      "2026-07-30"
-     ],
-     [
-      "2026-04-01",
-      "2026-06-30",
-      208000000,
-      "10-Q",
-      "2026-07-30"
      ]
     ]
    }
@@ -32489,6 +32221,769 @@
       50000000,
       "10-Q",
       "2026-08-04"
+     ]
+    ]
+   }
+  },
+  "INCY": {
+   "contable": 1.88,
+   "normalizado": 2.9828,
+   "diferencia": "59%",
+   "metodo": "operativo",
+   "armado": {
+    "interesesPagadosEnOperativo": false,
+    "interesesGanadosEnOperativo": false,
+    "asociadasEnOperativo": false,
+    "afudc": false
+   },
+   "accionesInformadas": true,
+   "ajustes": [
+    {
+     "fin": "2025-12-31",
+     "base": 366,
+     "tasa": 0.271,
+     "items": [
+      {
+       "cat": "deterioro de activos",
+       "pre": 76.3,
+       "src": "SEC",
+       "tag": "AssetImpairmentCharges",
+       "informado": 76.3,
+       "habitual": 0,
+       "eps": 0.271
+      }
+     ]
+    },
+    {
+     "fin": "2026-03-31",
+     "base": 334.2,
+     "tasa": 0.267,
+     "items": [
+      {
+       "cat": "deterioro de activos",
+       "pre": 23.2,
+       "src": "SEC",
+       "tag": "AssetImpairmentCharges",
+       "informado": 23.2,
+       "habitual": 0,
+       "eps": 0.082
+      }
+     ]
+    }
+   ],
+   "margenes": [
+    {
+     "fin": "2020-03-31",
+     "margen": -116.8,
+     "media": 11.9
+    },
+    {
+     "fin": "2024-06-30",
+     "margen": -45.8,
+     "media": 16
+    },
+    {
+     "fin": "2026-09-30",
+     "margen": -45.5,
+     "media": 28.6
+    }
+   ],
+   "trimestres": [
+    {
+     "fin": "2025-12-31",
+     "base": 366,
+     "ajuste": 76.3,
+     "tasa": 0.271,
+     "minoritarios": 0,
+     "preferidos": 0,
+     "acciones": 205,
+     "antesImp": 389.9,
+     "impuesto": 90.7,
+     "neto": 299.3,
+     "ebit": 412.1
+    },
+    {
+     "fin": "2026-03-31",
+     "base": 334.2,
+     "ajuste": 23.2,
+     "tasa": 0.267,
+     "minoritarios": 0,
+     "preferidos": 0,
+     "acciones": 206.8,
+     "antesImp": 343.6,
+     "impuesto": 40.3,
+     "neto": 303.3,
+     "ebit": 324.3
+    },
+    {
+     "fin": "2026-06-30",
+     "base": 735.4,
+     "ajuste": 0,
+     "tasa": 0.267,
+     "minoritarios": 0,
+     "preferidos": 0,
+     "acciones": 208.2,
+     "antesImp": 751.5,
+     "impuesto": 165.9,
+     "neto": 585.6,
+     "ebit": 697.9
+    },
+    {
+     "fin": "2026-09-30",
+     "base": -676.8,
+     "ajuste": 0,
+     "tasa": 0.266,
+     "minoritarios": 0,
+     "preferidos": 0,
+     "acciones": 203.2,
+     "antesImp": -688.8,
+     "impuesto": 96,
+     "neto": -784.8,
+     "ebit": -708.4
+    }
+   ],
+   "crudo": {
+    "oi": [
+     [
+      "2024-01-01",
+      "2024-06-30",
+      -386232000,
+      "10-Q",
+      "2024-07-30"
+     ],
+     [
+      "2024-01-01",
+      "2024-06-30",
+      -386232000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -478130000,
+      "10-Q",
+      "2024-07-30"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -478130000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      -240147000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      -240147000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      146085000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      146085000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      61366000,
+      "10-K",
+      "2025-02-10"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      61366000,
+      "10-K",
+      "2026-02-10"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      205168000,
+      "10-Q",
+      "2025-04-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      205168000,
+      "10-Q",
+      "2026-04-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      735482000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      735482000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      530314000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      530314000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1179000000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1179000000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      443518000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      443518000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      1514859000,
+      "10-K",
+      "2026-02-10"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      301117000,
+      "10-Q",
+      "2026-04-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-06-30",
+      999015000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      697898000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      290654000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      -708361000,
+      "10-Q",
+      "2026-10-29"
+     ]
+    ],
+    "pt": [
+     [
+      "2024-01-01",
+      "2024-06-30",
+      -153618000,
+      "10-Q",
+      "2024-07-30"
+     ],
+     [
+      "2024-01-01",
+      "2024-06-30",
+      -153618000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -389777000,
+      "10-Q",
+      "2024-07-30"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -389777000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      2906000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      2906000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      156524000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      156524000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      316630000,
+      "10-K",
+      "2025-02-10"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      316630000,
+      "10-K",
+      "2026-02-10"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      234190000,
+      "10-Q",
+      "2025-04-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      234190000,
+      "10-Q",
+      "2026-04-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      792202000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      792202000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      558012000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      558012000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1274510000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      1274510000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      482308000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      482308000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      1664451000,
+      "10-K",
+      "2026-02-10"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      343600000,
+      "10-Q",
+      "2026-04-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-06-30",
+      1095114000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      751514000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      406266000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      -688848000,
+      "10-Q",
+      "2026-10-29"
+     ]
+    ],
+    "ni": [
+     [
+      "2024-01-01",
+      "2024-06-30",
+      -275053000,
+      "10-Q",
+      "2024-07-30"
+     ],
+     [
+      "2024-01-01",
+      "2024-06-30",
+      -275053000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -444601000,
+      "10-Q",
+      "2024-07-30"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -444601000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -444601000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2024-04-01",
+      "2024-06-30",
+      -444601000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      -168597000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-01-01",
+      "2024-09-30",
+      -168597000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      106456000,
+      "10-Q",
+      "2024-10-29"
+     ],
+     [
+      "2024-07-01",
+      "2024-09-30",
+      106456000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      32615000,
+      "10-K",
+      "2025-02-10"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      32615000,
+      "10-K",
+      "2026-02-10"
+     ],
+     [
+      "2024-01-01",
+      "2024-12-31",
+      32600000,
+      "DEF 14A",
+      "2026-04-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      158203000,
+      "10-Q",
+      "2025-04-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      158203000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      158203000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      158203000,
+      "10-Q",
+      "2026-04-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      158203000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-03-31",
+      158203000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      563202000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-06-30",
+      563202000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      404999000,
+      "10-Q",
+      "2025-07-29"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      404999000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      404999000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2025-04-01",
+      "2025-06-30",
+      404999000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      987371000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-01-01",
+      "2025-09-30",
+      987371000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      424169000,
+      "10-Q",
+      "2025-10-28"
+     ],
+     [
+      "2025-07-01",
+      "2025-09-30",
+      424169000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      1286650000,
+      "10-K",
+      "2026-02-10"
+     ],
+     [
+      "2025-01-01",
+      "2025-12-31",
+      1286700000,
+      "DEF 14A",
+      "2026-04-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      303330000,
+      "10-Q",
+      "2026-04-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      303330000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-01-01",
+      "2026-03-31",
+      303330000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-01-01",
+      "2026-06-30",
+      888935000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      585605000,
+      "10-Q",
+      "2026-07-28"
+     ],
+     [
+      "2026-04-01",
+      "2026-06-30",
+      585605000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-01-01",
+      "2026-09-30",
+      104132000,
+      "10-Q",
+      "2026-10-29"
+     ],
+     [
+      "2026-07-01",
+      "2026-09-30",
+      -784803000,
+      "10-Q",
+      "2026-10-29"
      ]
     ]
    }
@@ -47568,9 +48063,9 @@
    }
   },
   "SW": {
-   "contable": 0.95,
+   "contable": 0.9,
    "normalizado": 1.28,
-   "diferencia": "35%",
+   "diferencia": "42%",
    "metodo": "operativo",
    "armado": {
     "interesesPagadosEnOperativo": false,
