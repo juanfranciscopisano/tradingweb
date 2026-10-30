@@ -1872,10 +1872,9 @@ function ntmFrom(r, now, k = 1) {
   const atEom = now % DAYMS === 0 && new Date(now + DAYMS).getUTCDate() === 1;
   const A = atEom ? eom(now, 12 * (k - 1)) : now + (k - 1) * 365 * DAYMS, T1 = atEom ? eom(now, 12 * k) : now + k * 365 * DAYMS;
   const t0 = r.t0 || [], t1 = r.t1 || [];
-  // crecimiento para lo que pasa del ejercicio siguiente (Yahoo no da consenso más allá): el esperado a 5 años de los
-  // analistas (g5, acotado a −10% y +40%); sin ese dato, el del ejercicio siguiente contra el en curso, acotado a 0,8–1,25
-  const g = r.g5 != null && isFinite(r.g5) ? 1 + Math.min(0.4, Math.max(-0.1, r.g5))
-    : r.f0 && t0[0] != null && t0[0] > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / t0[0])) : 1;
+  // crecimiento para lo que pasa del ejercicio siguiente (Yahoo no da consenso más allá ni el esperado a 5 años): el del
+  // ejercicio siguiente contra el en curso, acotado a 0,8–1,25
+  const g = r.f0 && t0[0] != null && t0[0] > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / t0[0])) : 1;
   const blend = () => {
     if (k > 1) {   // segundo año: lo que cae en el ejercicio siguiente con su consenso, lo que pasa con el crecimiento
       const f1 = r.f1 ? P(r.f1) : null, w1 = f1 ? Math.min(1, Math.max(0, (f1 - A) / (365.25 * DAYMS))) : 0, v = t1[0];
@@ -2307,7 +2306,7 @@ function fMx(v,c=999){ if(!v||!isFinite(v)||v<=0||v>c)return NA; return v.toFixe
 function fPct(v){ if(v==null||!isFinite(v))return NA; const cl=v>0?'pp':v<0?'pn':''; return '<span class="'+cl+'">'+(v>=0?'+':'')+v.toFixed(2)+'%</span>'; }
 function fPill(sec){ const i=SI[sec]; if(!i)return '<span class="na">'+(sec||'—')+'</span>'; return '<span class="pill '+i[1]+'">'+i[0]+'</span>'; }
 
-const COLS=[{k:'_r',l:'#',s:false},{k:'symbol',l:'Ticker',s:true},{k:'name',l:'Empresa',s:true},{k:'sector',l:'Sector',s:true},{k:'price',l:'Precio',s:true,f:fPx},{k:'marketCap',l:'Mkt Cap',s:true,f:fMC},{k:'pe',l:'P/E',s:true,f:v=>fMx(v,1000)},{k:'fwdPE',l:'Fw P/E',s:true,f:v=>fMx(v,500)},{k:'fwd2',l:'Fw P/E 2A',s:true,f:v=>fMx(v,500),t:'P/E dentro de dos años si el precio no se mueve: precio / EPS de consenso de los trimestres 5 a 8 que siguen al último presentado. Lo que pasa del ejercicio siguiente se extiende con el crecimiento esperado.'},{k:'pb',l:'P/BV',s:true,f:v=>fMx(v,200)},{k:'ret1d',l:'1D %',s:true,f:fPct},{k:'ret5d',l:'5D %',s:true,f:fPct},{k:'ret1m',l:'1M %',s:true,f:fPct},{k:'retYTD',l:'YTD %',s:true,f:fPct},{k:'ret1y',l:'1Y %',s:true,f:fPct}];
+const COLS=[{k:'_r',l:'#',s:false},{k:'symbol',l:'Ticker',s:true},{k:'name',l:'Empresa',s:true},{k:'sector',l:'Sector',s:true},{k:'price',l:'Precio',s:true,f:fPx},{k:'marketCap',l:'Mkt Cap',s:true,f:fMC},{k:'pe',l:'P/E',s:true,f:v=>fMx(v,1000)},{k:'fwdPE',l:'Fw P/E',s:true,f:v=>fMx(v,500)},{k:'fwd2',l:'Fw P/E 2A',s:true,f:v=>fMx(v,500),t:'P/E dentro de dos años si el precio no se mueve: precio / EPS de consenso de los trimestres 5 a 8 que siguen al último presentado. Lo que pasa del ejercicio siguiente (Yahoo no da consenso más lejos) se extiende con el crecimiento del ejercicio siguiente, acotado entre −20% y 25%.'},{k:'pb',l:'P/BV',s:true,f:v=>fMx(v,200)},{k:'ret1d',l:'1D %',s:true,f:fPct},{k:'ret5d',l:'5D %',s:true,f:fPct},{k:'ret1m',l:'1M %',s:true,f:fPct},{k:'retYTD',l:'YTD %',s:true,f:fPct},{k:'ret1y',l:'1Y %',s:true,f:fPct}];
 
 function getF() {
   const q=document.getElementById('srch').value.trim().toLowerCase(), sec=document.getElementById('secF').value, mc=document.getElementById('mcF').value;
@@ -4176,7 +4175,7 @@ function renderPebg(data) {
     set('psSubFw2', fw.eps2 ? 'EPS 4 trim. $' + fw.eps2.toFixed(2) : (fw.metodo === 'yahoo' ? 'sin consenso' : 'trim. 5 a 8'));
     if (b) { const w2 = fw.q ? fwWindowTxt(fw.q, 2) : '';
       b.title = 'P/E dentro de dos años si el precio no se mueve: precio / EPS de consenso de los trimestres 5 a 8 que siguen al último presentado'
-        + (w2 ? ' (' + w2 + ')' : '') + '. Yahoo da consenso hasta el ejercicio siguiente; lo que pasa de ahí va con el mismo trimestre un año antes por el crecimiento esperado a 5 años, o el del ejercicio siguiente si no está'
+        + (w2 ? ' (' + w2 + ')' : '') + '. Yahoo da consenso hasta el ejercicio siguiente; lo que pasa de ahí va con el mismo trimestre un año antes por el crecimiento del ejercicio siguiente contra el en curso, acotado entre −20% y 25%'
         + (fw.eps && fw.eps2 ? '. Crecimiento contra los cuatro trimestres anteriores: ' + ((fw.eps2 / fw.eps - 1) * 100).toFixed(1).replace('.', ',') + '%' : '') + '.'; } }
   ['psStatAnual', 'psStatFwd', 'psStatFw2'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg ? 'none' : ''; });
 
@@ -5052,8 +5051,8 @@ const METODO = [
         p: 'Yahoo da el consenso de hace 7, 30, 60 y 90 días solo por ejercicio, no por trimestre. El cambio se mide con los dos ejercicios ponderados con los pesos de hoy, para que el paso del tiempo (más peso al ejercicio siguiente) no cuente como revisión.',
         o: 'Por eso el EPS de 12 meses del Fw P/E (por trimestres) y el de la revisión (por ejercicios) pueden diferir unos puntos; la revisión es un cambio porcentual y no depende del nivel.' },
       { d: 'Fw P/E a 2 años: precio sobre el EPS de consenso de los trimestres 5 a 8 que siguen al último presentado, el P/E que va a tener la empresa dentro de dos años si el precio no se mueve. Está en P/E histórico y en el screener.',
-        p: 'Es el mismo armado que el Fw P/E, con la ventana un año más adelante. Yahoo da consenso hasta el ejercicio siguiente, así que lo que pasa de ahí va con el mismo trimestre un año antes por el crecimiento anual esperado a 5 años de los analistas (acotado entre −10% y 40%) o, si Yahoo no lo da, por el del ejercicio siguiente contra el en curso (acotado entre −20% y 25%). Sin trimestres, lo que cae en el ejercicio siguiente va con su consenso y el resto con ese crecimiento.',
-        o: 'Cuánto es extensión y cuánto consenso depende del calendario: en una empresa con ejercicio a diciembre, después del resultado del tercer trimestre son tres de los cuatro trimestres; después del cuarto, ninguno. Hay que leerlo como orden de magnitud.' },
+        p: 'Es el mismo armado que el Fw P/E, con la ventana un año más adelante. Yahoo da consenso hasta el ejercicio siguiente y ya no publica el crecimiento esperado a 5 años, así que lo que pasa de ahí va con el mismo trimestre un año antes por el crecimiento del ejercicio siguiente contra el en curso, acotado entre −20% y 25%. Sin trimestres, lo que cae en el ejercicio siguiente va con su consenso y el resto con ese crecimiento.',
+        o: 'Cuánto es extensión y cuánto consenso depende del calendario: en una empresa con ejercicio a diciembre, después del resultado del tercer trimestre son tres de los cuatro trimestres; después del cuarto, ninguno. En las que crecen más de 25% por año el tope lo baja (NVDA: el ejercicio 2028 crece 71% y la extensión va con 25%). Hay que leerlo como orden de magnitud.' },
       { d: 'Base propia de estimaciones: cada día hábil se guarda una foto del consenso de cada empresa (EPS y ventas esperados del trimestre en curso, el siguiente, el ejercicio en curso y el siguiente, con rango y cantidad de analistas) y las sorpresas de los últimos cuatro trimestres. Va en estimaciones/<ticker>.json.',
         p: 'Yahoo solo da el consenso de hoy y el EPS de hace 7, 30, 60 y 90 días; el historial largo de estimaciones es de proveedores pagos (I/B/E/S, FactSet). Guardándolo todos los días la historia se arma sola desde el 23/10/2026. Los 90 días anteriores del EPS se reconstruyen con lo que da Yahoo, sin ventas.',
         o: 'El consenso viene de los analistas que cubren cada empresa, agregados por Yahoo; no es un dato oficial. El EPS esperado y el "informado" de Yahoo suelen estar en la base ajustada de cada empresa; hay excepciones (en META el informado es el contable, con los extraordinarios adentro).' },

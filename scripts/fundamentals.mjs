@@ -69,9 +69,7 @@ export function parseTrend(j) {
   // trimestre en curso y siguiente (cierre, EPS esperado) y los últimos EPS informados: para el EPS de 12 meses por trimestres
   const qq = t => { if (!t || !t.endDate) return null; const v = raw(t.epsTrend?.current) ?? raw(t.earningsEstimate?.avg); return v == null ? null : [t.endDate, +v.toFixed(4)]; };
   const hist = (j?.quoteSummary?.result?.[0]?.earningsHistory?.history || []).map(h => [h.quarter?.fmt || null, raw(h.epsActual), raw(h.epsEstimate)]).filter(h => h[0] && h[1] != null);
-  // crecimiento anual esperado a 5 años (Yahoo, "+5y"): extiende el consenso más allá del ejercicio siguiente (Fw P/E a 2 años)
-  const g5 = raw(per("+5y")?.growth);
-  const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1), ...(g5 != null && isFinite(g5) ? { g5: +g5.toFixed(4) } : {}),
+  const e = { f0: y0?.endDate || null, t0: pack(y0), f1: y1?.endDate || null, t1: pack(y1),
     up: raw(y1?.epsRevisions?.upLast30days), dn: raw(y1?.epsRevisions?.downLast30days), n: raw(y1?.earningsEstimate?.numberOfAnalysts),
     q0: qq(per("0q")), q1: qq(per("+1q")), h: hist };
   return (e.t0?.[0] != null || e.t1?.[0] != null) ? e : null;
@@ -99,10 +97,9 @@ export function ntmFrom(r, now, k = 1) {
   const atEom = now % DAYMS === 0 && new Date(now + DAYMS).getUTCDate() === 1;
   const A = atEom ? eom(now, 12 * (k - 1)) : now + (k - 1) * 365 * DAYMS, T1 = atEom ? eom(now, 12 * k) : now + k * 365 * DAYMS;
   const t0 = r.t0 || [], t1 = r.t1 || [];
-  // crecimiento para lo que pasa del ejercicio siguiente (Yahoo no da consenso más allá): el esperado a 5 años de los
-  // analistas (g5, acotado a −10% y +40%); sin ese dato, el del ejercicio siguiente contra el en curso, acotado a 0,8–1,25
-  const g = r.g5 != null && isFinite(r.g5) ? 1 + Math.min(0.4, Math.max(-0.1, r.g5))
-    : r.f0 && t0[0] != null && t0[0] > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / t0[0])) : 1;
+  // crecimiento para lo que pasa del ejercicio siguiente (Yahoo no da consenso más allá ni el esperado a 5 años): el del
+  // ejercicio siguiente contra el en curso, acotado a 0,8–1,25
+  const g = r.f0 && t0[0] != null && t0[0] > 0 && t1[0] > 0 ? Math.min(1.25, Math.max(0.8, t1[0] / t0[0])) : 1;
   const blend = () => {
     if (k > 1) {   // segundo año: lo que cae en el ejercicio siguiente con su consenso, lo que pasa con el crecimiento
       const f1 = r.f1 ? P(r.f1) : null, w1 = f1 ? Math.min(1, Math.max(0, (f1 - A) / (365.25 * DAYMS))) : 0, v = t1[0];
