@@ -955,7 +955,7 @@ function checkPwd(){
     <div class="stat"><div class="stat-val" id="sN">&mdash;</div><div class="stat-lbl">Empresas</div></div>
     <div class="stat"><div class="stat-val" id="sPEn">&mdash;</div><div class="stat-lbl" id="sPEnLbl" title="Capitalización sobre EPS normalizado de 12 meses de la SEC, con precios de ahora. Es el S&amp;P 500 normalizado de la pestaña Sectores: al cierre dan igual.">P/E normalizado</div></div>
     <div class="stat"><div class="stat-val" id="sPE">&mdash;</div><div class="stat-lbl" id="sPELbl" title="Capitalización total sobre ganancias contables de 12 meses de la SEC, con precios de ahora. Las pérdidas restan y cada empresa cuenta una vez. Es la misma cuenta que el S&amp;P 500 de la pestaña Sectores y del panel de comparación: al cierre dan igual; durante la rueda este se mueve con los precios.">P/E contable</div></div>
-    <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas de los cuatro trimestres que cada empresa va a presentar en el próximo año (consenso por trimestres): el P/E que va a tener el grupo en un año si los precios no se mueven. Las empresas con ganancia esperada negativa quedan afuera.">Fw P/E agregado</div></div>
+    <div class="stat"><div class="stat-val" id="sFwd">&mdash;</div><div class="stat-lbl" title="Capitalización total sobre ganancias esperadas de los cuatro trimestres que cada empresa va a presentar en el próximo año (consenso por trimestres): el P/E que va a tener el grupo en un año si los precios no se mueven. Las pérdidas esperadas restan, como en el P/E de 12 meses; es el Fw P/E del S&P 500 de Sectores con precios de ahora.">Fw P/E agregado</div></div>
     <div class="stat"><div class="stat-val up" id="sG">&mdash;</div><div class="stat-lbl">Suben hoy</div></div>
     <div class="stat"><div class="stat-val dn" id="sL">&mdash;</div><div class="stat-lbl">Bajan hoy</div></div>
     <div class="stat"><div class="stat-val" id="s1D">&mdash;</div><div class="stat-lbl" title="Retorno de la canasta ponderada por market cap.">1D ponderado</div></div>
@@ -2103,7 +2103,7 @@ function fundFor(sym, livePrice) {
   const x = REV && Object.keys(REV).length ? fwQuarters(sym) : null, e4 = x ? x.eps : null, px = livePrice || f.p;
   const fpe = e4 != null && px > 0 ? (e4 > 0 ? px / e4 : null) : sc(f.fpe);
   const n12 = REV && REV[sym] ? ntmEps(sym) : null, fpe12 = n12 > 0 && px > 0 ? px / n12 : null;
-  return { pe: sc(f.pe), fpe, fpe12, fpeSrc: e4 != null ? 'trim' : (f.fpe ? 'yahoo' : null), pb: sc(f.pb), mc: sc(f.mc), name: f.n || null, asOf: f.d || null, stale: !!f.stale };
+  return { pe: sc(f.pe), fpe, fpe12, e4, fpeSrc: e4 != null ? 'trim' : (f.fpe ? 'yahoo' : null), pb: sc(f.pb), mc: sc(f.mc), name: f.n || null, asOf: f.d || null, stale: !!f.stale };
 }
 function fundAsOfLabel() {
   if(!FUND_AS_OF) return 'Fundamentals sin datos';
@@ -2181,7 +2181,7 @@ async function loadData() {
     if(se&&px>0){ peSrc='sec'; pe=se[0]>0?px/se[0]:null; }
     rows.push({symbol:sym, name:f.name||q.shortName||q.longName||sym, sector:SECTOR_MAP[sym]||'', price:px,
       marketCap:f.mc??null, pe, peSrc, eSec:se?se[0]:null, eNSec:se?se[1]:null, shSec:se?se[2]:null, qSec:se?se[3]:null, fSec:se?se[5]:null,
-      fwdPE:f.fpe??null, fwd12:f.fpe12??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
+      fwdPE:f.fpe??null, fwd12:f.fpe12??null, fwdE:f.e4??null, pb:f.pb??null, ret1d:q.regularMarketChangePercent,
       ret5d:rN(c,5), ret1m:rN(c,21), retYTD:rY(c,ts), ret1y:rN(c,252),
       rev1m:revOf(sym,'1m'), rev3m:revOf(sym,'3m'), revBr:revBreadth(sym), ...cdRow(sym, px), ...qRow(sym)});
   }
@@ -2217,7 +2217,12 @@ function updateStats() {
       + 'Con esas mismas empresas, el contable da ' + (Ec > 0 ? (Mn / Ec).toFixed(1) + 'x' : '—') + '.';
   const lbl = document.getElementById('sPELbl');
   if (lbl && peSec == null) lbl.title = 'Sin el archivo de EPS de la SEC: capitalización sobre ganancias de 12 meses de Yahoo, sin las empresas con pérdidas (no es comparable con el S&P 500 de la pestaña Sectores).';
-  sv('sFwd', fmx(agg('fwdPE')));
+  // Fw P/E agregado: Σ capitalización / Σ ganancias esperadas (los cuatro trimestres a presentar de cada empresa), con las
+  // pérdidas esperadas restando, como el P/E de 12 meses y el Fw P/E del S&P 500 de Sectores; sin consenso, el de Yahoo
+  let Mf=0, Ef=0;
+  uRows.forEach(r=>{ const mc=r.marketCap; if(!(mc>0)||!(r.price>0)) return;
+    if(r.fwdE!=null){ Mf+=mc; Ef+=mc/r.price*r.fwdE; } else if(r.fwdPE>0){ Mf+=mc; Ef+=mc/r.fwdPE; } });
+  sv('sFwd', fmx(Ef>0 ? Mf/Ef : null));
   sv('sPB', fmx(agg('pb')));
 
   sv('sG', rows.filter(r=>r.ret1d>0).length);
@@ -3487,7 +3492,8 @@ function carteraRow(sym, data) {
   const z1 = s1 && s1.sigma > 0 ? (last.pe - s1.mu) / s1.sigma : null;
   const histY = (last.date - full[0].date) / YR_S;
 
-  const lastQEps = eps[eps.length - 1]?.eps;
+  // último trimestre del P/E de hoy (uno presentado hoy entra mañana, como en el P/E de 12 meses)
+  const lastQEps = (eps.find(e => e.date === last.q) || eps[eps.length - 1])?.eps;
   const peAnual = (lastQEps && lastQEps > 0) ? last.close / (lastQEps * 4) : null;
   const impliedAnual = (lastQEps && lastQEps > 0) ? lastQEps * 4 * mu : null;
   const varAnual = impliedAnual != null ? (impliedAnual - last.close) / last.close * 100 : null;
@@ -3507,6 +3513,7 @@ function carteraRow(sym, data) {
     peAnual, impliedAnual, varAnual,
     forwardPE: fwdPE, varFwd, z1, histY, shortHist: histY < carteraWin - 0.25,
     ey: last.eps4q / last.close,   // rendimiento de las ganancias (para el agregado de la cartera; las pérdidas restan)
+    fey: fw.raw != null && last.close > 0 ? fw.raw / last.close : null,   // el esperado, con el EPS del Fw P/E (también resta)
     w: carteraMode === 'cartera' ? (carteraW[sym] || null) : null,
     normFallback: epsMode === 'norm' && !hasNorm(data),
     ...(() => { const m = cdMetrics(sym, data.currentPrice || last.close, data.cajaDeuda || null);
@@ -3529,7 +3536,8 @@ function buildCartera() {
   if (carteraMode === 'cartera' && wd.length) {
     const W = wd.reduce((a, d) => a + d.w, 0), Wall = Object.entries(carteraW).filter(([k]) => carteraList.includes(k)).reduce((a, [, v]) => a + v, 0);
     const E = wd.reduce((a, d) => a + d.w * d.ey, 0);
-    const wf = wd.filter(d => d.forwardPE > 0), Wf = wf.reduce((a, d) => a + d.w, 0), Ef = wf.reduce((a, d) => a + d.w / d.forwardPE, 0);
+    // Fw P/E de la cartera: igual, con el EPS del Fw P/E de cada una; una pérdida esperada resta, como en el de 12 meses
+    const wf = wd.filter(d => d.fey != null), Wf = wf.reduce((a, d) => a + d.w, 0), Ef = wf.reduce((a, d) => a + d.w * d.fey, 0);
     const norm = epsMode === 'norm';
     const spx = SEC_EPS_AS_OF && (norm ? secSpxN : secSpx), spxFw = MULT && MULT.series.SPX ? MULT.series.SPX.fw : null;
     const x = v => v != null && isFinite(v) ? v.toFixed(1).replace('.', ',') + 'x' : '—';
@@ -4081,7 +4089,7 @@ function renderPebg(data) {
     set('psLbl5', 'Crec. EPS 5A'); set('psStat5', last.g != null ? (last.g * 100).toFixed(1) + '%' : '—'); set('psSub5', 'tendencia anual, ' + (norm ? 'normalizado' : 'contable'));
   }
   set('psStat4', fmtP(data.currentPrice || last.close));
-  const lastQ = eps[eps.length - 1]?.eps;
+  const lastQ = (eps.find(e => e.date === last.q) || eps[eps.length - 1])?.eps;   // el último que entra en el P/E de hoy
   const peAnual = (lastQ && lastQ > 0) ? last.close / (lastQ * 4) : null;
   set('psStatAnual', peAnual != null ? peAnual.toFixed(1) + 'x' : '—');
   const fw = data.fw || (data.fw = pebgFwInfo(data)), pxNow = data.currentPrice || last.close, fwEpsS = fw.eps;
@@ -4150,9 +4158,9 @@ function pebgFwInfo(data) {
     if (g.length) q = g[g.length - 1].date;
   }
   const x = fwQuarters(sym, q), n12 = ntmEps(sym), fpe12 = n12 > 0 && px > 0 ? px / n12 : null;
-  if (x && x.eps != null) { const eps = x.eps > 0 ? x.eps : null; return { eps, fpe: eps && px > 0 ? px / eps : null, fpe12, q: x.q, metodo: x.metodo }; }
-  const y = fundFor(sym, px).fpe || null;   // sin consenso por trimestres: el Fw P/E de Yahoo
-  return { eps: y && px > 0 ? px / y : null, fpe: y, fpe12, q: null, metodo: y ? 'yahoo' : null };
+  if (x && x.eps != null) { const eps = x.eps > 0 ? x.eps : null; return { eps, raw: x.eps, fpe: eps && px > 0 ? px / eps : null, fpe12, q: x.q, metodo: x.metodo }; }
+  const y = fundFor(sym, px).fpe || null, ye = y && px > 0 ? px / y : null;   // sin consenso por trimestres: el Fw P/E de Yahoo
+  return { eps: ye, raw: ye, fpe: y, fpe12, q: null, metodo: y ? 'yahoo' : null };
 }
 function togglePebgFw() {
   pebgFw = !pebgFw;
@@ -5192,7 +5200,10 @@ const METODO = [
       { d: 'P/E contable y P/E normalizado del índice: la misma cuenta que el último punto del S&P 500 en Sectores, con los precios de ahora.',
         p: 'Al cierre dan igual; durante la rueda los del screener se mueven con los precios y la serie queda en el cierre anterior. El normalizado cubre menos empresas (las que tienen resultado operativo al día en la SEC), y al pasar el mouse se ve cuánto da el contable con esas mismas empresas, que es la comparación limpia.',
         x: 'Lo que hacía antes: P/E de Yahoo, sin las empresas con pérdidas y con Alphabet contada dos veces. Contra el panel en modo normalizado la diferencia llegaba a cuatro puntos.' },
-      { d: 'Fw P/E, P/BV y market cap: Yahoo (o Finnhub), del archivo diario, reescalados con el precio en vivo.',
+      { d: 'Fw P/E: precio en vivo sobre el EPS esperado de los cuatro trimestres que la empresa va a presentar, el mismo de P/E histórico. Al pasar el mouse, el de los 12 meses desde hoy. Sin consenso, el Fw P/E de Yahoo.' },
+      { d: 'Fw P/E agregado: suma de capitalizaciones sobre suma de ganancias esperadas, con las pérdidas esperadas restando. Es el Fw P/E del S&P 500 de Sectores con los precios de ahora.',
+        x: 'Dejar afuera a las que esperan pérdida, como hacía antes: el P/E de 12 meses las cuenta, y los dos tienen que medir lo mismo.' },
+      { d: 'P/BV y market cap: Yahoo (o Finnhub), del archivo diario, reescalados con el precio en vivo.',
         p: 'Si el precio se movió más de 2 a 1 contra el de referencia no se reescala, porque lo más probable es que haya un split en el medio.' },
       { d: 'Retornos: 1D contra el cierre anterior; 5D, 1M y 1Y en ruedas (5, 21 y 252); YTD contra el último cierre del año anterior.' },
       { d: '1D y YTD ponderados: retorno de la canasta ponderada por capitalización, con la capitalización al inicio igual a capitalización / (1 + retorno).' },
@@ -5202,9 +5213,10 @@ const METODO = [
     items: [
       { d: 'Media, desvío y z del P/E diario del último año.',
         p: 'Es una vista rápida para el día a día; para ventanas largas está P/E histórico.' },
-      { d: 'P/E anualizado: precio sobre el EPS del último trimestre por cuatro.',
+      { d: 'P/E anualizado: precio sobre el EPS del último trimestre que entra en el P/E de hoy, por cuatro.',
         p: 'Detecta un cambio de tendencia que el de 12 meses todavía no muestra, aunque en negocios estacionales mete ruido porque el último trimestre no representa al año.' },
       { d: 'Var. a μ: cuánto se movería el precio si el P/E volviera a la media del año con el EPS de hoy. La versión fw usa el EPS del Fw P/E: el de los cuatro trimestres que la empresa va a presentar en el año, el mismo de la proyección de P/E histórico.' },
+      { d: 'P/E y Fw P/E de la cartera con los pesos cargados: suma de pesos sobre suma de (peso × EPS / precio), con el EPS de 12 meses (contable o normalizado) o el del Fw P/E. Las pérdidas restan en los dos, como en el índice.' },
     ] },
 
   { id: 'res', t: 'Resumen',
