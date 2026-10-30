@@ -1,5 +1,5 @@
 {
- "_leeme": "EPS trimestral cargado a mano para tickers que EDGAR no cubre (presentan 20-F/6-K). El backend lo usa en /api/pebg antes que Finnhub. 'fin' = cierre del trimestre. Montos en millones de US$, acciones en millones. Para sumar un trimestre: agregar una fila al final con los mismos campos.",
+ "_leeme": "EPS trimestral cargado a mano para tickers que EDGAR no cubre (presentan 20-F/6-K). El backend lo usa en /api/pebg antes que Finnhub. 'fin' = cierre del trimestre; 'presentado' (opcional, AAAA-MM-DD) = fecha del 6-K con el resultado, desde el día siguiente entra en el P/E (sin ella, el cierre más 45 días). Montos en millones de US$, acciones en millones. Para sumar un trimestre: agregar una fila al final con los mismos campos.",
  "NU": {
   "nombre": "Nu Holdings",
   "unidad": "US$ por acción ordinaria (NYSE: 1 acción = 1 título), EPS diluido",

@@ -11,7 +11,7 @@
 // (no la composición de cada fecha): hacia atrás hay sesgo de supervivencia.
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, cashDebt, quality, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, sharesQuarterly, mergeRaw, netIncomeQuarterly, cashDebt, quality, fillPub, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "../backend/edgar.mjs";
 import { yahooSession, ntmFrom } from "./fundamentals.mjs";
 
 const CSV_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv";
@@ -48,16 +48,20 @@ export function constituents(csvText) {
   })).sort((a, b) => a.s.localeCompare(b.s));
 }
 
-// EPS de 12 meses por semana: suma de los últimos 4 trimestres con cierre anterior a la semana (como P/E histórico).
-// Si el último trimestre cerró hace más de 200 días, el dato está viejo (la empresa cambió de etiqueta o la SEC no
-// cargó sus presentaciones): esa semana la empresa no entra.
+// EPS de 12 meses por semana: suma de los últimos 4 trimestres presentados antes de la semana (como P/E histórico):
+// cada trimestre entra desde el día siguiente a su presentación a la SEC (pub, ver fillPub en edgar.mjs), así que un
+// 10-Q presentado hasta el jueves entra en el cierre de ese viernes. La semana en curso va con el cierre de hoy: entra
+// lo presentado hasta ayer, como en el último punto de P/E histórico. Si el último trimestre cerró hace más de 200 días,
+// el dato está viejo (la empresa cambió de etiqueta o la SEC no cargó sus presentaciones): esa semana la empresa no entra.
 const STALE_DAYS = 200;
-function ttmByWeek(quarters, weeks) {
+const pubT = q => (q.pub ?? q.date) + DAY;              // desde cuándo cuenta un trimestre
+const weekT = (w, today) => Math.min(MONDAY0 + w * WEEK + 4 * DAY, today);   // viernes de esa semana, u hoy
+function ttmByWeek(quarters, weeks, today = Infinity) {
   const q = quarters.slice().sort((a, b) => a.date - b.date), out = new Map();
   let j = 0;
   for (const w of weeks) {
-    const t = MONDAY0 + w * WEEK + 4 * DAY;             // viernes de esa semana
-    while (j < q.length && q[j].date <= t) j++;
+    const t = weekT(w, today);
+    while (j < q.length && pubT(q[j]) <= t) j++;
     if (j < 4) continue;
     if (t - q[j - 1].date > STALE_DAYS * DAY) continue;
     // los 4 trimestres tienen que ser consecutivos (sin huecos de más de ~4 meses entre sí)
@@ -66,12 +70,12 @@ function ttmByWeek(quarters, weeks) {
   }
   return out;
 }
-function sharesByWeek(sh, weeks) {
+function sharesByWeek(sh, weeks, today = Infinity) {
   const out = new Map(); let j = 0;
   for (const w of weeks) {
-    const t = MONDAY0 + w * WEEK + 4 * DAY;
-    while (j < sh.length && sh[j].date <= t) j++;
-    const v = j > 0 ? sh[j - 1].shares : (sh[0] && sh[0].date - t < 200 * DAY ? sh[0].shares : null);
+    const t = weekT(w, today);
+    while (j < sh.length && pubT(sh[j]) <= t) j++;
+    const v = j > 0 ? sh[j - 1].shares : (sh[0] && pubT(sh[0]) - t < 200 * DAY ? sh[0].shares : null);
     if (v) out.set(w, v);
   }
   return out;
@@ -105,7 +109,7 @@ function fillGaps(quarters, extra) {
 // Si EDGAR no trae EPS trimestral (V, KKR, ABNB... lo informan por clase de acción o con etiquetas propias), se usa
 // el resultado neto con las acciones de hoy (capitalización / precio de fundamentals.json): sin normalizado.
 // extra: trimestres de Yahoo para completar después del último de la SEC.
-export function companySeries({ sym = "", facts, chart, olderFacts = null, fundRow = null, extra = null }) {
+export function companySeries({ sym = "", facts, chart, olderFacts = null, fundRow = null, extra = null, nowS = Infinity }) {
   const ts = chart?.timestamp || [], cl = chart?.indicators?.quote?.[0]?.close || [];
   const price = new Map();
   ts.forEach((t, i) => { if (cl[i] != null && cl[i] > 0) price.set(weekOf(t), cl[i]); });
@@ -116,6 +120,10 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   const f = makeSplitFactor(splits);
   const gaap = gaapQuarterly(raw, f, "");
   const weeks = [...price.keys()].sort((a, b) => a - b);
+  // hoy (00:00 UTC): la semana en curso cuenta lo presentado hasta ayer. Tope para las fechas de presentación estimadas
+  // (los trimestres de Yahoo ya se publicaron): el día anterior al último punto, así entran en él
+  const today = isFinite(nowS) ? Math.floor(nowS / DAY) * DAY : Infinity;
+  const capS = weeks.length ? weekT(weeks[weeks.length - 1], today) - DAY : Infinity;
   // datos que no pueden ser ciertos (EPS de 12 meses mayor que el precio, o una pérdida de más de 3 veces el precio):
   // casi siempre son un split sin ajustar o una unidad mal cargada; esa semana la empresa no entra en el agregado
   const clean = (eps) => { for (const [w, e] of eps) { const p = price.get(w); if (p && (e > p || e < -3 * p)) eps.delete(w); } return eps; };
@@ -126,16 +134,18 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
   const epsCut = gaap.length >= 4 && ni.length >= 4 && ni[ni.length - 1].date - gaap[gaap.length - 1].date > STALE_DAYS * DAY;
   if (gaap.length < 4 || epsCut) {
     const shNow = fundRow && fundRow.mc > 0 && fundRow.p > 0 ? fundRow.mc / fundRow.p : null;
-    const epsLike = shNow && ni.length >= 4 ? ni.map(q => ({ date: q.date, eps: q.ni / shNow })) : [];
+    const epsLike = shNow && ni.length >= 4 ? ni.map(q => ({ date: q.date, eps: q.ni / shNow, pub: q.pub })) : [];
     const fl = shNow ? fillGaps(epsLike, extra) : { q: [], filled: [] };
     if (fl.q.length < 4) return { ...base, eG: new Map(), eN: new Map(), sh: new Map(), quarters: 0 };
     const shMap = new Map(weeks.map(w => [w, shNow]));
-    return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null), q: quality(raw, null),
+    return { ...base, eG: clean(ttmByWeek(fillPub(fl.q, capS, ni), weeks, today)), eN: new Map(), sh: shMap, quarters: fl.q.length, viaNI: epsLike.length > 0, cd: cashDebt(raw, null), q: quality(raw, null),
       lastQ: fl.q[fl.q.length - 1].date, filled: fl.filled, fillRejected: !!fl.rejected };
   }
-  const normFull = normalizedQuarterly(raw, f, gaap, sym), norm = normFull.eps;
-  const sh = sharesQuarterly(raw, f, gaap);
+  const normFull = normalizedQuarterly(raw, f, gaap, sym);
   const fl = fillGaps(gaap, extra);
+  // fechas de presentación: las que faltan (Yahoo, trimestres anteriores a XBRL) se estiman; el normalizado y las
+  // acciones van con la del trimestre contable
+  const qG = fillPub(fl.q, capS, gaap), norm = fillPub(normFull.eps, capS, qG), sh = fillPub(sharesQuarterly(raw, f, gaap), capS, qG);
   // hueco en los últimos dos años (un trimestre que no se pudo derivar): se busca en Yahoo
   const rec = gaap.filter(q => q.date > gaap[gaap.length - 1].date - 730 * DAY);
   const hole = rec.some((q, i) => i > 0 && q.date - rec[i - 1].date > 120 * DAY);
@@ -144,7 +154,7 @@ export function companySeries({ sym = "", facts, chart, olderFacts = null, fundR
     ajustes: (normFull.adj || []).slice(-6), margenes: (normFull.flags || []).slice(-3), trimestres: (normFull.rows || []).slice(-4),
     crudo: Object.fromEntries(["oi", "pt", "ni"].map(k => [k, (raw[k] || []).filter(e => e.end >= "2024-06-30").sort((a, b) => a.end.localeCompare(b.end) || a.start.localeCompare(b.start))
       .map(e => [e.start, e.end, e.val, e.form, e.filed])])) };
-  return { ...base, eG: clean(ttmByWeek(fl.q, weeks)), eN: clean(ttmByWeek(norm, weeks)), sh: sharesByWeek(sh, weeks), quarters: gaap.length, normDiag,
+  return { ...base, eG: clean(ttmByWeek(qG, weeks, today)), eN: clean(ttmByWeek(norm, weeks, today)), sh: sharesByWeek(sh, weeks, today), quarters: gaap.length, normDiag,
     cd: cashDebt(raw, normFull.rows), q: quality(raw, normFull.rows), cdTags: Object.fromEntries(Object.entries(raw.cd || {}).map(([t, a]) => [t, a.reduce((m, e) => e.end > m ? e.end : m, "")])),
     lastQ: fl.q[fl.q.length - 1].date, lastSec: gaap[gaap.length - 1].date, hole, filled: fl.filled, fillRejected: !!fl.rejected };
 }
@@ -290,14 +300,14 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       ]);
       const chart = cj?.chart?.result?.[0];
       if (!facts || !chart) { missing.push(c.s + (facts ? " (sin precios)" : " (sin EDGAR)")); return; }
-      let ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s] });
+      let ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], nowS: p2 });
       // sin trimestres, con el último de hace más de 100 días o con un hueco en los últimos dos años: se busca en Yahoo
       if (yOk && (ser.quarters < 4 || !ser.lastQ || p2 - ser.lastQ > 100 * DAY || ser.hole)) {
         try {
           const extra = await yahooQuarterlyEPS(fetchImpl, c.s, ySession, p2);
           const rg = a => a.length ? ` (${new Date(a[0].date * 1000).toISOString().slice(0, 10)} a ${new Date(a.at(-1).date * 1000).toISOString().slice(0, 10)})` : "";
           yDiag[c.s] = `continuas ${extra.cont.length}${rg(extra.cont)}, total ${extra.tot.length}${rg(extra.tot)}`;
-          if (extra.cont.length || extra.tot.length) ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], extra });
+          if (extra.cont.length || extra.tot.length) ser = companySeries({ sym: c.s, facts, chart, olderFacts, fundRow: fund[c.s], extra, nowS: p2 });
         } catch (e) {
           if (/HTTP 40[13]/.test(e.message)) yOk = false;
           yDiag[c.s] = "error " + e.message;

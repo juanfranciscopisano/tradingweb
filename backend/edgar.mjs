@@ -177,6 +177,56 @@ function quartersOf(facts, splitFactor) {
   return out;
 }
 export const isContinuingTag = t => /ContinuingOperations/.test(t || "");
+
+// ---- Fecha de presentación ----
+// Cada trimestre entra en el P/E cuando se conoció, el día que la empresa lo presentó a la SEC: la primera presentación
+// (10-Q, 10-K) cuyo período es ese trimestre, con cualquier etiqueta (si la empresa cambió de etiqueta, el trimestre ya se
+// conocía con la vieja). El período de una presentación es el más reciente que trae: el trimestre del 10-Q, el ejercicio
+// del 10-K. Lo anterior que viene en ella son comparativos o la nota de datos trimestrales del 10-K, que no cuentan:
+// un trimestre que solo aparece así es anterior a las primeras presentaciones de la empresa en XBRL o a su salida a la
+// bolsa. Tampoco cuenta una presentación de más de 150 días después del cierre (una empresa atrasada, que ya había
+// anunciado el resultado). En esos casos no hay fecha y se estima (fillPub).
+export const PUB_MAX_DAYS = 150;
+export function pubIndex(raw) {
+  const per = new Map();   // presentación (fecha y formulario) → cierre de su período
+  for (const k of ["eps", "ni", "pt", "oi", "rev", "sh"]) for (const e of raw?.[k] || []) {
+    if (!e.start || !e.end || !e.filed) continue;
+    const key = e.filed + "|" + (e.form || ""), o = per.get(key);
+    if (!o || e.end > o) per.set(key, e.end);
+  }
+  const L = [...per].map(([key, end]) => [Date.parse(end + "T00:00:00Z"), Date.parse(key.slice(0, 10) + "T00:00:00Z")]).filter(([t, f]) => isFinite(t) && isFinite(f));
+  // fecha de cierre (AAAA-MM-DD, o segundos) → fecha de presentación en segundos, o null
+  return end => {
+    const t = typeof end === "number" ? end * 1000 : Date.parse(end + "T00:00:00Z");
+    let f = null;
+    for (const [te, fe] of L) if (Math.abs(te - t) <= 10 * DAY_MS && (f == null || fe < f)) f = fe;
+    return f != null && f >= t - 10 * DAY_MS && f - t <= PUB_MAX_DAYS * DAY_MS ? Math.floor(f / 1000) : null;
+  };
+}
+// Completa la fecha donde falta (trimestres de Yahoo o de Finnhub, los 10-K anteriores a XBRL, los cargados a mano):
+// la del mismo trimestre en ref si la tiene; si no, el cierre más la demora típica de la empresa en ese trimestre del
+// año, la mediana de sus últimas 8 presentaciones a la SEC para ese trimestre (el cuarto va con el 10-K, que tarda más),
+// y sin historia en la SEC, 45 días. Un dato que ya está se publicó, así que la estimación no pasa de capS (el día
+// anterior al último precio: entra en el último punto). Al final ningún trimestre queda presentado después del
+// siguiente, porque las empresas presentan en orden. Los estimados van marcados (pubEst). qs: [{ date, pub? }] en segundos.
+export function fillPub(qs, capS, ref = []) {
+  const DAY = 86400, pos = d => (new Date((d - 45 * DAY) * 1000).getUTCMonth() / 3) | 0;
+  const known = (ref || []).filter(r => r.pub != null).sort((a, b) => a.date - b.date);
+  const real = known.filter(r => !r.pubEst && r.pub >= r.date);
+  const byPos = [[], [], [], []];
+  for (const r of real) byPos[pos(r.date)].push(r.pub - r.date);
+  const all = real.map(r => r.pub - r.date);
+  const lagOf = d => { const a = byPos[pos(d)]; return a.length >= 2 ? median(a.slice(-8)) : all.length >= 2 ? median(all.slice(-12)) : 45 * DAY; };
+  const out = (qs || []).slice().sort((a, b) => a.date - b.date).map(q => {
+    if (q.pub != null) return q;
+    const same = known.find(r => Math.abs(r.date - q.date) <= 10 * DAY);
+    if (same) return { ...q, pub: same.pub, ...(same.pubEst ? { pubEst: true } : {}) };
+    return { ...q, pub: Math.max(q.date, Math.min(Math.round(q.date + lagOf(q.date)), capS)), pubEst: true };
+  });
+  for (let i = out.length - 2; i >= 0; i--) if (out[i].pub > out[i + 1].pub) out[i] = { ...out[i], pub: out[i + 1].pub };
+  return out;
+}
+
 export function gaapQuarterly(raw, splitFactor, symbol) {
   const order = EDGAR_TAGS.eps[0], byTag = new Map();
   for (const e of raw.eps || []) { const t = e.tag || order[1]; if (!byTag.has(t)) byTag.set(t, []); byTag.get(t).push(e); }
@@ -188,7 +238,8 @@ export function gaapQuarterly(raw, splitFactor, symbol) {
       merged.push({ ...q, tag: t });
     }
   }
-  const out = merged.sort((a, b) => a.t - b.t).map(q => ({ date: Math.floor(q.t / 1000), eps: +q.eps.toFixed(4), frame: "CY" + qkeyOf(q.end), end: q.end, tag: q.tag, derived: !!q.derived }));
+  const pubOf = pubIndex(raw);
+  const out = merged.sort((a, b) => a.t - b.t).map(q => ({ date: Math.floor(q.t / 1000), eps: +q.eps.toFixed(4), frame: "CY" + qkeyOf(q.end), end: q.end, tag: q.tag, derived: !!q.derived, pub: pubOf(q.end) }));
   console.log(`pebg ${symbol}: EDGAR ${out.length} trimestres`);
   return out;
 }
@@ -235,6 +286,8 @@ const median = a => { const x = [...a].sort((p, q) => p - q); return x.length ? 
 export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
   if (!gaap.length) return { eps: [], method: null };
   const one = () => 1, TEN = 10 * DAY_MS;
+  // fecha de presentación: la del trimestre contable que cierra el mismo día; si no está, la de la SEC para esa fecha
+  const pubOf = pubIndex(raw), pubAt = t => { const g = gaap.find(x => Math.abs(x.date * 1000 - t) <= TEN); return g && g.pub != null ? g.pub : pubOf(Math.floor(t / 1000)); };
   // trimestres por período; si falta el cuarto y no hay acumulado de 9 meses, anual menos los otros tres (en US$ se puede restar)
   const ser = arr => {
     const q = quartersOf(arr || [], one);
@@ -435,7 +488,7 @@ export function normalizedQuarterly(raw, splitFactor, gaap, symbol) {
       antesImp: M(at(PT, q.t)), impuesto: M(at(TX, q.t)), neto: M(at(NI, q.t)), ebit: M(ebit) });
     if (!sh) return;
     const eps = ((base + addBack) * (1 - tax) * (1 - nci) - pref) / sh;
-    if (isFinite(eps)) out.push({ date: Math.floor(q.t / 1000), eps: +eps.toFixed(4), frame: "CY" + qkeyOf(q.end) });
+    if (isFinite(eps)) out.push({ date: Math.floor(q.t / 1000), eps: +eps.toFixed(4), frame: "CY" + qkeyOf(q.end), pub: pubAt(q.t) });
   });
   // margen operativo ajustado fuera de lo normal: más de 2,5 desvíos y más de 4 puntos contra los 8 trimestres previos
   const flags = [];
@@ -635,15 +688,16 @@ export function quality(raw, normRows, asOf = Date.now()) {
 
 // acciones diluidas por trimestre, ajustadas por splits (para ponderar en los agregados de índice y sector):
 // resultado neto / EPS contable cuando el EPS no es casi cero; si no, el dato de acciones de EDGAR con control
-// de escala. Devuelve [{ date, shares }] ordenado.
+// de escala. Devuelve [{ date, shares, pub }] ordenado (pub: fecha de presentación, como en el EPS).
 export function sharesQuarterly(raw, splitFactor, gaap) {
+  const pubOf = pubIndex(raw);
   const NI = new Map();
   for (const e of raw.ni) if (/^CY\d{4}Q\d$/.test(e.frame || "")) NI.set(qkeyOf(e.end), e.val);
   const out = new Map();
   for (const g of gaap) {
     if (isContinuingTag(g.tag)) continue;   // el resultado neto incluye lo discontinuado: no se divide por el EPS continuo
     const k = g.frame.slice(2), ni = NI.get(k);
-    if (ni != null && Math.abs(g.eps) >= 0.05 && ni / g.eps > 0) out.set(k, { date: g.date, shares: ni / g.eps });
+    if (ni != null && Math.abs(g.eps) >= 0.05 && ni / g.eps > 0) out.set(k, { date: g.date, shares: ni / g.eps, pub: g.pub });
   }
   const med = (() => { const v = [...out.values()].map(x => x.shares).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; })();
   for (const e of raw.sh) {
@@ -652,7 +706,7 @@ export function sharesQuarterly(raw, splitFactor, gaap) {
     if (out.has(k)) continue;
     let v = e.val * splitFactor(e.end, e.filed);
     if (med) v = [1, 1e3, 1e6].map(s => v * s).reduce((best, x) => Math.abs(Math.log(x / med)) < Math.abs(Math.log(best / med)) ? x : best);
-    out.set(k, { date: Math.floor(Date.parse(e.end) / 1000), shares: v });
+    out.set(k, { date: Math.floor(Date.parse(e.end) / 1000), shares: v, pub: pubOf(e.end) });
   }
   return [...out.values()].sort((a, b) => a.date - b.date);
 }
@@ -689,5 +743,6 @@ export function netIncomeQuarterly(raw) {
     const k = qkeyOf(a.end);
     if (inside.length === 3 && !q.has(k)) q.set(k, { end: a.end, start: null, val: a.val - inside.reduce((t, x) => t + x.val, 0) });
   }
-  return [...q.values()].map(x => ({ date: Math.floor(Date.parse(x.end) / 1000), ni: x.val })).sort((a, b) => a.date - b.date);
+  const pubOf = pubIndex(raw);
+  return [...q.values()].map(x => ({ date: Math.floor(Date.parse(x.end) / 1000), ni: x.val, pub: pubOf(x.end) })).sort((a, b) => a.date - b.date);
 }

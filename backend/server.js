@@ -7,7 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, fillPub, PUB_MAX_DAYS, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -262,15 +262,22 @@ try {
 } catch (e) {
   console.log("eps_hist.json: " + e.message);
 }
-// trimestres de eps_hist anteriores al primero de la serie, ajustados por splits
+// trimestres de eps_hist anteriores al primero de la serie, ajustados por splits. La fecha de presentación es la del
+// 10-K de donde se copió solo para el trimestre que cierra su ejercicio (el más reciente con esa fecha) y si llegó dentro
+// de los 150 días; los otros salen de la nota de datos trimestrales de ese 10-K o de uno posterior, y se estiman (fillPub)
 function histBefore(sym, firstDate, splits) {
   const h = EPS_HIST[sym];
   if (!h || !firstDate) return [];
   const f = makeSplitFactor(splits);
+  const own = new Map();
+  for (const q of h.trimestres) if (q.filed && !(own.get(q.filed) >= q.end)) own.set(q.filed, q.end);
   const pre = h.trimestres.filter(q => Date.parse(q.end) / 1000 < firstDate - 30 * 86400);
   // solo si empalma: el último trimestre cargado tiene que ser el anterior al primero de EDGAR (si no, queda un hueco)
   if (!pre.length || firstDate - Date.parse(pre[pre.length - 1].end) / 1000 > 200 * 86400) return [];
-  return pre.map(q => ({ date: Math.floor(Date.parse(q.end) / 1000), eps: +(q.eps / f(q.end, q.filed)).toFixed(4) }));
+  return pre.map(q => {
+    const date = Math.floor(Date.parse(q.end) / 1000), fs = q.filed ? Math.floor(Date.parse(q.filed) / 1000) : null;
+    return { date, eps: +(q.eps / f(q.end, q.filed)).toFixed(4), pub: fs != null && own.get(q.filed) === q.end && fs >= date && fs - date <= PUB_MAX_DAYS * 86400 ? fs : null };
+  });
 }
 
 function manualEPS(sym) {
@@ -278,13 +285,14 @@ function manualEPS(sym) {
   if (!m || !Array.isArray(m.trimestres)) return null;
   const rows = m.trimestres
     .filter(r => r.fin && isFinite(r.eps))
-    .map(r => ({ date: Math.floor(Date.parse(r.fin + "T00:00:00Z") / 1000), eps: +r.eps, adj: r.epsAjustado }))
+    .map(r => ({ date: Math.floor(Date.parse(r.fin + "T00:00:00Z") / 1000), eps: +r.eps, adj: r.epsAjustado,
+      pub: /^\d{4}-\d\d-\d\d$/.test(r.presentado || "") ? Math.floor(Date.parse(r.presentado + "T00:00:00Z") / 1000) : null }))
     .sort((a, b) => a.date - b.date);
   if (rows.length < 4) return null;
   return {
-    gaap: rows.map(r => ({ date: r.date, eps: r.eps })),
+    gaap: rows.map(r => ({ date: r.date, eps: r.eps, pub: r.pub })),
     // donde la empresa no publicó ajustado, el contable
-    norm: m.normalizado ? rows.map(r => ({ date: r.date, eps: r.adj != null && isFinite(r.adj) ? +r.adj : r.eps })) : [],
+    norm: m.normalizado ? rows.map(r => ({ date: r.date, eps: r.adj != null && isFinite(r.adj) ? +r.adj : r.eps, pub: r.pub })) : [],
     normNote: m.normalizado || null,
   };
 }
@@ -598,14 +606,23 @@ app.get("/api/pebg", async (req, res) => {
           histNote = `Hasta ${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}: EPS de los 10-K originales de la SEC (contable, también en el modo normalizado)`;
         }
       }
+      // fecha de presentación de cada trimestre: la de la SEC; la de los que no la tienen se estima con la demora típica
+      // de la empresa, sin pasar del día anterior al último precio (fillPub, en edgar.mjs). El normalizado va con la del
+      // trimestre contable que cierra el mismo día.
+      const capS = prices.length ? Math.floor(prices[prices.length - 1].date / 86400) * 86400 - 86400 : now;
+      eps = fillPub(eps, capS, edgar);
+      if (epsNorm && epsNorm.length) epsNorm = fillPub(epsNorm, capS, eps);
+      const withPub = e => ({ date: e.date, eps: e.eps, pub: e.pub, ...(e.pubEst ? { pubEst: 1 } : {}) });
       const meta = chart.meta || {};
       const last4 = eps.slice(-4);
       return {
         symbol: sym,
         shortName: meta.shortName || meta.longName || sym,
         prices,
-        eps: eps.map(e => ({ date: e.date, eps: e.eps })),
-        epsNorm: normMethod ? epsNorm.map(e => ({ date: e.date, eps: e.eps })) : [],
+        // EPS por trimestre: date = cierre, pub = fecha de presentación (la SEC, o estimada si pubEst); el P/E usa
+        // cada trimestre desde el día siguiente a pub
+        eps: eps.map(withPub),
+        epsNorm: normMethod ? epsNorm.map(withPub) : [],
         normMethod,
         normNote,
         // extraordinarios sacados del normalizado (trimestre, partida, millones de US$ antes de impuestos, efecto por acción)
