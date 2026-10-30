@@ -221,6 +221,38 @@ export async function realYieldByWeek(fetchImpl, weeks) {
   return { r: out, asOf, fuente: got.fuente };
 }
 
+// Amplitud: qué parte del índice está barata contra su propia historia, la medida de "cae el mercado" del backtest de
+// señales de P/E (desde 30% de las empresas en −1σ o menos). Para cada empresa, el P/E semanal (normalizado si lo tiene,
+// si no el contable; sin P/E con ganancias de 12 meses de cero o menos) contra su banda móvil de 3 años: media y desvío de
+// las 156 semanas que terminan en esa, con P/E entre 0 y 500 y al menos 60% de las semanas con dato, como la banda móvil
+// de P/E histórico. Devuelve, por semana, cuántas empresas tienen banda (n) y qué porcentaje está en −1σ y en −2σ o menos,
+// y el z de cada empresa en la última semana, de menor a mayor.
+export function breadth(cos, syms, weeks, years = 3) {
+  const W = years * 52, minPts = Math.round(W * 0.6), N = weeks.length;
+  const n = new Array(N).fill(0), c1 = new Array(N).fill(0), c2 = new Array(N).fill(0), last = [];
+  const ok = v => v != null && v > 0 && v < 500;
+  for (const s of syms) {
+    const c = cos[s]; if (!c) continue;
+    const E = c.eN && c.eN.size ? c.eN : c.eG;
+    if (!E || !E.size) continue;
+    const pe = weeks.map(w => { const e = E.get(w), p = c.price.get(w); return e > 0.01 && p > 0 ? p / e : null; });
+    let lo = 0, sx = 0, sxx = 0, cnt = 0;
+    for (let i = 0; i < N; i++) {
+      const v = pe[i];
+      if (ok(v)) { sx += v; sxx += v * v; cnt++; }
+      while (weeks[lo] <= weeks[i] - W) { const q = pe[lo]; if (ok(q)) { sx -= q; sxx -= q * q; cnt--; } lo++; }
+      if (v == null || cnt < minPts) continue;
+      const mu = sx / cnt, sd = Math.sqrt(Math.max(0, sxx / cnt - mu * mu));
+      if (!(sd > 0)) continue;
+      const z = (v - mu) / sd;
+      n[i]++; if (z <= -1) c1[i]++; if (z <= -2) c2[i]++;
+      if (i === N - 1) last.push([s, +z.toFixed(2)]);
+    }
+  }
+  const pct = c => c.map((k, i) => n[i] ? +(k / n[i] * 100).toFixed(1) : null);
+  return { n, p1: pct(c1), p2: pct(c2), last: last.sort((a, b) => a[1] - b[1]) };
+}
+
 export function aggregate(cos, groups, weeks, minCov) {
   // peso de cobertura: capitalización de la última semana con dato de cada empresa
   const capNow = {};
@@ -371,11 +403,16 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     const sector = type === "sub" ? list.find(c => c.sub === name).gics : type === "sector" ? name : null;
     series[key] = { name, type, sector, count: groups[key].length, withData: v.count, fw: fwOf(groups[key]), g: v.g, n: v.n };
   }
+  // amplitud del S&P 500 (cada empresa una vez), semana a semana
+  const amp = breadth(cos, groups.SPX, weeks);
   const out = {
     asOf: now.toISOString().slice(0, 10),
     nota: "P/E = suma de capitalizaciones / suma de ganancias de 12 meses (EDGAR), empresas actuales del índice; semanal",
     week0: weeks[0], monday0: MONDAY0, weeks: weeks.length,
     series,
+    // parte de las empresas del S&P 500 con el P/E (normalizado si lo tiene) en −1σ y en −2σ o menos contra su banda móvil
+    // de 3 años, y cuántas tienen banda; alineado con las semanas. Desde 30% en −1σ, el mercado está cayendo.
+    amplitud: { p1: amp.p1, p2: amp.p2, n: amp.n },
     sinDatos: missing,
     conResultadoNeto: viaNI,
     completadasConYahoo: conYahoo,
@@ -409,6 +446,9 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     nota: "Último EPS de 12 meses de la SEC por empresa (contable y normalizado), acciones diluidas, cierre del último trimestre presentado y precio usado en multiples.json",
     campos: ["eps12m", "eps12mNormalizado", "acciones", "ultimoTrimestre", "precio", "fuente"],
     spx: series.SPX.g.at(-1), spxN: series.SPX.n.at(-1),
+    // amplitud de la última semana (el cierre de hoy): % del S&P 500 en −1σ y −2σ o menos contra su banda de 3 años, y las
+    // empresas en −1σ o menos con su z, de menor a mayor
+    amplitud: { p1: amp.p1.at(-1), p2: amp.p2.at(-1), n: amp.n.at(-1), bajo: amp.last.filter(x => x[1] <= -1) },
     data: ultimos,
     fill,
   }));
