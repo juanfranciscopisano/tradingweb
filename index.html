@@ -5370,9 +5370,9 @@ const METODO = [
       { d: 'Tesoro en bancos (API del BCRA, mensual): depósitos de la administración central en pesos (serie 210) y en dólares (230), del grupo "Depósitos por tipo de titular", con el saldo a fin de mes y dos meses de rezago. En pesos son cuentas corrientes, plazo fijo y otros depósitos (240, 260 y 270; la caja de ahorro es casi cero); en dólares, casi todo caja de ahorro (290). El total suma lo del BCRA del último día hábil del mes.',
         p: 'Es la serie que usa el mercado para los pesos del Tesoro fuera del BCRA: fin de mayo de 2026 da $13,97 billones, el dato que citó la prensa. No incluye a los organismos descentralizados ni a las empresas públicas nacionales, que van en otras series, y no abre por banco.',
         o: 'La API dice "miles de ARS", pero vienen en millones, como las diarias: con miles, el Tesoro tendría $19.000 millones en bancos. Los de dólares vienen en pesos al tipo de cambio de fin de mes (en diciembre de 2023 la serie salta 2,2 veces, lo que saltó el A3500) y se pasan con el A3500 de ese día. "Administración central" incluye cuentas de los ministerios, no solo las del Tesoro, y si a un banco le falta el dato del mes, el BCRA repite su último saldo.' },
-      { d: 'INDEC (API del INDEC, mensual): IPC por región con el nivel general, las doce divisiones y las categorías núcleo, regulados y estacionales; EMAE desestacionalizado y original; industria manufacturera (IPI); precios mayoristas (IPIM); índice de salarios por sector; canastas básicas del GBA; desocupación (EPH, trimestral) y pobreza (EPH, semestral). Las variaciones mensuales e interanuales salen del índice. Salario real: índice de salarios sobre el IPC nacional, con diciembre de 2016 = 100.',
+      { d: 'INDEC (API del INDEC, mensual): IPC por región con el nivel general, las doce divisiones y las categorías núcleo, regulados y estacionales; EMAE desestacionalizado y original; industria manufacturera (IPI); precios mayoristas (IPIM); índice de salarios por sector; canastas básicas del GBA; desocupación (EPH, trimestral) y pobreza (EPH, semestral). Las variaciones mensuales e interanuales salen del índice. Salario real: índice de salarios sobre el IPC nacional, con diciembre de 2016 = 100. El no registrado sale de la EPH y el INDEC lo publica con cinco meses de rezago (el dato de un mes es el trimestre de la EPH centrado cinco meses antes): va corrido cinco meses y deflactado con el IPC de ese mes.',
         p: 'La API pide token: la consulta un workflow con el token en los secretos del repo (INDEC_API_TOKEN), los días hábiles a las 16:37 y a las 19:37 (el INDEC publica a las 16), y deja indec.json. Un servicio se vuelve a bajar solo si tiene un período nuevo. Del IPC se guardan las aperturas de pocos códigos (nivel general, divisiones, categorías); grupos, clases y subclases, no.',
-        o: 'La API está en beta y el token vence a los 12 meses: hay que regenerarlo en el perfil y actualizar el secreto. Las variaciones calculadas del índice pueden diferir en una décima de las publicadas, por redondeo (el INDEC lo avisa). La inflación del nivel general sigue saliendo del BCRA (series 27 y 28), que replica al INDEC.' },
+        o: 'La API está en beta y el token vence a los 12 meses: hay que regenerarlo en el perfil y actualizar el secreto. Las variaciones calculadas del índice pueden diferir en una décima de las publicadas, por redondeo (el INDEC lo avisa). La inflación del nivel general sigue saliendo del BCRA (series 27 y 28), que replica al INDEC. El salario total incluye al no registrado sin correr, así que mezcla meses: para el salario real del mes conviene el registrado.' },
       { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile vía mindicador.cl, que sin clave da solo el último mes; el workflow lo va guardando día a día y, para atrás de lo guardado, va Yahoo sin los saltos de un día, con aviso y las dos fuentes al pie. Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
         p: 'El tipo de cambio de Yahoo para estas monedas tiene datos malos: el 26/10/2026 dio 959,6 pesos chilenos por dólar con el observado en 990,35, y el sol alterna entre dos niveles 3% separados día por medio. Si una fuente oficial no responde, se usa Yahoo sacando los saltos de un día (más de 2% contra los dos vecinos que vuelven).' },
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
@@ -6261,6 +6261,8 @@ const INF_CAT = {
   ipcRegulados: { n: 'Inflación de regulados mensual', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => infIpc(/regulad/i, 1, 'el IPC de regulados') },
   ipcEstacionales: { n: 'Inflación de estacionales mensual', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => infIpc(/estacional/i, 1, 'el IPC de estacionales') },
   ipcNucleoA: { n: 'Inflación núcleo interanual', g: 'Inflación', u: '%', src: 'INDEC', load: () => infIpc(/n[uú]cleo/i, 12, 'el IPC núcleo') },
+  ipcBienes: { n: 'Inflación de bienes mensual', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => infIpc(/^bienes$/i, 1, 'el IPC de bienes') },
+  ipcServicios: { n: 'Inflación de servicios mensual', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => infIpc(/^servicios$/i, 1, 'el IPC de servicios') },
   ipcGba: { n: 'Inflación mensual en el GBA', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => infIpc(/nivel general/i, 1, 'el IPC del GBA', /^GBA$|gran buenos aires/i) },
   ipimM: { n: 'Inflación mayorista mensual (IPIM)', g: 'Inflación', u: '% mensual', src: 'INDEC', load: () => indecSerie('sipm_precios_mayoristas', s => /IPIM/i.test((s.operativo || '') + ' ' + (s.indicador || '')), 'el IPIM').then(s => indecVar(s, 1)) },
   emaeDesest: { n: 'EMAE desestacionalizado', g: 'Actividad', u: 'índice 2004 = 100', src: 'INDEC', load: () => indecSerie(EMAE, s => /desestacional/i.test(s.tipo_de_indicador_descripcion), 'el EMAE desestacionalizado') },
@@ -6268,14 +6270,14 @@ const INF_CAT = {
   emaeIA: { n: 'EMAE: variación interanual', g: 'Actividad', u: '%', src: 'INDEC', load: () => indecSerie(EMAE, s => /original/i.test(s.tipo_de_indicador_descripcion), 'el EMAE original').then(s => indecVar(s, 12)) },
   ipiDesest: { n: 'Industria manufacturera (IPI) desestacionalizada', g: 'Actividad', u: 'índice 2004 = 100', src: 'INDEC', load: () => indecSerie('ipi_manufacturero', s => /desestacional/i.test(s.serie), 'el IPI desestacionalizado') },
   ipiIA: { n: 'Industria manufacturera: variación interanual', g: 'Actividad', u: '%', src: 'INDEC', load: () => indecSerie('ipi_manufacturero', s => /original/i.test(s.serie), 'el IPI original').then(s => indecVar(s, 12)) },
-  salReal: { n: 'Salario real total', g: 'Salarios y empleo', u: 'índice dic-16 = 100', src: 'INDEC', load: () => infSalReal(s => /^total/i.test(s.descripcion) && !/registrado/i.test(s.descripcion), 'el índice de salarios total') },
+  salReal: { n: 'Salario real total', g: 'Salarios y empleo', u: 'índice dic-16 = 100', src: 'INDEC', load: () => infSalReal(s => /nivel general/i.test(s.descripcion || ''), 'el índice de salarios total') },
   salRealPriv: { n: 'Salario real privado registrado', g: 'Salarios y empleo', u: 'índice dic-16 = 100', src: 'INDEC', load: () => infSalReal(s => /privado/i.test(s.descripcion) && /registrado/i.test(s.descripcion) && !/no registrado/i.test(s.descripcion), 'los salarios privados registrados') },
   salRealPub: { n: 'Salario real público', g: 'Salarios y empleo', u: 'índice dic-16 = 100', src: 'INDEC', load: () => infSalReal(s => /p[uú]blico/i.test(s.descripcion), 'los salarios públicos') },
-  salRealNoReg: { n: 'Salario real privado no registrado', g: 'Salarios y empleo', u: 'índice dic-16 = 100', src: 'INDEC', load: () => infSalReal(s => /no registrado/i.test(s.descripcion), 'los salarios no registrados') },
+  salRealNoReg: { n: 'Salario real privado no registrado', g: 'Salarios y empleo', u: 'índice dic-16 = 100', src: 'INDEC', load: () => infSalReal(s => /no registrado/i.test(s.descripcion), 'los salarios no registrados', 5) },
   desocupacion: { n: 'Desocupación (EPH)', g: 'Salarios y empleo', u: '% de la población activa', src: 'INDEC', load: () => indecEph('mercado_trabajo_eph', 'tasa_de_desocupacion', 3), nota: 'trimestral' },
   pobreza: { n: 'Pobreza (personas, EPH)', g: 'Salarios y empleo', u: '% de las personas', src: 'INDEC', load: () => indecEph('pobreza_eph', 'tasa_pobreza_personas', 6), nota: 'semestral' },
-  cbt: { n: 'Canasta básica total (adulto equivalente, GBA)', g: 'Salarios y empleo', u: '$ por mes', src: 'INDEC', load: () => indecSerie('valorizacion_canastas_cba_cbt', s => /total|^CBT$/i.test(s.descripcion + '|' + s.codigo) && !/variaci/i.test(s.tipo_de_indicador || ''), 'la canasta básica total') },
-  cba: { n: 'Canasta básica alimentaria (adulto equivalente, GBA)', g: 'Salarios y empleo', u: '$ por mes', src: 'INDEC', load: () => indecSerie('valorizacion_canastas_cba_cbt', s => /alimentaria|^CBA$/i.test(s.descripcion + '|' + s.codigo) && !/variaci/i.test(s.tipo_de_indicador || ''), 'la canasta básica alimentaria') },
+  cbt: { n: 'Canasta básica total (adulto equivalente, GBA)', g: 'Salarios y empleo', u: '$ por mes', src: 'INDEC', load: () => indecSerie('valorizacion_canastas_cba_cbt', canasta('CBT'), 'la canasta básica total') },
+  cba: { n: 'Canasta básica alimentaria (adulto equivalente, GBA)', g: 'Salarios y empleo', u: '$ por mes', src: 'INDEC', load: () => indecSerie('valorizacion_canastas_cba_cbt', canasta('CBA'), 'la canasta básica alimentaria') },
 };
 // las doce divisiones del IPC nacional, variación mensual
 const IPC_DIV = [['ipcDivAlim', 'Alimentos y bebidas no alcohólicas', /^alimentos/i], ['ipcDivAlc', 'Bebidas alcohólicas y tabaco', /^bebidas alcoh/i], ['ipcDivPrendas', 'Prendas de vestir y calzado', /prendas/i],
@@ -6309,6 +6311,7 @@ const INF_PRESETS = [
   { id: 'reservas', n: 'Reservas y compras del BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
   { id: 'inflacion', n: 'Inflación mensual y acumulada', mode: 'serie', keys: ['ipcM', 'ipcYtd', 'ipcA'], trans: 'nivel', period: '2A', bars: { ipcM: true }, t: 'Inflación mensual, acumulada en el año e interanual' },
   { id: 'ipcCat', n: 'Inflación núcleo, regulados y estacionales', mode: 'serie', keys: ['ipcM', 'ipcNucleo', 'ipcRegulados', 'ipcEstacionales'], trans: 'nivel', period: '2A', t: 'Inflación mensual: nivel general, núcleo, regulados y estacionales' },
+  { id: 'ipcBS', n: 'Inflación de bienes y servicios', mode: 'serie', keys: ['ipcM', 'ipcBienes', 'ipcServicios'], trans: 'nivel', period: '2A', t: 'Inflación mensual de bienes y de servicios' },
   { id: 'actividad', n: 'EMAE e industria', mode: 'serie', keys: ['emaeDesest', 'ipiDesest'], trans: 'nivel', period: '5A', t: 'Actividad económica e industria manufacturera, desestacionalizadas' },
   { id: 'emaeVar', n: 'EMAE: variación mensual e interanual', mode: 'serie', keys: ['emaeMM', 'emaeIA'], trans: 'nivel', period: '2A', bars: { emaeMM: true }, t: 'Actividad económica: variación mensual (desestacionalizada) e interanual' },
   { id: 'salReal', n: 'Salario real por sector', mode: 'serie', keys: ['salReal', 'salRealPriv', 'salRealPub', 'salRealNoReg'], trans: 'nivel', period: '5A', t: 'Salario real por sector' },
@@ -6491,12 +6494,17 @@ function indecVar(s, k) {
   const by = new Map(s.map(p => [p.d.slice(0, 7), p.v]));
   return s.map(p => { const b = by.get(indecMes(p.d.slice(0, 7), -k)); return b ? { d: p.d, t: p.t, v: (p.v / b - 1) * 100 } : null; }).filter(Boolean);
 }
+// canasta por adulto equivalente, en pesos (no las variaciones ni los hogares tipo)
+const canasta = cod => s => /adulto/i.test(s.nivel || '') && String(s.codigo).toUpperCase() === cod && /pesos/i.test(s.unidad_de_medida || '');
 function infIpc(re, k, nombre, region = /nacional/i) {
   return indecSerie('ipc_nacional', s => region.test(s.region || '') && re.test(s.descripcion || ''), nombre).then(s => indecVar(s, k));
 }
-// salario real: índice de salarios / IPC nacional, con diciembre de 2016 = 100 (el primer mes del IPC)
-async function infSalReal(pred, nombre) {
-  const [S, P] = await Promise.all([indecSerie('indice_salarios', pred, nombre), indecSerie('ipc_nacional', s => /nacional/i.test(s.region || '') && /nivel general/i.test(s.descripcion || ''), 'el IPC')]);
+// salario real: índice de salarios / IPC nacional, con diciembre de 2016 = 100 (el primer mes del IPC). rezago: meses que
+// hay que correr el índice para atrás (el no registrado sale de la EPH: el dato de un mes es el trimestre centrado cinco
+// meses antes), y se deflacta con el IPC del mes al que corresponde
+async function infSalReal(pred, nombre, rezago = 0) {
+  const [S0, P] = await Promise.all([indecSerie('indice_salarios', pred, nombre), indecSerie('ipc_nacional', s => /nacional/i.test(s.region || '') && /nivel general/i.test(s.descripcion || ''), 'el IPC')]);
+  const S = rezago ? S0.map(p => { const d = indecFin(indecMes(p.d.slice(0, 7), -rezago)); return { d, t: argT(d), v: p.v }; }) : S0;
   const pm = new Map(P.map(p => [p.d, p.v]));
   const r = S.filter(p => pm.has(p.d)).map(p => ({ d: p.d, t: p.t, v: p.v / pm.get(p.d) }));
   const b = r.find(p => p.d === '2016-12-31') || r[0];

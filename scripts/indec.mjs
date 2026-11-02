@@ -14,6 +14,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 export const BASE = "https://api.indec.gob.ar/v1/";
+export const VERSION = 2;   // si cambia lo que se guarda, se vuelve a bajar todo aunque no haya período nuevo
 const UA = "tradingweb (series publicas del INDEC)";   // solo ASCII: un encabezado con tildes puede romper un proxy
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -71,7 +72,14 @@ export const SERVICIOS = {
 const TIEMPO = new Set(["periodo", "anio", "mes", "trimestre", "semestre"]);
 const dimsDe = s => SERVICIOS[s].filter(c => !TIEMPO.has(c));
 
-export const num = x => { if (x == null) return null; const v = typeof x === "number" ? x : parseFloat(String(x).replace(",", ".")); return isFinite(v) ? +v.toPrecision(7) : null; };
+// la API da los valores como texto con coma decimal ("9973,55"); por las dudas, también con punto de miles ("12.005,54")
+export const num = x => {
+  if (x == null) return null;
+  let t = typeof x === "number" ? null : String(x).trim();
+  if (t != null) t = /^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t) ? t.replace(/\./g, "").replace(",", ".") : t.replace(",", ".");
+  const v = t == null ? x : t === "" ? NaN : Number(t);
+  return isFinite(v) ? +(+v).toPrecision(7) : null;
+};
 // período AAAAMM → "AAAA-MM"; AAAAT o AAAAS (trimestre o semestre, un dígito) → "AAAA-T" / "AAAA-S"
 export const perMes = p => { const s = String(p); return s.length >= 6 ? s.slice(0, 4) + "-" + s.slice(4, 6) : null; };
 export const sigMes = (m, k = 1) => { const [y, mm] = m.split("-").map(Number), t = y * 12 + mm - 1 + k; return Math.floor(t / 12) + "-" + String(t % 12 + 1).padStart(2, "0"); };
@@ -113,7 +121,7 @@ async function ultimo(api, s) {
 }
 
 // IPC: el índice de las aperturas con pocos códigos (nivel general, divisiones, categorías, bienes y servicios), todas las
-// regiones. Grupos, clases y subclases (decenas o cientos de códigos) no se guardan
+// regiones. Grupos, clases y subclases no se guardan
 export async function ipc(api, P, enP) {
   const s = "ipc_nacional", dims = SERVICIOS.ipc_nacional;
   const tipos = combos(enP, ["tipo_de_indicador", "tipo_de_indicador_descripcion"]).filter(t => esIndice(t.tipo_de_indicador, t.tipo_de_indicador_descripcion));
@@ -124,7 +132,7 @@ export async function ipc(api, P, enP) {
   for (const r of idx) { const k = r.region; porRegion.set(k, (porRegion.get(k) || 0) + 1); }
   const regionMayor = [...porRegion.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   const grupos = combos(idx, ["clasificador", "nivel"]).map(g => ({ ...g, codigos: new Set(idx.filter(r => r.region === regionMayor && r.clasificador === g.clasificador && r.nivel === g.nivel).map(r => r.codigo)).size }))
-    .filter(g => g.codigos > 0 && g.codigos <= 20);
+    .filter(g => g.codigos > 0 && g.codigos <= 20 && !/grupo|clase/i.test(g.nivel));   // en el GBA, grupos y clases tienen pocos códigos
   if (!grupos.length) throw new Error(s + ": ninguna apertura con 20 códigos o menos");
   const rows = [];
   for (const g of grupos) rows.push(...await api.todas(s, { clasificador: "eq." + g.clasificador, nivel: "eq." + g.nivel, tipo_de_indicador: "eq." + T.tipo_de_indicador }, dims.join(",")));
@@ -190,8 +198,9 @@ export async function main({ fetchImpl = fetch, root = new URL("../", import.met
   if (modo === "diagnostico") { await diagnostico({ fetchImpl, log, token }); return null; }
   const api = cliente(token, { fetchImpl, pausa });
   let prev = {}; try { prev = JSON.parse(await readFile(new URL("indec.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  if (prev.version !== VERSION) prev = {};
   let explora = {}; try { explora = JSON.parse(await readFile(new URL("indec-explora.json", root), "utf8")); } catch (e) { /* primera vez */ }
-  const out = { asOf: new Date().toISOString(), fuente: "INDEC, Catálogo API-INDEC", ult: { ...(prev.ult || {}) }, datos: { ...(prev.datos || {}) }, errores: {} };
+  const out = { version: VERSION, asOf: new Date().toISOString(), fuente: "INDEC, Catálogo API-INDEC", ult: { ...(prev.ult || {}) }, datos: { ...(prev.datos || {}) }, errores: {} };
   explora = { asOf: out.asOf, servicios: { ...(explora.servicios || {}) } };
   for (const s of Object.keys(PEDIDOS)) {
     try {
