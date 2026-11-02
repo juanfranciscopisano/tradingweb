@@ -84,7 +84,8 @@ button,input,select{font:inherit;color:inherit}
 .inf-est:empty{display:none}
 .inf-est-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .inf-est-head .inf-lbl{margin:0}
-.inf-est-rows{display:grid;grid-template-columns:fit-content(300px) repeat(6,auto);justify-content:start;gap:8px 14px;align-items:center}
+.inf-est-rows{display:grid;grid-template-columns:minmax(140px,max-content) repeat(7,auto);justify-content:start;gap:8px 12px;align-items:center;overflow-x:auto;padding:4px;margin:-4px}
+.inf-est-rows .inf-seg{flex-wrap:nowrap;min-width:max-content}
 .inf-est-rows .inf-chip{justify-self:start}
 .inf-est-row{display:contents}
 .inf-est-name{display:flex;align-items:center;gap:8px;min-width:140px;font-size:13px;color:var(--ink)}
@@ -98,7 +99,7 @@ button,input,select{font:inherit;color:inherit}
 .inf-seg-ico button:disabled{opacity:.35;cursor:default}
 .inf-x{background:none;border:0;color:var(--muted);font-size:17px;line-height:1;padding:2px 4px;cursor:pointer;border-radius:4px}
 .inf-x:hover{color:var(--ink);background:var(--surf2)}
-@container (max-width:780px){.inf-est-rows{display:flex;flex-direction:column;align-items:stretch;gap:10px}.inf-est-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}.inf-est-row:last-child{border-bottom:0;padding-bottom:0}.inf-est-name{flex:1 1 100%}}
+@container (max-width:870px){.inf-est-rows{display:flex;flex-direction:column;align-items:stretch;gap:10px}.inf-est-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}.inf-est-row:last-child{border-bottom:0;padding-bottom:0}.inf-est-name{flex:1 1 100%}}
 .inf-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .inf-stage{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;justify-content:center}
 .inf-stage canvas{width:100%;max-width:1200px;height:auto;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -109,6 +110,9 @@ button,input,select{font:inherit;color:inherit}
 .inf-field-wide,.inf-texts .inf-checks{grid-column:1 / -1}
 .inf-reset{padding:4px 10px;font-size:12.5px;margin-left:auto}
 .inf-tes-datos{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:8px}
+.inf-base-nota{margin:6px 0 0}
+.inf-link{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer;text-align:left}
+.inf-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
 .inf-fav{align-self:flex-start;cursor:grab}
 .inf-toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .inf-toast.on{opacity:1;transform:translate(-50%,0)}
@@ -5365,7 +5369,8 @@ const METODO = [
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
         o: 'En una slide del template el título va en la slide: conviene destildar "Título y bajada en la imagen".' },
       { d: 'Gráficos armados: los más usados sueltos y el resto en desplegables por tema (BCRA, Tesoro, INDEC, Tasas y monedas). Al elegir uno, en la lista de series suben los grupos que tienen series del gráfico y después los que comparten fuente con ellas; prender o apagar una serie no reordena, para que la lista no salte.' },
-      { d: 'Series con dos unidades van con eje izquierdo y derecho; con más de dos, en base 100. Base 100 toma como base el primer día en que todas las series tienen dato. Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
+      { d: 'Etiquetas: el último valor de cada serie a la derecha, el valor de cada dato (arriba de cada columna, o de cada punto en líneas de hasta 40 datos) o ninguna. El valor de cada dato va con una decimal en porcentajes y, en niveles, con las de la escala (sin decimales desde 100); si pisa a otro va abajo de su punto y, si tampoco entra, no va. En líneas claras, el texto va en el mismo color oscurecido hasta que se lea. Con datos mensuales, cada dato va a mitad de su mes y abajo va su mes, y los períodos fijos cuentan meses hasta el último dato: el último año son doce meses.' },
+      { d: 'Series con dos unidades van con eje izquierdo y derecho. Con tres, dos comparten un eje: va el reparto en que la serie que menos lugar ocupa de su eje ocupe lo más posible, y mezclar un índice con un porcentaje en un eje cuesta (salario real, pobreza e inflación interanual de cinco años: la inflación sola a la derecha, porque con ella la caída de la pobreza queda en menos de un décimo del eje). Con más de tres, base 100, salvo que se elija el eje de cada serie. El eje de cada serie también se elige a mano, en la lista de series del gráfico; en un eje con unidades distintas van todas arriba y cada etiqueta lleva la suya. Base 100 toma como base el primer día en que todas las series tienen dato, o la fecha que se elija (con datos mensuales, el mes de esa fecha; si es anterior al período, la base sale de la serie entera y las líneas no pasan por 100 en el gráfico). Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
       { d: 'BCRA y Tesoro (API del BCRA, diaria): depósitos del Tesoro en el BCRA en pesos (serie 1265) y en dólares (1266, que viene en pesos y se pasa con el A3500 del día), adelantos transitorios (1268), BOPREAL y LEDIV en circulación (158, en dólares) y letras del BCRA en pesos (1258).',
         o: 'Las series de pases del BCRA (152 a 154 y 1261) están en cero, y la 76 (pase pasivo en dólares con el exterior) también: el REPO con bancos internacionales (US$ 6.000 millones a septiembre de 2028, SOFR + 4%, según el BCRA del 3/7/2026) no figura en la API.' },
       { d: 'Tesoro en bancos (API del BCRA, mensual): depósitos de la administración central en pesos (serie 210) y en dólares (230), del grupo "Depósitos por tipo de titular", con el saldo a fin de mes y dos meses de rezago. En pesos son cuentas corrientes, plazo fijo y otros depósitos (240, 260 y 270; la caja de ahorro es casi cero); en dólares, casi todo caja de ahorro (290). El total suma lo del BCRA del último día hábil del mes.',
@@ -6616,13 +6621,37 @@ const UST_TENORS = [['1M', '1M', 1 / 12], ['2M', '2M', 2 / 12], ['3M', '3M', .25
 const infDecs = step => Math.min(3, (String(+(+step || 1).toPrecision(6)).split('.')[1] || '').length);
 function infFmt(u, step, extra = 0) {
   const dec0 = infDecs(step), pct = /^%/.test(u) ? '%' : '';
-  return v => { const dec = Math.abs(v) >= 1000 ? dec0 : Math.min(3, dec0 + extra); return numAR(v, dec, dec) + pct; };
+  return v => { const dec = Math.abs(v) >= 1000 ? dec0 : Math.min(3, dec0 + extra); return numAR(+v.toFixed(dec) || 0, dec, dec) + pct; };
 }
 function infSince() {
   if (INF.desde) return argT(INF.desde);
   const p = INF_PERIODS.find(x => x[0] === INF.period) || INF_PERIODS[4], now = Date.now() / 1000;
   return p[1] === 'ytd' ? argT(new Date().getUTCFullYear() - 1 + '-12-31') : now - p[1] * 86400;
 }
+// ejes con tres unidades: dos comparten uno. Va el reparto en que la serie que menos lugar ocupa de su eje ocupe lo más
+// posible (una serie plana no cuenta: no tiene nada que aplastar), y mezclar familias de unidades en un eje (un índice con
+// un porcentaje) cuesta: cada familia de más multiplica por 0,6. Salario real, pobreza e inflación interanual de cinco
+// años: la inflación (de 31% a 289%) sola a la derecha; con ella, la caída de la pobreza queda en menos de un décimo del eje
+function infEjesAuto(ser) {
+  const us = [...new Set(ser.map(s => s.u))], fam = u => /^%/.test(u) ? '%' : u;
+  const R = ser.map(s => { const v = s.pts.map(p => p.v); let lo = Math.min(...v), hi = Math.max(...v); if (s.bars) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); } return [lo, hi]; });
+  let mejor = null;
+  for (let m = 1; m < 1 << (us.length - 1); m++) {   // la primera unidad a la izquierda; alguna a la derecha
+    const lado = s => { const i = us.indexOf(s.u); return i > 0 && (m >> (i - 1)) & 1 ? 'R' : 'L'; };
+    let min = 1, extra = 0;
+    for (const side of ['L', 'R']) {
+      const ix = ser.map((_, i) => i).filter(i => lado(ser[i]) === side);
+      const lo = Math.min(...ix.map(i => R[i][0])), hi = Math.max(...ix.map(i => R[i][1]));
+      ix.forEach(i => { const [a, b] = R[i]; if (b > a && hi > lo) min = Math.min(min, (b - a) / (hi - lo)); });
+      extra += new Set(ix.map(i => fam(ser[i].u))).size - 1;
+    }
+    const nota = min * Math.pow(0.6, extra);
+    if (!mejor || nota > mejor.nota) mejor = { nota, ejes: Object.fromEntries(ser.map(s => [s.k, lado(s)])) };
+  }
+  return mejor.ejes;
+}
+// una serie mensual: todos sus datos en el último día del mes (IPC, EMAE, salarios, saldos a fin de mes)
+const infEsMensual = pts => pts.length >= 2 && pts.every(p => p.d === indecFin(p.d.slice(0, 7)));
 async function infBuildSerie() {
   const keys = INF.keys.filter(k => INF_CAT[k]);
   if (!keys.length) return { kind: 'vacio', msg: 'Elegí al menos una serie de la lista.' };
@@ -6632,11 +6661,18 @@ async function infBuildSerie() {
   const enPesos = k => INF_CAT[k].u === '$ billones';
   let cer = null;
   if (INF.real && keys.some(enPesos)) { try { cer = await infBcra(30); } catch (e) { notes.push('No respondió el CER: van en pesos corrientes'); } }
+  // mensuales (todos los datos a fin de mes) en los períodos de largo fijo: los últimos meses hasta el último dato mensual del
+  // gráfico, para que el último año sean doce meses sea el día que sea. Si ese dato es de antes del período, como cualquiera
+  const mensK = res.map(r => r.status === 'fulfilled' && infEsMensual(r.value));
+  const nMeses = INF.desde ? 0 : { '3M': 3, '6M': 6, '1A': 12, '2A': 24, '5A': 60 }[INF.period] || 0;
+  const ultMes = res.reduce((m, r, i) => { const u = mensK[i] ? r.value[r.value.length - 1].d.slice(0, 7) : ''; return u > m ? u : m; }, '');
+  const desdeMes = nMeses && ultMes >= new Date(since * 1000).toISOString().slice(0, 7) ? indecMes(ultMes, 1 - nMeses) : null;
   let ser = keys.map((k, i) => {
     const c = INF_CAT[k];
     if (res[i].status !== 'fulfilled') { notes.push(c.n + ': no respondió la fuente (' + (res[i].reason?.message || 'error') + ')'); return null; }
     const inv = !!(INF.inv[k] && c.par);   // par invertido: k / valor (el peso en dólares por cada $1.000)
-    let pts = res[i].value.filter(p => p.t >= since - 43200).map(p => ({ d: p.d, t: p.t, v: inv ? c.par.k / p.v : p.v }));
+    const mensual = mensK[i];
+    let pts = res[i].value.filter(p => mensual && desdeMes ? p.d.slice(0, 7) >= desdeMes : p.t >= since - 43200).map(p => ({ d: p.d, t: p.t, v: inv ? c.par.k / p.v : p.v }));
     if (c.flow) { let acc = 0; pts = pts.map(p => ({ d: p.d, t: p.t, v: (acc += p.v) })); }
     let uReal = null;
     if (cer && cer.length && enPesos(k)) {
@@ -6646,25 +6682,58 @@ async function infBuildSerie() {
       uReal = '$ billones de hoy'; cer.ult = ult;
     }
     if (pts.length < 2) { notes.push(c.n + ': ' + (c.nota ? c.nota + '; todavía no alcanza para el período' : 'sin datos en el período')); return null; }
+    // el dato de una fecha cualquiera, con los mismos ajustes: la base 100 puede caer antes del período. Con datos mensuales,
+    // el del mes de la fecha. Los flujos acumulados no tienen (arrancan en el período)
+    const cerUlt = uReal ? cer.ult : null;
+    const enT = c.flow ? null : (t, mes) => {
+      const src = res[i].value, q = (mes && src.find(p => p.d.slice(0, 7) === mes)) || valAt(src, t); if (!q) return null;
+      let v = inv ? c.par.k / q.v : q.v;
+      if (cerUlt) { const z = valAt(cer, q.t); if (!z) return null; v = v * cerUlt.v / z.v; }
+      return { d: q.d, t: q.t, v };
+    };
     if (res[i].value.src && res[i].value.src !== c.src && /Yahoo/.test(res[i].value.src)) notes.push(c.n + ': Yahoo Finance sin los saltos de un día (la fuente oficial no respondió)');
     const mix = res[i].value.mezcla && pts[0].t < res[i].value.mezclaT;   // tramo viejo de Yahoo dentro del período
     if (mix) notes.push(c.n + ': ' + res[i].value.mezcla);
-    return { k, name: inv ? c.par.n : c.n, u: uReal || (inv ? c.par.u : c.u), src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k] };
+    return { k, name: inv ? c.par.n : c.n, u: uReal || (inv ? c.par.u : c.u), src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k], mensual, enT };
   }).filter(Boolean);
   if (!ser.length) return { kind: 'vacio', msg: notes.join('. ') || 'Sin datos.' };
   if (cer && cer.ult && ser.some(s => s.u === '$ billones de hoy')) { notes.push('Pesos de hoy: ajustados por CER al ' + infDdmmaa(cer.ult.d)); ser.forEach(s => { if (s.u === '$ billones de hoy' && !/BCRA/.test(s.src)) s.src += ' y BCRA'; }); }
+  // ejes: el que se eligió a mano para cada serie, o uno por unidad; con tres unidades, dos comparten eje (infEjesAuto); con
+  // más, base 100
   let trans = INF.trans, units = [...new Set(ser.map(s => s.u))];
-  if (trans === 'nivel' && units.length > 2) { trans = 'base'; notes.push('Más de dos unidades distintas: van en base 100'); }
-  let base0 = null;
+  const ejes = INF.ejes || {}, manual = ser.some(s => ejes[s.k]);
+  if (trans === 'nivel' && units.length > 3 && !manual) { trans = 'base'; notes.push('Más de tres unidades distintas: van en base 100 (o elegí el eje de cada serie)'); }
+  let base0 = null, baseTxt = '';
   if (trans === 'base') {
-    base0 = Math.max(...ser.map(s => s.pts[0].t));
-    ser = ser.map(s => { const b = valAt(s.pts, base0) || s.pts[0]; return { ...s, u: 'base 100', pts: s.pts.filter(p => p.t >= base0 - 43200).map(p => ({ d: p.d, t: p.t, v: p.v / b.v * 100 })) }; });
+    // base: la fecha elegida o el primer día con todas las series. Con datos mensuales vale el dato del mes de la fecha. Una
+    // fecha anterior al período también sirve: el gráfico muestra el período y las líneas no pasan por 100
+    const elegida = INF.base100 ? argT(INF.base100) : null, mensuales = ser.every(s => s.mensual);
+    const enBase = (s, t) => { const mes = s.mensual ? new Date(t * 1000).toISOString().slice(0, 7) : null;
+      return s.enT ? s.enT(t, mes) : (mes && s.pts.find(p => p.d.slice(0, 7) === mes)) || valAt(s.pts, t); };
+    let fija = elegida;
+    if (elegida && !ser.some(s => enBase(s, elegida))) { notes.push('Ninguna serie tiene datos al ' + infDdmmaa(INF.base100) + ': va el primer día con todas las series'); fija = null; }
+    base0 = fija ?? Math.max(...ser.map(s => s.pts[0].t));
+    const iso = new Date(base0 * 1000).toISOString().slice(0, 10);
+    baseTxt = mensuales ? MES_CORTO[+iso.slice(5, 7) - 1].toLowerCase() + '-' + iso.slice(2, 4) : infDdmmaa(iso);
+    ser = ser.map(s => { const b = fija ? enBase(s, fija) : valAt(s.pts, base0) || s.pts[0];
+      if (!b) { notes.push(s.name + ': no tiene datos al ' + baseTxt); return null; }
+      if (!(b.v > 0)) { notes.push(s.name + ': no va en base 100 (en la base vale ' + numAR(b.v, 2, 2) + ')'); return null; }
+      return { ...s, u: 'base 100', pts: s.pts.filter(p => fija || p.t >= base0 - 43200).map(p => ({ d: p.d, t: p.t, v: p.v / b.v * 100 })) }; }).filter(Boolean);
     // una serie que termina antes de que empiece otra no tiene base común (S&P Merval y MSCI MERVAL)
-    ser = ser.filter(s => { if (s.pts.length >= 2) return true; notes.push(s.name + ': no tiene datos desde la base (' + infDdmmaa(new Date(base0 * 1000).toISOString().slice(0, 10)) + ')'); return false; });
+    ser = ser.filter(s => { if (s.pts.length >= 2) return true; notes.push(s.name + ': no tiene datos desde la base (' + baseTxt + ')'); return false; });
     if (!ser.length) return { kind: 'vacio', msg: notes.join('. '), notes };
     units = ['base 100'];
-  }
-  ser.forEach(s => { s.axis = units.indexOf(s.u) === 1 ? 'R' : 'L'; });   // colores, grosor y trazo: infEstilar
+    ser.forEach(s => { s.axis = 'L'; });
+  } else {
+    const auto = units.length > 2 ? infEjesAuto(ser) : Object.fromEntries(ser.map(s => [s.k, units.indexOf(s.u) === 1 ? 'R' : 'L']));
+    ser.forEach(s => { s.axis = ejes[s.k] || auto[s.k] || 'L'; });
+    if (!ser.some(s => s.axis === 'L')) ser.forEach(s => { s.axis = 'L'; });   // todo a la derecha: va a la izquierda
+    // la unidad de cada eje: la de sus series; porcentajes distintos, "%"; mezcladas, todas, con las que no son porcentaje
+    // primero (así las marcas del eje no llevan %)
+    const uDe = side => { const us = [...new Set(ser.filter(s => s.axis === side).map(s => s.u))]; if (!us.length) return null; if (us.length === 1) return us[0];
+      return us.every(u => /^%/.test(u)) ? '%' : us.sort((a, b) => /^%/.test(a) - /^%/.test(b)).join(', '); };
+    units = [uDe('L'), uDe('R')].filter(Boolean);
+  }   // colores, grosor y trazo: infEstilar
   // columnas: un punto por día si entran (5 px por columna como mínimo); si no, el último dato de cada semana o de cada mes
   const anchoPlot = (INF_SIZES[INF.size] || INF_SIZES.ancho)[0] * 0.78;
   ser.filter(s => s.bars).forEach(s => {
@@ -6675,7 +6744,7 @@ async function infBuildSerie() {
   const desfasadas = ser.filter(s => (Date.parse(last) - Date.parse(s.pts[s.pts.length - 1].d)) / 86400000 > 4);
   desfasadas.forEach(s => notes.push(s.name + ' llega hasta el ' + infDdmmaa(s.pts[s.pts.length - 1].d)));
   const preset = INF_PRESETS.find(p => p.id === INF.preset);
-  const unitTxt = u => u === 'base 100' ? 'base 100 = ' + infDdmmaa(new Date(base0 * 1000).toISOString().slice(0, 10)) : u;
+  const unitTxt = u => u === 'base 100' ? 'base 100 = ' + baseTxt : u;
   const periodo = INF.desde ? 'desde el ' + infDdmmaa(INF.desde) : { '1M': 'último mes', '3M': 'últimos 3 meses', '6M': 'últimos 6 meses', 'YTD': 'en lo que va del año', '1A': 'último año', '2A': 'últimos 2 años', '5A': 'últimos 5 años' }[INF.period];
   const invIgual = ser.every(s => !!s.inv === !!(preset?.inv || {})[s.k]);   // el título del gráfico armado vale si los pares están como los trae
   const tAuto = (preset && preset.t && sameKeys(preset.keys, keys) && invIgual) ? preset.t : infJoinY(ser.map(s => s.name.replace(/ \(.*\)$/, '')));
@@ -6964,29 +7033,36 @@ function infColor(key, c) {
 }
 function infGrosor(key, g) { infEstSet(key, 'grosor', g); infRestyle(); }
 function infTrazo(key, t) { infEstSet(key, 'trazo', t); infRestyle(); }
-function infEstAuto() { const sp = infSpec; if (!sp || !sp.ser) return; const e = { ...(INF.estilo || {}) }; sp.ser.forEach(s => delete e[infEstKey(sp, s)]); INF.estilo = e; infRestyle(); }
+function infEstAuto() {
+  const sp = infSpec; if (!sp || !sp.ser) return; const e = { ...(INF.estilo || {}) }; sp.ser.forEach(s => delete e[infEstKey(sp, s)]); INF.estilo = e;
+  if (Object.keys(INF.ejes || {}).length) { INF.ejes = {}; infUpdate(); } else infRestyle();
+}
 function infRestyle() { infSave(); infEstilar(infSpec); renderInfCtl(); infPaint(); }
 const infLineSvg = (color, w, tr, len = 26) => '<svg width="' + len + '" height="12" viewBox="0 0 ' + len + ' 12" aria-hidden="true"><line x1="' + (2 + w / 2) + '" y1="6" x2="' + (len - 2 - w / 2) + '" y2="6" stroke="' + color + '" stroke-width="' + w + '" stroke-linecap="' + infCap(tr) + '"' + (infDash(tr, w).length ? ' stroke-dasharray="' + infDash(tr, w).join(' ') + '"' : '') + '/></svg>';
 function renderInfEst() {
   const E = document.getElementById('infEst'); if (!E) return;
   const sp = infSpec;
   if (!sp || !sp.ser || !sp.ser.length || sp.kind === 'vacio') { E.innerHTML = ''; return; }
+  // columnas: eje (solo con valores: en base 100 hay uno solo), columnas, par invertido (si alguna lo tiene) y quitar. Una
+  // celda por columna en cada fila, vacía si a esa serie no le toca, para que las filas queden alineadas
+  const esSerie = sp.kind === 'serie', colEje = esSerie && sp.units[0] !== 'base 100', colInv = esSerie && sp.ser.some(s => INF_CAT[s.k]?.par);
+  const nCol = 3 + (colEje ? 1 : 0) + (esSerie ? 2 : 0) + (colInv ? 1 : 0);
   const rows = sp.ser.map(s => {
-    const key = infEstKey(sp, s), q = "'" + key + "'", barras = infEnBarras(sp, s), c = sp.kind === 'serie' ? INF_CAT[s.k] : null;
+    const key = infEstKey(sp, s), q = "'" + key + "'", barras = infEnBarras(sp, s), c = esSerie ? INF_CAT[s.k] : null;
     const muestra = barras ? '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><rect x="11" y="0" width="12" height="12" fill="' + s.color + '"/></svg>' : infLineSvg(s.color, s.w, s.trazo, 34);
     let h = '<div class="inf-est-row"><div class="inf-est-name">' + muestra + '<span title="' + s.name.replace(/"/g, '&quot;') + '">' + s.name + '</span></div>';
     h += '<div class="inf-sw" role="group" aria-label="Color de ' + s.name.replace(/"/g, '&quot;') + '">' + INF_COLORES.map(([n, col]) => '<button type="button" class="' + (col === s.color ? 'on' : '') + '" style="background:' + col + '" title="' + n[0].toUpperCase() + n.slice(1) + '" aria-label="' + n + '" aria-pressed="' + (col === s.color) + '" onclick="infColor(' + q + ', \'' + col + '\')"></button>').join('') + '</div>';
     h += '<div class="inf-seg inf-seg-ico" role="group" aria-label="Grosor">' + INF_GROSOR.map(([g, w, l]) => '<button type="button" class="' + (s.grosor === g ? 'on' : '') + '" title="' + l + '" aria-label="' + l + '" aria-pressed="' + (s.grosor === g) + '"' + (barras ? ' disabled' : '') + ' onclick="infGrosor(' + q + ', \'' + g + '\')">' + infLineSvg('currentColor', w, 'solida', 22) + '</button>').join('') + '</div>';
     h += '<div class="inf-seg inf-seg-ico" role="group" aria-label="Trazo">' + INF_TRAZO.map(([t, l]) => '<button type="button" class="' + (s.trazo === t ? 'on' : '') + '" title="' + l + '" aria-label="' + l + '" aria-pressed="' + (s.trazo === t) + '"' + (barras ? ' disabled' : '') + ' onclick="infTrazo(' + q + ', \'' + t + '\')">' + infLineSvg('currentColor', 2, t, 28) + '</button>').join('') + '</div>';
-    // columnas, par invertido y quitar: una celda cada uno, vacía si no corresponde, para que las filas queden alineadas
+    if (colEje) h += '<div class="inf-seg inf-seg-eje" role="group" aria-label="Eje de ' + s.name.replace(/"/g, '&quot;') + '">' + [['L', 'Izq.', 'Eje izquierdo'], ['R', 'Der.', 'Eje derecho']].map(([e, l, t]) => '<button type="button" class="' + (s.axis === e ? 'on' : '') + '" title="' + t + '" aria-pressed="' + (s.axis === e) + '" onclick="infEje(\'' + s.k + '\', \'' + e + '\')">' + l + '</button>').join('') + '</div>';
     const on = c && !!INF.bars[s.k], inv = c && !!INF.inv[s.k];
-    h += c ? '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infBars(\'' + s.k + '\')"><span class="inf-bar-ico' + (on ? ' on' : '') + '"></span>Columnas</button>' : '<span></span>';
-    h += c && c.par ? '<button type="button" class="inf-chip' + (inv ? ' on' : '') + '" aria-pressed="' + inv + '" title="' + (inv ? 'Volver a ' + c.u : 'Ver en ' + c.par.u) + '" onclick="infInv(\'' + s.k + '\', \'' + (inv ? 'n' : 'i') + '\')">⇄ Invertir</button>' : '<span></span>';
-    h += c ? '<button type="button" class="inf-x" title="Quitar del gráfico" aria-label="Quitar ' + s.name.replace(/"/g, '&quot;') + ' del gráfico" onclick="infToggle(\'' + s.k + '\')">×</button>' : '<span></span>';
+    if (esSerie) h += '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infBars(\'' + s.k + '\')"><span class="inf-bar-ico' + (on ? ' on' : '') + '"></span>Columnas</button>';
+    if (colInv) h += c.par ? '<button type="button" class="inf-chip' + (inv ? ' on' : '') + '" aria-pressed="' + inv + '" title="' + (inv ? 'Volver a ' + c.u : 'Ver en ' + c.par.u) + '" onclick="infInv(\'' + s.k + '\', \'' + (inv ? 'n' : 'i') + '\')">⇄ Invertir</button>' : '<span></span>';
+    if (esSerie) h += '<button type="button" class="inf-x" title="Quitar del gráfico" aria-label="Quitar ' + s.name.replace(/"/g, '&quot;') + ' del gráfico" onclick="infToggle(\'' + s.k + '\')">×</button>';
     return h + '</div>';
   }).join('');
-  const hay = sp.ser.some(s => Object.keys((INF.estilo || {})[infEstKey(sp, s)] || {}).length);
-  E.innerHTML = '<div class="inf-est-head"><div class="inf-lbl">Series del gráfico</div>' + (hay ? '<button class="btn btn-ghost inf-reset" type="button" onclick="infEstAuto()">Estilos automáticos</button>' : '') + '</div><div class="inf-est-rows">' + rows + '</div>';
+  const hay = sp.ser.some(s => Object.keys((INF.estilo || {})[infEstKey(sp, s)] || {}).length) || Object.keys(INF.ejes || {}).length > 0;
+  E.innerHTML = '<div class="inf-est-head"><div class="inf-lbl">Series del gráfico</div>' + (hay ? '<button class="btn btn-ghost inf-reset" type="button" onclick="infEstAuto()">Estilos automáticos</button>' : '') + '</div><div class="inf-est-rows" style="grid-template-columns:minmax(140px,max-content) repeat(' + nCol + ',auto)">' + rows + '</div>';
 }
 
 // ---- dibujo
@@ -7067,21 +7143,38 @@ function infTicks(lo, hi, n) {
 }
 function infAxis(lo, hi, n = 6) { const pad = (hi - lo) * 0.06 || Math.abs(hi) * 0.05 || 1; lo -= pad; hi += pad; const tk = infTicks(lo, hi, n); return { lo: Math.min(lo, tk[0]), hi: Math.max(hi, tk[tk.length - 1]), tk }; }
 function infPlotSerie(ctx, sp, P) {
-  const all = sp.ser.flatMap(s => s.pts), t0 = Math.min(...all.map(p => p.t)), t1 = Math.max(...all.map(p => p.t));
+  const etq = INF.etiq || 'ult';
+  // con datos mensuales (fin de mes) cada punto va a mitad de su mes y abajo va el mes del dato: sin esto, el de septiembre
+  // quedaba bajo la marca de "Oct" (el 1/10 está pegado al 30/9)
+  const mens = sp.ser.every(s => s.mensual);
+  const tx = p => mens ? Date.UTC(+p.d.slice(0, 4), +p.d.slice(5, 7) - 1, 15, 12) / 1000 : p.t;
+  const conBarras = sp.ser.filter(s => s.bars && s.barPts);
+  // etiquetas: el último valor a la derecha, el valor de cada dato (columnas de hasta 60 datos, líneas de hasta 40) o ninguna
+  const enCada = s => etq === 'todas' && (s.bars && s.barPts ? s.barPts.length <= 60 : s.pts.length <= 40);
+  const conTag = s => etq === 'ult' || (etq === 'todas' && !enCada(s));
+  const all = sp.ser.flatMap(s => s.pts);
+  let t0 = Math.min(...all.map(tx)), t1 = Math.max(...all.map(tx));
+  // con columnas, medio lugar libre a cada lado: la primera no tapa el eje y la última no pisa las etiquetas
+  if (conBarras.length) { const nb = Math.max(...conBarras.map(s => s.barPts.length)), dt = nb > 1 ? (t1 - t0) / (nb - 1) : 15 * 86400; t0 -= dt / 2; t1 += dt / 2; }
   const axes = {};
   for (const side of ['L', 'R']) { const v = sp.ser.filter(s => s.axis === side).flatMap(s => s.pts.map(p => p.v)); if (v.length) {
-    const conBarras = sp.ser.some(s => s.axis === side && s.bars), mn = Math.min(...v), mx = Math.max(...v);
-    const a = infAxis(conBarras ? Math.min(mn, 0) : mn, conBarras ? Math.max(mx, 0) : mx);
-    if (conBarras && mn >= 0) { a.lo = 0; a.tk = a.tk.filter(t => t >= 0); }   // las columnas nacen en cero
-    a.u = side === 'L' ? sp.units[0] : sp.units[1]; const st = a.tk.length > 1 ? a.tk[1] - a.tk[0] : 1; a.fmt = infFmt(a.u, st); a.fmtEnd = infFmt(a.u, st, 1); axes[side] = a; } }
+    const barrasLado = sp.ser.some(s => s.axis === side && s.bars), mn = Math.min(...v);
+    // con el valor arriba de cada dato, un poco más de aire arriba (y abajo si hay negativos) para que no se corte
+    const aire = sp.ser.some(s => s.axis === side && enCada(s)) ? (Math.max(...v) - Math.min(0, mn)) * 0.08 : 0, mx = Math.max(...v) + aire;
+    const a = infAxis(barrasLado ? Math.min(mn - (mn < 0 ? aire : 0), 0) : mn - (mn < 0 && aire ? aire : 0), barrasLado ? Math.max(mx, 0) : mx);
+    if (barrasLado && mn >= 0) { a.lo = 0; a.tk = a.tk.filter(t => t >= 0); }   // las columnas nacen en cero
+    a.u = side === 'L' ? sp.units[0] : sp.units[1]; const st = a.tk.length > 1 ? a.tk[1] - a.tk[0] : 1; a.st = st; a.fmt = infFmt(a.u, st); a.fmtEnd = infFmt(a.u, st, 1); axes[side] = a; } }
+  // el valor de cada dato: una decimal en porcentajes; en niveles, según la escala (sin decimales desde 100)
+  const fmtVal = (s, v) => { const ax = axes[s.axis], d = /^%/.test(s.u || '') ? 1 : Math.abs(v) >= 100 ? 0 : Math.min(2, infDecs(ax.st) + 1); return numAR(+v.toFixed(d) || 0, d, d); };
   ctx.font = `12px ${BV_SANS}`;
   const wL = Math.max(...axes.L.tk.map(v => infW(ctx, axes.L.fmt(v)))) + 10;
   const wR = axes.R ? Math.max(...axes.R.tk.map(v => infW(ctx, axes.R.fmt(v)))) + 10 : 0;
   // etiquetas del último valor a la derecha (o a la derecha del eje derecho)
   ctx.font = `700 11.5px ${BV_SANS}`;
-  const endTxt = sp.ser.map(s => (axes[s.axis].fmtEnd)(s.pts[s.pts.length - 1].v));
-  const wEnd = Math.max(...endTxt.map(t => infW(ctx, t))) + 14;
-  const x0 = P.x0 + wL, x1 = P.x1 - wR - wEnd - 8, y0 = P.y0 + (axes.R || !INF.titulos ? 18 : 6), y1 = P.y1 - 22;
+  // cada una con su unidad: en un eje con unidades mezcladas, la pobreza lleva % y el salario real no
+  const endTxt = sp.ser.map(s => infFmt(s.u, axes[s.axis].st, 1)(s.pts[s.pts.length - 1].v));
+  const wEnd = sp.ser.some(conTag) ? Math.max(...endTxt.filter((_, i) => conTag(sp.ser[i])).map(t => infW(ctx, t))) + 14 : 0;
+  const x0 = P.x0 + wL, x1 = P.x1 - wR - wEnd - (wEnd || wR ? 8 : 0), y0 = P.y0 + (axes.R || !INF.titulos ? 18 : 6), y1 = P.y1 - 22;
   const xs = t => x0 + (t - t0) / (t1 - t0 || 1) * (x1 - x0);
   const ysOf = a => v => y0 + (1 - (v - a.lo) / (a.hi - a.lo)) * (y1 - y0);
   // grilla y ejes
@@ -7095,34 +7188,69 @@ function infPlotSerie(ctx, sp, P) {
     ctx.textAlign = 'left'; ctx.fillText(sp.unitTxt(axes.L.u), P.x0, P.y0 + 4);
     if (axes.R) { ctx.textAlign = 'right'; ctx.fillText(sp.unitTxt(axes.R.u), P.x1, P.y0 + 4); }
   }
-  // fechas
+  // fechas: con datos mensuales, el mes de cada dato (y el último siempre); si no, el comienzo de cada mes o año
   ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center';
   ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, Math.round(y1) + 0.5); ctx.lineTo(x1, Math.round(y1) + 0.5); ctx.stroke();
-  infDateTicks(t0, t1, x1 - x0).forEach(([t, lbl]) => { const x = xs(t); ctx.fillText(lbl, x, y1 + 17); });
+  (mens ? infMesTicks(all, x1 - x0) : infDateTicks(t0, t1, x1 - x0)).forEach(([t, lbl]) => { ctx.fillText(lbl, xs(t), y1 + 17); });
   // base 100: línea de referencia
   if (sp.units[0] === 'base 100' && axes.L.lo < 100 && axes.L.hi > 100) { const yy = Math.round(ysOf(axes.L)(100)) + 0.5; ctx.strokeStyle = BV.texto2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]); }
+  // el valor arriba (o abajo, si es negativo) de un punto, con un borde blanco para que se lea sobre la grilla. Sin pisarse:
+  // primero los de las columnas y después los de cada línea, en el orden de las series; el que no entra ni arriba ni abajo
+  // de su punto no va
+  const rotulo = (txt, x, y, color) => { ctx.lineWidth = 3; ctx.strokeStyle = '#ffffff'; ctx.lineJoin = 'round'; ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y); };
+  const ocupado = [];
+  const ubicar = (txt, x, ys) => { const w = infW(ctx, txt);
+    for (const y of ys) { const b = [x - w / 2 - 2, y - 10, x + w / 2 + 2, y + 2];
+      if (b[1] < P.y0 || b[3] > y1 - 2 || ocupado.some(o => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1])) continue;
+      ocupado.push(b); return y; }
+    return null; };
   // columnas primero, para que las líneas queden arriba
-  const conBarras = sp.ser.filter(s => s.bars && s.barPts);
   conBarras.forEach((s, bi) => {
     const ax = axes[s.axis], ys = ysOf(ax), y0v = ys(Math.min(Math.max(0, ax.lo), ax.hi));
     const slot = (x1 - x0) / Math.max(1, s.barPts.length), w = Math.max(1, slot * 0.72 / conBarras.length);
     ctx.fillStyle = s.color;
-    s.barPts.forEach(p => { const x = xs(p.t) - slot * 0.36 + bi * w, y = ys(p.v); ctx.fillRect(x, Math.min(y, y0v), w, Math.max(0.5, Math.abs(y0v - y))); });
+    s.barPts.forEach(p => { const x = xs(tx(p)) - slot * 0.36 + bi * w, y = ys(p.v); ctx.fillRect(x, Math.min(y, y0v), w, Math.max(0.5, Math.abs(y0v - y))); });
+    if (enCada(s) && w >= 9) {
+      ctx.font = `600 ${w >= 22 ? 11 : 9.5}px ${BV_SANS}`; ctx.textAlign = 'center';
+      s.barPts.forEach(p => { const x = xs(tx(p)) - slot * 0.36 + bi * w + w / 2, y = ys(p.v), t = fmtVal(s, p.v), yy = ubicar(t, x, [p.v >= 0 ? y - 5 : y + 13]); if (yy != null) rotulo(t, x, yy, BV.navy); });
+    }
   });
   // series: la primera arriba de todo (navy manda)
   [...sp.ser].reverse().forEach(s => {
     if (s.bars && s.barPts) return;
     const ys = ysOf(axes[s.axis]);
     ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2.25; ctx.lineJoin = 'round'; ctx.lineCap = s.cap || 'butt'; ctx.setLineDash(s.dash || []); ctx.beginPath();
-    s.pts.forEach((p, i) => i ? ctx.lineTo(xs(p.t), ys(p.v)) : ctx.moveTo(xs(p.t), ys(p.v))); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
+    s.pts.forEach((p, i) => i ? ctx.lineTo(xs(tx(p)), ys(p.v)) : ctx.moveTo(xs(tx(p)), ys(p.v))); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
+  });
+  sp.ser.forEach(s => {
+    if ((s.bars && s.barPts) || !enCada(s)) return;
+    const ys = ysOf(axes[s.axis]), tinta = infTinta(s.color); ctx.font = `600 10.5px ${BV_SANS}`; ctx.textAlign = 'center';
+    s.pts.forEach(p => { const y = ys(p.v), x = xs(tx(p)), t = fmtVal(s, p.v), yy = ubicar(t, x, p.v >= 0 ? [y - 8, y + 17] : [y + 17, y - 8]); if (yy != null) rotulo(t, x, yy, tinta); });
   });
   // último valor en una etiqueta del color de la serie, sin pisarse
-  const tags = sp.ser.map((s, i) => ({ y: ysOf(axes[s.axis])(s.pts[s.pts.length - 1].v), txt: endTxt[i], color: s.color, ink: s.ink || '#ffffff', xe: xs(s.pts[s.pts.length - 1].t) })).sort((a, b) => a.y - b.y);
+  const tags = sp.ser.map((s, i) => ({ s, y: ysOf(axes[s.axis])(s.pts[s.pts.length - 1].v), txt: endTxt[i], color: s.color, ink: s.ink || '#ffffff' })).filter(t => conTag(t.s)).sort((a, b) => a.y - b.y);
   for (let i = 1; i < tags.length; i++) if (tags[i].y - tags[i - 1].y < 19) tags[i].y = tags[i - 1].y + 19;
   const over = tags.length ? tags[tags.length - 1].y - (y1 - 6) : 0; if (over > 0) tags.forEach(t => { t.y -= over; });
   ctx.font = `700 11.5px ${BV_SANS}`; ctx.textAlign = 'left';
   tags.forEach(t => { const w = infW(ctx, t.txt) + 12; ctx.fillStyle = t.color; infRound(ctx, x1 + 6, t.y - 9, w, 18, 3); ctx.fill(); ctx.fillStyle = t.ink; ctx.fillText(t.txt, x1 + 12, t.y + 4); });
   ctx.textAlign = 'left';
+}
+// marcas de datos mensuales: el mes de cada dato a mitad de mes, cada tantos meses para que entren (52 px como mínimo),
+// contando desde el último, que siempre lleva su mes
+function infMesTicks(pts, ancho) {
+  const ds = pts.map(p => p.d).sort(), m0 = ds[0].slice(0, 7), m1 = ds[ds.length - 1].slice(0, 7), meses = [];
+  for (let m = m0; m <= m1; m = indecMes(m, 1)) meses.push(m);
+  const paso = [1, 2, 3, 6, 12, 24].find(k => k * ancho / Math.max(1, meses.length) >= 52) || 24;
+  return meses.filter((_, i) => (meses.length - 1 - i) % paso === 0).map(m => [Date.UTC(+m.slice(0, 4), +m.slice(5, 7) - 1, 15, 12) / 1000, MES_CORTO[+m.slice(5, 7) - 1] + ' ' + m.slice(2, 4)]);
+}
+// el color de un texto sobre blanco: el de la serie, oscurecido (sin cambiar el tono) hasta un contraste de 3,2 o más. El
+// celeste de las estacionales queda celeste oscuro, no del teal de los regulados
+function infTinta(c) {
+  const h = String(c || '').replace('#', ''); if (!/^[0-9a-f]{6}$/i.test(h)) return c;
+  let rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+  const lum = () => rgb.map(x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }).reduce((a, x, i) => a + x * [0.2126, 0.7152, 0.0722][i], 0);
+  for (let k = 0; k < 25 && 1.05 / (lum() + 0.05) < 3.2; k++) rgb = rgb.map(x => x * 0.92);
+  return '#' + rgb.map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
 }
 const infTxtSobre = c => { const h = String(c || '').replace('#', ''); if (h.length !== 6) return '#fff'; const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? BV.navy : '#fff'; };
 function infPlotPagos(ctx, sp, P) {
@@ -7324,6 +7452,9 @@ function renderInfCtl() {
     h += '<div class="inf-lbl">Período</div>' + seg(INF_PERIODS.map(p => [p[0], p[0]]), INF.desde ? '' : INF.period, 'infPeriod')
       + '<label class="inf-desde">Desde <input type="date" value="' + (INF.desde || '') + '" onchange="infDesde(this.value)"></label>';
     h += '<div class="inf-lbl">Escala</div>' + seg([['nivel', 'Valores'], ['base', 'Base 100']], INF.trans, 'infTrans');
+    if (INF.trans === 'base') h += '<label class="inf-desde">Base 100 al <input type="date" max="' + new Date().toISOString().slice(0, 10) + '" value="' + (INF.base100 || '') + '" onchange="infBase100(this.value)"></label>'
+      + '<div class="inf-tes-datos inf-base-nota">' + (INF.base100 ? 'Con datos mensuales vale el mes de la fecha. <button type="button" class="inf-link" onclick="infBase100(\'\')">Volver al primer día con todas las series</button>' : 'Sin fecha: el primer día con todas las series. Con datos mensuales vale el mes de la fecha.') + '</div>';
+    h += '<div class="inf-lbl">Etiquetas</div>' + seg([['ult', 'Último valor'], ['todas', 'Cada dato'], ['no', 'Ninguna']], INF.etiq || 'ult', 'infEtiq');
     if (INF.keys.some(k => INF_CAT[k]?.u === '$ billones')) h += '<div class="inf-checks"><label><input type="checkbox"' + (INF.real ? ' checked' : '') + ' onchange="infSet(\'real\', this.checked)"> Agregados en pesos de hoy (CER)</label></div>';
     if (!infGrpOrd) infGrpOrd = infOrdenGrupos(INF.keys);
     cat = '<div class="inf-lbl inf-lbl-first">Series</div><div class="inf-cat-grid">' + infGrpOrd.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
@@ -7357,6 +7488,7 @@ function infPreset(id) {
   const p = INF_PRESETS.find(x => x.id === id); if (!p) return;
   INF.preset = id; INF.mode = p.mode; INF.edit = { t: false, b: false, f: false }; INF.desde = '';
   if (p.mode === 'serie') infGrpOrd = infOrdenGrupos(p.keys);
+  INF.ejes = {}; INF.base100 = '';
   if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; INF.tramo = 'toda'; if (p.tasa) INF.tasa = p.tasa; }
   infUpdate();
 }
@@ -7366,6 +7498,9 @@ function infBars(k) { INF.bars = { ...INF.bars, [k]: !INF.bars[k] }; infUpdate()
 function infPeriod(p) { INF.period = p; INF.desde = ''; infUpdate(); }
 function infDesde(d) { INF.desde = d || ''; infUpdate(); }
 function infTrans(t) { INF.trans = t; infUpdate(); }
+function infEtiq(e) { INF.etiq = e; infUpdate(); }
+function infBase100(d) { INF.base100 = d || ''; infUpdate(); }
+function infEje(k, side) { INF.ejes = { ...(INF.ejes || {}), [k]: side }; infUpdate(); }
 function infCurva(c) { INF.curva = c; INF.preset = INF_PRESETS.some(p => p.id === c && p.mode === 'curva') ? c : ''; INF.edit = { t: false, b: false, f: false }; infUpdate(); }
 function infPagosPor(v) { INF.pagosPor = v; infUpdate(); }
 function infTes(k, v) { INF.tesoro = { ...(INF.tesoro || {}), [k]: v }; infUpdate(); }
