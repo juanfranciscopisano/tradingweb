@@ -8,7 +8,12 @@ on:
   push:
     branches: [main]
     paths: ["scripts/indec.mjs", ".github/workflows/indec.yml"]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "diario: las series del Informe (indec.json); diagnostico: el mismo pedido con y sin token, solo en el log"
+        required: false
+        default: "diario"
 
 permissions:
   contents: write
@@ -32,6 +37,7 @@ jobs:
         run: node scripts/indec.mjs
         env:
           INDEC_API_TOKEN: ${{ secrets.INDEC_API_TOKEN }}
+          MODO: ${{ inputs.modo || 'diario' }}
       - name: Commit si cambió
         run: |
           git config user.name "github-actions[bot]"

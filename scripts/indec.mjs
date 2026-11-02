@@ -14,6 +14,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 export const BASE = "https://api.indec.gob.ar/v1/";
+const UA = "tradingweb (series publicas del INDEC)";   // solo ASCII: un encabezado con tildes puede romper un proxy
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // query string con %20 (no "+") y los * de ilike sin escapar
@@ -30,7 +31,7 @@ export function cliente(token, { fetchImpl = fetch, pausa = 250 } = {}) {
     const url = BASE + tabla + (Object.keys(params).length ? "?" + qs(params) : "");
     for (let i = 0; ; i++) {
       if (n++) await sleep(pausa);
-      const r = await fetchImpl(url, { headers: { Authorization: "Bearer " + token, Accept: "application/json", "User-Agent": "tradingweb (series públicas del INDEC)" } });
+      const r = await fetchImpl(url, { headers: { Authorization: "Bearer " + token, Accept: "application/json", "User-Agent": UA } });
       if ((r.status === 429 && i < 3) || (r.status >= 500 && i < 1)) { await sleep(pausa * 12 * (i + 1)); continue; }
       const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch (e) { /* no es JSON */ }
       if (!r.ok) {
@@ -165,10 +166,28 @@ const PEDIDOS = {
     ["tasa_pobreza_personas", "tasa_indigencia_personas", "tasa_pobreza_hogares", "tasa_indigencia_hogares"], "semestre"),
 };
 
-export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, token = process.env.INDEC_API_TOKEN, pausa = 250 } = {}) {
+// MODO=diagnostico: el mismo pedido con y sin token y con distintos encabezados, para ver qué responde la API (solo log)
+export async function diagnostico({ fetchImpl = fetch, log = console.log, token }) {
+  const prueba = async (nombre, url, headers) => {
+    try {
+      const r = await fetchImpl(url, { headers }), t = (await r.text()).replace(/\s+/g, " ").slice(0, 160).split(token).join("***");
+      log("diagnóstico " + nombre + ": HTTP " + r.status + " (" + (r.headers.get("content-type") || "sin tipo") + ") " + t);
+    } catch (e) { log("diagnóstico " + nombre + ": " + String(e.message || e).split(token).join("***")); }
+  };
+  const u = BASE + "pobreza_eph?limit=1", auth = { Authorization: "Bearer " + token };
+  await prueba("sin token", u, { Accept: "application/json", "User-Agent": UA });
+  await prueba("con token", u, { ...auth, Accept: "application/json", "User-Agent": UA });
+  await prueba("con token, sin Accept ni User-Agent", u, auth);
+  await prueba("con token, User-Agent con tilde", u, { ...auth, "User-Agent": "tradingweb (series públicas del INDEC)" });
+  await prueba("con token, select y order", BASE + "pobreza_eph?select=periodo&order=periodo.desc&limit=1", { ...auth, Accept: "application/json", "User-Agent": UA });
+  await prueba("con token, raíz", BASE, { ...auth, Accept: "application/json", "User-Agent": UA });
+}
+
+export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, token = process.env.INDEC_API_TOKEN, pausa = 250, modo = process.env.MODO } = {}) {
   token = limpiarToken(token);
   if (!token) { log("::warning::INDEC_API_TOKEN no está cargado en los secretos del repo: no se consulta la API del INDEC"); return null; }
   log("token: " + formaToken(token));
+  if (modo === "diagnostico") { await diagnostico({ fetchImpl, log, token }); return null; }
   const api = cliente(token, { fetchImpl, pausa });
   let prev = {}; try { prev = JSON.parse(await readFile(new URL("indec.json", root), "utf8")); } catch (e) { /* primera vez */ }
   let explora = {}; try { explora = JSON.parse(await readFile(new URL("indec-explora.json", root), "utf8")); } catch (e) { /* primera vez */ }
