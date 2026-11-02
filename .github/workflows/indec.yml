@@ -1,0 +1,41 @@
+name: INDEC (API del INDEC)
+
+on:
+  schedule:
+    - cron: "37 19 * * 1-5"   # 16:37 de Buenos Aires: el INDEC publica a las 16
+    - cron: "37 22 * * 1-5"   # 19:37, por si tardó
+    # sin período nuevo, cada corrida hace un pedido por servicio (nueve)
+  push:
+    branches: [main]
+    paths: ["scripts/indec.mjs", ".github/workflows/indec.yml"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: indec
+  cancel-in-progress: false
+
+jobs:
+  bajar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Consultar la API del INDEC
+        run: node scripts/indec.mjs
+        env:
+          INDEC_API_TOKEN: ${{ secrets.INDEC_API_TOKEN }}
+      - name: Commit si cambió
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in indec.json indec-explora.json; do [ -f "$f" ] && git add "$f"; done
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "INDEC: series del Informe"
+          git pull --rebase -q
+          git push
