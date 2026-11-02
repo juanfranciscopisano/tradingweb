@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main   # lo último de main, no el commit del disparo: dos corridas seguidas no chocan con indec.json
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -37,5 +39,5 @@ jobs:
           for f in indec.json indec-explora.json; do [ -f "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
           git commit -m "INDEC: series del Informe"
-          git pull --rebase -q
+          git pull --rebase -X theirs -q   # si igual choca, manda lo de esta corrida (indec.json es generado)
           git push

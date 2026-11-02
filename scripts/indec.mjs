@@ -19,6 +19,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // query string con %20 (no "+") y los * de ilike sin escapar
 const qs = p => Object.entries(p).map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(String(v)).replace(/%2A/gi, "*")).join("&");
 
+// el token como lo pegó la persona: sin espacios ni saltos de línea y sin el "Bearer " adelante
+export const limpiarToken = t => String(t || "").trim().replace(/^Bearer\s+/i, "").trim();
+// forma del token sin mostrarlo: un JWT tiene tres partes separadas por puntos
+export const formaToken = t => { const p = t.split("."); return p.length + " partes, " + t.length + " caracteres" + (/^eyJ/.test(t) ? ", JWT" : ""); };
+
 export function cliente(token, { fetchImpl = fetch, pausa = 250 } = {}) {
   let n = 0;
   async function get(tabla, params = {}) {
@@ -26,9 +31,13 @@ export function cliente(token, { fetchImpl = fetch, pausa = 250 } = {}) {
     for (let i = 0; ; i++) {
       if (n++) await sleep(pausa);
       const r = await fetchImpl(url, { headers: { Authorization: "Bearer " + token, Accept: "application/json", "User-Agent": "tradingweb (series públicas del INDEC)" } });
-      if ((r.status === 429 || r.status >= 500) && i < 3) { await sleep(pausa * 12 * (i + 1)); continue; }
+      if ((r.status === 429 && i < 3) || (r.status >= 500 && i < 1)) { await sleep(pausa * 12 * (i + 1)); continue; }
       const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch (e) { /* no es JSON */ }
-      if (!r.ok) throw new Error(tabla + ": HTTP " + r.status + (j && j.message ? " " + j.message : ""));
+      if (!r.ok) {
+        // el detalle del error: el de PostgREST (código y mensaje) o el principio de lo que haya devuelto, sin el token
+        const det = j && (j.message || j.error || j.code) ? [j.code, j.message || j.error, j.details, j.hint].filter(Boolean).join(" | ") : t.replace(/\s+/g, " ").slice(0, 200);
+        throw new Error(tabla + ": HTTP " + r.status + (det ? " " + det.split(token).join("***") : "") + " (" + (r.headers.get("content-type") || "sin tipo") + ")");
+      }
       if (!Array.isArray(j)) throw new Error(tabla + ": la respuesta no es una tabla");
       return j;
     }
@@ -157,7 +166,9 @@ const PEDIDOS = {
 };
 
 export async function main({ fetchImpl = fetch, root = new URL("../", import.meta.url), log = console.log, token = process.env.INDEC_API_TOKEN, pausa = 250 } = {}) {
+  token = limpiarToken(token);
   if (!token) { log("::warning::INDEC_API_TOKEN no está cargado en los secretos del repo: no se consulta la API del INDEC"); return null; }
+  log("token: " + formaToken(token));
   const api = cliente(token, { fetchImpl, pausa });
   let prev = {}; try { prev = JSON.parse(await readFile(new URL("indec.json", root), "utf8")); } catch (e) { /* primera vez */ }
   let explora = {}; try { explora = JSON.parse(await readFile(new URL("indec-explora.json", root), "utf8")); } catch (e) { /* primera vez */ }
