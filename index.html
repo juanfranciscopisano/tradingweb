@@ -5364,6 +5364,7 @@ const METODO = [
       { d: 'Cada gráfico se dibuja en un canvas blanco al doble de resolución (2400 px de ancho en "Ancho de página"): título navy, bajada azul en mayúsculas con el subrayado corto, leyenda abajo, fuente en Verdana itálica y el logo de BAVSA Fondos. "Copiar imagen" lo deja en el portapapeles como PNG; "Copiar datos", la tabla para Excel.',
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
         o: 'En una slide del template el título va en la slide: conviene destildar "Título y bajada en la imagen".' },
+      { d: 'Gráficos armados: los más usados sueltos y el resto en desplegables por tema (BCRA, Tesoro, INDEC, Tasas y monedas). Al elegir uno, en la lista de series suben los grupos que tienen series del gráfico y después los que comparten fuente con ellas; prender o apagar una serie no reordena, para que la lista no salte.' },
       { d: 'Series con dos unidades van con eje izquierdo y derecho; con más de dos, en base 100. Base 100 toma como base el primer día en que todas las series tienen dato. Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
       { d: 'BCRA y Tesoro (API del BCRA, diaria): depósitos del Tesoro en el BCRA en pesos (serie 1265) y en dólares (1266, que viene en pesos y se pasa con el A3500 del día), adelantos transitorios (1268), BOPREAL y LEDIV en circulación (158, en dólares) y letras del BCRA en pesos (1258).',
         o: 'Las series de pases del BCRA (152 a 154 y 1261) están en cero, y la 76 (pase pasivo en dólares con el exterior) también: el REPO con bancos internacionales (US$ 6.000 millones a septiembre de 2028, SOFR + 4%, según el BCRA del 3/7/2026) no figura en la API.' },
@@ -6288,36 +6289,38 @@ IPC_DIV.forEach(([k, n, re]) => { INF_CAT[k] = { n, g: 'IPC por división', u: '
 const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Tasas', 'Inflación', 'IPC por división', 'Actividad', 'Salarios y empleo', 'BCRA'];
 const INF_GROUP_N = { BCRA: 'BCRA y Tesoro', 'IPC por división': 'IPC por división (mensual)' };
 
-// gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo
+// gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo. Los que
+// tienen grupo van en un desplegable con ese nombre, en el orden de INF_PRESET_GRUPOS
+const INF_PRESET_GRUPOS = ['BCRA', 'Tesoro', 'INDEC', 'Tasas y monedas'];
 const INF_PRESETS = [
   { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna' },
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
-  { id: 'tpUsa', n: 'Treasuries: tasa esperada, term premium y tasa real', mode: 'tp' },
-  { id: 'cau', n: 'Curva de cauciones', mode: 'curva', curva: 'cau', extra: true },
+  { id: 'tpUsa', n: 'Treasuries: tasa esperada, term premium y tasa real', grupo: 'Tasas y monedas', mode: 'tp' },
+  { id: 'cau', n: 'Curva de cauciones', grupo: 'Tasas y monedas', mode: 'curva', curva: 'cau' },
   { id: 'usd', n: 'Curva soberana en dólares', mode: 'curva', curva: 'usd', cmp: { s: false, m: true }, tasa: 'tea' },
   { id: 'cer', n: 'Curva CER', mode: 'curva', curva: 'cer', cmp: { s: true, m: true }, tasa: 'tea' },
-  { id: 'venc', n: 'Vencimientos en dólares (Tesoro y BCRA)', mode: 'pagos' },
-  { id: 'tesoro', n: 'Vencimientos del Tesoro (1816)', mode: 'tesoro' },
+  { id: 'venc', n: 'Vencimientos en dólares (Tesoro y BCRA)', grupo: 'Tesoro', mode: 'pagos' },
+  { id: 'tesoro', n: 'Vencimientos del Tesoro (1816)', grupo: 'Tesoro', mode: 'tesoro' },
   { id: 'fx', n: 'Dólar, DXY, real e ITCRM', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', t: 'Dólar oficial, DXY, real e ITCRM' },
-  { id: 'latam', n: 'Monedas de la región', mode: 'serie', keys: ['a3500', 'brl', 'clp', 'mxn', 'pen'], trans: 'base', period: '1A', inv: { a3500: true, brl: true, clp: true, mxn: true, pen: true }, t: 'Monedas de la región contra el dólar' },
+  { id: 'latam', n: 'Monedas de la región', grupo: 'Tasas y monedas', mode: 'serie', keys: ['a3500', 'brl', 'clp', 'mxn', 'pen'], trans: 'base', period: '1A', inv: { a3500: true, brl: true, clp: true, mxn: true, pen: true }, t: 'Monedas de la región contra el dólar' },
   { id: 'merval', n: 'Merval en pesos y en dólares', mode: 'serie', keys: ['mervalEmp', 'mervalUsd'], trans: 'nivel', period: '1A', t: 'Merval en pesos y en dólares' },
-  { id: 'tasas1d', n: 'Tasas a 1 día', mode: 'serie', keys: ['cau1', 'pases1d', 'baibar'], trans: 'nivel', period: '6M', t: 'Tasas a 1 día' },
-  { id: 'otros', n: 'Tasas y cuenta Otros del BCRA', mode: 'serie', keys: ['tamar', 'pases1d', 'cau1', 'otros'], trans: 'nivel', period: '1A', bars: { otros: true }, t: 'Tasas y cuenta Otros del BCRA' },
-  { id: 'tasasRef', n: 'TAMAR, BADLAR y plazo fijo', mode: 'serie', keys: ['tamar', 'badlar', 'pf30'], trans: 'nivel', period: '1A', t: 'Tasas de referencia' },
-  { id: 'tesoroDep', n: 'Depósitos del Tesoro en el BCRA', mode: 'serie', keys: ['tesoro', 'tesoroUsd'], trans: 'nivel', period: '1A', t: 'Depósitos del Tesoro en el BCRA' },
-  { id: 'liqTesoro', n: 'Pesos del Tesoro en el BCRA y en bancos', mode: 'serie', keys: ['tesoro', 'tesoroBancos', 'tesoroTot'], trans: 'nivel', period: '2A', t: 'Pesos del Tesoro en el BCRA y en bancos' },
-  { id: 'liqTesoroUsd', n: 'Dólares del Tesoro en el BCRA y en bancos', mode: 'serie', keys: ['tesoroUsd', 'tesoroBancosUsd', 'tesoroUsdTot'], trans: 'nivel', period: '2A', t: 'Dólares del Tesoro en el BCRA y en bancos' },
-  { id: 'bcraUsd', n: 'Reservas y BOPREAL', mode: 'serie', keys: ['reservas', 'bopreal'], trans: 'nivel', period: '1A', bars: { bopreal: true }, t: 'Reservas y deuda del BCRA en dólares' },
-  { id: 'reservas', n: 'Reservas y compras del BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
+  { id: 'tasas1d', n: 'Tasas a 1 día', grupo: 'Tasas y monedas', mode: 'serie', keys: ['cau1', 'pases1d', 'baibar'], trans: 'nivel', period: '6M', t: 'Tasas a 1 día' },
+  { id: 'otros', n: 'Tasas y cuenta Otros del BCRA', grupo: 'BCRA', mode: 'serie', keys: ['tamar', 'pases1d', 'cau1', 'otros'], trans: 'nivel', period: '1A', bars: { otros: true }, t: 'Tasas y cuenta Otros del BCRA' },
+  { id: 'tasasRef', n: 'TAMAR, BADLAR y plazo fijo', grupo: 'Tasas y monedas', mode: 'serie', keys: ['tamar', 'badlar', 'pf30'], trans: 'nivel', period: '1A', t: 'Tasas de referencia' },
+  { id: 'tesoroDep', n: 'Depósitos del Tesoro en el BCRA', grupo: 'Tesoro', mode: 'serie', keys: ['tesoro', 'tesoroUsd'], trans: 'nivel', period: '1A', t: 'Depósitos del Tesoro en el BCRA' },
+  { id: 'liqTesoro', n: 'Pesos del Tesoro en el BCRA y en bancos', grupo: 'Tesoro', mode: 'serie', keys: ['tesoro', 'tesoroBancos', 'tesoroTot'], trans: 'nivel', period: '2A', t: 'Pesos del Tesoro en el BCRA y en bancos' },
+  { id: 'liqTesoroUsd', n: 'Dólares del Tesoro en el BCRA y en bancos', grupo: 'Tesoro', mode: 'serie', keys: ['tesoroUsd', 'tesoroBancosUsd', 'tesoroUsdTot'], trans: 'nivel', period: '2A', t: 'Dólares del Tesoro en el BCRA y en bancos' },
+  { id: 'bcraUsd', n: 'Reservas y BOPREAL', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'bopreal'], trans: 'nivel', period: '1A', bars: { bopreal: true }, t: 'Reservas y deuda del BCRA en dólares' },
+  { id: 'reservas', n: 'Reservas y compras del BCRA', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
   { id: 'inflacion', n: 'Inflación mensual y acumulada', mode: 'serie', keys: ['ipcM', 'ipcYtd', 'ipcA'], trans: 'nivel', period: '2A', bars: { ipcM: true }, t: 'Inflación mensual, acumulada en el año e interanual' },
-  { id: 'ipcCat', n: 'Inflación núcleo, regulados y estacionales', mode: 'serie', keys: ['ipcM', 'ipcNucleo', 'ipcRegulados', 'ipcEstacionales'], trans: 'nivel', period: '2A', t: 'Inflación mensual: nivel general, núcleo, regulados y estacionales' },
-  { id: 'ipcBS', n: 'Inflación de bienes y servicios', mode: 'serie', keys: ['ipcM', 'ipcBienes', 'ipcServicios'], trans: 'nivel', period: '2A', t: 'Inflación mensual de bienes y de servicios' },
-  { id: 'actividad', n: 'EMAE e industria', mode: 'serie', keys: ['emaeDesest', 'ipiDesest'], trans: 'nivel', period: '5A', t: 'Actividad económica e industria manufacturera, desestacionalizadas' },
-  { id: 'emaeVar', n: 'EMAE: variación mensual e interanual', mode: 'serie', keys: ['emaeMM', 'emaeIA'], trans: 'nivel', period: '2A', bars: { emaeMM: true }, t: 'Actividad económica: variación mensual (desestacionalizada) e interanual' },
-  { id: 'salReal', n: 'Salario real por sector', mode: 'serie', keys: ['salReal', 'salRealPriv', 'salRealPub', 'salRealNoReg'], trans: 'nivel', period: '5A', t: 'Salario real por sector' },
-  { id: 'netas', n: 'Reservas brutas y netas', mode: 'serie', keys: ['reservas', 'resNetas'], trans: 'nivel', period: '2A', t: 'Reservas internacionales brutas y netas' },
-  { id: 'netasDes', n: 'Reservas netas: desglose', mode: 'serie', keys: ['reservas', 'encajes', 'swapChina', 'resNetas'], trans: 'nivel', period: '1A', t: 'Reservas brutas, encajes, swap con China y reservas netas' },
-  { id: 'dinero', n: 'Base monetaria y M2', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
+  { id: 'ipcCat', n: 'Inflación núcleo, regulados y estacionales', grupo: 'INDEC', mode: 'serie', keys: ['ipcM', 'ipcNucleo', 'ipcRegulados', 'ipcEstacionales'], trans: 'nivel', period: '2A', t: 'Inflación mensual: nivel general, núcleo, regulados y estacionales' },
+  { id: 'ipcBS', n: 'Inflación de bienes y servicios', grupo: 'INDEC', mode: 'serie', keys: ['ipcM', 'ipcBienes', 'ipcServicios'], trans: 'nivel', period: '2A', t: 'Inflación mensual de bienes y de servicios' },
+  { id: 'actividad', n: 'EMAE e industria', grupo: 'INDEC', mode: 'serie', keys: ['emaeDesest', 'ipiDesest'], trans: 'nivel', period: '5A', t: 'Actividad económica e industria manufacturera, desestacionalizadas' },
+  { id: 'emaeVar', n: 'EMAE: variación mensual e interanual', grupo: 'INDEC', mode: 'serie', keys: ['emaeMM', 'emaeIA'], trans: 'nivel', period: '2A', bars: { emaeMM: true }, t: 'Actividad económica: variación mensual (desestacionalizada) e interanual' },
+  { id: 'salReal', n: 'Salario real por sector', grupo: 'INDEC', mode: 'serie', keys: ['salReal', 'salRealPriv', 'salRealPub', 'salRealNoReg'], trans: 'nivel', period: '5A', t: 'Salario real por sector' },
+  { id: 'netas', n: 'Reservas brutas y netas', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'resNetas'], trans: 'nivel', period: '2A', t: 'Reservas internacionales brutas y netas' },
+  { id: 'netasDes', n: 'Reservas netas: desglose', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'encajes', 'swapChina', 'resNetas'], trans: 'nivel', period: '1A', t: 'Reservas brutas, encajes, swap con China y reservas netas' },
+  { id: 'dinero', n: 'Base monetaria y M2', grupo: 'BCRA', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
 
@@ -7269,11 +7272,30 @@ function infTsv() {
 }
 
 // ---- controles
+// desplegables de gráficos abiertos a mano (se mantienen abiertos al redibujar). El clic llega antes de que se abra o se
+// cierre: el estado nuevo es el contrario del actual
+const infGrpAbiertos = new Set();
+function infGrpToggle(el) { if (el.open) infGrpAbiertos.delete(el.dataset.g); else infGrpAbiertos.add(el.dataset.g); }
+// orden de los grupos de series: primero los que tienen series elegidas, después los que comparten fuente con ellas
+// (con un gráfico del INDEC suben los otros grupos del INDEC) y al final el resto. Se ordena al elegir un gráfico, no al
+// prender o apagar una serie, para que la lista no salte bajo el mouse
+let infGrpOrd = null;
+function infOrdenGrupos(keys) {
+  const sel = keys.filter(k => INF_CAT[k]), fu = c => String(c.src || '').split(/ y |, /);
+  const srcs = new Set(sel.flatMap(k => fu(INF_CAT[k])));
+  const nota = g => { const cs = Object.entries(INF_CAT).filter(([, c]) => c.g === g);
+    return cs.some(([k]) => sel.includes(k)) ? 2 : cs.some(([, c]) => fu(c).some(x => srcs.has(x))) ? 1 : 0; };
+  return INF_GROUPS.map((g, i) => [g, nota(g), i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]).map(x => x[0]);
+}
 function renderInfCtl() {
   const P = document.getElementById('infPresets'); if (!P) return;
   const btn = p => '<button type="button" class="inf-preset' + (p.id === INF.preset ? ' on' : '') + '" aria-pressed="' + (p.id === INF.preset) + '" onclick="infPreset(\'' + p.id + '\')">' + p.n + '</button>';
-  const extra = INF_PRESETS.filter(p => p.extra), abierto = extra.some(p => p.id === INF.preset);
-  P.innerHTML = INF_PRESETS.filter(p => !p.extra).map(btn).join('') + (extra.length ? '<details class="inf-extra"' + (abierto ? ' open' : '') + '><summary>Gráficos adicionales</summary>' + extra.map(btn).join('') + '</details>' : '');
+  // un desplegable por grupo: abierto si tiene el gráfico elegido o si se abrió a mano
+  P.innerHTML = INF_PRESETS.filter(p => !p.grupo).map(btn).join('') + INF_PRESET_GRUPOS.map(g => {
+    const ps = INF_PRESETS.filter(p => p.grupo === g); if (!ps.length) return '';
+    const ab = ps.some(p => p.id === INF.preset) || infGrpAbiertos.has(g);
+    return '<details class="inf-extra"' + (ab ? ' open' : '') + ' data-g="' + g + '"><summary onclick="infGrpToggle(this.parentElement)">' + g + '</summary>' + ps.map(btn).join('') + '</details>';
+  }).join('');
   const seg = (opts, cur, fn) => '<div class="inf-seg">' + opts.map(([v, l]) => '<button type="button" class="' + (v === cur ? 'on' : '') + '" aria-pressed="' + (v === cur) + '" onclick="' + fn + '(\'' + v + '\')">' + l + '</button>').join('') + '</div>';
   let h = '', cat = '';
   if (INF.mode === 'tp') {
@@ -7303,7 +7325,8 @@ function renderInfCtl() {
       + '<label class="inf-desde">Desde <input type="date" value="' + (INF.desde || '') + '" onchange="infDesde(this.value)"></label>';
     h += '<div class="inf-lbl">Escala</div>' + seg([['nivel', 'Valores'], ['base', 'Base 100']], INF.trans, 'infTrans');
     if (INF.keys.some(k => INF_CAT[k]?.u === '$ billones')) h += '<div class="inf-checks"><label><input type="checkbox"' + (INF.real ? ' checked' : '') + ' onchange="infSet(\'real\', this.checked)"> Agregados en pesos de hoy (CER)</label></div>';
-    cat = '<div class="inf-lbl inf-lbl-first">Series</div><div class="inf-cat-grid">' + INF_GROUPS.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
+    if (!infGrpOrd) infGrpOrd = infOrdenGrupos(INF.keys);
+    cat = '<div class="inf-lbl inf-lbl-first">Series</div><div class="inf-cat-grid">' + infGrpOrd.map(g => '<div class="inf-grp"><div class="inf-grp-name">' + (INF_GROUP_N[g] || g) + '</div><div class="inf-chips">'
       + Object.entries(INF_CAT).filter(([, c]) => c.g === g).map(([k, c]) => { const i = INF.keys.indexOf(k), on = i >= 0;
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
       + '</div></div>').join('') + '</div>';
@@ -7333,6 +7356,7 @@ function infSyncTexts() {
 function infPreset(id) {
   const p = INF_PRESETS.find(x => x.id === id); if (!p) return;
   INF.preset = id; INF.mode = p.mode; INF.edit = { t: false, b: false, f: false }; INF.desde = '';
+  if (p.mode === 'serie') infGrpOrd = infOrdenGrupos(p.keys);
   if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; INF.tramo = 'toda'; if (p.tasa) INF.tasa = p.tasa; }
   infUpdate();
 }
