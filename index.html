@@ -5366,6 +5366,9 @@ const METODO = [
       { d: 'Series con dos unidades van con eje izquierdo y derecho; con más de dos, en base 100. Base 100 toma como base el primer día en que todas las series tienen dato. Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
       { d: 'BCRA y Tesoro (API del BCRA, diaria): depósitos del Tesoro en el BCRA en pesos (serie 1265) y en dólares (1266, que viene en pesos y se pasa con el A3500 del día), adelantos transitorios (1268), BOPREAL y LEDIV en circulación (158, en dólares) y letras del BCRA en pesos (1258).',
         o: 'Las series de pases del BCRA (152 a 154 y 1261) están en cero, y la 76 (pase pasivo en dólares con el exterior) también: el REPO con bancos internacionales (US$ 6.000 millones a septiembre de 2028, SOFR + 4%, según el BCRA del 3/7/2026) no figura en la API.' },
+      { d: 'Tesoro en bancos (API del BCRA, mensual): depósitos de la administración central en pesos (serie 210) y en dólares (230), del grupo "Depósitos por tipo de titular", con el saldo a fin de mes y dos meses de rezago. En pesos son cuentas corrientes, plazo fijo y otros depósitos (240, 260 y 270; la caja de ahorro es casi cero); en dólares, casi todo caja de ahorro (290). El total suma lo del BCRA del último día hábil del mes.',
+        p: 'Es la serie que usa el mercado para los pesos del Tesoro fuera del BCRA: fin de mayo de 2026 da $13,97 billones, el dato que citó la prensa. No incluye a los organismos descentralizados ni a las empresas públicas nacionales, que van en otras series, y no abre por banco.',
+        o: 'La API dice "miles de ARS", pero vienen en millones, como las diarias: con miles, el Tesoro tendría $19.000 millones en bancos. Los de dólares vienen en pesos al tipo de cambio de fin de mes (en diciembre de 2023 la serie salta 2,2 veces, lo que saltó el A3500) y se pasan con el A3500 de ese día. "Administración central" incluye cuentas de los ministerios, no solo las del Tesoro, y si a un banco le falta el dato del mes, el BCRA repite su último saldo.' },
       { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile vía mindicador.cl, que sin clave da solo el último mes; el workflow lo va guardando día a día y, para atrás de lo guardado, va Yahoo sin los saltos de un día, con aviso y las dos fuentes al pie. Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
         p: 'El tipo de cambio de Yahoo para estas monedas tiene datos malos: el 26/10/2026 dio 959,6 pesos chilenos por dólar con el observado en 990,35, y el sol alterna entre dos niveles 3% separados día por medio. Si una fuente oficial no responde, se usa Yahoo sacando los saltos de un día (más de 2% contra los dos vecinos que vuelven).' },
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
@@ -6235,6 +6238,10 @@ const INF_CAT = {
   m2: { n: 'M2 transaccional privado', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(197, 1e-6) },
   tesoro: { n: 'Depósitos del Tesoro en el BCRA en pesos', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1265, 1e-6) },
   tesoroUsd: { n: 'Depósitos del Tesoro en el BCRA en dólares', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infEnDolares(1266) },
+  tesoroBancos: { n: 'Depósitos del Tesoro en bancos en pesos', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(210, 1e-6), nota: 'saldo a fin de mes, con dos meses de rezago' },
+  tesoroBancosUsd: { n: 'Depósitos del Tesoro en bancos en dólares', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infEnDolares(230), nota: 'saldo a fin de mes, con dos meses de rezago' },
+  tesoroTot: { n: 'Depósitos del Tesoro en pesos, BCRA y bancos', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infTesoroTot(false), nota: 'a fin de mes, con dos meses de rezago' },
+  tesoroUsdTot: { n: 'Depósitos del Tesoro en dólares, BCRA y bancos', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infTesoroTot(true), nota: 'a fin de mes, con dos meses de rezago' },
   adelantos: { n: 'Adelantos transitorios al Tesoro', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1268, 1e-6) },
   bopreal: { n: 'BOPREAL y LEDIV en circulación', g: 'BCRA', u: 'US$ millones', src: 'BCRA', load: () => infBcra(158) },
   letrasBcra: { n: 'Letras del BCRA en pesos', g: 'BCRA', u: '$ billones', src: 'BCRA', load: () => infBcra(1258, 1e-6) },
@@ -6266,6 +6273,8 @@ const INF_PRESETS = [
   { id: 'otros', n: 'Tasas y cuenta Otros del BCRA', mode: 'serie', keys: ['tamar', 'pases1d', 'cau1', 'otros'], trans: 'nivel', period: '1A', bars: { otros: true }, t: 'Tasas y cuenta Otros del BCRA' },
   { id: 'tasasRef', n: 'TAMAR, BADLAR y plazo fijo', mode: 'serie', keys: ['tamar', 'badlar', 'pf30'], trans: 'nivel', period: '1A', t: 'Tasas de referencia' },
   { id: 'tesoroDep', n: 'Depósitos del Tesoro en el BCRA', mode: 'serie', keys: ['tesoro', 'tesoroUsd'], trans: 'nivel', period: '1A', t: 'Depósitos del Tesoro en el BCRA' },
+  { id: 'liqTesoro', n: 'Pesos del Tesoro en el BCRA y en bancos', mode: 'serie', keys: ['tesoro', 'tesoroBancos', 'tesoroTot'], trans: 'nivel', period: '2A', t: 'Pesos del Tesoro en el BCRA y en bancos' },
+  { id: 'liqTesoroUsd', n: 'Dólares del Tesoro en el BCRA y en bancos', mode: 'serie', keys: ['tesoroUsd', 'tesoroBancosUsd', 'tesoroUsdTot'], trans: 'nivel', period: '2A', t: 'Dólares del Tesoro en el BCRA y en bancos' },
   { id: 'bcraUsd', n: 'Reservas y BOPREAL', mode: 'serie', keys: ['reservas', 'bopreal'], trans: 'nivel', period: '1A', bars: { bopreal: true }, t: 'Reservas y deuda del BCRA en dólares' },
   { id: 'reservas', n: 'Reservas y compras del BCRA', mode: 'serie', keys: ['reservas', 'compras'], trans: 'nivel', period: 'YTD', t: 'Reservas y compras de divisas del BCRA' },
   { id: 'inflacion', n: 'Inflación mensual y acumulada', mode: 'serie', keys: ['ipcM', 'ipcYtd', 'ipcA'], trans: 'nivel', period: '2A', bars: { ipcM: true }, t: 'Inflación mensual, acumulada en el año e interanual' },
@@ -6428,6 +6437,17 @@ async function infEnDolares(id) {
   for (const p of A) { while (j + 1 < B.length && B[j + 1].t <= p.t) j++; const q = B[j]; if (q && q.t <= p.t && p.t - q.t <= 5 * 86400) out.push({ d: p.d, t: p.t, v: p.v / q.v }); }
   return out;
 }
+// Tesoro en el BCRA más en bancos, a fin de mes: los bancos son la administración central de "Depósitos por tipo de
+// titular" (210 en pesos, 230 en dólares), saldo a fin de mes con dos meses de rezago. La API dice "miles de ARS" pero
+// vienen en millones, como las diarias (fin de mayo de 2026: $13,97 billones, el dato que citó la prensa); los de dólares
+// vienen en pesos al tipo de cambio de fin de mes (en diciembre de 2023 saltan 2,2 veces, como el A3500) y se pasan con el
+// A3500 de ese día. Lo del BCRA, del último día hábil del mes (hasta 5 días antes)
+async function infTesoroTot(usd) {
+  const [A, B] = await Promise.all(usd ? [infEnDolares(1266), infEnDolares(230)] : [infBcra(1265, 1e-6), infBcra(210, 1e-6)]);
+  const out = []; let j = 0;
+  for (const p of B) { while (j + 1 < A.length && A[j + 1].t <= p.t) j++; const q = A[j]; if (q && q.t <= p.t && p.t - q.t <= 5 * 86400) out.push({ d: p.d, t: p.t, v: p.v + q.v }); }
+  return out;
+}
 // cociente día por día (Merval en dólares): el divisor del mismo día o el último anterior, con hasta 5 días de diferencia
 async function infRatio(a, b) {
   const [A, B] = await Promise.all([INF_CAT[a].load(), INF_CAT[b].load()]);
@@ -6580,7 +6600,10 @@ async function infBuildSerie() {
   const bAuto = (units.length === 2 ? unitTxt(units[0]) + ' (eje izq.) y ' + unitTxt(units[1]) + ' (eje der.)' : unitTxt(units[0])) + ', ' + periodo;
   const srcs = [...new Set(ser.flatMap(s => s.src.split(' y ')))];
   // con reservas netas, la cuenta va al pie: el número depende de qué se resta
-  const metod = ser.some(s => s.k === 'resNetas') ? ' Reservas netas: brutas menos encajes de los depósitos en dólares y swap con China.' : '';
+  // los del Tesoro en bancos terminan dos meses antes que el resto: la fecha va en la imagen, no solo en las notas
+  const banco = ser.find(s => /^tesoro(Bancos|BancosUsd|Tot|UsdTot)$/.test(s.k));
+  const metod = (ser.some(s => s.k === 'resNetas') ? ' Reservas netas: brutas menos encajes de los depósitos en dólares y swap con China.' : '')
+    + (banco ? ' En bancos: depósitos de la administración central, saldo a fin de mes que se publica con dos meses de rezago (último: ' + infDdmmaa(banco.pts[banco.pts.length - 1].d) + ').' : '');
   const fAuto = 'Fuente: ' + (srcs.length > 1 ? srcs.slice(0, -1).join(', ') + ' y ' + srcs[srcs.length - 1] : srcs[0]) + '.' + metod;
   return { kind: 'serie', ser, units, unitTxt, tAuto, bAuto, fAuto, notes, last, first, flow: ser.some(s => INF_CAT[s.k]?.flow) };
 }
