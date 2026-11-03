@@ -73,7 +73,28 @@ export async function diagnostico2({ fetchImpl = globalThis.fetch, log = console
   }
 }
 
+// tercer diagnóstico: el balance histórico (balhist.txt): desde cuándo hay datos de cada banco y qué cuentas usa en
+// cada época (las de primer nivel y las de patrimonio), y el plan de cuentas con su fecha de baja
+export async function diagnostico3({ fetchImpl = globalThis.fetch, log = console.log, mes = "202607" } = {}) {
+  const sh = (cmd, args) => { try { return execFileSync(cmd, args, { encoding: "latin1", maxBuffer: 1 << 30 }); } catch (e) { return "ERR " + String(e.stderr || e.message).slice(0, 300); } };
+  const dir = await mkdtemp(join(tmpdir(), "bcra-"));
+  const r = await fetchImpl(BASE + mes + "d.7z", { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(180000) });
+  const f = join(dir, "a.7z"); await writeFile(f, Buffer.from(await r.arrayBuffer()));
+  sh("7z", ["e", "-y", "-o" + dir, f, "-r", "balhist.txt", "cuentas.txt"]);
+  const B = join(dir, "balhist.txt");
+  log(sh("bash", ["-c", `head -5 '${B}'; echo ...; tail -3 '${B}'; echo; cut -f1 '${B}' | sort | uniq -c | sort -rn | head -5; echo "entidades: $(cut -f1 '${B}' | sort -u | wc -l)"; echo "fechas: $(cut -f2 '${B}' | sort -u | head -3 | tr '\n' ' ') ... $(cut -f2 '${B}' | sort -u | tail -3 | tr '\n' ' ') ($(cut -f2 '${B}' | sort -u | wc -l))"`]));
+  for (const c of ["00007", "00285", "00017", "00027", "00034", "00044", "00198"]) {
+    log(`\n===== ${c}: ` + sh("bash", ["-c", `grep -P '^"?${c}"?\t' '${B}' > '${dir}/e.txt'; wc -l < '${dir}/e.txt'; cut -f2 '${dir}/e.txt' | sort -u | head -2 | tr '\n' ' '; echo -n '... '; cut -f2 '${dir}/e.txt' | sort -u | tail -1; echo "meses: $(cut -f2 '${dir}/e.txt' | sort -u | wc -l)"`]));
+    for (const m of ["200001", "200012", "200512", "201012", "201712", "202607"]) {
+      log(`  ${m}: ` + sh("bash", ["-c", `grep -P '\t"?${m}"?\t' '${dir}/e.txt' | awk -F'\t' '{gsub(/"/,"",$3); if ($3 ~ /^[1-9]0000$|^[1-9]00000$|^4[0-9]0000$|^65[0-9]000$|^41[0-9]00[0-9]$/) printf "%s=%s  ", $3, $4}'`]).slice(0, 900));
+    }
+  }
+  const C = join(dir, "cuentas.txt");
+  log("\ncuentas de primer nivel y de patrimonio:\n" + sh("bash", ["-c", `awk -F'\t' '{c=$1; gsub(/"/,"",c); if (c ~ /^[1-9]00000$|^4[0-9]0000$|^65[0-9]000$|^41[0-9][0-9]0[0-9]$|^5[0-9]0000$|^6[0-9]0000$/) print}' '${C}' | head -120`]).slice(0, 12000));
+}
+
 export async function main({ modo = process.env.MODO || "diario", log = console.log } = {}) {
+  if (modo === "diagnostico3") return diagnostico3({ log });
   if (modo === "diagnostico") return diagnostico({ log });
   if (modo === "diagnostico2") return diagnostico2({ log });
   log("bcra: modo " + modo + " todavía no implementado");
