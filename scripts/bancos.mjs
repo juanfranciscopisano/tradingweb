@@ -241,12 +241,16 @@ export function yahooSerie(j) {
 }
 // balances y ROE desde Yahoo. Trimestres: en pesos de su cierre. Ejercicios: en pesos del último ejercicio. Sin fecha de
 // presentación: el cierre más 60 días (75 el anual), y nunca después de hoy (si está en Yahoo, ya se publicó)
-export function arDesdeYahoo(ys, hoyS) {
+// Cada ejercicio de Yahoo viene como comparativo del balance del año siguiente (reexpresado a ese cierre) y el último, en
+// su moneda: contra el balance del BCRA, 2022 en pesos de diciembre de 2023, 2023 en los de 2024 y 2024 y 2025 en los de
+// 2025 (Patagonia e Hipotecario dan iguales a menos de 1% así; con todo en moneda del último, 2022 daba un tercio)
+export const monedaYahoo = (end, fin) => { const sig = `${+end.slice(0, 4) + 1}${end.slice(4)}`; return sig < fin ? sig : fin; };
+export function arDesdeYahoo(ys, hoyS, conv = null) {
   const bal = [], fin = Object.keys(ys.a).sort().pop();
   const bvDe = o => o.CommonStockEquity ?? o.StockholdersEquity;
   const pub = (end, lag) => Math.min(tOf(end) + lag * DAY, hoyS);
   for (const [end, o] of Object.entries(ys.q)) if (bvDe(o) > 0) bal.push({ end, c: end, bv: bvDe(o), tbv: o.TangibleBookValue ?? bvDe(o), sh: o.OrdinarySharesNumber || null, pub: pub(end, end.slice(5) === "12-31" ? 75 : 60), src: "Yahoo trimestral" });
-  for (const [end, o] of Object.entries(ys.a)) if (bvDe(o) > 0) bal.push({ end, c: fin, bv: bvDe(o), tbv: o.TangibleBookValue ?? bvDe(o), sh: o.OrdinarySharesNumber || null, pub: pub(end, 75), src: "Yahoo anual" });
+  for (const [end, o] of Object.entries(ys.a)) if (bvDe(o) > 0) bal.push({ end, c: monedaYahoo(end, fin), bv: bvDe(o), tbv: o.TangibleBookValue ?? bvDe(o), sh: o.OrdinarySharesNumber || null, pub: pub(end, 75), src: "Yahoo anual" });
   // resultados trimestrales (para el ROE de 12 meses, que se arma con todas las fuentes juntas) y ROE de cada ejercicio:
   // resultado / promedio del patrimonio de cierre y de apertura (los dos en la misma moneda)
   const ni = Object.entries(ys.q).filter(([, o]) => isFinite(o.NetIncomeCommonStockholders)).map(([end, o]) => ({ end, c: end, val: o.NetIncomeCommonStockholders, pub: pub(end, end.slice(5) === "12-31" ? 75 : 60) })).sort((a, b) => a.end.localeCompare(b.end));
@@ -255,8 +259,9 @@ export function arDesdeYahoo(ys, hoyS) {
   for (let i = 1; i < A.length; i++) {
     const [end, o] = A[i], [endP, oP] = A[i - 1];
     if (!isFinite(o.NetIncomeCommonStockholders) || !(bvDe(o) > 0) || !(bvDe(oP) > 0) || dias(endP, end) < 350 || dias(endP, end) > 380) continue;
-    const avg = (bvDe(o) + bvDe(oP)) / 2;
-    roe.push({ end, c: fin, pub: pub(end, 75), roe: o.NetIncomeCommonStockholders / avg, ni: o.NetIncomeCommonStockholders, avg, roeQ: null, tipo: "ejercicio" });
+    // el patrimonio de apertura, a la moneda del ejercicio (el resultado viene en la misma que su cierre)
+    const c = monedaYahoo(end, fin), cP = monedaYahoo(endP, fin), avg = (bvDe(o) + bvDe(oP) * (conv && cP !== c ? conv(cP, c) : 1)) / 2;
+    roe.push({ end, c, pub: pub(end, 75), roe: o.NetIncomeCommonStockholders / avg, ni: o.NetIncomeCommonStockholders, avg, roeQ: null, tipo: "ejercicio" });
   }
   return { bal, roe, ni };
 }
@@ -290,7 +295,10 @@ export function unirObs(listas) {
 // código está el Macro que no cotizaba (36 millones de acciones contra 609). Cada mes vale desde 60 días después de su cierre
 export const BCRA_MAP = {
   GGAL: { cod: "00007", aprox: true, acciones: [["2000-07-01", 1092407017], ["2004-05-13", 1241407017]] },
-  BMA: { cod: "00285", desde: "200312" }, BBAR: { cod: "00017" }, BHIP: { cod: "00044" }, BPAT: { cod: "00034" },
+  BMA: { cod: "00285", desde: "200312" }, BBAR: { cod: "00017" },
+  // Hipotecario y Patagonia no presentan 20-F: el BCRA hasta su último mes (contra Yahoo da lo mismo a menos de 1% en
+  // 2024 y 2025, y es mensual en vez de un ejercicio por año); Yahoo, solo los trimestres posteriores
+  BHIP: { cod: "00044", todo: true }, BPAT: { cod: "00034", todo: true },
 };
 const finDeMes = m => new Date(Date.UTC(+m.slice(0, 4), +m.slice(4, 6), 0)).toISOString().slice(0, 10);
 export function balancesBcra(bcra, s, hastaBal, hastaRoe) {
@@ -628,12 +636,13 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     try {
       const [facts, chart, yj] = await Promise.all([c.cik ? secGet(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`) : null, chartDe(c.px), yFund(c.px).catch(e => { errores[c.s + " Yahoo"] = e.message; return null; })]);
       if (!chart) { errores[c.s] = "sin precios"; continue; }
-      const yser = yahooSerie(yj), sec = facts ? arDesdeEdgar(facts) : { bal: [], roe: [] }, yah = arDesdeYahoo(yser, hoyS);
+      const yser = yahooSerie(yj), sec = facts ? arDesdeEdgar(facts) : { bal: [], roe: [] }, yah = arDesdeYahoo(yser, hoyS, conv);
       // por cierre: el trimestre de Yahoo, después el 20-F, después el ejercicio de Yahoo (reexpresado)
       const bal0 = unirObs([yah.bal.filter(b => b.src === "Yahoo trimestral"), sec.bal, yah.bal.filter(b => b.src === "Yahoo anual")]);
-      // para atrás, el BCRA: solo antes del primer balance de los 20-F o de Yahoo
-      const roe0 = unirObs([sec.roe, yah.roe]), hist = balancesBcra(bcra, c.s, bal0[0]?.end, roe0[0]?.end);
-      const bal = [...hist.bal, ...bal0];
+      // para atrás, el BCRA: antes del primer balance de los 20-F o de Yahoo (en Hipotecario y Patagonia, hasta su último mes)
+      const todo = !!BCRA_MAP[c.s]?.todo, roe0 = unirObs([sec.roe, yah.roe]), hist = balancesBcra(bcra, c.s, todo ? null : bal0[0]?.end, roe0[0]?.end);
+      const ultBcra = hist.bal.at(-1)?.end, usados = todo && ultBcra ? bal0.filter(b => b.end > ultBcra) : bal0;
+      const bal = [...hist.bal, ...usados];
       // acciones que faltan: las del balance más cercano que las tenga
       for (const b of bal) if (!b.sh) { const o = bal.filter(y => y.sh).sort((p, q) => Math.abs(dias(p.end, b.end)) - Math.abs(dias(q.end, b.end)))[0]; if (o) b.sh = o.sh; }
       // ROE: 12 meses con los trimestres (Yahoo, con los balances del 20-F para el promedio) y, para atrás, los ejercicios
@@ -644,9 +653,9 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       series[c.s] = x;
       bancos[c.s] = { n: c.n, pais: "ar", grupo: AR_AGREGADO.includes(c.s) ? "ar" : "arOtros", moneda: "ARS", ticker: c.px, pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)), precio: x.px.map(r2),
         ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), true, 470),
-        balances: bal0.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]),
+        balances: usados.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]),
         ...(hist.bal.length ? { bcra: { desde: hist.bal[0].end, hasta: hist.bal.at(-1).end, meses: hist.bal.length, aprox: !!BCRA_MAP[c.s]?.aprox, ejercicios: hist.roe.length } } : {}) };
-      log(`${c.s}: ${hist.bal.length ? `BCRA ${hist.bal[0].end} a ${hist.bal.at(-1).end} (${hist.bal.length} meses, ${hist.roe.length} ejercicios); ` : ""}balances ${bal0.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.filter(r => r.src !== "BCRA").map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
+      log(`${c.s}: ${hist.bal.length ? `BCRA ${hist.bal[0].end} a ${hist.bal.at(-1).end} (${hist.bal.length} meses, ${hist.roe.length} ejercicios); ` : ""}balances ${usados.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.filter(r => r.src !== "BCRA").map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   const nAr = AR_AGREGADO.filter(s => series[s]).length, nUs = US.filter(c => series[c.s]).length;

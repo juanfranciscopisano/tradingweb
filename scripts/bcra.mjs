@@ -24,7 +24,7 @@ import { pathToFileURL } from "node:url";
 
 export const VERSION = 1;
 // cambia cuando cambia cómo se calcula algo: la corrida diaria rearma los balances aunque no haya un mes nuevo
-export const REV = 5;
+export const REV = 6;
 export const BASE = "https://www.bcra.gob.ar/archivos/Pdfs/PublicacionesEstadisticas/Entidades/";
 export const FECHAS = "https://www.bcra.gob.ar/api/endpoints/informacion-entidades.php?action=fechas&lang=es";
 export const IPC_HIST = "https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv";
@@ -185,14 +185,19 @@ export function unirIndicadores(lista, base, hasta) {
 
 // ---- ROE real de cada ejercicio. Desde 2020 y en 2002 los balances vienen en moneda de cada mes (ajuste por inflación):
 // el resultado ya es real y va sobre el patrimonio promedio de los meses del ejercicio llevado a moneda del cierre con el
-// IPC. Los demás años son nominales: ROE real = (1 + ROE) / (1 + inflación de esos meses) − 1
+// IPC. Los demás años son nominales: ROE real = (1 + ROE) / (1 + K_INFL × inflación de esos meses) − 1. K_INFL: la parte
+// del patrimonio que se come la inflación (lo que no está en bienes de uso, participaciones y posiciones que la siguen).
+// Calibrado con los 12 ejercicios de 2017-2019 de Galicia, Macro, BBVA y Supervielle en que están el balance del BCRA
+// (nominal) y el 20-F (NIC 29): con 0,6 el ROE real queda 0,5 puntos arriba del 20-F en promedio (3,3 en valor absoluto);
+// con la inflación entera, 10,7 puntos abajo
+export const K_INFL = 0.6;
 export const ajustePorInflacion = fin => fin >= "202001" || fin.startsWith("2002");
 export function roeReales(entidades, ipc) {
   for (const e of Object.values(entidades)) for (const x of e.ejercicios) {
     const fin = mesIdx(x.fin, ipc.m0), ini = fin - x.meses, a = ipc.v[ini], b = ipc.v[fin];
     if (!(ini >= 0 && a > 0 && b > 0)) continue;
     const pi = Math.pow(b / a, 12 / x.meses) - 1; x.inflacion = +(pi * 100).toFixed(2);
-    if (!ajustePorInflacion(x.fin)) { x.roeReal = +(((1 + x.roe / 100) / (1 + pi) - 1) * 100).toFixed(2); continue; }
+    if (!ajustePorInflacion(x.fin)) { x.roeReal = +(((1 + x.roe / 100) / (1 + K_INFL * pi) - 1) * 100).toFixed(2); continue; }
     const fe = mesIdx(x.fin, BASE_MES); let suma = 0, n = 0;
     for (let k = fe - x.meses + 1; k <= fe; k++) {
       const pn = e.pn?.[k], ik = ipc.v[mesIdx(mesDe(k, BASE_MES), ipc.m0)];
@@ -347,7 +352,7 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
     else log("inflación: no se pudo encadenar (falta diciembre de 2016)");
   } catch (e) { log("inflación: " + e.message); }
   if (ipc) roeReales(entidades, ipc);
-  const out = { version: VERSION, rev: REV, asOf: now.toISOString(), mes: ult, m0: BASE_MES, i0: BASE_IND, fuente: "BCRA, Información de entidades financieras (datos abiertos)", entidades, ind, ipc };
+  const out = { version: VERSION, rev: REV, asOf: now.toISOString(), mes: ult, m0: BASE_MES, i0: BASE_IND, fuente: "BCRA, Información de entidades financieras (datos abiertos)", kInfl: K_INFL, entidades, ind, ipc };
   await writeFile(new URL("bcra.json", root), JSON.stringify(out));
   log(`bcra.json: ${Object.keys(entidades).length} entidades, balances desde ${BASE_MES}, indicadores desde ${BASE_IND} hasta ${ult}; sistema: ${Object.entries(ind[SISTEMA] || {}).map(([k, a]) => k + " " + a.filter(v => v != null).length).join(", ")}`);
   await rm(dir, { recursive: true, force: true });
