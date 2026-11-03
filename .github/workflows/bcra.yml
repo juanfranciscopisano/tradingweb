@@ -9,9 +9,13 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "diario: bcra.json si hay un mes nuevo; historia: también los indicadores de todos los archivos desde 2011"
+        description: "diario: bcra.json si hay un mes nuevo; historia: también los indicadores de todos los archivos desde 2011; diagnostico: qué traen algunos archivos, solo en el log"
         required: false
         default: "diario"
+      meses:
+        description: "diagnostico: meses a revisar (YYYYMM separados por coma)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -39,6 +43,7 @@ jobs:
         run: node scripts/bcra.mjs
         env:
           MODO: ${{ inputs.modo || 'diario' }}
+          MESES: ${{ inputs.meses }}
       - name: Commit si cambió
         run: |
           git config user.name "github-actions[bot]"

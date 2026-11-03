@@ -21,7 +21,7 @@ import { pathToFileURL } from "node:url";
 
 export const VERSION = 1;
 // cambia cuando cambia cómo se calcula algo: la corrida diaria rearma los balances aunque no haya un mes nuevo
-export const REV = 2;
+export const REV = 3;
 export const BASE = "https://www.bcra.gob.ar/archivos/Pdfs/PublicacionesEstadisticas/Entidades/";
 export const FECHAS = "https://www.bcra.gob.ar/api/endpoints/informacion-entidades.php?action=fechas&lang=es";
 export const IPC_HIST = "https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv";
@@ -81,18 +81,19 @@ export function serieEntidad(meses, base, hasta) {
   }
   return s;
 }
-// cierres de ejercicio, en junio o diciembre (los bancos que cerraban en junio pasaron a diciembre en 1998-2002): el mes
-// anterior a uno en que el resultado acumulado pasa a resultados no asignados (sube en lo mismo); en diciembre alcanza con
-// que el acumulado vuelva a empezar (cambie de signo o quede en menos de 60%)
+// cierres de ejercicio, en junio o diciembre (los bancos que cerraban en junio pasaron a diciembre en 1998-2002). Dos señales:
+// que el resultado acumulado vuelva a empezar al mes siguiente (cambie de signo o quede en menos de 60%) y que pase a
+// resultados no asignados (que suban en lo mismo). En el mes de cierre de la entidad alcanza con una; en junio, para los
+// ejercicios viejos, hacen falta las dos (un resultado chico de junio no es un cierre)
 export function cierres(s, base, mesCierre = 12) {
   const out = [];
   for (let i = 1; i < s.resEj.length; i++) {
     const a = s.resEj[i - 1], b = s.resEj[i], ra = s.rna[i - 1], rb = s.rna[i], mes = +mesDe(i - 1, base).slice(4, 6);
-    if (a == null || b == null || (mes !== 12 && mes !== 6 && mes !== mesCierre)) continue;
-    const vuelve = a !== 0 && (Math.sign(b) !== Math.sign(a) || Math.abs(b) < 0.6 * Math.abs(a));
+    if (a == null || b == null || !a || (mes !== 12 && mes !== 6 && mes !== mesCierre)) continue;
+    const vuelve = Math.sign(b) !== Math.sign(a) || Math.abs(b) < 0.6 * Math.abs(a);
     const salto = ra != null && rb != null ? rb - ra : null;
-    const pasaARna = salto != null && a !== 0 && Math.abs(salto - a) <= 0.25 * Math.abs(a) + 0.01 * Math.abs(s.pn[i] || 0);
-    if (pasaARna || (vuelve && mes === mesCierre)) out.push(i - 1);
+    const pasaARna = salto != null && Math.abs(salto - a) <= 0.25 * Math.abs(a) + 0.002 * Math.abs(s.pn[i] || 0);
+    if (mes === mesCierre ? (vuelve || pasaARna) : (vuelve && pasaARna)) out.push(i - 1);
   }
   return out;
 }
@@ -190,7 +191,34 @@ function buscar(destino, sufijo) {
 }
 const leer = p => p ? readFileSync(p, "latin1") : "";
 
+// MODO=diagnostico: qué hay adentro de algunos archivos (MESES=201107,202004), solo en el log
+async function diagnostico({ fetchImpl, log, meses }) {
+  const fechas = await fetchImpl(FECHAS, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(60000) }).then(r => r.json());
+  const lista = (fechas?.data?.fechas || []).map(x => x.value).filter(v => /^\d{6}$/.test(v)).sort();
+  const faltan = []; for (let i = 0; i <= mesIdx(lista.at(-1), lista[0]); i++) { const m = mesDe(i, lista[0]); if (!lista.includes(m)) faltan.push(m); }
+  log(`lista del BCRA: ${lista.length} meses, ${lista.slice(0, 3).join(" ")} … ${lista.slice(-2).join(" ")}; faltan ${faltan.join(" ") || "ninguno"}`);
+  const dir = await mkdtemp(join(tmpdir(), "bcra-d-"));
+  for (const m of meses) {
+    const f = join(dir, m + ".7z");
+    let tam = 0;
+    try { tam = await bajar(fetchImpl, BASE + m + "d.7z", f); } catch (e) { log(`${m}: ${e.message}`); continue; }
+    if (!tam) { log(`${m}: no está (404)`); continue; }
+    const cab = readFileSync(f).subarray(0, 8).toString("hex");
+    let txt = "";
+    try { txt = execFileSync("7z", ["l", "-ba", "-slt", f], { encoding: "latin1", maxBuffer: 1 << 28 }); } catch (e) { txt = "7z falló: " + String(e.stdout || e.message).slice(0, 400); }
+    const rutas = [...txt.matchAll(/^Path = (.*)$/gm)].map(x => x[1]);
+    log(`${m}: ${(tam / 1e6).toFixed(1)} MB, cabecera ${cab}, ${rutas.length} archivos${rutas.length ? "" : "; " + txt.slice(0, 300).replace(/\s+/g, " ")}`);
+    const carpetas = [...new Set(rutas.map(r => r.split(/[\\/]/).slice(0, -1).join("/")))];
+    log(`  carpetas: ${carpetas.slice(0, 30).join(" | ")}`);
+    for (const r of rutas.filter(r => /indicad|entidad|bal_?hist|cuentas|\.(7z|zip|rar)$/i.test(r)).slice(0, 25)) log("  " + JSON.stringify(r));
+    await rm(f, { force: true });
+  }
+  await rm(dir, { recursive: true, force: true });
+  return null;
+}
+
 export async function main({ fetchImpl = globalThis.fetch, root = new URL("../", import.meta.url), now = new Date(), log = console.log, modo = process.env.MODO || "diario" } = {}) {
+  if (modo === "diagnostico") return diagnostico({ fetchImpl, log, meses: (process.env.MESES || "201107,201410,201704,201707,202004,202010,202101").split(",") });
   let prev = null;
   try { prev = JSON.parse(await readFile(new URL("bcra.json", root), "utf8")); } catch (e) { /* primera vez */ }
   const fechas = await fetchImpl(FECHAS, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(60000) }).then(r => r.json());
