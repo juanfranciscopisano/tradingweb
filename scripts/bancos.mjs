@@ -282,10 +282,11 @@ export function unirObs(listas) {
 // ---- Argentina antes de los 20-F y de Yahoo: el balance mensual del BCRA (bcra.json). Es el del banco: Macro, BBVA,
 // Hipotecario y Patagonia cotizan como banco; Galicia cotiza como grupo y el banco es una aproximación, con las acciones
 // del grupo (20-F de 2006: 1.092.407.017 desde el canje de julio de 2000 y 1.241.407.017 desde el aumento del 13/5/2004).
-// Macro, desde 2003: antes cotizaba Bansud, otra entidad. Cada mes vale desde 60 días después de su cierre
+// Macro, desde diciembre de 2003, cuando Bansud (la que cotizaba) y Macro se fusionan en la entidad 285: antes, en ese
+// código está el Macro que no cotizaba (36 millones de acciones contra 609). Cada mes vale desde 60 días después de su cierre
 export const BCRA_MAP = {
   GGAL: { cod: "00007", aprox: true, acciones: [["2000-07-01", 1092407017], ["2004-05-13", 1241407017]] },
-  BMA: { cod: "00285", desde: "200301" }, BBAR: { cod: "00017" }, BHIP: { cod: "00044" }, BPAT: { cod: "00034" },
+  BMA: { cod: "00285", desde: "200312" }, BBAR: { cod: "00017" }, BHIP: { cod: "00044" }, BPAT: { cod: "00034" },
 };
 const finDeMes = m => new Date(Date.UTC(+m.slice(0, 4), +m.slice(4, 6), 0)).toISOString().slice(0, 10);
 export function balancesBcra(bcra, s, hastaBal, hastaRoe) {
@@ -302,7 +303,8 @@ export function balancesBcra(bcra, s, hastaBal, hastaRoe) {
   });
   const roe = (e.ejercicios || []).filter(x => x.roeReal != null && (!m.desde || x.fin >= m.desde)).map(x => {
     const end = finDeMes(x.fin), r = x.roeReal / 100;
-    return { end, pub: tOf(end) + 60 * DAY, roe: r, tipo: "ejercicio", ni: r * x.pnProm * 1000, avg: x.pnProm * 1000, c: end, src: "BCRA" };
+    const avg = (x.pnPromReal ?? x.pnProm) * 1000;
+    return { end, pub: tOf(end) + 60 * DAY, roe: r, tipo: "ejercicio", ni: r * avg, avg, c: end, src: "BCRA" };
   }).filter(r => !hastaRoe || r.end < hastaRoe);
   return { bal, roe };
 }

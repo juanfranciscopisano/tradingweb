@@ -21,7 +21,7 @@ import { pathToFileURL } from "node:url";
 
 export const VERSION = 1;
 // cambia cuando cambia cómo se calcula algo: la corrida diaria rearma los balances aunque no haya un mes nuevo
-export const REV = 3;
+export const REV = 4;
 export const BASE = "https://www.bcra.gob.ar/archivos/Pdfs/PublicacionesEstadisticas/Entidades/";
 export const FECHAS = "https://www.bcra.gob.ar/api/endpoints/informacion-entidades.php?action=fechas&lang=es";
 export const IPC_HIST = "https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv";
