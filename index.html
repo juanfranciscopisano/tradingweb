@@ -6421,8 +6421,8 @@ function drawBcoChart() {
 function bcoNotaAr(k) {
   const h = BCO.bancos[k]?.bcra, mes = d => MES_CORTO[+d.slice(5, 7) - 1].toLowerCase() + ' ' + d.slice(0, 4);
   if (h && h.hasta >= '2025') return 'En Argentina: no presenta 20-F y va con el balance mensual del BCRA hasta el último mes (' + mes(h.hasta) + '), cada uno desde 60 días después de su cierre; si hay un trimestre de Yahoo más nuevo, ese.';
-  const antes = h ? 'Hasta ' + mes(h.hasta) + ', el balance mensual del BCRA' + (h.aprox ? ' del banco (aproxima al grupo)' : '') + ', cada mes desde 60 días después de su cierre; después, '
-    : k === 'ar' ? 'Hasta 2016, el balance mensual del BCRA de cada banco (en Galicia, el del banco); después, ' : '';
+  const antes = h ? 'hasta ' + mes(h.hasta) + ', el balance mensual del BCRA' + (h.aprox ? ' del banco (aproxima al grupo)' : '') + ', cada mes desde 60 días después de su cierre; después, '
+    : k === 'ar' ? 'hasta 2016, el balance mensual del BCRA de cada banco (en Galicia, el del banco); después, ' : '';
   const salto = k === 'ar' || (h && h.hasta < '2017-06');
   return 'En Argentina: ' + antes + 'un balance por año hasta 2024 (los 20-F) y uno por trimestre desde 2025.'
     + (salto ? ' En marzo de 2017 el valor libro pasa al 20-F en NIIF reexpresado, más alto que el balance local sin ajuste: el P/VL baja de golpe.' : '');
