@@ -401,6 +401,25 @@ export async function diagnostico({ fetchImpl = globalThis.fetch, log = console.
   let s = null;
   try { s = await yahooSession(fetchImpl); log("Yahoo: sesión OK"); } catch (e) { log("Yahoo sesión: " + e.message); }
   const H = { "User-Agent": UA, Accept: "application/json", ...(s ? { Cookie: s.cookie } : {}) }, cr = s ? `&crumb=${encodeURIComponent(s.crumb)}` : "";
+  // etiquetas de patrimonio, preferidas y acciones de los bancos de EE.UU. que se ven raros
+  const spx = JSON.parse(await readFile(new URL("../spx.json", import.meta.url), "utf8")).list;
+  for (const sym of ["BAC", "C", "TFC", "JPM"]) {
+    const c = spx.find(x => x.s === sym); if (!c) continue;
+    await new Promise(r => setTimeout(r, 300));
+    const r = await fetchImpl(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`, { headers: { "User-Agent": secUA, Accept: "application/json" } });
+    if (!r.ok) { log(`${sym}: companyfacts HTTP ${r.status}`); continue; }
+    const g = (await r.json()).facts?.["us-gaap"] || {};
+    log(`\n=== ${sym} (CIK ${c.cik})`);
+    for (const [tag, o] of Object.entries(g)) {
+      if (!/Equity|Preferred|SharesOutstanding|Goodwill|Intangible|AvailableToCommon/.test(tag) || /Method|Investment|Securities|Compensation|Award|Option|Increase|Decrease|Issued|Repurchase|Dividend|Adjustment|Changes|Unrealized|Accumulated|Tax|Fair|Reclass|Contracts|Plan|Fund/.test(tag)) continue;
+      for (const [u, a] of Object.entries(o.units || {})) {
+        const inst = a.filter(e => !e.start), recientes = a.filter(e => e.end >= "2025-06-30");
+        if (!recientes.length) continue;
+        const ult = a.slice().sort((x, y) => x.end.localeCompare(y.end) || x.filed.localeCompare(y.filed)).pop();
+        log(`  ${tag} [${u}] ${a.length} (${inst.length} saldos), último ${ult.end} ${ult.val} ${ult.form} ${ult.filed}; desde 2025-06: ${[...new Set(recientes.map(e => e.end))].sort().join(" ")}`);
+      }
+    }
+  }
   for (const sym of AR.map(c => c.px)) {
     const types = ["quarterly", "annual"].flatMap(p => TIPOS_DIAG.map(t => p + t)).join(",");
     try {
