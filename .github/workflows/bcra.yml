@@ -1,0 +1,45 @@
+name: BCRA (datos por entidad)
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "diario: bcra.json con los meses nuevos; historia: lo rearma desde 2001; diagnostico: qué traen los archivos, solo en el log"
+        required: false
+        default: "diario"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bcra
+  cancel-in-progress: false
+
+jobs:
+  armar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: 7-Zip y pdftotext
+        run: |
+          command -v 7z >/dev/null && command -v pdftotext >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full poppler-utils >/dev/null; }
+          7z | head -2; pdftotext -v 2>&1 | head -1
+      - name: Armar bcra.json
+        run: node scripts/bcra.mjs
+        env:
+          MODO: ${{ inputs.modo || 'diario' }}
+      - name: Commit si cambió
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          [ -f bcra.json ] && git add bcra.json
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "BCRA: datos por entidad"
+          git pull --rebase -X theirs -q
+          git push
