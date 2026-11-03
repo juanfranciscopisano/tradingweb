@@ -6484,7 +6484,9 @@ function drawBcoBand(hover) {
   ctx.textAlign = 'center'; { let lastX = -1e9; const d0 = new Date(t0 * 1000), step = chartY > 6 ? 12 : chartY > 2 ? 6 : 3;
     for (let q = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; q++) { const t = Date.UTC(Math.floor(q / 12), q % 12, 1) / 1000; if (t > t1) break; if (q % step) continue; const x = xs(t); if (x - lastX < 56) continue; lastX = x; ctx.fillStyle = C.text; ctx.fillText(MES_CORTO[q % 12] + ' ' + String(Math.floor(q / 12)).slice(2), x, H - 8); } }
   // franja entre −1σ y +1σ. Donde la media todavía no tiene los N años (el principio de la historia), más clara
-  const tramos = []; let cur = []; idx.forEach(i => { if (bandV(i, 1) != null && bandV(i, 3) != null) cur.push(i); else if (cur.length) { tramos.push(cur); cur = []; } }); if (cur.length) tramos.push(cur);
+  // (se corta donde faltan semanas: el P/E con ROE menor a 3%)
+  const tramos = []; let cur = []; idx.forEach(i => { const ok = bandV(i, 1) != null && bandV(i, 3) != null, salto = cur.length && i - cur[cur.length - 1] > 2;
+    if (ok && !salto) cur.push(i); else { if (cur.length) tramos.push(cur); cur = ok ? [i] : []; } }); if (cur.length) tramos.push(cur);
   const corto = i => !!(bands[i] && bands[i].corto), runs = [];
   tramos.forEach(tr => { let r = [tr[0]]; for (let q = 1; q < tr.length; q++) { const i = tr[q]; r.push(i); if (corto(i) !== corto(r[0])) { runs.push({ ix: r, c: corto(r[0]) }); r = [i]; } } if (r.length > 1 || !runs.length) runs.push({ ix: r, c: corto(r[0]) }); });
   ctx.fillStyle = C.fill;
@@ -6496,7 +6498,7 @@ function drawBcoBand(hover) {
   }
   ctx.globalAlpha = 1; ctx.setLineDash([]);
   // la línea
-  ctx.strokeStyle = C.line; ctx.lineWidth = 1.9; ctx.beginPath(); { let on = false; idx.forEach(i => { const v = lineV(i); if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); } ctx.stroke();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1.9; ctx.beginPath(); { let on = false, ant = -9; idx.forEach(i => { const v = lineV(i); if (i - ant > 2) on = false; ant = i; if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); } ctx.stroke();
   // a la derecha: el valor de hoy de cada banda y de la línea, sin pisarse
   const lb = bands[last], tags = [];
   if (lb) for (let j = 0; j < 5; j++) { const v = bandV(last, j); if (v != null && v >= lo && v <= hi) tags.push({ y: ys(v), txt: PE_BAND_LABELS[j] + ' ' + fmt(v), col: cols[j] }); }
