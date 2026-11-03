@@ -3737,7 +3737,9 @@ async function loadPebgAr(k, pedido, previo, req) {
     const r = await fetch(BASE_URL + '/api/pebg?symbol=' + encodeURIComponent(e.px));
     const d0 = await r.json();
     if (req !== pebgReq) return;
-    const prices = (d0.prices || []).filter(p => p.close > 0);
+    // antes de un salto de precio sin split (Ecogas al empezar a cotizar), el proceso no usa el precio: el gráfico tampoco
+    const desde = e.precioDesde ? Date.parse(e.precioDesde + 'T00:00:00Z') / 1000 : -Infinity;
+    const prices = (d0.prices || []).filter(p => p.close > 0 && p.date >= desde);
     if (!prices.length) throw new Error(d0.error || 'sin precios');
     const d = { symbol: k, arKey: k, ar: e, shortName: e.n, prices, eps: [], epsNorm: [], bv: [], splits: [], histNote: null,
       currentPrice: d0.currentPrice || prices[prices.length - 1].close,

@@ -306,9 +306,23 @@ const precioDe = chart => {
 // tipo de cambio oficial de cada día (argentinadatos: mayorista; si no está, el del BNA): fxAt(t) = el último hasta t
 export const FX_URLS = ["https://api.argentinadatos.com/v1/cotizaciones/dolares/mayorista", "https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial"];
 export const CCL_URL = "https://api.argentinadatos.com/v1/cotizaciones/dolares/contadoconliqui";
-export function fxDe(j) {
-  const pts = (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && x.venta > 0).map(x => [tOf(x.fecha), +x.venta]).sort((a, b) => a[0] - b[0]);
-  if (pts.length < 100) return null;
+const ptsDe = j => (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && x.venta > 0).map(x => [tOf(x.fecha), +x.venta]).sort((a, b) => a[0] - b[0]);
+// el mayorista de argentinadatos tiene huecos (no tiene nada del 13/12/2023, la devaluación, a fin de mes): donde faltan
+// más de siete días, el del BNA por la relación entre los dos en los diez datos anteriores al hueco
+export function completarFx(may, ofi) {
+  const M = ptsDe(may), O = ptsDe(ofi);
+  if (!M.length) return O;
+  const out = [...M];
+  for (let i = 1; i < M.length; i++) {
+    if (M[i][0] - M[i - 1][0] <= 7 * DAY) continue;
+    const ant = O.filter(o => o[0] <= M[i - 1][0]).slice(-10), rel = ant.length ? ant.reduce((a, o) => a + (M.filter(m => m[0] <= o[0]).at(-1)?.[1] || o[1]) / o[1], 0) / ant.length : 1;
+    for (const o of O) if (o[0] > M[i - 1][0] && o[0] < M[i][0]) out.push([o[0], +(o[1] * rel).toFixed(4)]);
+  }
+  return out.sort((a, b) => a[0] - b[0]).map(([t, v]) => ({ fecha: isoOf(t), venta: v }));
+}
+export function fxDe(j, min = 100) {
+  const pts = ptsDe(j);
+  if (pts.length < min) return null;
   const at = t => { if (t <= pts[0][0]) return pts[0][1]; let lo = 0, hi = pts.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m][0] <= t) lo = m; else hi = m; } return pts[hi][0] <= t ? pts[hi][1] : pts[lo][1]; };
   return { at, n: pts.length, desde: isoOf(pts[0][0]), hasta: isoOf(pts.at(-1)[0]) };
 }
@@ -324,7 +338,9 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   if (!ipc) throw new Error("indec.json sin el IPC nacional");
   const convARS = (c, t) => ipc.at(t) / ipc.at(tOf(c) + DAY - 1), convUSD = () => 1;
   let fx = null;
-  for (const u of FX_URLS) { try { fx = fxDe(await getJSON(fetchImpl, u, { headers: { "User-Agent": UA, Accept: "application/json" } })); if (fx) break; } catch (e) { log("tipo de cambio: " + u + " " + e.message); } }
+  { const H = { headers: { "User-Agent": UA, Accept: "application/json" } }, bajar = u => getJSON(fetchImpl, u, H).catch(e => { log("tipo de cambio: " + u + " " + e.message); return null; });
+    const [may, ofi] = await Promise.all(FX_URLS.map(bajar));
+    fx = fxDe(completarFx(may, ofi)); }
   if (!fx) errores.fx = "sin tipo de cambio oficial: todas en pesos con el IPC";
   // con el dólar como moneda funcional, el balance pasa a dólares con el oficial de su cierre (como presenta la empresa) y
   // a pesos de cada semana con el contado con liquidación, el dólar al que el mercado pone el precio: es el múltiplo de
@@ -429,7 +445,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
           ajusteIPC: regimen === "pesos" && u.eq ? +convARS(u.eq.c, hoyS).toFixed(3) : null, ajusteTC: regimen === "dólar funcional" && u.eq ? +convFX(u.eq.c, hoyS).toFixed(3) : null },
         obs: { resultados: ni.map(o => [o.end, o.tipo, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]),
           balances: eq.map(o => [o.end, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]) },
-        ...(splits.length ? { splits: splits.map(z => [isoOf(z.date), z.ratio]) } : {}) };
+        ...(splits.length ? { splits: splits.map(z => [isoOf(z.date), z.ratio]) } : {}), ...(corte != null ? { precioDesde: isoOf(MONDAY0 + corte * WEEK) } : {}) };
       const pe = x.eps.at(-1) > 0 ? x.c.at(-1) / x.eps.at(-1) : null, pb = x.bv.at(-1) > 0 ? x.c.at(-1) / x.bv.at(-1) : null;
       log(`${c.s} (${px}, ${usd ? "US$" : "$"}): desde ${isoOf(MONDAY0 + x.w0 * WEEK)}; resultados ${ni.map(o => o.end + o.tipo + "(" + o.src.split(" ")[0] + ")").join(" ")}; balances ${eq.map(o => o.end + "(" + o.src.split(" ")[0] + ")").join(" ")}`
         + `; hoy P/E ${pe ? pe.toFixed(2) : "—"} (${u.ni ? u.ni.tipo + " al " + u.ni.end : "sin resultado"}), P/BV ${pb ? pb.toFixed(2) : "—"} (${u.eq ? u.eq.end : "sin balance"})`
