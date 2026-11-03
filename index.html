@@ -564,6 +564,13 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .bco-ke input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .bco-ke-msg{color:var(--down)}
 .bco-sc-box{position:relative;height:380px}
+.bco-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px 0 10px}
+.bco-ctl .arg-chips{margin-bottom:0}
+.bco-ctl-lbl{font-size:12.5px;color:var(--muted)}
+.bco-sel{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);max-width:100%}
+.bco-sel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.bco-stats{display:flex;flex-wrap:wrap;row-gap:10px;margin:0 0 12px}
+.bco-stats .pebg-stat-block{flex:0 1 auto}
 .sect-tbl thead th.srt,.sect-co thead th.srt{cursor:pointer;user-select:none}
 .sect-tbl thead th.srt:hover,.sect-co thead th.srt:hover{color:var(--ink)}
 .sect-tbl thead th.on,.sect-co thead th.on{color:var(--accent)}
@@ -1332,6 +1339,32 @@ function checkPwd(){
       <div class="arg-chart-top">
         <div class="ov-card-title" id="bcoChartTitle">P/VL</div>
         <div class="cs"></div>
+        <div class="pebg-period-btns" id="bcoViewBtns" role="group" aria-label="Vista">
+          <span class="pebg-period active" data-v="banda" onclick="setBcoView('banda')" title="Un grupo o un banco con su media móvil y los desvíos">Banda móvil</span>
+          <span class="pebg-period" data-v="comparar" onclick="setBcoView('comparar')" title="Varios grupos o bancos en el mismo gráfico">Comparar</span>
+        </div>
+      </div>
+      <div class="bco-ctl" id="bcoBandCtl">
+        <select id="bcoFoco" class="bco-sel" onchange="setBcoFoco(this.value)" aria-label="Grupo o banco de la banda"></select>
+        <span class="bco-ctl-lbl">Media de</span>
+        <div class="pebg-period-btns" id="bcoWinBtns" role="group" aria-label="Años de la media">
+          <span class="pebg-period" data-w="1" onclick="setBcoWin(1)">1A</span>
+          <span class="pebg-period active" data-w="3" onclick="setBcoWin(3)">3A</span>
+          <span class="pebg-period" data-w="5" onclick="setBcoWin(5)">5A</span>
+          <span class="pebg-period" data-w="10" onclick="setBcoWin(10)">10A</span>
+        </div>
+        <div class="pebg-period-btns" id="bcoBandBtns" role="group" aria-label="Banda">
+          <span class="pebg-period active" data-b="movil" onclick="setBcoBandT('movil')" title="En cada semana, los años anteriores">Móvil</span>
+          <span class="pebg-period" data-b="fija" onclick="setBcoBandT('fija')" title="Un solo juego con los últimos años">Fija</span>
+        </div>
+        <div class="pebg-period-btns" id="bcoEjeBtns" role="group" aria-label="Eje">
+          <span class="pebg-period active" data-e="mult" onclick="setBcoEje('mult')">Múltiplo</span>
+          <span class="pebg-period" data-e="precio" onclick="setBcoEje('precio')" title="Solo para un banco: el precio con las bandas pasadas a precio">Precio</span>
+        </div>
+      </div>
+      <div class="bco-ctl" id="bcoCmpCtl" style="display:none">
+        <div class="arg-chips" id="bcoLegend"></div>
+        <div class="cs"></div>
         <div class="pebg-period-btns" id="bcoRangeBtns" role="group" aria-label="Período">
           <span class="pebg-period" data-y="3" onclick="setBcoRange(3)">3A</span>
           <span class="pebg-period" data-y="5" onclick="setBcoRange(5)">5A</span>
@@ -1339,7 +1372,7 @@ function checkPwd(){
           <span class="pebg-period" data-y="0" onclick="setBcoRange(0)">Todo</span>
         </div>
       </div>
-      <div class="arg-chips" id="bcoLegend"></div>
+      <div class="bco-stats" id="bcoStats"></div>
       <div class="sect-chart-box"><canvas id="bcoCanvas"></canvas><div class="pebg-tooltip" id="bcoCanvasTip"></div></div>
       <div class="arg-note" id="bcoChartNote"></div>
     </div>
@@ -5335,8 +5368,10 @@ const METODO = [
       { d: 'ROE de 12 meses: resultado de los comunes de los últimos cuatro trimestres / patrimonio promedio de los cierres del año (el del trimestre y los anteriores hasta un año antes). En Argentina, todo en pesos del último cierre: es real. ROE del trimestre: resultado del último trimestre × 4 / promedio de su cierre y el anterior. Donde faltan trimestres, el resultado de 12 meses de Yahoo; en Argentina hasta 2024, el del ejercicio, con el resultado y los dos patrimonios del mismo 20-F.',
         o: 'El resultado de 12 meses de Yahoo es la suma nominal de los cuatro trimestres: en Argentina deja el ROE un poco por debajo del real.' },
       { d: 'Cada balance vale desde su presentación a la SEC o, sin esa fecha, desde el cierre más 45 a 75 días; deja de valer a los 200 días en EE.UU. y a los 470 en Argentina (que hasta 2024 tiene uno por año).' },
+      { d: 'Banda móvil (la vista que abre la pestaña): el P/VL semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores (hace falta 60% con dato); fija: un solo juego con los últimos años. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (un banco), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/VL), así que salta cuando entra un balance.',
+        p: 'Es la misma lectura que P/E histórico con el múltiplo que se usa para bancos: el resultado de un banco depende del ciclo de crédito y de las previsiones, y el valor libro es más estable que la ganancia.' },
       { d: 'P/VL que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/VL × (costo del capital − crecimiento). Costo del capital y crecimiento editables: por defecto 10% y 4% nominales en EE.UU. y 14% y 3% reales en Argentina.',
-        p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal.',
+        p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal. Los valores por defecto son supuestos, armados con CAPM a fines de octubre de 2026: en EE.UU., bono del Tesoro a 10 años (~5%) + beta de los bancos (~1,1) × prima de mercado (~4,2%, la implícita de Damodaran) ≈ 9,6%, redondeado a 10%, y crecimiento nominal de 4% (2% real + 2% de inflación); en Argentina, en términos reales, tasa real del Tesoro a 10 años (TIPS, ~2,6%) + riesgo país (~6,5%) + 1,1 × 4,2% ≈ 13,7%, redondeado a 14%, y crecimiento real de 3%.',
         x: 'Comparar los P/VL de Argentina y EE.UU. sin más: un banco argentino tiene que ganar más para valer lo mismo, porque su costo del capital es más alto.',
         o: 'El resultado depende mucho del costo del capital argentino (riesgo país más prima por acciones): con 12% y 3%, un P/VL de 1x pide 12% de ROE real; con 16%, 16%.' },
       { d: 'Percentil y mediana del P/VL contra los últimos 10 años (Argentina, desde 2017), con al menos 3 años de datos.' },
@@ -6076,7 +6111,45 @@ const BCO_KE0 = { us: { ke: 10, g: 4 }, ar: { ke: 14, g: 3 } };
 let BCO_KE = JSON.parse(JSON.stringify(BCO_KE0));
 try { const k = JSON.parse(localStorage.getItem('bcoKe') || 'null'); if (k && k.us && k.ar && k.us.ke > k.us.g && k.ar.ke > k.ar.g) BCO_KE = k; } catch (e) {}
 const BCO_MET = { pb: ['P/VL', 'precio / valor libro'], ptb: ['P/VL tangible', 'precio / valor libro tangible'], roe: ['ROE', 'ROE de 12 meses (Argentina: real)'] };
-const BCO_COL = { ar: () => BV.azul, us: () => BV.navy, usDiv: () => BV.teal, usReg: () => BV.celeste };
+// colores de pantalla: variables del tema, que cambian con el modo oscuro (la paleta BAVSA es para el Informe, sobre blanco)
+const BCO_COL = { ar: () => cssVar('--accent'), us: () => cssVar('--b1p'), usDiv: () => cssVar('--b1m'), usReg: () => cssVar('--b2m') };
+const BCO_PAL = ['--b2p', '--warn', '--ink2', '--muted'];
+// la banda: un grupo o un banco con su media móvil y los desvíos, como en P/E histórico
+let bcoView = 'banda', bcoFoco = 'ar', bcoWin = 3, bcoBandT = 'movil', bcoEje = 'mult';
+try { const o = JSON.parse(localStorage.getItem('bcoBanda') || 'null');
+  if (o) { if (o.v === 'comparar') bcoView = 'comparar'; if ([1, 3, 5, 10].includes(o.w)) bcoWin = o.w; if (o.b === 'fija') bcoBandT = 'fija'; if (o.e === 'precio') bcoEje = 'precio'; if (typeof o.f === 'string') bcoFoco = o.f; } } catch (e) {}
+const bcoGuardar = () => { try { localStorage.setItem('bcoBanda', JSON.stringify({ v: bcoView, w: bcoWin, b: bcoBandT, e: bcoEje, f: bcoFoco })); } catch (e) {} };
+function setBcoView(v) { bcoView = v === 'comparar' ? 'comparar' : 'banda'; bcoGuardar(); renderBancos(); }
+function setBcoFoco(k) { bcoFoco = k; bcoGuardar(); renderBancos(); }
+function setBcoWin(w) { bcoWin = w; bcoGuardar(); drawBcoChart(); }
+function setBcoBandT(b) { bcoBandT = b === 'fija' ? 'fija' : 'movil'; bcoGuardar(); drawBcoChart(); }
+function setBcoEje(e) { bcoEje = e === 'precio' ? 'precio' : 'mult'; bcoGuardar(); drawBcoChart(); }
+// una fila de la tabla: en la banda, ese grupo o banco; al comparar, lo suma o lo saca
+function bcoFila(k) {
+  if (bcoView === 'comparar') return bcoToggle(k);
+  setBcoFoco(k);
+  const c = document.getElementById('bcoCanvas'); if (c && c.scrollIntoView) c.closest('.ov-card').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+// media y desvío de cada semana. Móvil: las semanas de los N años anteriores, incluida esa (al menos 60% con dato).
+// Fija: un solo juego con los últimos N años, aplicado a esos N años
+function bcoBanda(a, years, tipo) {
+  const n = a.length, W = Math.round(years * 52.18), min = Math.round(W * 0.6), out = new Array(n).fill(null);
+  const banda = (mu, sd) => ({ mu, sd, mult: [mu + 2 * sd, mu + sd, mu, mu - sd, mu - 2 * sd] });
+  if (tipo === 'fija') {
+    const v = []; for (let i = Math.max(0, n - W); i < n; i++) if (a[i] != null) v.push(a[i]);
+    if (v.length < 26) return out;
+    const mu = v.reduce((x, y) => x + y, 0) / v.length, sd = Math.sqrt(v.reduce((x, y) => x + (y - mu) ** 2, 0) / v.length), b = banda(mu, sd);
+    for (let i = Math.max(0, n - W); i < n; i++) out[i] = b;
+    return out;
+  }
+  let sx = 0, sxx = 0, cnt = 0;
+  for (let i = 0; i < n; i++) {
+    if (a[i] != null) { sx += a[i]; sxx += a[i] * a[i]; cnt++; }
+    const j = i - W; if (j >= 0 && a[j] != null) { sx -= a[j]; sxx -= a[j] * a[j]; cnt--; }
+    if (cnt >= min && a[i] != null) { const mu = sx / cnt; out[i] = banda(mu, Math.sqrt(Math.max(0, sxx / cnt - mu * mu))); }
+  }
+  return out;
+}
 function loadBancos() {
   if (!bcoLoading) bcoLoading = fetch('bancos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { BCO = j && j.bancos && j.grupos ? j : null; if (!BCO) bcoLoading = null; return BCO; }).catch(() => { bcoLoading = null; return null; });
   return bcoLoading;
@@ -6128,14 +6201,14 @@ function renderBancos() {
   const fila = (k, cls) => {
     const g = !!BCO.grupos[k], b = BCO.bancos[k], u = b ? b.ult : null, P = BCO_KE[bcoPais(k)];
     const pb = g ? bcoUlt(k, 'pb') : u.pb, ptb = g ? bcoUlt(k, 'ptb') : u.ptb, roe = g ? bcoUlt(k, 'roe') : u.roe, roeQ = g ? null : u.roeQ, h = bcoHist(k, 'pb');
-    const on = bcoSel.includes(k);
+    const on = bcoView === 'banda' ? k === bcoFoco : bcoSel.includes(k);
     let bal = na;
     if (u && u.balance) {
       const tit = 'Balance al ' + infDdmmaa(u.balance) + ' (' + u.fuente + ')' + (u.ajusteIPC ? ', valor libro × ' + numAR(u.ajusteIPC, 3, 3) + ' por la inflación desde el cierre' : '');
       bal = '<span title="' + tit + '">' + MES_CORTO[+u.balance.slice(5, 7) - 1].toLowerCase() + '-' + u.balance.slice(2, 4) + '</span>';
     }
     const roeTit = u && u.roeTipo === 'ejercicio' ? ' title="ROE del ejercicio cerrado el ' + infDdmmaa(u.roeCierre) + ': faltan trimestres para el de 12 meses"' : u && u.roeCierre ? ' title="12 meses al ' + infDdmmaa(u.roeCierre) + '"' : '';
-    return '<tr class="' + cls + (on ? ' sel' : '') + '" tabindex="0" onclick="bcoToggle(\'' + k + '\')" onkeydown="if(event.key===\'Enter\')bcoToggle(\'' + k + '\')" title="' + (on ? 'Sacar del gráfico' : 'Ver en el gráfico') + '">'
+    return '<tr class="' + cls + (on ? ' sel' : '') + '" tabindex="0" onclick="bcoFila(\'' + k + '\')" onkeydown="if(event.key===\'Enter\')bcoFila(\'' + k + '\')" title="' + (bcoView === 'banda' ? 'Ver su banda móvil' : on ? 'Sacar del gráfico' : 'Sumar al gráfico') + '">'
       + '<td>' + (b ? b.n + ' <span class="bco-tk">' + k + '</span>' : BCO.grupos[k].n + '<div class="sect-par">' + BCO.grupos[k].desc + '</div>') + '</td>'
       + '<td class="sect-now">' + x(pb) + '</td><td>' + x(ptb) + '</td>'
       + '<td' + roeTit + '>' + pc(roe) + (u && u.roeTipo === 'ejercicio' ? '*' : '') + '</td><td>' + pc(roeQ) + '</td>'
@@ -6143,6 +6216,9 @@ function renderBancos() {
       + '<td>' + (h ? Math.round(h.pct * 100) + '%' : na) + '</td><td>' + (h ? x(h.med) : na) + '</td><td>' + bal + '</td></tr>';
   };
   const ar = Object.keys(BCO.bancos).filter(k => BCO.bancos[k].pais === 'ar'), us = Object.keys(BCO.bancos).filter(k => BCO.bancos[k].pais === 'us').sort((a, c) => (BCO.bancos[c].ult.cap || 0) - (BCO.bancos[a].ult.cap || 0));
+  { const S = document.getElementById('bcoFoco'), op = k => '<option value="' + k + '">' + (BCO.grupos[k] ? BCO.grupos[k].n : BCO.bancos[k].n + ' (' + k + ')') + '</option>';
+    if (S) { S.innerHTML = '<optgroup label="Grupos">' + ['ar', 'us', 'usDiv', 'usReg'].map(op).join('') + '</optgroup><optgroup label="Argentina">' + ar.map(op).join('') + '</optgroup><optgroup label="EE.UU.">' + us.map(op).join('') + '</optgroup>';
+      if (!bcoObj(bcoFoco)) bcoFoco = 'ar'; S.value = bcoFoco; } }
   const sec = (t, P, nota) => '<tr class="bco-sec"><td colspan="11">' + t + ' <span>' + nota + ' Costo del capital ' + numAR(P.ke, 1, 1) + '% y crecimiento ' + numAR(P.g, 1, 1) + '%.</span></td></tr>';
   tb.innerHTML = '<table class="ov-tbl sect-tbl bco-tbl"><thead><tr><th>Banco</th><th title="Capitalización / patrimonio de los comunes">P/VL</th><th title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/VL tangible</th>'
     + '<th title="Resultado de los comunes de 12 meses / patrimonio promedio">ROE 12 meses</th><th title="Resultado del último trimestre por 4 / patrimonio promedio del trimestre">ROE del trimestre</th>'
@@ -6155,7 +6231,7 @@ function renderBancos() {
     + ['us', 'usDiv', 'usReg'].map(k => fila(k, 'sect-idx')).join('') + us.map(k => fila(k, 'sect-sub')).join('')
     + '</tbody></table>';
   const err = Object.keys(BCO.errores || {});
-  document.getElementById('bcoTblNote').innerHTML = 'Tocá una fila para sumarla al gráfico o sacarla. El agregado argentino es Galicia, Macro, BBVA y Supervielle (con historia desde 2017); Patagonia, Hipotecario y Valores tienen datos desde 2023. '
+  document.getElementById('bcoTblNote').innerHTML = (bcoView === 'banda' ? 'Tocá una fila para ver su banda móvil. ' : 'Tocá una fila para sumarla al gráfico o sacarla. ') + 'El agregado argentino es Galicia, Macro, BBVA y Supervielle (con historia desde 2017); Patagonia, Hipotecario y Valores tienen datos desde 2023. '
     + 'Percentil y mediana del P/VL contra los últimos 10 años (en Argentina, desde 2017; Patagonia, Hipotecario y Valores, desde 2023). * ROE del último ejercicio: a ese banco le faltan trimestres para el de 12 meses.'
     + (err.length ? ' Sin datos hoy: ' + err.join(', ') + '.' : '');
   drawBcoChart(); drawBcoScatter();
@@ -6163,10 +6239,16 @@ function renderBancos() {
 function drawBcoChart() {
   if (!document.getElementById('bcoCanvas')) return;
   const tit = document.getElementById('bcoChartTitle'), leg = document.getElementById('bcoLegend');
+  const on = (sel, attr, v) => document.querySelectorAll(sel + ' .pebg-period').forEach(e => e.classList.toggle('active', e.dataset[attr] === String(v)));
+  on('#bcoViewBtns', 'v', bcoView); on('#bcoWinBtns', 'w', bcoWin); on('#bcoBandBtns', 'b', bcoBandT); on('#bcoEjeBtns', 'e', bcoEje); on('#bcoRangeBtns', 'y', bcoRange);
+  document.getElementById('bcoBandCtl').style.display = bcoView === 'banda' ? '' : 'none';
+  document.getElementById('bcoCmpCtl').style.display = bcoView === 'comparar' ? '' : 'none';
+  document.getElementById('bcoStats').style.display = bcoView === 'banda' ? '' : 'none';
   if (!BCO) { drawLines('bcoCanvas', [], null, null, 'Sin datos'); return; }
+  if (bcoView === 'banda') return drawBcoBand();
   const M = BCO_MET[bcoMetric];
   tit.innerHTML = M[0] + ' <span>' + M[1] + (bcoMetric === 'roe' ? '' : ', semanal') + '</span>';
-  const since = bcoRange ? Date.now() / 1000 - bcoRange * YR_S : 0, pal = ['--b1p', '--b2p', '--b1m', '--b2m', '--warn', '--ink2'];
+  const since = bcoRange ? Date.now() / 1000 - bcoRange * YR_S : 0, pal = BCO_PAL;
   let i = 0;
   const series = bcoSel.filter(k => bcoObj(k)).map(k => ({ k, name: bcoNom(k) + (BCO.bancos[k] ? ' (' + k + ')' : ''), color: BCO_COL[k] ? BCO_COL[k]() : cssVar(pal[i++ % pal.length]), pts: bcoSerie(k, bcoMetric).filter(p => p.t >= since) }));
   const fmt = bcoMetric === 'roe' ? ((v, tip) => numAR(v, 1, 1) + '%') : ((v, tip) => numAR(v, tip ? 2 : 1, tip ? 2 : 1) + 'x');
@@ -6179,6 +6261,98 @@ function drawBcoChart() {
     ? 'ROE de 12 meses de cada semana: el último publicado. En Argentina es real (los balances tienen ajuste por inflación) y, hasta 2025, del ejercicio; en EE.UU., nominal.'
     : 'Cada balance cuenta desde que se publicó. En Argentina el valor libro se lleva a pesos de cada semana con el IPC; hasta 2024 hay un balance por año (los 20-F) y desde 2025, uno por trimestre.';
 }
+// banda móvil de un grupo o un banco: la métrica semanal con su media y ±1σ y ±2σ, en múltiplo o, para un banco, en
+// precio (cada banda × el valor libro por acción de esa semana: precio / P/VL)
+function drawBcoBand(hover) {
+  const cv = document.getElementById('bcoCanvas'); if (!cv || !BCO) return;
+  if (!bcoObj(bcoFoco)) bcoFoco = 'ar';
+  const k = bcoFoco, m = bcoMetric, b = BCO.bancos[k], roe = m === 'roe';
+  const precio = bcoEje === 'precio' && !!b && !roe && Array.isArray(b.precio);
+  document.getElementById('bcoEjeBtns').classList.toggle('is-off', !b || roe);
+  const sel = document.getElementById('bcoFoco'); if (sel && sel.value !== k) sel.value = k;
+  const a = bcoObj(k)[m] || [], n = a.length, bands = bcoBanda(a, bcoWin, bcoBandT);
+  const M = BCO_MET[m], wTxt = bcoWin === 1 ? '1 año' : bcoWin + ' años';
+  document.getElementById('bcoChartTitle').innerHTML = bcoNom(k) + (b ? ' (' + k + ')' : '') + ' <span>' + M[0] + (precio ? ' en precio' : '') + ', '
+    + (bcoBandT === 'fija' ? 'media de los últimos ' + wTxt : 'media móvil de ' + wTxt) + ' ±1σ y ±2σ</span>';
+  // el gráfico muestra más años que la ventana, como en P/E histórico
+  const chartY = bcoBandT === 'fija' ? bcoWin : ({ 1: 3, 3: 5, 5: 8, 10: 15 })[bcoWin] || bcoWin;
+  const last = (() => { for (let i = n - 1; i >= 0; i--) if (a[i] != null) return i; return -1; })();
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1, W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), line: cssVar('--price'), fill: cssVar('--band-fill') }, cols = bandColors();
+  const st = document.getElementById('bcoStats'), tip = document.getElementById('bcoCanvasTip');
+  if (last < 0) { ctx.fillStyle = C.text; ctx.font = `13px ${CANVAS_FONT}`; ctx.fillText('Sin datos', 12, 24); st.innerHTML = ''; return; }
+  const t0 = bcoT(last) - chartY * YR_S, idx = []; for (let i = 0; i <= last; i++) if (bcoT(i) >= t0 && a[i] != null) idx.push(i);
+  const lineV = i => precio ? (b.precio[i] > 0 ? b.precio[i] : null) : a[i];
+  const bandV = (i, j) => { const B = bands[i]; if (!B) return null; const v = B.mult[j]; if (!precio) return roe || v > 0 ? v : null; return v > 0 && a[i] > 0 && b.precio[i] > 0 ? v * b.precio[i] / a[i] : null; };
+  const vals = []; idx.forEach(i => { const v = lineV(i); if (v != null) vals.push(v); for (let j = 0; j < 5; j++) { const x = bandV(i, j); if (x != null) vals.push(x); } });
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad; if (!roe && lo < 0) lo = 0;
+  const P = { l: 58, r: 92, t: 14, b: 26 }, t1 = bcoT(last);
+  const xs = t => P.l + (t - t0) / (t1 - t0 || 1) * (W - P.l - P.r), ys = v => P.t + (1 - (v - lo) / (hi - lo)) * (H - P.t - P.b);
+  const fmtM = v => roe ? numAR(v, 1, 1) + '%' : numAR(v, v >= 10 ? 1 : 2, v >= 10 ? 1 : 2) + 'x';
+  const fmtP = v => (b && b.moneda === 'ARS' ? '$ ' : 'US$ ') + numAR(v, v >= 1000 ? 0 : 2, v >= 1000 ? 0 : 2);
+  const fmt = precio ? fmtP : fmtM;
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  niceTicks(lo, hi, 6).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = C.text; ctx.textAlign = 'right'; ctx.fillText(precio ? fmtP(v).replace(/,00$/, '') : fmtM(v), P.l - 6, y + 4); });
+  // fechas: comienzo de cada año o de cada trimestre según el largo
+  ctx.textAlign = 'center'; { let lastX = -1e9; const d0 = new Date(t0 * 1000), step = chartY > 6 ? 12 : chartY > 2 ? 6 : 3;
+    for (let q = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; q++) { const t = Date.UTC(Math.floor(q / 12), q % 12, 1) / 1000; if (t > t1) break; if (q % step) continue; const x = xs(t); if (x - lastX < 56) continue; lastX = x; ctx.fillStyle = C.text; ctx.fillText(MES_CORTO[q % 12] + ' ' + String(Math.floor(q / 12)).slice(2), x, H - 8); } }
+  // franja entre −1σ y +1σ
+  const tramos = []; let cur = []; idx.forEach(i => { if (bandV(i, 1) != null && bandV(i, 3) != null) cur.push(i); else if (cur.length) { tramos.push(cur); cur = []; } }); if (cur.length) tramos.push(cur);
+  ctx.fillStyle = C.fill;
+  tramos.forEach(tr => { ctx.beginPath(); tr.forEach((i, q) => q ? ctx.lineTo(xs(bcoT(i)), ys(bandV(i, 1))) : ctx.moveTo(xs(bcoT(i)), ys(bandV(i, 1)))); tr.slice().reverse().forEach(i => ctx.lineTo(xs(bcoT(i)), ys(bandV(i, 3)))); ctx.closePath(); ctx.fill(); });
+  // bandas: la media llena, ±1σ finas, ±2σ punteadas
+  for (let j = 0; j < 5; j++) {
+    ctx.strokeStyle = cols[j]; ctx.lineWidth = j === 2 ? 1.6 : 1.1; ctx.setLineDash(j === 0 || j === 4 ? [4, 3] : []);
+    tramos.forEach(tr => { ctx.beginPath(); let on = false; tr.forEach(i => { const v = bandV(i, j); if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); ctx.stroke(); });
+  }
+  ctx.setLineDash([]);
+  // la línea
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1.9; ctx.beginPath(); { let on = false; idx.forEach(i => { const v = lineV(i); if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); } ctx.stroke();
+  // a la derecha: el valor de hoy de cada banda y de la línea, sin pisarse
+  const lb = bands[last], tags = [];
+  if (lb) for (let j = 0; j < 5; j++) { const v = bandV(last, j); if (v != null && v >= lo && v <= hi) tags.push({ y: ys(v), txt: PE_BAND_LABELS[j] + ' ' + fmt(v), col: cols[j] }); }
+  tags.sort((p, q) => p.y - q.y); for (let q = 1; q < tags.length; q++) if (tags[q].y - tags[q - 1].y < 14) tags[q].y = tags[q - 1].y + 14;
+  ctx.font = `600 11px ${CANVAS_FONT}`; ctx.textAlign = 'left';
+  tags.forEach(g => { ctx.fillStyle = g.col; ctx.fillText(g.txt, W - P.r + 6, g.y + 4); });
+  // la semana bajo el mouse
+  if (hover != null && a[hover] != null) {
+    const x = Math.round(xs(bcoT(hover))) + 0.5;
+    ctx.strokeStyle = C.text; ctx.globalAlpha = 0.45; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, H - P.b); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const v = lineV(hover); if (v != null) { ctx.fillStyle = C.line; ctx.beginPath(); ctx.arc(x, ys(v), 3.2, 0, Math.PI * 2); ctx.fill(); }
+    const B = bands[hover], z = B && B.sd > 0 ? (a[hover] - B.mu) / B.sd : null;
+    tip.innerHTML = '<div class="pebg-tooltip-date">' + new Date(bcoT(hover) * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) + '</div>'
+      + '<div>' + M[0] + ' ' + fmtM(a[hover]) + (precio && b.precio[hover] ? ', precio ' + fmtP(b.precio[hover]) : '') + '</div>'
+      + (B ? '<div>Media ' + fmtM(B.mu) + ', σ ' + fmtM(B.sd) + '</div><div>Z ' + (z >= 0 ? '+' : '−') + numAR(Math.abs(z), 2, 2) + 'σ</div>' : '<div>Sin historia suficiente para la banda</div>');
+    tip.style.display = 'block'; tip.style.left = Math.min(x + 12, W - 200) + 'px'; tip.style.top = '8px';
+  } else if (tip) tip.style.display = 'none';
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(), t = t0 + (e.clientX - r.left - P.l) / (W - P.l - P.r) * (t1 - t0);
+    let best = null, bd = Infinity; idx.forEach(i => { const d = Math.abs(bcoT(i) - t); if (d < bd) { bd = d; best = i; } }); if (best !== hover) drawBcoBand(best); };
+  cv.onpointerleave = () => drawBcoBand();
+  // cifras de hoy, como la barra de P/E histórico
+  const now = a[last], z = lb && lb.sd > 0 ? (now - lb.mu) / lb.sd : null;
+  const win = []; for (let i = Math.max(0, last - Math.round(bcoWin * 52.18) + 1); i <= last; i++) if (a[i] != null) win.push(a[i]);
+  const pct = win.length >= 26 ? win.filter(v => v <= now).length / win.length : null;
+  const blk = (l, v, sub, cls = '', col = '') => '<div class="pebg-stat-block"><div class="pebg-stat-lbl">' + l + '</div><div class="pebg-stat-val ' + cls + '"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</div><div class="pebg-stat-sub">' + sub + '</div></div>';
+  const lado = z == null || roe ? '' : z < -1 ? 'pp' : z > 1 ? 'pn' : '';
+  let h = blk(M[0] + ' hoy', fmtM(now), 'semana del ' + infDdmmaa(new Date(bcoT(last) * 1000).toISOString().slice(0, 10)))
+    + blk('Media ' + bcoWin + 'A', lb ? fmtM(lb.mu) : '—', lb ? (bcoBandT === 'fija' ? 'fija' : 'móvil') : 'falta historia')
+    + blk('Desv. std', lb ? fmtM(lb.sd) : '—', 'σ')
+    + blk('Z-score', z != null ? (z >= 0 ? '+' : '−') + numAR(Math.abs(z), 2, 2) + 'σ' : '—', z == null || roe ? '' : z < -1 ? 'barato' : z > 1 ? 'caro' : 'justo', lado)
+    + blk('Percentil ' + bcoWin + 'A', pct != null ? Math.round(pct * 100) + '%' : '—', 'semanas con ' + M[0] + ' menor o igual');
+  if (b && !roe && lb && b.precio && b.precio[last] > 0) {
+    const px = b.precio[last];
+    h += blk('Precio', fmtP(px), b.moneda === 'ARS' ? 'BYMA, en pesos' : 'en dólares');
+    [2, 3, 1].forEach(j => { const v = lb.mult[j] > 0 ? lb.mult[j] * px / now : null;
+      h += blk('Precio a ' + PE_BAND_LABELS[j], v ? fmtP(v) : 'N/A', v ? M[0] + ' ' + fmtM(lb.mult[j]) + ', ' + (v >= px ? '+' : '−') + Math.abs((v / px - 1) * 100).toFixed(0) + '%' : '', '', v ? cols[j] : ''); });
+  }
+  st.innerHTML = h;
+  document.getElementById('bcoChartNote').textContent = (bcoBandT === 'fija' ? 'Media y desvío de las semanas de los últimos ' + wTxt + ', los mismos para todo el gráfico. ' : 'En cada semana, media y desvío de las semanas de los ' + wTxt + ' anteriores (hace falta 60% con dato). ')
+    + (precio ? 'En precio, cada banda es su múltiplo por el valor libro por acción de esa semana' + (b.moneda === 'ARS' ? ', que en Argentina se lleva a pesos de cada semana con el IPC. ' : '. ') : '')
+    + (BCO.bancos[k]?.pais === 'ar' || k === 'ar' ? 'En Argentina, hasta 2024 hay un balance por año (los 20-F); desde 2025, uno por trimestre.' : 'Cada balance cuenta desde que se presentó a la SEC.');
+}
 // P/VL contra ROE: cada banco y, por país, la línea del P/VL que corresponde a cada ROE con el costo del capital y el
 // crecimiento elegidos. Arriba de la línea, el precio pide más ROE que el que tiene; abajo, menos
 function drawBcoScatter(hover) {
@@ -6188,7 +6362,7 @@ function drawBcoScatter(hover) {
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
   const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
   const grid = cssVar('--chart-grid'), text = cssVar('--chart-text'), ink = cssVar('--ink');
-  const col = { ar: BV.azul, us: cssVar('--ink2') };
+  const col = { ar: BCO_COL.ar(), us: BCO_COL.us() };
   const pts = BCO ? Object.entries(BCO.bancos).map(([k, b]) => ({ k, pais: b.pais, n: b.n, x: bcoRoeX === 'q' ? b.ult.roeQ : b.ult.roe, y: b.ult.pb })).filter(p => p.x != null && p.y != null) : [];
   if (!pts.length) { ctx.fillStyle = text; ctx.font = `13px ${CANVAS_FONT}`; ctx.fillText('Sin datos', 12, 24); return; }
   const P = { l: 44, r: 16, t: 14, b: 34 };
