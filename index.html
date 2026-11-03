@@ -551,6 +551,19 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .sect-tg:focus-visible{outline:2px solid var(--accent)}
 .sect-date{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink)}
 .sect-chart-box{position:relative;height:340px}
+.bco-tbl tbody tr.bco-sec td{cursor:default;background:none;font-weight:700;color:var(--ink);padding-top:14px;text-align:left;white-space:normal}
+.bco-tbl tbody tr.bco-sec td span{font-weight:400;color:var(--muted);font-size:11.5px}
+.bco-tbl tbody tr.bco-sec:hover td{background:none}
+.bco-tbl tbody tr:focus-visible td{outline:2px solid var(--accent);outline-offset:-2px}
+.bco-tk{font-size:11px;color:var(--muted);font-weight:600}
+.bco-ke{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:2px 0 10px}
+.bco-ke-pais{font-weight:700;color:var(--ink)}
+.bco-ke-g{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.bco-ke label{display:inline-flex;align-items:center;gap:5px}
+.bco-ke input{width:3.6em;font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);text-align:right}
+.bco-ke input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.bco-ke-msg{color:var(--down)}
+.bco-sc-box{position:relative;height:380px}
 .sect-tbl thead th.srt,.sect-co thead th.srt{cursor:pointer;user-select:none}
 .sect-tbl thead th.srt:hover,.sect-co thead th.srt:hover{color:var(--ink)}
 .sect-tbl thead th.on,.sect-co thead th.on{color:var(--accent)}
@@ -686,6 +699,7 @@ function checkPwd(){
   <div class="tab" id="tab-cartera" onclick="switchTab('cartera')">Cartera</div>
   <div class="tab" id="tab-pebg" onclick="switchTab('pebg')">P/E histórico</div>
   <div class="tab" id="tab-sect" onclick="switchTab('sect')">Sectores</div>
+  <div class="tab" id="tab-bancos" onclick="switchTab('bancos')">Bancos</div>
   <div class="tab" id="tab-informe" onclick="switchTab('informe')">Informe</div>
   <div class="tab" id="tab-calendar" onclick="switchTab('calendar')">Calendario</div>
   <div class="tab" id="tab-metodo" onclick="switchTab('metodo')">Metodología</div>
@@ -1302,6 +1316,62 @@ function checkPwd(){
   </div>
 </div>
 
+<div class="view view-scroll" id="view-bancos">
+  <div class="ov-clock-bar">
+    <span class="arg-title">Bancos: precio / valor libro</span>
+    <div class="pebg-period-btns" id="bcoMetricBtns" role="group" aria-label="Métrica">
+      <span class="pebg-period active" data-k="pb" onclick="setBcoMetric('pb')" title="Capitalización / patrimonio de los comunes">P/VL</span>
+      <span class="pebg-period" data-k="ptb" onclick="setBcoMetric('ptb')" title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/VL tangible</span>
+      <span class="pebg-period" data-k="roe" onclick="setBcoMetric('roe')" title="Resultado de los comunes de 12 meses / patrimonio promedio">ROE</span>
+    </div>
+    <div class="cs"></div>
+    <span class="arg-status" id="bcoStatus">—</span>
+  </div>
+  <div class="sect-body">
+    <div class="ov-card">
+      <div class="arg-chart-top">
+        <div class="ov-card-title" id="bcoChartTitle">P/VL</div>
+        <div class="cs"></div>
+        <div class="pebg-period-btns" id="bcoRangeBtns" role="group" aria-label="Período">
+          <span class="pebg-period" data-y="3" onclick="setBcoRange(3)">3A</span>
+          <span class="pebg-period" data-y="5" onclick="setBcoRange(5)">5A</span>
+          <span class="pebg-period active" data-y="10" onclick="setBcoRange(10)">10A</span>
+          <span class="pebg-period" data-y="0" onclick="setBcoRange(0)">Todo</span>
+        </div>
+      </div>
+      <div class="arg-chips" id="bcoLegend"></div>
+      <div class="sect-chart-box"><canvas id="bcoCanvas"></canvas><div class="pebg-tooltip" id="bcoCanvasTip"></div></div>
+      <div class="arg-note" id="bcoChartNote"></div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-title">Cada banco hoy</div>
+      <div id="bcoTable"><div class="ov-loading">Cargando...</div></div>
+      <div class="arg-note" id="bcoTblNote"></div>
+    </div>
+    <div class="ov-card">
+      <div class="arg-chart-top">
+        <div class="ov-card-title">P/VL contra ROE</div>
+        <div class="cs"></div>
+        <div class="pebg-period-btns" id="bcoRoeBtns" role="group" aria-label="ROE">
+          <span class="pebg-period active" data-x="12m" onclick="setBcoRoeX('12m')">ROE de 12 meses</span>
+          <span class="pebg-period" data-x="q" onclick="setBcoRoeX('q')" title="Resultado del último trimestre por 4">ROE del trimestre</span>
+        </div>
+      </div>
+      <div class="bco-ke">
+        <span class="bco-ke-g"><span class="bco-ke-pais">EE.UU., nominal</span>
+        <label>Costo del capital <input type="text" inputmode="decimal" id="bcoKeUs" onchange="bcoSetKe()" aria-label="Costo del capital de EE.UU., en %">%</label>
+        <label>Crecimiento <input type="text" inputmode="decimal" id="bcoGUs" onchange="bcoSetKe()" aria-label="Crecimiento de largo plazo de EE.UU., en %">%</label></span>
+        <span class="bco-ke-g"><span class="bco-ke-pais">Argentina, real</span>
+        <label>Costo del capital <input type="text" inputmode="decimal" id="bcoKeAr" onchange="bcoSetKe()" aria-label="Costo del capital de Argentina, real, en %">%</label>
+        <label>Crecimiento <input type="text" inputmode="decimal" id="bcoGAr" onchange="bcoSetKe()" aria-label="Crecimiento de largo plazo de Argentina, real, en %">%</label></span>
+        <button type="button" class="inf-link" onclick="bcoKeDefault()">Volver a 10% y 4%, 14% y 3%</button>
+        <span class="bco-ke-msg" id="bcoKeMsg" role="status"></span>
+      </div>
+      <div class="bco-sc-box"><canvas id="bcoScatter"></canvas><div class="pebg-tooltip" id="bcoScatterTip"></div></div>
+      <div class="arg-note" id="bcoScNote"></div>
+    </div>
+  </div>
+</div>
 <div class="view view-scroll" id="view-sect">
   <div class="ov-clock-bar">
     <span class="arg-title">Múltiplos del S&amp;P 500 por sector</span>
@@ -1483,6 +1553,7 @@ function switchTab(t) {
   if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
   if(t==='fondos') { if(!FCI) loadFondos(); else renderFondos(); }
   if(t==='sect') { if(!MULT) loadSect(); else renderSect(); }
+  if(t==='bancos') { if(!BCO) loadBancosTab(); else renderBancos(); }
   if(t==='calendar') initCalendar();
   if(t==='informe') initInforme();
   if(t==='metodo') renderMetodo();
@@ -5249,6 +5320,28 @@ const METODO = [
         p: 'Usa el mismo precio y el mismo EPS que arman el P/E del grupo, así que se puede ver qué lo explica: una empresa que pesa mucho en capitalización y poco en ganancias lo sube (hoy, en Application Software, PLTR es 29% de la capitalización y 6% de las ganancias). Clic en una empresa abre su P/E histórico.' },
     ] },
 
+  { id: 'bancos', t: 'Pestaña Bancos: precio / valor libro y ROE',
+    items: [
+      { d: 'Bancos: en Argentina, Galicia, Macro, BBVA, Supervielle, Patagonia, Hipotecario y Valores; el agregado argentino es los cuatro con ADR (Galicia, Macro, BBVA y Supervielle). En EE.UU., los del S&P 500 de las subindustrias Diversified Banks (grandes) y Regional Banks (regionales).',
+        p: 'Los cuatro con ADR presentan el 20-F en la SEC y tienen historia desde 2016; Patagonia, Hipotecario y Valores solo tienen los últimos años y cambiarían la composición del agregado en 2023.' },
+      { d: 'P/VL = capitalización (precio × acciones del balance) / patrimonio de los comunes (sin preferidas ni minoritarios). Tangible: además sin llave de negocio ni intangibles. Por grupo, suma de capitalizaciones / suma de valores libro.',
+        p: 'Sumar antes de dividir pesa cada banco por su tamaño, como un índice: un banco chico con un P/VL raro no mueve el grupo. En EE.UU. el mercado mira el tangible, porque la llave de negocio de las compras no respalda pérdidas.' },
+      { d: 'EE.UU.: balances trimestrales de la SEC (EDGAR), cada uno desde su presentación. Las preferidas y los intangibles que un banco informa solo en el 10-K (Bank of America) se toman del último 10-K; si el patrimonio solo viene con los minoritarios (Truist), se restan. Los trimestres que la SEC todavía no tiene (Citi en 2026) salen de Yahoo.' },
+      { d: 'Argentina: los 20-F (NIIF) para atrás y, para los últimos cinco trimestres y cuatro ejercicios, Yahoo. Precio en pesos de BYMA.',
+        o: 'Hasta 2024 hay un balance por año: el P/VL de esos años usa el valor libro de diciembre llevado con el IPC y no ve el resultado del año hasta el balance siguiente.' },
+      { d: 'Inflación: los balances argentinos están en moneda de su cierre (los ejercicios de Yahoo, en moneda del último ejercicio, como los comparativos). El valor libro se lleva a pesos de cada semana con el IPC nacional, interpolado por día y, después del último dato, con la inflación promedio de los últimos tres meses.',
+        p: 'Con 2% de inflación por mes, el valor libro de junio comparado con el precio de noviembre queda 10% abajo y el P/VL 10% arriba.',
+        o: 'Antes de 2020 los bancos no ajustaban por inflación; el valor libro de esos años igual se lleva con el IPC desde su cierre.' },
+      { d: 'ROE de 12 meses: resultado de los comunes de los últimos cuatro trimestres / patrimonio promedio de los cierres del año (el del trimestre y los anteriores hasta un año antes). En Argentina, todo en pesos del último cierre: es real. ROE del trimestre: resultado del último trimestre × 4 / promedio de su cierre y el anterior. Donde faltan trimestres, el resultado de 12 meses de Yahoo; en Argentina hasta 2024, el del ejercicio, con el resultado y los dos patrimonios del mismo 20-F.',
+        o: 'El resultado de 12 meses de Yahoo es la suma nominal de los cuatro trimestres: en Argentina deja el ROE un poco por debajo del real.' },
+      { d: 'Cada balance vale desde su presentación a la SEC o, sin esa fecha, desde el cierre más 45 a 75 días; deja de valer a los 200 días en EE.UU. y a los 470 en Argentina (que hasta 2024 tiene uno por año).' },
+      { d: 'P/VL que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/VL × (costo del capital − crecimiento). Costo del capital y crecimiento editables: por defecto 10% y 4% nominales en EE.UU. y 14% y 3% reales en Argentina.',
+        p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal.',
+        x: 'Comparar los P/VL de Argentina y EE.UU. sin más: un banco argentino tiene que ganar más para valer lo mismo, porque su costo del capital es más alto.',
+        o: 'El resultado depende mucho del costo del capital argentino (riesgo país más prima por acciones): con 12% y 3%, un P/VL de 1x pide 12% de ROE real; con 16%, 16%.' },
+      { d: 'Percentil y mediana del P/VL contra los últimos 10 años (Argentina, desde 2017), con al menos 3 años de datos.' },
+    ] },
+
   { id: 'cd', t: 'Flujo de caja y deuda (opcional)',
     i: 'Botón "Caja y deuda" en el screener, en las empresas de Sectores y en Cartera. Es lo que el P/E no ve: si la ganancia se convierte en caja y cuánta deuda hay detrás. Todo sale de la SEC (10-Q y 10-K) con el precio de ahora.',
     items: [
@@ -5974,6 +6067,186 @@ function drawLines(id, series, fmt, hoverT, vacio) {
   cv.onpointerleave = () => drawLines(id, series, fmt);
 }
 
+// ── BANCOS: precio / valor libro y ROE de los bancos argentinos y de EE.UU. (bancos.json, scripts/bancos.mjs) ──
+// P/VL = capitalización / patrimonio de los comunes; tangible, sin llave de negocio ni intangibles. En Argentina el valor
+// libro está llevado a pesos de cada semana con el IPC y el ROE es real; en EE.UU., nominal.
+let BCO = null, bcoLoading = null, bcoMetric = 'pb', bcoRange = 10, bcoRoeX = '12m', bcoSel = ['ar', 'us'];
+// costo del capital y crecimiento de largo plazo de cada país, para el P/VL que corresponde a cada ROE (editables)
+const BCO_KE0 = { us: { ke: 10, g: 4 }, ar: { ke: 14, g: 3 } };
+let BCO_KE = JSON.parse(JSON.stringify(BCO_KE0));
+try { const k = JSON.parse(localStorage.getItem('bcoKe') || 'null'); if (k && k.us && k.ar && k.us.ke > k.us.g && k.ar.ke > k.ar.g) BCO_KE = k; } catch (e) {}
+const BCO_MET = { pb: ['P/VL', 'precio / valor libro'], ptb: ['P/VL tangible', 'precio / valor libro tangible'], roe: ['ROE', 'ROE de 12 meses (Argentina: real)'] };
+const BCO_COL = { ar: () => BV.azul, us: () => BV.navy, usDiv: () => BV.teal, usReg: () => BV.celeste };
+function loadBancos() {
+  if (!bcoLoading) bcoLoading = fetch('bancos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { BCO = j && j.bancos && j.grupos ? j : null; if (!BCO) bcoLoading = null; return BCO; }).catch(() => { bcoLoading = null; return null; });
+  return bcoLoading;
+}
+async function loadBancosTab() { const st = document.getElementById('bcoStatus'); if (st) st.textContent = 'Cargando…'; await loadBancos(); renderBancos(); }
+const bcoObj = k => BCO && (BCO.grupos[k] || BCO.bancos[k]);
+const bcoNom = k => BCO.grupos[k] ? BCO.grupos[k].n : BCO.bancos[k] ? BCO.bancos[k].n : k;
+// viernes de la semana i (la última, el día del dato)
+const bcoT = i => Math.min(BCO.monday0 + (BCO.week0 + i) * 604800 + 4 * 86400, Math.floor(Date.parse(BCO.asOf) / 1000));
+function bcoSerie(k, m) { const a = bcoObj(k)?.[m] || [], out = []; a.forEach((v, i) => { if (v != null) out.push({ t: bcoT(i), v }); }); return out; }
+const bcoUlt = (k, m) => { const a = bcoObj(k)?.[m] || []; return a.length ? a[a.length - 1] : null; };
+// contra su historia: percentil y mediana de los últimos 10 años (o desde el primer dato), con al menos 3 años de datos
+function bcoHist(k, m) {
+  const p = bcoSerie(k, m); if (p.length < 156) return null;
+  const now = p[p.length - 1], w = p.filter(x => x.t > now.t - 10 * YR_S).map(x => x.v), s = w.slice().sort((a, b) => a - b);
+  return { pct: w.filter(v => v <= now.v).length / w.length, med: s[Math.floor(s.length / 2)], desde: new Date(p.find(x => x.t > now.t - 10 * YR_S).t * 1000).getUTCFullYear() };
+}
+// P/VL que corresponde a un ROE con costo del capital Ke y crecimiento g (descuento de dividendos, con lo que no se
+// reparte reinvertido al mismo ROE): (ROE − g) / (Ke − g). El ROE que paga el precio es la cuenta al revés.
+const bcoJusto = (roe, p) => roe == null ? null : (roe - p.g) / (p.ke - p.g);
+const bcoImpl = (pb, p) => pb == null ? null : p.g + pb * (p.ke - p.g);
+const bcoPais = k => k === 'ar' || BCO.bancos[k]?.pais === 'ar' ? 'ar' : 'us';
+function setBcoMetric(m) { bcoMetric = m; renderBancos(); }
+function setBcoRange(y) { bcoRange = y; drawBcoChart(); }
+function setBcoRoeX(x) { bcoRoeX = x; drawBcoScatter(); }
+function bcoToggle(k) { bcoSel = bcoSel.includes(k) ? bcoSel.filter(x => x !== k) : [...bcoSel, k]; renderBancos(); }
+function bcoSetKe() {
+  const v = id => parseFloat(String(document.getElementById(id)?.value || '').replace(',', '.'));
+  const n = { us: { ke: v('bcoKeUs'), g: v('bcoGUs') }, ar: { ke: v('bcoKeAr'), g: v('bcoGAr') } };
+  const ok = ['us', 'ar'].every(c => isFinite(n[c].ke) && isFinite(n[c].g) && n[c].ke > n[c].g);
+  const msg = document.getElementById('bcoKeMsg');
+  if (msg) msg.textContent = ok ? '' : 'El costo del capital tiene que ser mayor que el crecimiento.';
+  if (!ok) return;
+  BCO_KE = n; try { localStorage.setItem('bcoKe', JSON.stringify(n)); } catch (e) {}
+  renderBancos();
+}
+function bcoKeDefault() { BCO_KE = JSON.parse(JSON.stringify(BCO_KE0)); try { localStorage.removeItem('bcoKe'); } catch (e) {} renderBancos(); }
+function renderBancos() {
+  const st = document.getElementById('bcoStatus'), tb = document.getElementById('bcoTable');
+  if (!st || !tb) return;
+  document.querySelectorAll('#bcoMetricBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.k === bcoMetric));
+  document.querySelectorAll('#bcoRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.y === bcoRange));
+  document.querySelectorAll('#bcoRoeBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.x === bcoRoeX));
+  for (const [id, c, f] of [['bcoKeUs', 'us', 'ke'], ['bcoGUs', 'us', 'g'], ['bcoKeAr', 'ar', 'ke'], ['bcoGAr', 'ar', 'g']]) { const e = document.getElementById(id); if (e && document.activeElement !== e) e.value = String(BCO_KE[c][f]).replace('.', ','); }
+  if (!BCO) { st.textContent = 'Todavía no está bancos.json: se arma cada día hábil después del cierre.'; tb.innerHTML = ''; drawBcoChart(); drawBcoScatter(); return; }
+  st.innerHTML = 'Al cierre del ' + infDdmmaa(BCO.asOf.slice(0, 10)) + '. Argentina: precio en BYMA y valor libro llevado a pesos de hoy con el IPC. EE.UU.: los bancos del S&amp;P 500. <a class="sect-link" onclick="openMetodo(\'bancos\')">Cómo se calcula</a>';
+  const na = '<span class="na">—</span>', x = v => v == null ? na : numAR(v, 2, 2) + 'x', pc = v => v == null ? na : numAR(v, 1, 1) + '%';
+  const xj = v => v == null ? na : v <= 0 ? '<span class="na" title="El ROE es menor que el crecimiento: ese ROE no justifica pagar nada por encima de cero">menos de 0</span>' : numAR(v, 2, 2) + 'x';
+  const fila = (k, cls) => {
+    const g = !!BCO.grupos[k], b = BCO.bancos[k], u = b ? b.ult : null, P = BCO_KE[bcoPais(k)];
+    const pb = g ? bcoUlt(k, 'pb') : u.pb, ptb = g ? bcoUlt(k, 'ptb') : u.ptb, roe = g ? bcoUlt(k, 'roe') : u.roe, roeQ = g ? null : u.roeQ, h = bcoHist(k, 'pb');
+    const on = bcoSel.includes(k);
+    let bal = na;
+    if (u && u.balance) {
+      const tit = 'Balance al ' + infDdmmaa(u.balance) + ' (' + u.fuente + ')' + (u.ajusteIPC ? ', valor libro × ' + numAR(u.ajusteIPC, 3, 3) + ' por la inflación desde el cierre' : '');
+      bal = '<span title="' + tit + '">' + MES_CORTO[+u.balance.slice(5, 7) - 1].toLowerCase() + '-' + u.balance.slice(2, 4) + '</span>';
+    }
+    const roeTit = u && u.roeTipo === 'ejercicio' ? ' title="ROE del ejercicio cerrado el ' + infDdmmaa(u.roeCierre) + ': faltan trimestres para el de 12 meses"' : u && u.roeCierre ? ' title="12 meses al ' + infDdmmaa(u.roeCierre) + '"' : '';
+    return '<tr class="' + cls + (on ? ' sel' : '') + '" tabindex="0" onclick="bcoToggle(\'' + k + '\')" onkeydown="if(event.key===\'Enter\')bcoToggle(\'' + k + '\')" title="' + (on ? 'Sacar del gráfico' : 'Ver en el gráfico') + '">'
+      + '<td>' + (b ? b.n + ' <span class="bco-tk">' + k + '</span>' : BCO.grupos[k].n + '<div class="sect-par">' + BCO.grupos[k].desc + '</div>') + '</td>'
+      + '<td class="sect-now">' + x(pb) + '</td><td>' + x(ptb) + '</td>'
+      + '<td' + roeTit + '>' + pc(roe) + (u && u.roeTipo === 'ejercicio' ? '*' : '') + '</td><td>' + pc(roeQ) + '</td>'
+      + '<td>' + pc(bcoImpl(pb, P)) + '</td><td>' + xj(bcoJusto(roe, P)) + '</td><td>' + xj(bcoJusto(roeQ, P)) + '</td>'
+      + '<td>' + (h ? Math.round(h.pct * 100) + '%' : na) + '</td><td>' + (h ? x(h.med) : na) + '</td><td>' + bal + '</td></tr>';
+  };
+  const ar = Object.keys(BCO.bancos).filter(k => BCO.bancos[k].pais === 'ar'), us = Object.keys(BCO.bancos).filter(k => BCO.bancos[k].pais === 'us').sort((a, c) => (BCO.bancos[c].ult.cap || 0) - (BCO.bancos[a].ult.cap || 0));
+  const sec = (t, P, nota) => '<tr class="bco-sec"><td colspan="11">' + t + ' <span>' + nota + ' Costo del capital ' + numAR(P.ke, 1, 1) + '% y crecimiento ' + numAR(P.g, 1, 1) + '%.</span></td></tr>';
+  tb.innerHTML = '<table class="ov-tbl sect-tbl bco-tbl"><thead><tr><th>Banco</th><th title="Capitalización / patrimonio de los comunes">P/VL</th><th title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/VL tangible</th>'
+    + '<th title="Resultado de los comunes de 12 meses / patrimonio promedio">ROE 12 meses</th><th title="Resultado del último trimestre por 4 / patrimonio promedio del trimestre">ROE del trimestre</th>'
+    + '<th title="El ROE de largo plazo que hace falta para que este P/VL sea el que corresponde: crecimiento + P/VL × (costo del capital − crecimiento)">ROE que paga el precio</th>'
+    + '<th title="(ROE de 12 meses − crecimiento) / (costo del capital − crecimiento)">P/VL que da el ROE 12 meses</th><th title="(ROE del trimestre − crecimiento) / (costo del capital − crecimiento)">P/VL que da el ROE del trimestre</th>'
+    + '<th title="Qué parte de las semanas de los últimos 10 años (o desde el primer dato) tuvo un P/VL menor o igual al de hoy">Percentil P/VL</th><th title="Mediana del P/VL de los últimos 10 años (o desde el primer dato)">Mediana P/VL</th><th>Balance</th></tr></thead><tbody>'
+    + sec('Argentina', BCO_KE.ar, 'ROE real (balances con ajuste por inflación); costo del capital y crecimiento, reales.')
+    + fila('ar', 'sect-idx') + ar.map(k => fila(k, 'sect-sub')).join('')
+    + sec('EE.UU.', BCO_KE.us, 'ROE nominal; costo del capital y crecimiento, nominales.')
+    + ['us', 'usDiv', 'usReg'].map(k => fila(k, 'sect-idx')).join('') + us.map(k => fila(k, 'sect-sub')).join('')
+    + '</tbody></table>';
+  const err = Object.keys(BCO.errores || {});
+  document.getElementById('bcoTblNote').innerHTML = 'Tocá una fila para sumarla al gráfico o sacarla. El agregado argentino es Galicia, Macro, BBVA y Supervielle (con historia desde 2017); Patagonia, Hipotecario y Valores tienen datos desde 2023. '
+    + 'Percentil y mediana del P/VL contra los últimos 10 años (en Argentina, desde 2017; Patagonia, Hipotecario y Valores, desde 2023). * ROE del último ejercicio: a ese banco le faltan trimestres para el de 12 meses.'
+    + (err.length ? ' Sin datos hoy: ' + err.join(', ') + '.' : '');
+  drawBcoChart(); drawBcoScatter();
+}
+function drawBcoChart() {
+  if (!document.getElementById('bcoCanvas')) return;
+  const tit = document.getElementById('bcoChartTitle'), leg = document.getElementById('bcoLegend');
+  if (!BCO) { drawLines('bcoCanvas', [], null, null, 'Sin datos'); return; }
+  const M = BCO_MET[bcoMetric];
+  tit.innerHTML = M[0] + ' <span>' + M[1] + (bcoMetric === 'roe' ? '' : ', semanal') + '</span>';
+  const since = bcoRange ? Date.now() / 1000 - bcoRange * YR_S : 0, pal = ['--b1p', '--b2p', '--b1m', '--b2m', '--warn', '--ink2'];
+  let i = 0;
+  const series = bcoSel.filter(k => bcoObj(k)).map(k => ({ k, name: bcoNom(k) + (BCO.bancos[k] ? ' (' + k + ')' : ''), color: BCO_COL[k] ? BCO_COL[k]() : cssVar(pal[i++ % pal.length]), pts: bcoSerie(k, bcoMetric).filter(p => p.t >= since) }));
+  const fmt = bcoMetric === 'roe' ? ((v, tip) => numAR(v, 1, 1) + '%') : ((v, tip) => numAR(v, tip ? 2 : 1, tip ? 2 : 1) + 'x');
+  drawLines('bcoCanvas', series.filter(s => s.pts.length > 1), fmt, null, 'Elegí un grupo o un banco en la tabla');
+  const grupos = ['ar', 'us', 'usDiv', 'usReg'];
+  leg.innerHTML = grupos.map(k => { const on = bcoSel.includes(k), s = series.find(z => z.k === k);
+    return '<span class="arg-chip' + (on ? ' on' : '') + '" role="button" tabindex="0" aria-pressed="' + on + '" onclick="bcoToggle(\'' + k + '\')" onkeydown="if(event.key===\'Enter\')bcoToggle(\'' + k + '\')"><span class="arg-chip-dot" style="background:' + (on && s ? s.color : 'transparent') + '"></span>' + bcoNom(k) + '</span>'; }).join('')
+    + series.filter(s => !grupos.includes(s.k)).map(s => '<span class="arg-chip on" role="button" tabindex="0" title="Sacar del gráfico" onclick="bcoToggle(\'' + s.k + '\')" onkeydown="if(event.key===\'Enter\')bcoToggle(\'' + s.k + '\')"><span class="arg-chip-dot" style="background:' + s.color + '"></span>' + s.name + ' ×</span>').join('');
+  document.getElementById('bcoChartNote').textContent = bcoMetric === 'roe'
+    ? 'ROE de 12 meses de cada semana: el último publicado. En Argentina es real (los balances tienen ajuste por inflación) y, hasta 2025, del ejercicio; en EE.UU., nominal.'
+    : 'Cada balance cuenta desde que se publicó. En Argentina el valor libro se lleva a pesos de cada semana con el IPC; hasta 2024 hay un balance por año (los 20-F) y desde 2025, uno por trimestre.';
+}
+// P/VL contra ROE: cada banco y, por país, la línea del P/VL que corresponde a cada ROE con el costo del capital y el
+// crecimiento elegidos. Arriba de la línea, el precio pide más ROE que el que tiene; abajo, menos
+function drawBcoScatter(hover) {
+  const cv = document.getElementById('bcoScatter'); if (!cv) return;
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1, W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const grid = cssVar('--chart-grid'), text = cssVar('--chart-text'), ink = cssVar('--ink');
+  const col = { ar: BV.azul, us: cssVar('--ink2') };
+  const pts = BCO ? Object.entries(BCO.bancos).map(([k, b]) => ({ k, pais: b.pais, n: b.n, x: bcoRoeX === 'q' ? b.ult.roeQ : b.ult.roe, y: b.ult.pb })).filter(p => p.x != null && p.y != null) : [];
+  if (!pts.length) { ctx.fillStyle = text; ctx.font = `13px ${CANVAS_FONT}`; ctx.fillText('Sin datos', 12, 24); return; }
+  const P = { l: 44, r: 16, t: 14, b: 34 };
+  let x0 = Math.min(0, ...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)), y1 = Math.max(...pts.map(p => p.y));
+  x1 += (x1 - x0) * 0.08; x0 -= (x1 - x0) * 0.04; y1 *= 1.12;
+  const xs = v => P.l + (v - x0) / (x1 - x0) * (W - P.l - P.r), ys = v => P.t + (1 - v / y1) * (H - P.t - P.b);
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  niceTicks(0, y1, 5).forEach(v => { const y = Math.round(ys(v)) + 0.5; ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(W - P.r, y); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'right'; ctx.fillText(numAR(v, 1, 1) + 'x', P.l - 6, y + 4); });
+  niceTicks(x0, x1, 6).forEach(v => { const x = Math.round(xs(v)) + 0.5; ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, H - P.b); ctx.stroke(); ctx.fillStyle = text; ctx.textAlign = 'center'; ctx.fillText(numAR(v, 0, 0) + '%', x, H - P.b + 15); });
+  ctx.textAlign = 'center'; ctx.fillText(bcoRoeX === 'q' ? 'ROE del último trimestre, anualizado' : 'ROE de 12 meses', P.l + (W - P.l - P.r) / 2, H - 4);
+  // 1x: el valor libro
+  ctx.strokeStyle = text; ctx.globalAlpha = 0.5; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(P.l, Math.round(ys(1)) + 0.5); ctx.lineTo(W - P.r, Math.round(ys(1)) + 0.5); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  // la línea de cada país
+  for (const c of ['us', 'ar']) {
+    const p = BCO_KE[c], a = Math.max(x0, p.g), b = x1;
+    if (!(b > a)) continue;
+    ctx.strokeStyle = col[c]; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); ctx.beginPath();
+    for (let k = 0; k <= 40; k++) { const r = a + (b - a) * k / 40, y = bcoJusto(r, p); if (y > y1) break; k ? ctx.lineTo(xs(r), ys(y)) : ctx.moveTo(xs(r), ys(y)); }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  // puntos y tickers: cada ticker arriba a la derecha de su punto o, si pisa a otro, en la primera esquina libre
+  for (const p of pts) { ctx.fillStyle = col[p.pais]; ctx.beginPath(); ctx.arc(xs(p.x), ys(p.y), p.k === hover ? 5.5 : 4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.font = `600 11px ${CANVAS_FONT}`; ctx.fillStyle = ink;
+  const ocup = pts.map(p => [xs(p.x) - 4, ys(p.y) - 4, xs(p.x) + 4, ys(p.y) + 4]);
+  for (const p of pts.slice().sort((a, b) => b.y - a.y)) {
+    const X = xs(p.x), Y = ys(p.y), w = (ctx.measureText(p.k) || {}).width || 24;
+    const opc = [[X + 6, Y - 5, 'left'], [X + 6, Y + 13, 'left'], [X - 6, Y - 5, 'right'], [X - 6, Y + 13, 'right']];
+    for (const [tx, ty, al] of opc) {
+      const bx = al === 'left' ? [tx, ty - 10, tx + w, ty + 2] : [tx - w, ty - 10, tx, ty + 2];
+      if (bx[0] < P.l || bx[2] > W - P.r || ocup.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+      ocup.push(bx); ctx.textAlign = al; ctx.fillText(p.k, tx, ty); break;
+    }
+  }
+  // qué color es cada país
+  ctx.font = `12px ${CANVAS_FONT}`; ctx.textAlign = 'left';
+  let lx = P.l + 8;
+  for (const [c, l] of [['ar', 'Argentina (ROE real)'], ['us', 'EE.UU.']]) {
+    ctx.fillStyle = col[c]; ctx.beginPath(); ctx.arc(lx + 4, P.t + 10, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = ink; ctx.fillText(l, lx + 12, P.t + 14); lx += 22 + ((ctx.measureText(l) || {}).width || 80);
+  }
+  const tip = document.getElementById('bcoScatterTip');
+  const h = pts.find(p => p.k === hover);
+  if (tip) {
+    if (h) {
+      const P2 = BCO_KE[h.pais], j = bcoJusto(h.x, P2);
+      tip.innerHTML = '<div class="pebg-tooltip-date">' + h.n + ' (' + h.k + ')</div><div>P/VL ' + numAR(h.y, 2, 2) + 'x</div><div>ROE ' + numAR(h.x, 1, 1) + '%' + (h.pais === 'ar' ? ' real' : '') + '</div>'
+        + '<div>Con ese ROE corresponde ' + (j > 0 ? numAR(j, 2, 2) + 'x' : 'menos de 0') + '</div><div>El precio paga un ROE de ' + numAR(bcoImpl(h.y, P2), 1, 1) + '%</div>';
+      tip.style.display = 'block'; tip.style.left = Math.min(xs(h.x) + 12, W - 190) + 'px'; tip.style.top = Math.max(0, ys(h.y) - 20) + 'px';
+    } else tip.style.display = 'none';
+  }
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = null, bd = 18; for (const p of pts) { const d = Math.hypot(xs(p.x) - mx, ys(p.y) - my); if (d < bd) { bd = d; best = p.k; } }
+    if (best !== hover) drawBcoScatter(best); };
+  cv.onpointerleave = () => { if (hover) drawBcoScatter(); };
+  document.getElementById('bcoScNote').innerHTML = 'La línea de cada país es el P/VL que corresponde a cada ROE: (ROE − crecimiento) / (costo del capital − crecimiento). Un banco abajo de su línea cotiza por debajo de lo que justifica ese ROE si fuera el de siempre; arriba, por encima. '
+    + 'La línea punteada fina es 1x. En Argentina el ROE es real, así que van reales el costo del capital y el crecimiento. Pasá el mouse por un punto para ver el detalle.';
+}
+
 // ── FONDOS: industria de FCI (datos diarios de la CAFCI vía la API de FCI de 1816, fondos.json) ──
 // Lo que no viene en las cuatro monedas (gerentes, fondos, flujos por ventana) se pasa con el cociente de la industria
 // por tipo, que 1816 sí da en pesos, pesos de hoy, dólar A3500 y dólar implícito: el mismo tipo de cambio que usa 1816.
@@ -6229,6 +6502,22 @@ const INF_CAT = {
   merval: { n: 'S&P Merval (hasta 16/10/26)', g: 'Acciones', u: 'puntos S&P Merval', src: 'Yahoo Finance', load: () => infYahoo('^MERV') },
   msci: { n: 'MSCI MERVAL (base 100.000 el 16/10/26)', g: 'Acciones', u: 'puntos MSCI MERVAL', src: 'BYMA', load: () => infMsci() },
   spx: { n: 'S&P 500', g: 'Acciones', u: 'puntos S&P 500', src: 'Yahoo Finance', load: () => infYahoo('^GSPC') },
+  // bancos (bancos.json, pestaña Bancos): P/VL semanal y ROE de 12 meses, por grupo y de cada banco argentino
+  pvlAr: { n: 'P/VL bancos argentinos', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'pb') },
+  pvlUs: { n: 'P/VL bancos de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'pb') },
+  pvlUsDiv: { n: 'P/VL bancos grandes de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('usDiv', 'pb') },
+  pvlUsReg: { n: 'P/VL bancos regionales de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('usReg', 'pb') },
+  pvltAr: { n: 'P/VL tangible bancos argentinos', g: 'Bancos', u: 'veces el valor libro tangible', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'ptb') },
+  pvltUs: { n: 'P/VL tangible bancos de EE.UU.', g: 'Bancos', u: 'veces el valor libro tangible', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'ptb') },
+  roeAr: { n: 'ROE bancos argentinos (real)', g: 'Bancos', u: '%', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'roe') },
+  roeUs: { n: 'ROE bancos de EE.UU. (nominal)', g: 'Bancos', u: '%', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'roe') },
+  pvlGGAL: { n: 'P/VL Galicia', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('GGAL', 'pb') },
+  pvlBMA: { n: 'P/VL Macro', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('BMA', 'pb') },
+  pvlBBAR: { n: 'P/VL BBVA Argentina', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('BBAR', 'pb') },
+  pvlSUPV: { n: 'P/VL Supervielle', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('SUPV', 'pb') },
+  pvlBPAT: { n: 'P/VL Patagonia', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BPAT', 'pb') },
+  pvlBHIP: { n: 'P/VL Hipotecario', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BHIP', 'pb') },
+  pvlVALO: { n: 'P/VL Valores', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('VALO', 'pb') },
   ibov: { n: 'Bovespa', g: 'Acciones', u: 'puntos Bovespa', src: 'Yahoo Finance', load: () => infYahoo('^BVSP') },
   cau1: { n: 'Caución a 1 día (promedio ponderado)', g: 'Tasas', u: '% TNA', src: 'BYMA', load: () => infCaucion(), nota: 'hay historia desde el 26/02/2026 (BYMA no la publica)' },
   pases1d: { n: 'Pases entre terceros a 1 día', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(150) },
@@ -6291,12 +6580,12 @@ const IPC_DIV = [['ipcDivAlim', 'Alimentos y bebidas no alcohólicas', /^aliment
   ['ipcDivTransp', 'Transporte', /transporte/i], ['ipcDivComunic', 'Comunicación', /comunicaci/i], ['ipcDivRecre', 'Recreación y cultura', /recreaci/i], ['ipcDivEduc', 'Educación', /educaci/i],
   ['ipcDivRest', 'Restaurantes y hoteles', /restaurantes/i], ['ipcDivVarios', 'Bienes y servicios varios', /varios/i]];
 IPC_DIV.forEach(([k, n, re]) => { INF_CAT[k] = { n, g: 'IPC por división', u: '% mensual', src: 'INDEC', load: () => infIpc(re, 1, 'la división ' + n) }; });
-const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Tasas', 'Inflación', 'IPC por división', 'Actividad', 'Salarios y empleo', 'BCRA'];
+const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Bancos', 'Tasas', 'Inflación', 'IPC por división', 'Actividad', 'Salarios y empleo', 'BCRA'];
 const INF_GROUP_N = { BCRA: 'BCRA y Tesoro', 'IPC por división': 'IPC por división (mensual)' };
 
 // gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo. Los que
 // tienen grupo van en un desplegable con ese nombre, en el orden de INF_PRESET_GRUPOS
-const INF_PRESET_GRUPOS = ['BCRA', 'Tesoro', 'INDEC', 'Tasas y monedas'];
+const INF_PRESET_GRUPOS = ['BCRA', 'Tesoro', 'INDEC', 'Tasas y monedas', 'Bancos'];
 const INF_PRESETS = [
   { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna' },
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
@@ -6326,6 +6615,9 @@ const INF_PRESETS = [
   { id: 'netas', n: 'Reservas brutas y netas', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'resNetas'], trans: 'nivel', period: '2A', t: 'Reservas internacionales brutas y netas' },
   { id: 'netasDes', n: 'Reservas netas: desglose', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'encajes', 'swapChina', 'resNetas'], trans: 'nivel', period: '1A', t: 'Reservas brutas, encajes, swap con China y reservas netas' },
   { id: 'dinero', n: 'Base monetaria y M2', grupo: 'BCRA', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
+  { id: 'bcoPvl', n: 'P/VL: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['pvlAr', 'pvlUs'], trans: 'nivel', period: '5A', t: 'Bancos: precio / valor libro en Argentina y EE.UU.' },
+  { id: 'bcoRoe', n: 'ROE: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['roeAr', 'roeUs'], trans: 'nivel', period: '5A', t: 'Bancos: ROE de 12 meses en Argentina (real) y EE.UU.' },
+  { id: 'bcoArg', n: 'P/VL de cada banco argentino', grupo: 'Bancos', mode: 'serie', keys: ['pvlGGAL', 'pvlBMA', 'pvlBBAR', 'pvlSUPV'], trans: 'nivel', period: '5A', t: 'Precio / valor libro de los bancos argentinos' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
 
@@ -6357,6 +6649,16 @@ const infOnce = (k, f) => infMemo[k] || (infMemo[k] = f().catch(e => { delete in
 const INF_DESDE = () => new Date(Date.now() - 5.2 * 365.25 * 86400000).toISOString().slice(0, 10);
 const infDay = t => new Date((t + 6 * 3600) * 1000).toISOString().slice(0, 10);   // fecha de una vela diaria (Yahoo y BYMA la marcan entre 0 y 14 UTC)
 const infJson = (u, o) => fetch(u, o).then(r => { if (!r.ok) throw new Error(u.split('/')[2] + ' ' + r.status); return r.json(); });
+// series de bancos.json (pestaña Bancos): un punto por semana, el viernes (el último, el día del dato)
+function infBco(k, m) {
+  return loadBancos().then(j => {
+    if (!j) throw new Error('todavía no está bancos.json');
+    const a = (j.grupos[k] || j.bancos[k] || {})[m]; if (!a) throw new Error('bancos.json no tiene ' + k);
+    const fin = Math.floor(Date.parse(j.asOf) / 1000), out = [];
+    a.forEach((v, i) => { if (v == null) return; const d = new Date(Math.min(j.monday0 + (j.week0 + i) * 604800 + 4 * 86400, fin) * 1000).toISOString().slice(0, 10); out.push({ d, t: argT(d), v }); });
+    return out;
+  });
+}
 function infBcra(id, scale = 1) { return infOnce('bcra' + id, () => bcraSerie(id, INF_DESDE())).then(s => scale === 1 ? s : s.map(x => ({ d: x.d, t: x.t, v: x.v * scale }))); }
 function infDolar(casa) {
   return infOnce('ad' + casa, async () => {
@@ -6754,7 +7056,10 @@ async function infBuildSerie() {
   // los del Tesoro en bancos terminan dos meses antes que el resto: la fecha va en la imagen, no solo en las notas
   const banco = ser.find(s => /^tesoro(Bancos|BancosUsd|Tot|UsdTot)$/.test(s.k));
   const metod = (ser.some(s => s.k === 'resNetas') ? ' Reservas netas: brutas menos encajes de los depósitos en dólares y swap con China.' : '')
-    + (banco ? ' En bancos: depósitos de la administración central, saldo a fin de mes que se publica con dos meses de rezago (último: ' + infDdmmaa(banco.pts[banco.pts.length - 1].d) + ').' : '');
+    + (banco ? ' En bancos: depósitos de la administración central, saldo a fin de mes que se publica con dos meses de rezago (último: ' + infDdmmaa(banco.pts[banco.pts.length - 1].d) + ').' : '')
+    // bancos argentinos: el IPC no es una fuente del dato sino del ajuste, así que va acá y no en las fuentes (no acerca grupos)
+    + (ser.some(s => /^pvlt?(Ar|GGAL|BMA|BBAR|SUPV|BPAT|BHIP|VALO)$/.test(s.k)) ? ' Bancos argentinos: valor libro llevado a pesos de cada semana con el IPC del INDEC.' : '')
+    + (ser.some(s => s.k === 'roeAr') ? ' ROE argentino real: balances con ajuste por inflación.' : '');
   const fAuto = 'Fuente: ' + (srcs.length > 1 ? srcs.slice(0, -1).join(', ') + ' y ' + srcs[srcs.length - 1] : srcs[0]) + '.' + metod;
   return { kind: 'serie', ser, units, unitTxt, tAuto, bAuto, fAuto, notes, last, first, flow: ser.some(s => INF_CAT[s.k]?.flow) };
 }
