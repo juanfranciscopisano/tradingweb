@@ -360,8 +360,8 @@ export function fechaUS(v, d1904 = false) {
 // si el libro cuenta las fechas desde 1904
 export const fecha1904 = buf => { try { return /<workbookPr\b[^>]*\bdate1904="(1|true)"/i.test(unzip(buf)["xl/workbook.xml"]?.toString("utf8") || ""); } catch (e) { return false; } };
 // la planilla mensual (ERPbymonth.xlsx, hoja "Historical ERP"): la fila de encabezados con la fecha y columnas de ERP; la
-// de los últimos 12 meses con payout ajustado o sostenible (la principal de la página), si no la de los últimos 12 meses,
-// si no la primera. En % (0,0441 → 4,41)
+// de los últimos 12 meses con payout ajustado o sostenible (la principal de la página, desde 2016) y, en los meses que no
+// la tiene, la de los últimos 12 meses sin ajustar (la que publicaba antes). En % (0,0441 → 4,41)
 export function erpDeExcel(hojas, d1904 = false) {
   for (const [hoja, filas] of Object.entries(hojas || {})) {
     for (let h = 0; h < Math.min(filas.length, 40); h++) {
@@ -369,13 +369,15 @@ export function erpDeExcel(hojas, d1904 = false) {
       const iF = head.findIndex(c => /^(start of (the )?month|month|date|fecha)\b/i.test(c));
       const cols = head.map((c, i) => /\bERP\b|risk premium/i.test(c) ? i : -1).filter(i => i >= 0 && i !== iF);
       if (iF < 0 || !cols.length) continue;
-      const iE = cols.find(i => /(adjusted|sustainable) payout/i.test(head[i])) ?? cols.find(i => /t12m|trailing 12/i.test(head[i])) ?? cols[0];
-      const serie = [];
+      const t12 = i => /t12 ?m|trailing 12/i.test(head[i]) && !/payout|riskfree|adj/i.test(head[i]);
+      const iE = cols.find(i => /(adjusted|sustainable) payout/i.test(head[i])) ?? cols.find(t12) ?? cols[0], iR = cols.find(i => i !== iE && t12(i));
+      const num = v => typeof v === "number" && isFinite(v) && v > 0 ? v : null;
+      const serie = []; let deRespaldo = 0;
       for (const r of filas.slice(h + 1)) {
-        const d = fechaUS(r?.[iF], d1904), v = r?.[iE];
-        if (d && typeof v === "number" && isFinite(v) && v > 0) serie.push({ fecha: d, erp: +(v < 1 ? v * 100 : v).toFixed(2) });
+        const d = fechaUS(r?.[iF], d1904), a = num(r?.[iE]), b = iR != null ? num(r?.[iR]) : null, v = a ?? b;
+        if (d && v != null) { serie.push({ fecha: d, erp: +(v < 1 ? v * 100 : v).toFixed(2) }); if (a == null) deRespaldo++; }
       }
-      if (serie.length >= 12) return { serie: serie.sort((a, b) => a.fecha.localeCompare(b.fecha)), hoja, columna: head[iE] };
+      if (serie.length >= 12) return { serie: serie.sort((a, b) => a.fecha.localeCompare(b.fecha)), hoja, columna: head[iE], respaldo: iR != null ? head[iR] : null, deRespaldo };
     }
   }
   return null;
@@ -651,7 +653,7 @@ export async function diagnosticoKe({ fetchImpl = globalThis.fetch, log = consol
       if (filas.length) log(`  última: ${JSON.stringify(filas.at(-1) || []).slice(0, 400)}`);
     }
     const x = erpDeExcel(hojas, d1904);
-    log("leída: " + (x ? `${x.serie.length} meses, hoja "${x.hoja}", columna "${x.columna}", de ${JSON.stringify(x.serie[0])} a ${JSON.stringify(x.serie.at(-1))}` : "no encontré la columna"));
+    log("leída: " + (x ? `${x.serie.length} meses, hoja "${x.hoja}", columna "${x.columna}" (${x.deRespaldo} meses con "${x.respaldo}"), de ${JSON.stringify(x.serie[0])} a ${JSON.stringify(x.serie.at(-1))}` : "no encontré la columna"));
   } catch (e) { log("planilla mensual de Damodaran: " + e.message); }
   try {
     const j = await getJSON(fetchImpl, `https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=1mo&interval=1wk`, { "User-Agent": UA, Accept: "application/json" });
