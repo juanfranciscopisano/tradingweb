@@ -1,35 +1,221 @@
-// Empresas argentinas del MSCI MERVAL: P/E y P/BV semanales para P/E histórico y el panel del Merval.
-// Por ahora, solo el diagnóstico de las fuentes (MODO=diagnostico): qué trae la SEC (20-F con NIIF) de las que tienen
-// ADR, qué trae Yahoo de cada una (en BYMA y el ADR) y qué lista BYMA de sus balances. Todo va al log.
-import { readFile } from "node:fs/promises";
+// Arma empresas.json: P/E y P/BV semana a semana de las 19 acciones del MSCI MERVAL, para el panel del Merval y para
+// P/E histórico. Corre en GitHub Actions los días hábiles (.github/workflows/empresas.yml), después de Bancos.
+//
+// Por empresa y por semana: el precio de cierre, el resultado por acción de 12 meses y el valor libro por acción, los dos
+// en la moneda del precio de esa semana. El múltiplo de cada semana es precio / eso.
+//   - Las que presentan en pesos (NIC 29 desde 2018): precio de BYMA en pesos. Cada resultado y cada patrimonio está en
+//     pesos de su cierre y se lleva a pesos de cada semana con el IPC (indec.json, como en Bancos). El resultado de 12
+//     meses es la suma de los cuatro trimestres (cada uno con su IPC) o, si no están, el del último ejercicio.
+//   - Las que presentan en dólares (YPF y Pampa): precio del ADR en dólares y resultados en dólares por ADR.
+//   - Bancos (Galicia, Macro, BBVA, Supervielle y Valores): de bancos.json (el BCRA desde 2000, los 20-F y Yahoo):
+//     valor libro = precio / P/BV y resultado = ROE real × valor libro.
+// Fuentes de los resultados y patrimonios: los 20-F de la SEC (NIIF) de las que tienen ADR, los ejercicios y los
+// últimos cinco trimestres de Yahoo, y los trimestres cargados a mano de Pampa (backend/data/eps_manual.json). Cada
+// balance vale desde su presentación: el plazo de la CNV (42 días el trimestre, 70 el ejercicio) o antes si la SEC lo
+// tiene antes. Con MODO=diagnostico solo escribe en el log qué trae cada fuente.
+import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { yahooSession } from "./fundamentals.mjs";
+import { ipcDe, weekOf, MONDAY0, yahooSerie, monedaYahoo } from "./bancos.mjs";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-const DAY = 86400;
+const DAY = 86400, WEEK = 7 * DAY;
+const tOf = d => Math.floor(Date.parse(d + "T00:00:00Z") / 1000);
+const isoOf = t => new Date(t * 1000).toISOString().slice(0, 10);
+const dias = (a, b) => (Date.parse(b) - Date.parse(a)) / 864e5;
+export const VERSION = 1;
+export const W_DESDE = weekOf(Date.UTC(2014, 0, 6) / 1000);   // las series que no son de bancos arrancan en 2014
+export const MAX_DIAS = 470;   // un resultado o un balance de más de 470 días ya no se usa (el ejercicio siguiente se atrasó)
+export const PLAZO = { q: 42, a: 70 };   // días de la CNV para presentar el trimestre y el ejercicio
 
-// las 19 del MSCI MERVAL desde el 19/10/2026 (La Nación, 17/10/2026): con ADR, el ticker de Nueva York
+// las 19 del MSCI MERVAL desde el 19/10/2026 (La Nación, 17/10/2026). px: el precio que se usa (el ADR si los
+// resultados están en dólares); ratio: acciones por ADR; sec: el ADR con 20-F en la SEC
 export const MERVAL = [
-  { s: "YPFD", n: "YPF", adr: "YPF" },
-  { s: "PAMP", n: "Pampa Energía", adr: "PAM" },
-  { s: "GGAL", n: "Grupo Financiero Galicia", adr: "GGAL" },
-  { s: "BMA", n: "Banco Macro", adr: "BMA" },
-  { s: "TGSU2", n: "Transportadora de Gas del Sur", adr: "TGS" },
-  { s: "CEPU", n: "Central Puerto", adr: "CEPU" },
-  { s: "BBAR", n: "BBVA Argentina", adr: "BBAR" },
-  { s: "BYMA", n: "Bolsas y Mercados Argentinos" },
-  { s: "TXAR", n: "Ternium Argentina" },
-  { s: "LOMA", n: "Loma Negra", adr: "LOMA" },
-  { s: "CRES", n: "Cresud", adr: "CRESY" },
-  { s: "EDN", n: "Edenor", adr: "EDN" },
-  { s: "ALUA", n: "Aluar" },
-  { s: "SUPV", n: "Grupo Supervielle", adr: "SUPV" },
-  { s: "VALO", n: "Banco de Valores" },
-  { s: "TRAN", n: "Transener" },
-  { s: "ECOG", n: "Ecogas Inversiones" },
-  { s: "TGNO4", n: "Transportadora de Gas del Norte" },
-  { s: "METR", n: "Metrogas" },
+  { s: "YPFD", n: "YPF", adr: "YPF", px: "YPF", moneda: "USD", ratio: 1, sec: "YPF", sector: "Energía" },
+  { s: "PAMP", n: "Pampa Energía", adr: "PAM", px: "PAM", moneda: "USD", ratio: 25, sec: "PAM", manual: "PAM", sector: "Energía" },
+  { s: "GGAL", n: "Grupo Financiero Galicia", adr: "GGAL", banco: true, sector: "Financiero" },
+  { s: "BMA", n: "Banco Macro", adr: "BMA", banco: true, sector: "Financiero" },
+  { s: "TGSU2", n: "Transportadora de Gas del Sur", adr: "TGS", sec: "TGS", sector: "Servicios públicos" },
+  { s: "CEPU", n: "Central Puerto", adr: "CEPU", sec: "CEPU", sector: "Servicios públicos" },
+  { s: "BBAR", n: "BBVA Argentina", adr: "BBAR", banco: true, sector: "Financiero" },
+  { s: "BYMA", n: "Bolsas y Mercados Argentinos", sector: "Financiero" },
+  { s: "TXAR", n: "Ternium Argentina", sector: "Materiales" },
+  { s: "LOMA", n: "Loma Negra", adr: "LOMA", sec: "LOMA", sector: "Materiales" },
+  { s: "CRES", n: "Cresud", adr: "CRESY", sec: "CRESY", sector: "Agro e inmuebles" },
+  { s: "EDN", n: "Edenor", adr: "EDN", sec: "EDN", sector: "Servicios públicos" },
+  { s: "ALUA", n: "Aluar", sector: "Materiales" },
+  { s: "SUPV", n: "Grupo Supervielle", adr: "SUPV", banco: true, sector: "Financiero" },
+  { s: "VALO", n: "Banco de Valores", banco: true, sector: "Financiero" },
+  { s: "TRAN", n: "Transener", sector: "Servicios públicos" },
+  { s: "ECOG", n: "Ecogas Inversiones", sector: "Servicios públicos" },
+  { s: "TGNO4", n: "Transportadora de Gas del Norte", sector: "Servicios públicos" },
+  { s: "METR", n: "Metrogas", sector: "Servicios públicos" },
 ];
+// fuera del índice, solo para el P/BV de P/E histórico de los que tienen el EPS cargado a mano
+export const EXTRA = [{ s: "NU", n: "Nu Holdings", px: "NU", moneda: "USD", ratio: 1, sec: "NU", manual: "NU" }];
+
+// ---- observaciones: { end, tipo: "q" (trimestre) | "a" (ejercicio) | "t" (12 meses), val, c (fecha de la moneda),
+// pub (segundos), sh (acciones, ya por ADR si el precio es el ADR), src }
+const pubDe = (end, tipo, hoyS, filed = null) => {
+  const p = tOf(end) + PLAZO[tipo === "q" ? "q" : "a"] * DAY, f = filed ? tOf(filed) : Infinity;
+  return Math.min(p, f >= tOf(end) ? f : Infinity, hoyS);
+};
+const anual = (a, b) => { const d = dias(a, b); return d >= 350 && d <= 380; };
+
+// 20-F (NIIF): resultado y patrimonio de los propietarios de la controladora por ejercicio, en la primera presentación
+// (lo que se supo entonces). En pesos, cada uno está en moneda del cierre del 20-F en que salió (los comparativos de
+// los 20-F con NIC 29, desde el ejercicio 2018, vienen reexpresados a ese cierre; antes, en pesos de su fecha)
+export function desdeSec(facts, { unidad = "ARS", hoyS = Infinity } = {}) {
+  const f = facts?.facts?.["ifrs-full"] || {}, dei = facts?.facts?.dei || {};
+  const first = (arr, key) => {
+    const m = new Map();
+    for (const e of arr) { const k = key(e), p = m.get(k); if (!p || (e.filed || "") < (p.filed || "")) m.set(k, e); }
+    return [...m.values()];
+  };
+  const finDe = new Map();
+  for (const t of ["EquityAttributableToOwnersOfParent", "Equity"]) for (const e of f[t]?.units?.[unidad] || []) if (!e.start && e.end && e.accn && !(finDe.get(e.accn) >= e.end)) finDe.set(e.accn, e.end);
+  const moneda = e => unidad !== "ARS" || (e.filed || "") < "2018-09-01" ? e.end : (finDe.get(e.accn) || e.end);
+  // patrimonio de los propietarios; sin esa etiqueta, el total menos los minoritarios (si no están, el total)
+  const eqA = (f.EquityAttributableToOwnersOfParent?.units?.[unidad] || []).filter(e => !e.start && isFinite(e.val));
+  const eqT = (f.Equity?.units?.[unidad] || []).filter(e => !e.start && isFinite(e.val));
+  const nci = (f.NoncontrollingInterests?.units?.[unidad] || []).filter(e => !e.start && isFinite(e.val));
+  const eq = [], ends = new Set();
+  for (const e of first(eqA, e => e.end)) { eq.push({ end: e.end, val: e.val, c: moneda(e), pub: pubDe(e.end, "a", hoyS, e.filed), src: "SEC 20-F", tag: "atribuible" }); ends.add(e.end); }
+  for (const e of first(eqT, e => e.end)) {
+    if (ends.has(e.end)) continue;
+    const m = nci.filter(x => x.end === e.end && x.accn === e.accn)[0];
+    eq.push({ end: e.end, val: e.val - (m ? m.val : 0), c: moneda(e), pub: pubDe(e.end, "a", hoyS, e.filed), src: "SEC 20-F", tag: m ? "total − minoritarios" : "total" });
+  }
+  const niTag = f.ProfitLossAttributableToOwnersOfParent?.units?.[unidad] ? "ProfitLossAttributableToOwnersOfParent" : "ProfitLoss";
+  const ni = first((f[niTag]?.units?.[unidad] || []).filter(e => e.start && e.end && isFinite(e.val) && anual(e.start, e.end)), e => e.start + e.end)
+    .map(e => ({ end: e.end, tipo: "a", val: e.val, c: moneda(e), pub: pubDe(e.end, "a", hoyS, e.filed), src: "SEC 20-F", accn: e.accn }));
+  // acciones de cada ejercicio: las de la tapa (dei) cerca del cierre, el promedio ponderado o resultado / EPS
+  const cand = end => {
+    const out = [];
+    for (const e of dei.EntityCommonStockSharesOutstanding?.units?.shares || []) if (Math.abs(dias(end, e.end)) <= 130 && e.val > 1e6) out.push(e.val);
+    for (const t of ["WeightedAverageShares", "AdjustedWeightedAverageShares"]) for (const e of f[t]?.units?.shares || []) if (e.start && e.end === end && anual(e.start, e.end) && e.val > 1e6) out.push(e.val);
+    const n = ni.find(x => x.end === end), eps = (f.BasicEarningsLossPerShare?.units?.[unidad + "/shares"] || []).find(e => e.end === end && e.start && anual(e.start, e.end) && e.val && n && e.accn === n.accn);
+    if (n && eps && n.val / eps.val > 1e6) out.push(Math.abs(n.val / eps.val));
+    return out;
+  };
+  return { ni: ni.sort((a, b) => a.end.localeCompare(b.end)), eq: eq.sort((a, b) => a.end.localeCompare(b.end)), cand };
+}
+
+// Yahoo: trimestres en pesos de su cierre; ejercicios en moneda del ejercicio siguiente (comparativos) y el último en la
+// suya (monedaYahoo, de Bancos); 12 meses: la suma nominal de los cuatro trimestres que publica Yahoo
+export function desdeYahoo(ys, { hoyS = Infinity, acc = "OrdinarySharesNumber" } = {}) {
+  const fin = Object.keys(ys.a).sort().pop();
+  const bvDe = o => o.CommonStockEquity ?? o.StockholdersEquity;
+  const sh = o => (o[acc] > 0 ? o[acc] : null);
+  const ni = [], eq = [];
+  for (const [end, o] of Object.entries(ys.q)) {
+    if (isFinite(o.NetIncomeCommonStockholders)) ni.push({ end, tipo: "q", val: o.NetIncomeCommonStockholders, c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo trimestral" });
+    if (isFinite(bvDe(o))) eq.push({ end, val: bvDe(o), c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo trimestral" });
+  }
+  for (const [end, o] of Object.entries(ys.a)) {
+    const c = monedaYahoo(end, fin);
+    if (isFinite(o.NetIncomeCommonStockholders)) ni.push({ end, tipo: "a", val: o.NetIncomeCommonStockholders, c, pub: pubDe(end, "a", hoyS), sh: sh(o), src: "Yahoo anual" });
+    if (isFinite(bvDe(o))) eq.push({ end, val: bvDe(o), c, pub: pubDe(end, "a", hoyS), sh: sh(o), src: "Yahoo anual" });
+  }
+  for (const [end, o] of Object.entries(ys.t || {})) if (isFinite(o.NetIncomeCommonStockholders)) ni.push({ end, tipo: "t", val: o.NetIncomeCommonStockholders, c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo 12 meses" });
+  return { ni, eq };
+}
+
+// trimestres cargados a mano (eps_manual.json): resultado en millones y acciones en millones; por ADR con el ratio
+export function desdeManual(m, { ratio = 1, hoyS = Infinity } = {}) {
+  return (m?.trimestres || []).filter(r => r.fin && isFinite(r.resultado) && r.acciones > 0).map(r => ({
+    end: r.fin, tipo: "q", val: r.resultado * 1e6, c: r.fin, sh: r.acciones * 1e6 / ratio,
+    pub: Math.min(/^\d{4}-\d\d-\d\d$/.test(r.presentado || "") ? tOf(r.presentado) : tOf(r.fin) + 45 * DAY, hoyS), src: "a mano (6-K)",
+  }));
+}
+
+// une observaciones: por cierre y tipo manda la primera lista que lo tiene (±10 días)
+export function unir(listas) {
+  const out = [];
+  for (const L of listas) for (const x of L) if (!out.some(y => y.tipo === x.tipo && Math.abs(dias(y.end, x.end)) <= 10)) out.push(x);
+  return out.sort((a, b) => a.end.localeCompare(b.end) || a.tipo.localeCompare(b.tipo));
+}
+
+// el trimestre que falta de un ejercicio: el ejercicio menos los otros tres (Ternium no tiene el 3T25 en Yahoo). Solo
+// con el ejercicio en moneda de su cierre; los otros tres se llevan a esa moneda (conv) y el que falta queda en ella
+export function completarTrimestres(ni, conv = () => 1) {
+  const q = ni.filter(x => x.tipo === "q"), out = [];
+  for (const a of ni.filter(x => x.tipo === "a" && Math.abs(dias(x.c, x.end)) <= 10)) {
+    const ini = new Date(tOf(a.end) * 1000); ini.setUTCMonth(ini.getUTCMonth() - 12);
+    const dentro = q.filter(x => dias(isoOf(ini.getTime() / 1000), x.end) > 20 && dias(x.end, a.end) >= -10);
+    if (dentro.length !== 3) continue;
+    // los cuatro cierres trimestrales del ejercicio: el que no está es el que falta
+    const cierres = [3, 6, 9, 12].map(k => { const d = new Date(ini.getTime()); d.setUTCMonth(d.getUTCMonth() + k + 1, 0); return isoOf(d.getTime() / 1000); });
+    const falta = cierres.find(e => !dentro.some(x => Math.abs(dias(x.end, e)) <= 10));
+    if (!falta) continue;
+    const tc = tOf(a.c) + DAY - 1;
+    out.push({ end: falta, tipo: "q", val: a.val - dentro.reduce((s, x) => s + x.val * conv(x.c, tc), 0), c: a.c, pub: Math.max(a.pub, ...dentro.map(x => x.pub)), sh: a.sh ?? dentro[0].sh, src: "ejercicio menos tres trimestres" });
+  }
+  return unir([ni, out]);
+}
+
+// acciones que faltan: las de la observación más cercana que las tenga (del mismo origen si hay)
+export function completarAcciones(lista, otras = []) {
+  const con = [...lista, ...otras].filter(x => x.sh > 0);
+  for (const x of lista) if (!(x.sh > 0)) {
+    const o = con.slice().sort((p, q) => Math.abs(dias(p.end, x.end)) - Math.abs(dias(q.end, x.end)))[0];
+    if (o) x.sh = o.sh;
+  }
+  return lista;
+}
+
+// ---- series semanales: precio, resultado por acción de 12 meses y valor libro por acción, en la moneda de cada semana.
+// conv(c, t): de la moneda de la fecha c a la del momento t (segundos). splits: [{ date, ratio }] (Yahoo ajusta los
+// precios viejos por los splits; las acciones de un balance anterior se multiplican por el ratio)
+export function semanalEmpresa({ price, ni, eq, conv, splits = [], weeks, hoyS }) {
+  const Q = ni.filter(x => x.tipo === "q").sort((a, b) => a.end.localeCompare(b.end));
+  const A = ni.filter(x => x.tipo !== "q");
+  const E = eq.slice().sort((a, b) => a.end.localeCompare(b.end));
+  const spl = end => splits.filter(s => s.date > tOf(end)).reduce((a, s) => a * s.ratio, 1);
+  const c = [], eps = [], bv = [], uso = [];
+  for (const w of weeks) {
+    const t = Math.min(MONDAY0 + w * WEEK + 4 * DAY, hoyS), p = price.get(w);
+    // 12 meses: cuatro trimestres seguidos presentados, o el último ejercicio (o los 12 meses de Yahoo)
+    let best = null;
+    const qs = Q.filter(x => x.pub <= t);
+    if (qs.length >= 4) {
+      const u = qs.slice(-4);
+      const seguidos = u.every((x, i) => i === 0 || (dias(u[i - 1].end, x.end) >= 75 && dias(u[i - 1].end, x.end) <= 105));
+      if (seguidos) best = { end: u[3].end, val: u.reduce((s, x) => s + x.val * conv(x.c, t), 0), sh: u[3].sh, tipo: "4 trimestres", src: u[3].src };
+    }
+    for (const x of A) if (x.pub <= t && (!best || x.end > best.end)) best = { end: x.end, val: x.val * conv(x.c, t), sh: x.sh, tipo: x.tipo === "a" ? "ejercicio" : "12 meses", src: x.src };
+    const b = E.filter(x => x.pub <= t).pop();
+    c.push(p > 0 ? p : null);
+    const okN = best && best.sh > 0 && t - tOf(best.end) <= MAX_DIAS * DAY;
+    eps.push(okN ? best.val / (best.sh * spl(best.end)) : null);
+    const okB = b && b.sh > 0 && t - tOf(b.end) <= MAX_DIAS * DAY;
+    bv.push(okB ? b.val * conv(b.c, t) / (b.sh * spl(b.end)) : null);
+    uso.push({ ni: okN ? best : null, eq: okB ? b : null });
+  }
+  return { c, eps, bv, uso };
+}
+
+// bancos: de bancos.json (precio de BYMA, P/BV y ROE real por semana): valor libro = precio / P/BV; resultado de 12
+// meses = ROE × valor libro
+export function desdeBancos(B, week0, weeks) {
+  const c = [], eps = [], bv = [];
+  for (const w of weeks) {
+    const i = w - week0, p = i >= 0 ? B.precio?.[i] : null, pb = i >= 0 ? B.pb?.[i] : null, roe = i >= 0 ? B.roe?.[i] : null;
+    c.push(p > 0 ? p : null);
+    const b = p > 0 && pb > 0 ? p / pb : null;
+    bv.push(b);
+    eps.push(b != null && roe != null ? b * roe / 100 : null);
+  }
+  return { c, eps, bv };
+}
+
+const sig = (v, n = 5) => v == null || !isFinite(v) ? null : +v.toPrecision(n);
+// recorta los nulos del principio: w0 = primera semana con precio y algún dato
+function recortar(weeks, x) {
+  let i0 = weeks.findIndex((w, i) => x.c[i] != null && (x.eps[i] != null || x.bv[i] != null));
+  if (i0 < 0) return null;
+  return { w0: weeks[i0], c: x.c.slice(i0).map(v => sig(v, 6)), eps: x.eps.slice(i0).map(v => sig(v)), bv: x.bv.slice(i0).map(v => sig(v)) };
+}
 
 async function getJSON(f, url, opts = {}, tries = 3) {
   for (let a = 0; ; a++) {
@@ -46,87 +232,149 @@ async function getJSON(f, url, opts = {}, tries = 3) {
   }
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const precioDe = chart => {
+  const ts = chart?.timestamp || [], cl = chart?.indicators?.quote?.[0]?.close || [], m = new Map();
+  ts.forEach((t, i) => { if (cl[i] > 0) m.set(weekOf(t), cl[i]); });
+  const splits = Object.values(chart?.events?.splits || {}).map(s => ({ date: s.date, ratio: s.numerator / s.denominator })).filter(s => s.ratio > 0 && isFinite(s.ratio) && s.ratio !== 1);
+  return { m, splits };
+};
+const Y_TIPOS = ["NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares"];
 
-const SEC_TAGS = ["EquityAttributableToOwnersOfParent", "Equity", "ProfitLossAttributableToOwnersOfParent", "ProfitLoss",
-  "BasicEarningsLossPerShare", "DilutedEarningsLossPerShare", "WeightedAverageShares", "AdjustedWeightedAverageShares",
-  "NumberOfSharesOutstanding", "Revenue", "ProfitLossFromOperatingActivities"];
-const Y_TIPOS = ["DilutedEPS", "BasicEPS", "NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares", "EBITDA", "TotalRevenue"];
-
-export async function diagnostico({ fetchImpl = globalThis.fetch, log = console.log, secUA = "tradingweb research@example.com", solo = null } = {}) {
-  const now = Math.floor(Date.now() / 1000);
-  const lista = solo ? MERVAL.filter(c => solo.includes(c.s)) : MERVAL;
-  // ---- SEC
+export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(), log = console.log,
+  secUA = process.env.SEC_UA || "tradingweb research@example.com", modo = process.env.MODO || "diario" } = {}) {
+  if (modo === "diagnostico") return diagnostico({ fetchImpl, log, secUA, solo: process.env.SOLO ? process.env.SOLO.split(",") : null, extraY: (process.env.EXTRA_Y || "").split(",").filter(Boolean) });
+  const hoyS = Math.floor(now.getTime() / 1000), errores = {};
+  const leer = async (p, req = true) => { try { return JSON.parse(await readFile(new URL(p, root), "utf8")); } catch (e) { if (req) throw new Error(p + ": " + e.message); log(p + ": " + e.message); return null; } };
+  const indec = await leer("indec.json"), bcra = await leer("bcra.json", false), bancos = await leer("bancos.json", false), manual = await leer("backend/data/eps_manual.json", false) || {};
+  const ipc = ipcDe(indec, bcra?.ipc);
+  if (!ipc) throw new Error("indec.json sin el IPC nacional");
+  const convARS = (c, t) => ipc.at(t) / ipc.at(tOf(c) + DAY - 1), convUSD = () => 1;
+  // SEC
   const secH = { headers: { "User-Agent": secUA, Accept: "application/json" } };
-  let tick = {};
-  try {
-    const j = await getJSON(fetchImpl, "https://www.sec.gov/files/company_tickers.json", secH);
-    for (const c of Object.values(j || {})) tick[String(c.ticker).toUpperCase()] = String(c.cik_str).padStart(10, "0");
-    log(`SEC: ${Object.keys(tick).length} tickers`);
-  } catch (e) { log("SEC tickers: " + e.message); }
-  for (const c of [...lista.filter(c => c.adr), { s: "NU", adr: "NU" }]) {
-    const cik = tick[c.adr];
-    if (!cik) { log(`\n=== ${c.s}/${c.adr}: sin CIK`); continue; }
-    await sleep(250);
-    let facts;
-    try { facts = await getJSON(fetchImpl, `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, secH); } catch (e) { log(`\n=== ${c.adr}: ${e.message}`); continue; }
-    const fam = Object.keys(facts?.facts || {});
-    log(`\n=== ${c.s}/${c.adr} CIK ${cik} ${facts?.entityName || ""}: taxonomías ${fam.map(k => k + "(" + Object.keys(facts.facts[k]).length + ")").join(" ")}`);
-    const f = facts?.facts?.["ifrs-full"] || {};
-    for (const tag of SEC_TAGS) {
-      const o = f[tag]; if (!o) continue;
-      for (const [u, a] of Object.entries(o.units || {})) {
-        const inst = a.filter(e => !e.start), dur = a.filter(e => e.start);
-        const anual = dur.filter(e => (Date.parse(e.end) - Date.parse(e.start)) / 864e5 > 350);
-        const corto = dur.filter(e => (Date.parse(e.end) - Date.parse(e.start)) / 864e5 < 200);
-        const forms = [...new Set(a.map(e => e.form))].join("/");
-        log(`  ${tag} [${u}] ${a.length} hechos (${inst.length} saldos, ${anual.length} anuales, ${corto.length} de menos de 200 días) ${forms}; cierres ${[...new Set(a.map(e => e.end))].sort().slice(0, 1)}…${[...new Set(a.map(e => e.end))].sort().slice(-1)}`);
-        // primera presentación de cada cierre (lo que se supo entonces)
-        const first = new Map();
-        for (const e of (inst.length ? inst : anual)) { const k = e.end + (e.start || ""); const p = first.get(k); if (!p || e.filed < p.filed) first.set(k, e); }
-        if (/Equity$|ProfitLoss|EarningsLoss|WeightedAverageShares|NumberOfShares/.test(tag))
-          log("    " + [...first.values()].sort((x, y) => x.end.localeCompare(y.end)).map(e => `${e.start ? e.start.slice(0, 7) + "→" : ""}${e.end} ${+e.val.toPrecision(5)} (${e.form} ${e.filed})`).join("; "));
-      }
-    }
-    const dei = facts?.facts?.dei || {};
-    for (const tag of ["EntityCommonStockSharesOutstanding"]) for (const [u, a] of Object.entries(dei[tag]?.units || {})) log(`  dei:${tag} [${u}] ` + a.map(e => `${e.end} ${e.val}`).join("; "));
-  }
-  // ---- Yahoo
-  let s = null;
-  try { s = await yahooSession(fetchImpl); log("\nYahoo: sesión OK"); } catch (e) { log("\nYahoo sesión: " + e.message); }
-  const H = { headers: { "User-Agent": UA, Accept: "application/json", ...(s ? { Cookie: s.cookie } : {}) } }, cr = s ? `&crumb=${encodeURIComponent(s.crumb)}` : "";
-  const syms = lista.flatMap(c => [c.s + ".BA", ...(c.adr ? [c.adr] : [])]);
-  try {
-    const fields = "shortName,currency,financialCurrency,regularMarketPrice,marketCap,sharesOutstanding,trailingPE,priceToBook,epsTrailingTwelveMonths,bookValue,forwardPE";
-    const j = await getJSON(fetchImpl, `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${syms.map(encodeURIComponent).join(",")}&fields=${fields}${cr}`, H);
-    for (const q of j?.quoteResponse?.result || []) log(`quote ${q.symbol}: ${q.shortName} ${q.currency}/${q.financialCurrency} p=${q.regularMarketPrice} mc=${q.marketCap} acc=${q.sharesOutstanding} PE=${q.trailingPE} PB=${q.priceToBook} EPS12=${q.epsTrailingTwelveMonths} BV=${q.bookValue} fPE=${q.forwardPE}`);
-  } catch (e) { log("quote: " + e.message); }
-  for (const sym of syms) {
-    await sleep(400);
-    const types = ["quarterly", "annual", "trailing"].flatMap(p => Y_TIPOS.map(t => p + t)).join(",");
+  let lastSec = 0;
+  const secGet = async url => { const w = lastSec + 200 - Date.now(); if (w > 0) await sleep(w); lastSec = Date.now(); return getJSON(fetchImpl, url, secH); };
+  const cik = {};
+  try { for (const x of Object.values(await secGet("https://www.sec.gov/files/company_tickers.json") || {})) cik[String(x.ticker).toUpperCase()] = String(x.cik_str).padStart(10, "0"); }
+  catch (e) { errores.sec = e.message; log("SEC tickers: " + e.message); }
+  // Yahoo
+  let ys = null;
+  try { ys = await yahooSession(fetchImpl); } catch (e) { errores.yahoo = e.message; log("Yahoo (sesión): " + e.message); }
+  const yH = { headers: { "User-Agent": UA, Accept: "application/json", ...(ys ? { Cookie: ys.cookie } : {}) } }, cr = ys ? `&crumb=${encodeURIComponent(ys.crumb)}` : "";
+  const p1 = Date.UTC(2013, 11, 30) / 1000;
+  const chartDe = sym => getJSON(fetchImpl, `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${p1}&period2=${hoyS}&interval=1wk&events=splits`, { headers: { "User-Agent": UA, Accept: "application/json" } }).then(j => j?.chart?.result?.[0] || null);
+  const tipos = [...["quarterly", "annual"].flatMap(p => Y_TIPOS.map(t => p + t)), "trailingNetIncomeCommonStockholders"].join(",");
+  const yFund = sym => getJSON(fetchImpl, `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${tipos}&period1=${Date.UTC(2015, 0, 1) / 1000}&period2=${hoyS + DAY}${cr}`, yH);
+
+  const weeks = []; for (let w = W_DESDE; w <= weekOf(hoyS); w++) weeks.push(w);
+  const empresas = {};
+  for (const c of [...MERVAL, ...EXTRA]) {
     try {
-      const j = await getJSON(fetchImpl, `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${types}&period1=946684800&period2=${now + DAY}${cr}`, H);
-      const res = j?.timeseries?.result || [], lineas = [];
-      for (const r of res) {
-        const t = r?.meta?.type?.[0], pts = (r[t] || []).filter(x => x && x.asOfDate && isFinite(x.reportedValue?.raw));
-        if (!pts.length) continue;
-        lineas.push(`${t}: ${pts.map(x => `${x.asOfDate} ${+(+x.reportedValue.raw).toPrecision(5)}${x.currencyCode ? "" : ""}`).join(", ")} [${[...new Set(pts.map(x => x.currencyCode))].join("/")}]`);
+      const base = { n: c.n, adr: c.adr || null, sector: c.sector || null };
+      if (c.banco) {
+        const B = bancos?.bancos?.[c.s];
+        if (!B) throw new Error("no está en bancos.json");
+        const bw = []; for (let w = bancos.week0; w <= weekOf(hoyS); w++) bw.push(w);
+        const x = recortar(bw, desdeBancos(B, bancos.week0, bw));
+        if (!x) throw new Error("bancos.json sin datos");
+        const k = x.c.length - 1;
+        empresas[c.s] = { ...base, px: B.ticker || c.s + ".BA", moneda: "ARS", banco: true, ...x,
+          ult: { precio: B.ult?.precio ?? x.c[k], eps: x.eps[k], bv: x.bv[k], balance: B.ult?.balance || null, roe: B.ult?.roe ?? null, fuente: "Bancos: " + (B.ult?.fuente || "BCRA, 20-F y Yahoo") } };
+        log(`${c.s}: de bancos.json desde ${isoOf(MONDAY0 + x.w0 * WEEK)}, P/BV ${B.ult?.pb}, ROE ${B.ult?.roe}%`);
+        continue;
       }
-      log(`\nYahoo ${sym}: ${lineas.length ? "" : "sin datos"}`);
-      for (const l of lineas) log("  " + l);
-    } catch (e) { log(`Yahoo ${sym}: ${e.message}`); }
+      const usd = c.moneda === "USD", px = c.px || c.s + ".BA", ySym = usd ? (c.adr || c.px) : c.s + ".BA";
+      const [chart, yj, facts] = await Promise.all([
+        chartDe(px),
+        yFund(ySym).catch(e => { errores[c.s + " Yahoo"] = e.message; return null; }),
+        c.sec && cik[c.sec] ? secGet(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik[c.sec]}.json`).catch(e => { errores[c.s + " SEC"] = e.message; return null; }) : null,
+      ]);
+      if (!chart) throw new Error("sin precios de " + px);
+      const { m: price, splits } = precioDe(chart);
+      // en dólares, las acciones por ADR: las del promedio diluido del ADR en Yahoo (las de la acción local vienen mal en YPF)
+      const yah = desdeYahoo(yahooSerie(yj), { hoyS, acc: usd ? "DilutedAverageShares" : "OrdinarySharesNumber" });
+      const sec = facts ? desdeSec(facts, { unidad: usd ? "USD" : "ARS", hoyS }) : { ni: [], eq: [], cand: () => [] };
+      const man = c.manual ? desdeManual(manual[c.manual], { ratio: c.ratio || 1, hoyS }) : [];
+      // acciones de los 20-F: la candidata más cercana a las de Yahoo (o a las de los trimestres a mano)
+      const ref = [...man, ...yah.ni, ...yah.eq].filter(x => x.sh > 0).sort((a, b) => b.end.localeCompare(a.end))[0];
+      for (const x of [...sec.ni, ...sec.eq]) {
+        const cs = sec.cand(x.end).map(v => v / (usd ? (c.ratio || 1) : 1));
+        if (!cs.length) continue;
+        x.sh = ref ? cs.sort((a, b) => Math.abs(Math.log(a / ref.sh)) - Math.abs(Math.log(b / ref.sh)))[0] : cs.sort((a, b) => a - b)[Math.floor(cs.length / 2)];
+      }
+      // por cierre manda: los trimestres a mano, Yahoo trimestral, los 20-F y los ejercicios de Yahoo
+      let ni = unir([man, yah.ni.filter(x => x.tipo === "q"), sec.ni, yah.ni.filter(x => x.tipo !== "q")]);
+      const conv = usd ? convUSD : convARS;
+      ni = completarTrimestres(ni, conv);
+      const eq = unir([yah.eq.filter(x => x.src === "Yahoo trimestral").map(x => ({ ...x, tipo: "b" })), sec.eq.map(x => ({ ...x, tipo: "b" })), yah.eq.filter(x => x.src === "Yahoo anual").map(x => ({ ...x, tipo: "b" }))]);
+      completarAcciones(ni, eq); completarAcciones(eq, ni);
+      const s = semanalEmpresa({ price, ni, eq, conv, splits, weeks, hoyS });
+      const x = recortar(weeks, s);
+      if (!x) throw new Error("sin resultados ni balances que empalmen con el precio");
+      const k = s.c.length - 1, u = s.uso[k];
+      const precio = chart?.meta?.regularMarketPrice ?? x.c.at(-1);
+      // control: los 20-F contra los ejercicios de Yahoo del mismo cierre (llevados a la misma moneda)
+      const ctrl = [];
+      for (const a of sec.ni) { const y = yah.ni.find(z => z.tipo === "a" && z.end === a.end); if (y && y.val) ctrl.push(`resultado ${a.end}: ${(a.val * conv(a.c, tOf(y.c) + DAY - 1) / y.val).toFixed(2)}`); }
+      for (const a of sec.eq) { const y = yah.eq.find(z => z.src === "Yahoo anual" && z.end === a.end); if (y && y.val) ctrl.push(`patrimonio ${a.end}: ${(a.val * conv(a.c, tOf(y.c) + DAY - 1) / y.val).toFixed(2)}${a.tag !== "atribuible" ? " (" + a.tag + ")" : ""}`); }
+      empresas[c.s] = { ...base, px, moneda: usd ? "USD" : "ARS", ...(usd ? { ratio: c.ratio || 1 } : {}), ...x,
+        ult: { precio, eps: sig(s.eps[k]), bv: sig(s.bv[k]), resultado: u.ni ? { cierre: u.ni.end, tipo: u.ni.tipo, fuente: u.ni.src } : null, balance: u.eq ? { cierre: u.eq.end, fuente: u.eq.src } : null,
+          ajusteIPC: !usd && u.eq ? +convARS(u.eq.c, hoyS).toFixed(3) : null },
+        obs: { resultados: ni.map(o => [o.end, o.tipo, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]),
+          balances: eq.map(o => [o.end, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]) },
+        ...(splits.length ? { splits: splits.map(z => [isoOf(z.date), z.ratio]) } : {}) };
+      const pe = x.eps.at(-1) > 0 ? x.c.at(-1) / x.eps.at(-1) : null, pb = x.bv.at(-1) > 0 ? x.c.at(-1) / x.bv.at(-1) : null;
+      log(`${c.s} (${px}, ${usd ? "US$" : "$"}): desde ${isoOf(MONDAY0 + x.w0 * WEEK)}; resultados ${ni.map(o => o.end + o.tipo + "(" + o.src.split(" ")[0] + ")").join(" ")}; balances ${eq.map(o => o.end + "(" + o.src.split(" ")[0] + ")").join(" ")}`
+        + `; hoy P/E ${pe ? pe.toFixed(2) : "—"} (${u.ni ? u.ni.tipo + " al " + u.ni.end : "sin resultado"}), P/BV ${pb ? pb.toFixed(2) : "—"} (${u.eq ? u.eq.end : "sin balance"})`
+        + `; acciones ${[...new Set(eq.map(o => o.sh ? Math.round(o.sh / 1e6) : null))].join("/")} M` + (ctrl.length ? `; 20-F/Yahoo ${ctrl.join(", ")}` : "") + (splits.length ? `; splits ${splits.map(z => isoOf(z.date) + " x" + z.ratio).join(" ")}` : ""));
+    } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
-  // ---- BYMA: balances presentados (fechas de cierre y de presentación)
-  for (const c of lista.filter(c => !c.adr).slice(0, 3)) {
-    try {
-      const r = await fetchImpl("https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/seriesHistoricas/balances", { method: "POST", headers: { "Content-Type": "application/json", "User-Agent": UA }, body: JSON.stringify({ symbol: c.s }) });
-      const txt = await r.text();
-      log(`\nBYMA balances ${c.s}: HTTP ${r.status} ${txt.length} bytes: ${txt.slice(0, 1200)}`);
-    } catch (e) { log(`BYMA balances ${c.s}: ${e.message}`); }
-  }
+  if (MERVAL.filter(c => empresas[c.s]).length < 12) throw new Error(`Faltan empresas: ${JSON.stringify(errores)}`);
+  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult },
+    fuente: "SEC (20-F), Yahoo Finance, INDEC y bancos.json", merval: MERVAL.map(c => c.s).filter(s => empresas[s]), extra: EXTRA.map(c => c.s).filter(s => empresas[s]),
+    indice: { n: "MSCI MERVAL", desde: "2026-10-19", fuente: "La Nación, 17/10/2026" }, empresas, errores };
+  await writeFile(new URL("empresas.json", root), JSON.stringify(out));
+  log(`empresas.json: ${Object.keys(empresas).length} empresas; errores: ${JSON.stringify(errores)}`);
+  return out;
 }
 
-export async function main({ fetchImpl = globalThis.fetch, log = console.log, secUA = process.env.SEC_UA || "tradingweb research@example.com", modo = process.env.MODO || "diario" } = {}) {
-  if (modo === "diagnostico" || modo === "diario") return diagnostico({ fetchImpl, log, secUA, solo: process.env.SOLO ? process.env.SOLO.split(",") : null });
+// ---- diagnóstico: qué trae cada fuente (solo en el log)
+const SEC_TAGS = ["EquityAttributableToOwnersOfParent", "Equity", "NoncontrollingInterests", "ProfitLossAttributableToOwnersOfParent", "ProfitLoss",
+  "BasicEarningsLossPerShare", "DilutedEarningsLossPerShare", "WeightedAverageShares", "AdjustedWeightedAverageShares", "NumberOfSharesOutstanding"];
+const YD_TIPOS = ["DilutedEPS", "BasicEPS", "NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares"];
+export async function diagnostico({ fetchImpl = globalThis.fetch, log = console.log, secUA = "tradingweb research@example.com", solo = null, extraY = [] } = {}) {
+  const now = Math.floor(Date.now() / 1000);
+  const lista = solo ? MERVAL.filter(c => solo.includes(c.s)) : MERVAL;
+  const secH = { headers: { "User-Agent": secUA, Accept: "application/json" } };
+  let tick = {};
+  try { for (const c of Object.values(await getJSON(fetchImpl, "https://www.sec.gov/files/company_tickers.json", secH) || {})) tick[String(c.ticker).toUpperCase()] = String(c.cik_str).padStart(10, "0"); }
+  catch (e) { log("SEC tickers: " + e.message); }
+  for (const c of [...lista.filter(c => c.sec), ...EXTRA]) {
+    const id = tick[c.sec]; if (!id) { log(`${c.s}: sin CIK`); continue; }
+    await sleep(250);
+    let facts;
+    try { facts = await getJSON(fetchImpl, `https://data.sec.gov/api/xbrl/companyfacts/CIK${id}.json`, secH); } catch (e) { log(`${c.s}: ${e.message}`); continue; }
+    const f = facts?.facts?.["ifrs-full"] || {};
+    log(`\n=== ${c.s}/${c.sec}`);
+    for (const tag of SEC_TAGS) for (const [u, a] of Object.entries(f[tag]?.units || {})) {
+      const firstBy = new Map(); for (const e of a) { const k = e.end + (e.start || ""); const p = firstBy.get(k); if (!p || e.filed < p.filed) firstBy.set(k, e); }
+      log(`  ${tag} [${u}]: ` + [...firstBy.values()].filter(e => !e.start || anual(e.start, e.end)).sort((x, y) => x.end.localeCompare(y.end)).map(e => `${e.end} ${+e.val.toPrecision(5)} (${e.filed})`).join("; "));
+    }
+  }
+  let s = null;
+  try { s = await yahooSession(fetchImpl); } catch (e) { log("Yahoo sesión: " + e.message); }
+  const H = { headers: { "User-Agent": UA, Accept: "application/json", ...(s ? { Cookie: s.cookie } : {}) } }, cr = s ? `&crumb=${encodeURIComponent(s.crumb)}` : "";
+  for (const sym of [...extraY, ...(solo ? lista.map(c => c.s + ".BA") : [])]) {
+    await sleep(400);
+    const types = ["quarterly", "annual", "trailing"].flatMap(p => YD_TIPOS.map(t => p + t)).join(",");
+    try {
+      const j = await getJSON(fetchImpl, `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${types}&period1=946684800&period2=${now + DAY}${cr}`, H);
+      log(`\nYahoo ${sym}:`);
+      for (const r of j?.timeseries?.result || []) {
+        const t = r?.meta?.type?.[0], pts = (r[t] || []).filter(x => x && x.asOfDate && isFinite(x.reportedValue?.raw));
+        if (pts.length) log(`  ${t}: ${pts.map(x => `${x.asOfDate} ${+(+x.reportedValue.raw).toPrecision(5)}`).join(", ")}`);
+      }
+    } catch (e) { log(`Yahoo ${sym}: ${e.message}`); }
+  }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) main().then(() => {}, e => { console.error(e); process.exit(1); });

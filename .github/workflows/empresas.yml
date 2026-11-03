@@ -1,14 +1,23 @@
 name: Empresas del Merval (P/E y P/BV)
 
 on:
+  schedule:
+    - cron: "11 23 * * 1-5"   # días hábiles 20:11 de Buenos Aires, después de Bancos (bancos.json)
+  push:
+    branches: [main]
+    paths: ["scripts/empresas.mjs", ".github/workflows/empresas.yml", "backend/data/eps_manual.json"]
   workflow_dispatch:
     inputs:
       modo:
-        description: "diagnostico: qué trae cada fuente, solo en el log"
+        description: "diario: empresas.json; diagnostico: qué trae cada fuente, solo en el log"
         required: false
-        default: "diagnostico"
+        default: "diario"
       solo:
-        description: "tickers de BYMA separados por coma (vacío: las 19)"
+        description: "diagnóstico: tickers de BYMA separados por coma (vacío: las 19)"
+        required: false
+        default: ""
+      extra_y:
+        description: "diagnóstico: otros símbolos de Yahoo para ver sus series"
         required: false
         default: ""
 
@@ -26,13 +35,24 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: main
+          ref: main   # lo último de main (bancos.json e indec.json los actualizan otros workflows)
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Empresas del Merval
+      - name: Armar empresas.json
         run: node scripts/empresas.mjs
         env:
           SEC_UA: ${{ secrets.SEC_UA }}
-          MODO: ${{ inputs.modo || 'diagnostico' }}
+          MODO: ${{ inputs.modo || 'diario' }}
           SOLO: ${{ inputs.solo || '' }}
+          EXTRA_Y: ${{ inputs.extra_y || '' }}
+      - name: Commit si cambió
+        if: ${{ (inputs.modo || 'diario') == 'diario' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          [ -f empresas.json ] && git add empresas.json
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "Empresas del Merval: P/E y P/BV"
+          git pull --rebase -X theirs -q
+          git push
