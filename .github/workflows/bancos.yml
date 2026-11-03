@@ -1,12 +1,17 @@
 name: Bancos (P/VL y ROE)
 
 on:
+  schedule:
+    - cron: "41 22 * * 1-5"   # días hábiles 19:41 de Buenos Aires, después del cierre de BYMA y de Nueva York
+  push:
+    branches: [main]
+    paths: ["scripts/bancos.mjs", ".github/workflows/bancos.yml"]
   workflow_dispatch:
     inputs:
       modo:
-        description: "diario: bancos.json; diagnostico: qué trae cada fuente, solo en el log"
+        description: "diario: bancos.json; diagnostico: qué trimestres y ejercicios trae Yahoo, solo en el log"
         required: false
-        default: "diagnostico"
+        default: "diario"
 
 permissions:
   contents: write
@@ -22,12 +27,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: main
+          ref: main   # lo último de main (spx.json e indec.json los actualizan otros workflows)
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Bancos
+      - name: Armar bancos.json
         run: node scripts/bancos.mjs
         env:
           SEC_UA: ${{ secrets.SEC_UA }}
           MODO: ${{ inputs.modo || 'diario' }}
+      - name: Commit si cambió
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          [ -f bancos.json ] && git add bancos.json
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "Bancos: P/VL y ROE"
+          git pull --rebase -X theirs -q
+          git push
