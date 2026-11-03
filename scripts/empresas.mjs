@@ -39,7 +39,9 @@ export const MERVAL = [
   { s: "CEPU", n: "Central Puerto", adr: "CEPU", sec: "CEPU", sector: "Servicios públicos" },
   { s: "BBAR", n: "BBVA Argentina", adr: "BBAR", banco: true, sector: "Financiero" },
   { s: "BYMA", n: "Bolsas y Mercados Argentinos", sector: "Financiero" },
-  { s: "TXAR", n: "Ternium Argentina", sector: "Materiales" },
+  // Ternium Argentina tiene el dólar como moneda funcional (presenta en pesos al tipo de cambio de cada cierre): su
+  // patrimonio en dólares da 4,75, 4,33, 4,94 y 4,68 mil millones a fin de 2022 a 2025, y en pesos constantes salta
+  { s: "TXAR", n: "Ternium Argentina", sector: "Materiales", funcional: "USD" },
   { s: "LOMA", n: "Loma Negra", adr: "LOMA", sec: "LOMA", sector: "Materiales" },
   { s: "CRES", n: "Cresud", adr: "CRESY", sec: "CRESY", sector: "Agro e inmuebles" },
   { s: "EDN", n: "Edenor", adr: "EDN", sec: "EDN", sector: "Servicios públicos" },
@@ -386,7 +388,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       if (!usd && fx) {
         // la prueba en pesos constantes lleva cada valor desde su moneda de NIC 29 (c) y la de dólares desde su cierre
         const mf = monedaFuncional(unir([yah.eq.filter(x => x.src === "Yahoo trimestral"), sec.eq, yah.eq.filter(x => x.src === "Yahoo anual")].map(L => L.map(x => ({ ...x, tipo: "b" })))), convARS, fx.at, hoyS);
-        if (mf.dolar) regimen = "dólar funcional";
+        if (mf.dolar || c.funcional === "USD") regimen = "dólar funcional";
         log(`${c.s}: moneda funcional, desvío de los cambios anuales del patrimonio en pesos constantes ${mf.ars?.toFixed(3)} y en dólares ${mf.usd?.toFixed(3)}: ${regimen}`);
       }
       if (regimen === "dólar funcional") for (const x of [...yah.ni, ...yah.eq]) x.c = x.end;
