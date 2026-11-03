@@ -535,6 +535,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   secUA = process.env.SEC_UA || "tradingweb research@example.com", modo = process.env.MODO || "diario", secGapMs = 150 } = {}) {
   if (modo === "diagnostico") return diagnostico({ fetchImpl, log, secUA });
   if (modo === "ke") return diagnosticoKe({ fetchImpl, log });
+  if (modo === "bcra") return diagnosticoBcra({ fetchImpl, log });
   const hoyS = Math.floor(now.getTime() / 1000), errores = {};
   const spx = JSON.parse(await readFile(new URL("spx.json", root), "utf8"));
   const indec = JSON.parse(await readFile(new URL("indec.json", root), "utf8"));
@@ -630,6 +631,35 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   await writeFile(new URL("bancos.json", root), JSON.stringify(out));
   log(`bancos.json: ${Object.keys(bancos).length} bancos, ${out.weeks} semanas desde ${isoOf(MONDAY0 + out.week0 * WEEK)}; errores: ${JSON.stringify(errores)}`);
   return out;
+}
+
+// ---- diagnóstico de los datos por entidad del BCRA (los que usa su sitio: indicadores, estados contables y situación de
+// deudores), para ver si se pueden leer desde acá. Solo en el log
+export const BCRA_ENT = { AAA00: "Sistema financiero", "00007": "Galicia", "00285": "Macro", "00017": "BBVA", "00027": "Supervielle", "00034": "Patagonia", "00044": "Hipotecario", "00198": "Valores" };
+export async function diagnosticoBcra({ fetchImpl = globalThis.fetch, log = console.log } = {}) {
+  const ep = c => [["indicadores", `https://www.bcra.gob.ar/api/endpoints/indicadores-economicos.php?action=indicadores&category=${c}`],
+    ["estados", `https://www.bcra.gob.ar/api/endpoints/entidades-financieras-estados-contables.php?category=${c}&lang=es`],
+    ["deudores", `https://www.bcra.gob.ar/api/endpoints/entidades-financieras-situacion-deudores.php?category=${c}&lang=es`]];
+  let ok = 0, mal = 0;
+  for (const [c, n] of Object.entries(BCRA_ENT)) {
+    for (const [k, url] of ep(c)) {
+      try {
+        const r = await fetchImpl(url, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; datos de bancos)", Accept: "application/json" }, signal: AbortSignal.timeout(30000) });
+        const txt = await r.text(), ct = r.headers.get("content-type") || "", cf = r.headers.get("cf-mitigated") || "";
+        let j = null; try { j = JSON.parse(txt); } catch (e) { /* no es JSON */ }
+        if (!r.ok || !j || j.success === false) { mal++; log(`${n} ${k}: HTTP ${r.status} ${ct}${cf ? " cf-mitigated " + cf : ""}; ${txt.slice(0, 160).replace(/\s+/g, " ")}`); continue; }
+        ok++;
+        const per = j.columnas ? Object.values(j.columnas) : j.fechas || [];
+        let extra = "";
+        if (k === "indicadores") { const f = t => Object.values(j.secciones || {}).flat().find(x => x.in_titulo.startsWith(t)); extra = ["A9", "A16", "R1", "C1"].map(t => { const x = f(t + " "); return x ? `${t} ${x.in_c5}` : t + " —"; }).join(", "); }
+        if (k === "estados") { const pn = (j.filas || []).find(x => /P A T R I M O N I O/.test(x.titulo)); extra = "patrimonio " + (pn ? pn.valores.at(-1) : "—"); }
+        if (k === "deudores") { const s4 = (j.filas || []).find(x => /^TF\.Sit\.4/.test(x.titulo)); extra = "situación 4 " + (s4 ? s4.valores.at(-1) : "—") + "%"; }
+        log(`${n} ${k}: ${j.en_nombre || j.entidad || j.codigo || ""}, ${j.fecha_actualizacion?.texto || ""}, períodos ${per.join(" ")}; ${extra}`);
+      } catch (e) { mal++; log(`${n} ${k}: ${e.message}`); }
+      await new Promise(r => setTimeout(r, 400));
+    }
+  }
+  log(`BCRA: ${ok} respuestas bien, ${mal} mal`);
 }
 
 // ---- diagnóstico del costo del capital: qué trae cada fuente, crudo y leído (solo en el log)
