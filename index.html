@@ -556,6 +556,8 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .bco-tbl tbody tr.bco-sec:hover td{background:none}
 .bco-tbl tbody tr:focus-visible td{outline:2px solid var(--accent);outline-offset:-2px}
 .bco-tk{font-size:11px;color:var(--muted);font-weight:600}
+.bco-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px;border:1px solid var(--line2)}
+.bco-dot.on{border-color:transparent}
 .bco-ke{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr));gap:10px 30px;font-size:12.5px;color:var(--muted);margin:2px 0 10px}
 .bco-ke-pais{font-weight:700;color:var(--ink)}
 .bco-ke-fila{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
@@ -1354,7 +1356,7 @@ function checkPwd(){
           <span class="pebg-period" data-y="3" onclick="setBcoRange(3)">3A</span>
           <span class="pebg-period" data-y="5" onclick="setBcoRange(5)">5A</span>
           <span class="pebg-period" data-y="10" onclick="setBcoRange(10)">10A</span>
-          <span class="pebg-period active" data-y="0" onclick="setBcoRange(0)" title="Argentina desde 2017; EE.UU. desde 2010">Todo</span>
+          <span class="pebg-period active" data-y="0" onclick="setBcoRange(0)" title="Argentina desde 2000; EE.UU. desde 2010">Todo</span>
         </div>
         <div class="pebg-period-btns" id="bcoViewBtns" role="group" aria-label="Vista">
           <span class="pebg-period active" data-v="banda" onclick="setBcoView('banda')" title="Un grupo o un banco con su media móvil y los desvíos">Banda móvil</span>
@@ -1390,6 +1392,27 @@ function checkPwd(){
       <div class="ov-card-title">Cada banco hoy</div>
       <div id="bcoTable"><div class="ov-loading">Cargando...</div></div>
       <div class="arg-note" id="bcoTblNote"></div>
+    </div>
+    <div class="ov-card" id="bcoMoraCard">
+      <div class="arg-chart-top">
+        <div class="ov-card-title" id="bcoMoraTitle">Mora y capital</div>
+        <div class="cs"></div>
+        <div class="pebg-period-btns" id="bcoMoraKBtns" role="group" aria-label="Indicador">
+          <span class="pebg-period active" data-k="mora" onclick="setBcoMoraK('mora')" title="Cartera irregular (situación 3 a 6) / financiaciones">Mora</span>
+          <span class="pebg-period" data-k="moraCons" onclick="setBcoMoraK('moraCons')" title="Cartera irregular de consumo / financiaciones de consumo">Mora consumo</span>
+          <span class="pebg-period" data-k="cobertura" onclick="setBcoMoraK('cobertura')" title="Previsiones / cartera irregular, desde 2014">Previsiones</span>
+          <span class="pebg-period" data-k="capital" onclick="setBcoMoraK('capital')" title="Patrimonio neto / activo">Capital</span>
+        </div>
+        <div class="pebg-period-btns" id="bcoMoraRangeBtns" role="group" aria-label="Período del gráfico">
+          <span class="pebg-period" data-y="3" onclick="setBcoMoraRange(3)">3A</span>
+          <span class="pebg-period" data-y="5" onclick="setBcoMoraRange(5)">5A</span>
+          <span class="pebg-period" data-y="10" onclick="setBcoMoraRange(10)">10A</span>
+          <span class="pebg-period active" data-y="0" onclick="setBcoMoraRange(0)" title="Desde 2000">Todo</span>
+        </div>
+      </div>
+      <div id="bcoMoraTabla"><div class="ov-loading">Cargando...</div></div>
+      <div class="sect-chart-box"><canvas id="bcoMoraCanvas"></canvas><div class="pebg-tooltip" id="bcoMoraCanvasTip"></div></div>
+      <div class="arg-note" id="bcoMoraNote"></div>
     </div>
     <div class="ov-card">
       <div class="arg-chart-top">
@@ -1549,6 +1572,7 @@ function toggleTheme() {
   if (argData) { drawArgCharts(); drawCauCurve(); }
   if (MULT && document.getElementById('tab-sect').classList.contains('active')) drawSectChart();
   if (pebgData) renderPebg(pebgData);
+  if (BCO && document.getElementById('tab-bancos').classList.contains('active')) renderBancos();
   if (ggalCache[ggalRange]) drawGgal();
   if (MINI.spy.cache[MINI.spy.range]) drawMini('spy');
 }
@@ -5219,7 +5243,7 @@ const METODO = [
       { d: 'Composición del S&P 500: la lista de datasets/s-and-p-500-companies, que sale de Wikipedia, con sector y subindustria GICS y el CIK de cada empresa.',
         p: 'S&P no publica la composición gratis. Wikipedia se actualiza el día de cada cambio, y el CIK permite cruzar cada empresa con la SEC sin depender del ticker.' },
       { d: 'Tasas y Fed: curva oficial del Tesoro, Yahoo para los plazos con dato intradiario, la Fed de Nueva York para la EFFR y el rango objetivo, y FRED como respaldo.' },
-      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar; argentinadatos también para el riesgo país.' },
+      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar; argentinadatos también para el riesgo país. Bancos: la Información de entidades financieras del BCRA (un archivo por mes desde 2001, con el balance de cada entidad desde 1996 y sus indicadores), que baja un workflow cada día y la página lee en bcra.json.' },
       { d: 'INDEC: su API (Catálogo API-INDEC, en beta) para IPC por región y apertura, EMAE, industria, precios mayoristas, salarios, canastas y mercado de trabajo. Pide token, así que la consulta un workflow y la página lee indec.json.' },
       { d: 'Fondos: la API de FCI de 1816, con los datos diarios que publica la CAFCI (patrimonio, suscripciones netas, fees, facturación y valor de la cuotaparte de cada clase).' },
       { d: 'Cuándo se actualiza cada cosa.',
@@ -5379,19 +5403,23 @@ const METODO = [
   { id: 'bancos', t: 'Pestaña Bancos: precio / valor libro y ROE',
     items: [
       { d: 'Bancos: en Argentina, Galicia, Macro, BBVA, Supervielle, Patagonia, Hipotecario y Valores; el agregado argentino es los cuatro con ADR (Galicia, Macro, BBVA y Supervielle). En EE.UU., los del S&P 500 de las subindustrias Diversified Banks (grandes) y Regional Banks (regionales).',
-        p: 'Los cuatro con ADR presentan el 20-F en la SEC y tienen historia desde 2016; Patagonia, Hipotecario y Valores solo tienen los últimos años y cambiarían la composición del agregado en 2023.' },
+        p: 'Los cuatro con ADR presentan el 20-F en la SEC; para atrás, el balance mensual del BCRA lleva la historia a 2000 (Supervielle cotiza desde 2016). Patagonia, Hipotecario y Valores quedan afuera del agregado para no cambiar su composición en el medio de la serie.' },
       { d: 'P/VL = capitalización (precio × acciones del balance) / patrimonio de los comunes (sin preferidas ni minoritarios). Tangible: además sin llave de negocio ni intangibles. Por grupo, suma de capitalizaciones / suma de valores libro.',
         p: 'Sumar antes de dividir pesa cada banco por su tamaño, como un índice: un banco chico con un P/VL raro no mueve el grupo. En EE.UU. el mercado mira el tangible, porque la llave de negocio de las compras no respalda pérdidas.' },
       { d: 'EE.UU.: balances trimestrales de la SEC (EDGAR), cada uno desde su presentación. Las preferidas y los intangibles que un banco informa solo en el 10-K (Bank of America) se toman del último 10-K; si el patrimonio solo viene con los minoritarios (Truist), se restan. Los trimestres que la SEC todavía no tiene (Citi en 2026) salen de Yahoo.' },
-      { d: 'Argentina: los 20-F (NIIF) para atrás y, para los últimos cinco trimestres y cuatro ejercicios, Yahoo. Precio en pesos de BYMA.',
-        o: 'Hasta 2024 hay un balance por año: el P/VL de esos años usa el valor libro de diciembre llevado con el IPC y no ve el resultado del año hasta el balance siguiente.' },
+      { d: 'Argentina: los 20-F (NIIF) desde 2017 y, para los últimos cinco trimestres y cuatro ejercicios, Yahoo. Antes, el balance mensual de cada banco que publica el BCRA (Información de entidades financieras, datos abiertos), cada mes desde 60 días después de su cierre: hasta 2016 en Galicia, Macro y BBVA y hasta 2022 en Patagonia e Hipotecario. Precio en pesos de BYMA.',
+        p: 'Del balance del BCRA: patrimonio = cuentas de patrimonio, resultados y otros resultados integrales; acciones = capital social (valor nominal $1); tangible, sin las cuentas de intangibles. Activo = pasivo + patrimonio cierra al peso todos los meses desde 1996. Un 20-F de 2017 sale como comparativo del de 2018, reexpresado a moneda de diciembre de 2018: se lleva con el IPC desde ahí.',
+        o: 'Es el balance del banco. Galicia cotiza como grupo: el banco es una aproximación, con las acciones del grupo (1.092 millones desde 2000 y 1.241 millones desde mayo de 2004, según el 20-F de 2006). Macro, desde diciembre de 2003, cuando se fusiona con Bansud, que era la que cotizaba. El balance local no ajustó por inflación entre 2003 y 2019; el 20-F de 2017 viene en NIIF reexpresado, con más patrimonio, y el P/VL baja de golpe en marzo de 2017. Hasta 2024 hay un balance por año: el P/VL de esos años no ve el resultado del año hasta el balance siguiente.' },
       { d: 'Inflación: los balances argentinos están en moneda de su cierre (los ejercicios de Yahoo, en moneda del último ejercicio, como los comparativos). El valor libro se lleva a pesos de cada semana con el IPC nacional, interpolado por día y, después del último dato, con la inflación promedio de los últimos tres meses.',
         p: 'Con 2% de inflación por mes, el valor libro de junio comparado con el precio de noviembre queda 10% abajo y el P/VL 10% arriba.',
         o: 'Antes de 2020 los bancos no ajustaban por inflación; el valor libro de esos años igual se lleva con el IPC desde su cierre.' },
       { d: 'ROE de 12 meses: resultado de los comunes de los últimos cuatro trimestres / patrimonio promedio de los cierres del año (el del trimestre y los anteriores hasta un año antes). En Argentina, todo en pesos del último cierre: es real. ROE del trimestre: resultado del último trimestre × 4 / promedio de su cierre y el anterior. Donde faltan trimestres, el resultado de 12 meses de Yahoo; en Argentina hasta 2024, el del ejercicio, con el resultado y los dos patrimonios del mismo 20-F.',
         o: 'El resultado de 12 meses de Yahoo es la suma nominal de los cuatro trimestres: en Argentina deja el ROE un poco por debajo del real.' },
+      { d: 'Antes de los 20-F, el ROE de cada ejercicio del balance del BCRA: resultado acumulado al cierre / promedio del patrimonio al cierre anterior y a este (los que cerraban en junio y pasaron a diciembre, anualizado), llevado a real con la inflación de esos meses: (1 + ROE) / (1 + inflación) − 1. En 2002 y desde 2020 los balances ya vienen en moneda de cada mes: el resultado es real y va sobre el promedio del patrimonio de los meses del ejercicio, en moneda del cierre.',
+        p: 'Hasta 2019 los bancos no ajustaban por inflación: un ROE nominal de 30% con 40% de inflación es una pérdida real. Inflación: hasta 2016, la serie empalmada de INDEC (hasta 2006) y los IPC de CABA, Córdoba y San Luis (matuteiglesias/IPC-Argentina); desde diciembre de 2016, el IPC nacional.',
+        o: 'El cierre de cada ejercicio sale del balance: el mes en que el resultado acumulado vuelve a empezar y pasa a resultados no asignados. En 2002 el ROE real va de −69% (BBVA) a −164% (Hipotecario).' },
       { d: 'Cada balance vale desde su presentación a la SEC o, sin esa fecha, desde el cierre más 45 a 75 días; deja de valer a los 200 días en EE.UU. y a los 470 en Argentina (que hasta 2024 tiene uno por año).' },
-      { d: 'Banda móvil (la vista que abre la pestaña): el P/VL semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores; mientras no hay esos años de historia, todas las semanas desde el primer dato (con al menos un año, y el primer año con la banda de su primer año), en un tramo más claro. Fija: un solo juego con los últimos años, para todo el gráfico. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (solo un banco y con P/VL o P/VL tangible: un grupo no tiene precio), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/VL), así que salta cuando entra un balance; si en el período el precio se mueve más de 8 veces, en escala logarítmica. El gráfico muestra toda la historia (Argentina desde marzo de 2017, con el balance de diciembre de 2016; EE.UU. desde 2010) o los últimos 3, 5 o 10 años.',
+      { d: 'Banda móvil (la vista que abre la pestaña): el P/VL semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores; mientras no hay esos años de historia, todas las semanas desde el primer dato (con al menos un año, y el primer año con la banda de su primer año), en un tramo más claro. Fija: un solo juego con los últimos años, para todo el gráfico. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (solo un banco y con P/VL o P/VL tangible: un grupo no tiene precio), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/VL), así que salta cuando entra un balance; si en el período el precio se mueve más de 8 veces, en escala logarítmica. El gráfico muestra toda la historia (Argentina desde 2000; EE.UU. desde 2010) o los últimos 3, 5 o 10 años.',
         p: 'Es la misma lectura que P/E histórico con el múltiplo que se usa para bancos: el resultado de un banco depende del ciclo de crédito y de las previsiones, y el valor libro es más estable que la ganancia.' },
       { d: 'ROE ÷ P/VL (el P/VL ajustado por ROE): el ROE dividido por el P/VL de cada semana, en %. Es la ganancia sobre la capitalización, la inversa del P/E. Con el ROE promedio de las semanas de los últimos 3 años (por defecto; mientras no hay 3 años de ROE, el de los que hay) o con el de 12 meses. En la banda se lee al revés que el P/VL: más alto es más barato, así que más de +1σ es barato y menos de −1σ, caro. En un banco, el precio a cada banda es el que la lleva ahí con el ROE y el valor libro de hoy: precio × (ROE ÷ P/VL de hoy) / (el de la banda).',
         p: 'Un P/VL bajo puede estar barato o puede ser el que corresponde a un ROE bajo; dividir por el ROE separa las dos cosas. Va el ROE sobre el P/VL y no al revés porque P/VL ÷ ROE explota cuando el ROE se acerca a cero (Argentina en 2019 y en 2026) y con ROE negativo pierde el sentido; así, solo baja. El promedio de 3 años saca el ciclo: un año con muchas previsiones o con una ganancia extraordinaria lo mueve menos.',
@@ -5405,7 +5433,11 @@ const METODO = [
         p: 'El costo del capital se mueve con el mercado: un número fijo deja de describir el precio cuando el riesgo país pasa de menos de 500 a más de 800 puntos en dos meses, como en 2026. CAPM más riesgo país es la forma habitual de llevarlo a un mercado emergente, y la beta de los bancos de EE.UU. mide el riesgo del negocio contra un mercado que no tiene el riesgo argentino adentro.',
         x: 'La beta de los bancos argentinos contra el Merval: el Merval ya tiene el riesgo país adentro y se contaría dos veces. Una beta fija: la de la regresión pasó de 1,4 en 2012 a 1,0 en 2026.',
         o: 'Sumar el riesgo país entero supone que la acción tiene el riesgo del bono soberano; Damodaran lo multiplica por la volatilidad de las acciones sobre la de los bonos, lo que lo subiría. La tasa real de EE.UU. hace de tasa real argentina de largo plazo. Si una fuente no responde, queda el dato de la corrida anterior, con su fecha a la vista.' },
-      { d: 'Percentil y mediana del P/VL contra los últimos 10 años (Argentina, desde 2017), con al menos 3 años de datos.' },
+      { d: 'Percentil y mediana del P/VL contra los últimos 10 años (o desde el primer dato), con al menos 3 años de datos.' },
+      { d: 'Mora y capital: indicadores mensuales del BCRA de cada banco argentino y del sistema financiero, desde 2001 (la mora) y 2000 (el capital). Mora: cartera irregular (situación 3 a 6) / financiaciones. Mora de consumo: la de las financiaciones de consumo. Previsiones / cartera irregular, desde 2014. Capital: patrimonio neto / activo; de cada banco, su balance mensual; del sistema, el indicador de apalancamiento del BCRA pasado a patrimonio / activo.',
+        p: 'La mora es lo primero que mueve el ROE: cada punto de mora nueva pide previsiones. Contra el sistema se separa lo del banco de lo del ciclo; el capital dice cuánto colchón hay para absorberla.',
+        x: 'Comparar la mora de consumo de un banco minorista con la de uno de empresas: la cartera es otra.',
+        o: 'El BCRA cambió los códigos y los textos de los indicadores en 2006 y en 2014: cada uno se busca por su texto y, en los meses que se pisan, dan lo mismo. De 2002 a 2005 no publicó los indicadores de varios meses: el gráfico tiene huecos. Hasta 2013 el sistema sale de a un dato por archivo. Es la entidad: Galicia es el banco, no el grupo.' },
     ] },
 
   { id: 'cd', t: 'Flujo de caja y deuda (opcional)',
@@ -6124,7 +6156,8 @@ function drawLines(id, series, fmt, hoverT, vacio) {
     if (x - lastX < 50 || x - w2 < 0) continue; lastX = x;
     ctx.fillStyle = text; ctx.fillText(lbl, x, H - 6);
   }
-  series.forEach(s => { ctx.strokeStyle = s.color; ctx.lineWidth = 1.75; ctx.beginPath(); s.pts.forEach((p, i) => i ? ctx.lineTo(xs(p.t), ys(p.v)) : ctx.moveTo(xs(p.t), ys(p.v))); ctx.stroke(); });
+  // s.w: ancho de la línea; s.gap: segundos sin datos a partir de los que la línea se corta
+  series.forEach(s => { ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 1.75; ctx.beginPath(); s.pts.forEach((p, i) => i && !(s.gap && p.t - s.pts[i - 1].t > s.gap) ? ctx.lineTo(xs(p.t), ys(p.v)) : ctx.moveTo(xs(p.t), ys(p.v))); ctx.stroke(); });
   const tip = document.getElementById(id + 'Tip');
   if (hoverT != null) {
     const x = Math.round(xs(hoverT)) + 0.5;
@@ -6245,7 +6278,7 @@ function loadBancos() {
   if (!bcoLoading) bcoLoading = fetch('bancos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { BCO = j && j.bancos && j.grupos ? j : null; if (!BCO) bcoLoading = null; return BCO; }).catch(() => { bcoLoading = null; return null; });
   return bcoLoading;
 }
-async function loadBancosTab() { const st = document.getElementById('bcoStatus'); if (st) st.textContent = 'Cargando…'; await loadBancos(); renderBancos(); }
+async function loadBancosTab() { const st = document.getElementById('bcoStatus'); if (st) st.textContent = 'Cargando…'; loadBcra().then(renderBcoMora); await loadBancos(); renderBancos(); }
 const bcoObj = k => BCO && (BCO.grupos[k] || BCO.bancos[k]);
 const bcoNom = k => BCO.grupos[k] ? BCO.grupos[k].n : BCO.bancos[k] ? BCO.bancos[k].n : k;
 // viernes de la semana i (la última, el día del dato)
@@ -6342,10 +6375,10 @@ function renderBancos() {
     + ['us', 'usDiv', 'usReg'].map(k => fila(k, 'sect-idx')).join('') + us.map(k => fila(k, 'sect-sub')).join('')
     + '</tbody></table>';
   const err = Object.keys(BCO.errores || {});
-  document.getElementById('bcoTblNote').innerHTML = (bcoView === 'banda' ? 'Tocá una fila para ver su banda móvil. ' : 'Tocá una fila para sumarla al gráfico o sacarla. ') + 'El agregado argentino es Galicia, Macro, BBVA y Supervielle (con historia desde 2017); Patagonia, Hipotecario y Valores tienen datos desde 2023. '
-    + 'Percentil y mediana del P/VL contra los últimos 10 años (en Argentina, desde 2017; Patagonia, Hipotecario y Valores, desde 2023). * ROE del último ejercicio: a ese banco le faltan trimestres para el de 12 meses.'
+  document.getElementById('bcoTblNote').innerHTML = (bcoView === 'banda' ? 'Tocá una fila para ver su banda móvil. ' : 'Tocá una fila para sumarla al gráfico o sacarla. ') + 'El agregado argentino es Galicia, Macro, BBVA y Supervielle, con historia desde 2000: antes de los 20-F, el balance mensual del BCRA (Macro desde 2004; Supervielle cotiza desde 2016). Patagonia e Hipotecario también van con el BCRA para atrás; Valores, desde 2023. '
+    + 'Percentil y mediana del P/VL contra los últimos 10 años (o desde el primer dato). * ROE del último ejercicio: a ese banco le faltan trimestres para el de 12 meses.'
     + (err.length ? ' Sin datos hoy: ' + err.join(', ') + '.' : '');
-  drawBcoChart(); drawBcoScatter();
+  drawBcoChart(); drawBcoScatter(); renderBcoMora();
 }
 function drawBcoChart() {
   if (!document.getElementById('bcoCanvas')) return;
@@ -6370,8 +6403,17 @@ function drawBcoChart() {
     + series.filter(s => !grupos.includes(s.k)).map(s => '<span class="arg-chip on" role="button" tabindex="0" title="Sacar del gráfico" onclick="bcoToggle(\'' + s.k + '\')" onkeydown="if(event.key===\'Enter\')bcoToggle(\'' + s.k + '\')"><span class="arg-chip-dot" style="background:' + s.color + '"></span>' + s.name + ' ×</span>').join('');
   document.getElementById('bcoChartNote').textContent = bcoMetric === 'rend' ? bcoNotaRend()
     : bcoMetric === 'roe'
-    ? 'ROE de 12 meses de cada semana: el último publicado. En Argentina es real (los balances tienen ajuste por inflación) y, hasta 2025, del ejercicio; en EE.UU., nominal.'
-    : 'Cada balance cuenta desde que se publicó. En Argentina el valor libro se lleva a pesos de cada semana con el IPC; hasta 2024 hay un balance por año (los 20-F) y desde 2025, uno por trimestre.';
+    ? 'ROE de 12 meses de cada semana: el último publicado. En Argentina es real y, hasta 2025, del ejercicio: hasta 2016, el del balance del BCRA llevado a real con el IPC (en 2002 y desde 2020 los balances ya vienen ajustados por inflación); en EE.UU., nominal.'
+    : 'Cada balance cuenta desde que se publicó. En Argentina el valor libro se lleva a pesos de cada semana con el IPC. ' + bcoNotaAr(bcoSel.find(k => k === 'ar' || BCO.bancos[k]?.pais === 'ar') || 'ar');
+}
+// de dónde sale el valor libro argentino de un banco o del agregado, y el salto de 2017 (del balance local sin ajuste al 20-F)
+function bcoNotaAr(k) {
+  const h = BCO.bancos[k]?.bcra, mes = d => MES_CORTO[+d.slice(5, 7) - 1].toLowerCase() + ' ' + d.slice(0, 4);
+  const antes = h ? 'Hasta ' + mes(h.hasta) + ', el balance mensual del BCRA' + (h.aprox ? ' del banco (aproxima al grupo)' : '') + ', cada mes desde 60 días después de su cierre; después, '
+    : k === 'ar' ? 'Hasta 2016, el balance mensual del BCRA de cada banco (en Galicia, el del banco); después, ' : '';
+  const salto = k === 'ar' || (h && h.hasta < '2017-06');
+  return 'En Argentina: ' + antes + 'un balance por año hasta 2024 (los 20-F) y uno por trimestre desde 2025.'
+    + (salto ? ' En marzo de 2017 el valor libro pasa al 20-F en NIIF reexpresado, más alto que el balance local sin ajuste: el P/VL baja de golpe.' : '');
 }
 const bcoNotaRend = () => 'ROE ÷ P/VL es el P/VL ajustado por la rentabilidad: lo que gana el banco por cada peso que vale en bolsa (la inversa del P/E). Un P/VL bajo con un ROE igual de bajo no sale barato acá. '
   + (bcoRoeRef === '3a' ? 'Con el ROE promedio de las semanas de los últimos 3 años, para sacar el ciclo (mientras no hay 3 años de ROE, el de los que hay). ' : 'Con el ROE de 12 meses: muestra el último año, con sus pérdidas o ganancias extraordinarias. ')
@@ -6484,7 +6526,7 @@ function drawBcoBand(hover) {
     + (precio ? 'En precio, cada banda es su múltiplo por el valor libro por acción de esa semana' + (b.moneda === 'ARS' ? ', que en Argentina se lleva a pesos de cada semana con el IPC' : '') + (logY ? '; escala logarítmica. ' : '. ') : '')
     + (inv ? bcoNotaRend() + ' ' : '')
     + (!b && (m === 'pb' || m === 'ptb') ? 'Para verla en precio, elegí un banco: un grupo no tiene precio. ' : '')
-    + (BCO.bancos[k]?.pais === 'ar' || k === 'ar' ? 'En Argentina, hasta 2024 hay un balance por año (los 20-F); desde 2025, uno por trimestre.' : 'Cada balance cuenta desde que se presentó a la SEC.');
+    + (BCO.bancos[k]?.pais === 'ar' || k === 'ar' ? bcoNotaAr(k) : 'Cada balance cuenta desde que se presentó a la SEC.');
 }
 // P/VL contra ROE: cada banco y, por país, la línea del P/VL que corresponde a cada ROE con el costo del capital y el
 // crecimiento elegidos. Arriba de la línea, el precio pide más ROE que el que tiene; abajo, menos
@@ -6553,6 +6595,73 @@ function drawBcoScatter(hover) {
   document.getElementById('bcoScNote').innerHTML = 'La línea de cada país es el P/VL que corresponde a cada ROE: (ROE − crecimiento) / (costo del capital − crecimiento). Un banco abajo de su línea cotiza por debajo de lo que justifica ese ROE si fuera el de siempre; arriba, por encima. '
     + 'La línea punteada fina es 1x. En Argentina el ROE es real, así que van reales el costo del capital y el crecimiento. Pasá el mouse por un punto para ver el detalle.';
 }
+
+// ── MORA Y CAPITAL: indicadores del BCRA de cada banco argentino y del sistema, mes a mes desde 2000 (bcra.json, scripts/bcra.mjs).
+// Cada banco es la entidad, no el grupo (Galicia es el banco). Patrimonio / activo: de cada banco, su balance mensual; del
+// sistema, el indicador del BCRA (que da lo mismo a unas décimas)
+let BCRA = null, bcraLoading = null, bcoMoraK = 'mora', bcoMoraRange = 0, bcoMoraSel = ['AA000', '00007', '00285', '00017'];
+const BCO_MORA = { mora: ['Mora', 'cartera irregular / financiaciones'], moraCons: ['Mora de consumo', 'cartera irregular de consumo / financiaciones de consumo'],
+  cobertura: ['Previsiones', 'previsiones / cartera irregular'], capital: ['Capital', 'patrimonio neto / activo'] };
+const BCO_MORA_ENT = [['AA000', 'Sistema financiero', '', '--ink2'], ['00007', 'Galicia', 'GGAL', '--accent'], ['00285', 'Macro', 'BMA', '--b1p'], ['00017', 'BBVA', 'BBAR', '--b2m'],
+  ['00027', 'Supervielle', 'SUPV', '--warn'], ['00034', 'Patagonia', 'BPAT', '--b1m'], ['00044', 'Hipotecario', 'BHIP', '--b2p'], ['00198', 'Valores', 'VALO', '--muted']];
+try { const o = JSON.parse(localStorage.getItem('bcoMora') || 'null');
+  if (o) { if (BCO_MORA[o.k]) bcoMoraK = o.k; if ([0, 3, 5, 10].includes(o.r)) bcoMoraRange = o.r; if (Array.isArray(o.s)) bcoMoraSel = o.s.filter(c => BCO_MORA_ENT.some(e => e[0] === c)); } } catch (e) {}
+const bcoMoraGuardar = () => { try { localStorage.setItem('bcoMora', JSON.stringify({ k: bcoMoraK, r: bcoMoraRange, s: bcoMoraSel })); } catch (e) {} };
+function loadBcra() {
+  if (!bcraLoading) bcraLoading = fetch('bcra.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { BCRA = j && j.ind && j.entidades ? j : null; if (!BCRA) bcraLoading = null; return BCRA; }).catch(() => { bcraLoading = null; return null; });
+  return bcraLoading;
+}
+// fin del mes i desde "YYYYMM"
+const bcraT = (m0, i) => Date.UTC(+m0.slice(0, 4), +m0.slice(4, 6) - 1 + i + 1, 0) / 1000;
+const BCRA_T0 = Date.UTC(2000, 0, 1) / 1000;
+function bcoMoraSerie(c, k) {
+  const out = []; if (!BCRA) return out;
+  if (k === 'capital' && c !== 'AA000') {
+    const e = BCRA.entidades[c]; if (!e) return out;
+    e.pn.forEach((pn, i) => { const a = e.activo[i]; if (pn > 0 && a > 0) out.push({ t: bcraT(BCRA.m0, i), v: pn / a * 100 }); });
+  } else (BCRA.ind[c]?.[k] || []).forEach((v, i) => { if (v != null) out.push({ t: bcraT(BCRA.i0, i), v }); });
+  return out.filter(p => p.t >= BCRA_T0);
+}
+function setBcoMoraK(k) { bcoMoraK = k; bcoMoraGuardar(); drawBcoMora(); }
+function setBcoMoraRange(y) { bcoMoraRange = y; bcoMoraGuardar(); drawBcoMora(); }
+function bcoMoraFila(c) { bcoMoraSel = bcoMoraSel.includes(c) ? bcoMoraSel.filter(x => x !== c) : [...bcoMoraSel, c]; bcoMoraGuardar(); renderBcoMora(); }
+// cambio de un cociente: en puntos y, debajo de un punto, en bps
+const bcoDpp = d => d == null ? '<span class="na">—</span>' : (d > 0.005 ? '+' : d < -0.005 ? '−' : '') + (Math.abs(d) < 1 ? Math.round(Math.abs(d) * 100) + ' bps' : numAR(Math.abs(d), 1, 1) + ' pp');
+function renderBcoMora() {
+  const tb = document.getElementById('bcoMoraTabla'); if (!tb) return;
+  if (!BCRA) { tb.innerHTML = '<div class="ov-loading">' + (bcraLoading ? 'Cargando...' : 'Todavía no está bcra.json: lo arma cada día el proceso del BCRA.') + '</div>'; drawBcoMora(); return; }
+  const na = '<span class="na">—</span>', pc = v => v == null ? na : numAR(v, 1, 1) + '%', ult = a => a.length ? a[a.length - 1] : null;
+  const mes = t => { const d = new Date(t * 1000); return MES_CORTO[d.getUTCMonth()].toLowerCase() + '-' + String(d.getUTCFullYear()).slice(2); };
+  const filas = BCO_MORA_ENT.map(([c, n, tk, col]) => {
+    const m = bcoMoraSerie(c, 'mora'), u = ult(m), on = bcoMoraSel.includes(c);
+    const a12 = u ? m.find(p => Math.abs(p.t - (u.t - 365.25 * 86400)) < 16 * 86400) : null, d = u && a12 ? u.v - a12.v : null;
+    const v = k => { const x = ult(bcoMoraSerie(c, k)); return x && (!u || x.t > u.t - 100 * 86400) ? x.v : null; };   // el último, si es del mismo momento
+    return '<tr class="' + (c === 'AA000' ? 'sect-idx' : 'sect-sub') + (on ? ' sel' : '') + '" tabindex="0" onclick="bcoMoraFila(\'' + c + '\')" onkeydown="if(event.key===\'Enter\')bcoMoraFila(\'' + c + '\')" title="' + (on ? 'Sacar del gráfico' : 'Sumar al gráfico') + '">'
+      + '<td><span class="bco-dot' + (on ? ' on' : '') + '" style="background:' + (on ? cssVar(col) : 'transparent') + '"></span>' + n + (tk ? ' <span class="bco-tk">' + tk + '</span>' : '') + '</td>'
+      + '<td class="sect-now">' + pc(u && u.v) + '</td><td class="' + (d == null ? '' : d > 0.005 ? 'dn' : d < -0.005 ? 'up' : '') + '">' + bcoDpp(d) + '</td>'
+      + '<td>' + pc(v('moraCons')) + '</td><td>' + pc(v('cobertura')) + '</td><td>' + pc(v('capital')) + '</td><td>' + (u ? mes(u.t) : na) + '</td></tr>';
+  });
+  tb.innerHTML = '<table class="ov-tbl sect-tbl bco-tbl"><thead><tr><th>Banco</th><th title="Cartera irregular (situación 3 a 6) / financiaciones">Mora</th><th title="Contra el mismo mes del año anterior">Mora, cambio en 12 meses</th>'
+    + '<th title="Cartera irregular de consumo / financiaciones de consumo">Mora de consumo</th><th title="Previsiones / cartera irregular">Previsiones / cartera irregular</th>'
+    + '<th title="Patrimonio neto / activo">Patrimonio / activo</th><th>Dato</th></tr></thead><tbody>' + filas.join('') + '</tbody></table>';
+  document.getElementById('bcoMoraNote').textContent = 'Datos del BCRA (Información de entidades financieras), mes a mes, de cada banco como entidad: Galicia es el banco, no el grupo. '
+    + 'Tocá una fila para sumarla al gráfico o sacarla. Mora: cartera en situación 3 a 6 sobre el total de financiaciones; previsiones, desde 2014 (antes el BCRA no las publica en este archivo). '
+    + 'Patrimonio / activo: de cada banco, su balance mensual; del sistema, el indicador del BCRA. Cada mes se publica unos 60 días después de su cierre. Huecos: meses que el BCRA no publicó (2002-2005).';
+  drawBcoMora();
+}
+function drawBcoMora() {
+  const id = 'bcoMoraCanvas'; if (!document.getElementById(id)) return;
+  document.querySelectorAll('#bcoMoraKBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.k === bcoMoraK));
+  document.querySelectorAll('#bcoMoraRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.y === bcoMoraRange));
+  const M = BCO_MORA[bcoMoraK];
+  document.getElementById('bcoMoraTitle').innerHTML = 'Mora y capital <span>' + M[0] + ': ' + M[1] + ', mensual</span>';
+  if (!BCRA) { drawLines(id, [], null, null, bcraLoading ? 'Cargando…' : 'Sin datos del BCRA'); return; }
+  const since = bcoMoraRange ? Date.now() / 1000 - bcoMoraRange * YR_S : 0;
+  const series = BCO_MORA_ENT.filter(([c]) => bcoMoraSel.includes(c)).map(([c, n, tk, col]) => ({ k: c, name: n, color: cssVar(col), w: c === 'AA000' ? 2.6 : 1.6, gap: 100 * 86400,
+    pts: bcoMoraSerie(c, bcoMoraK).filter(p => p.t >= since) })).filter(s => s.pts.length > 1);
+  drawLines(id, series, (v, tip) => numAR(v, tip ? 2 : 1, tip ? 2 : 1) + '%', null, 'Tocá el sistema o un banco en la tabla');
+}
+window.addEventListener('resize', () => { if (document.getElementById('tab-bancos')?.classList.contains('active') && BCO) { drawBcoChart(); drawBcoScatter(); drawBcoMora(); } });
 
 // ── FONDOS: industria de FCI (datos diarios de la CAFCI vía la API de FCI de 1816, fondos.json) ──
 // Lo que no viene en las cuatro monedas (gerentes, fondos, flujos por ventana) se pasa con el cociente de la industria

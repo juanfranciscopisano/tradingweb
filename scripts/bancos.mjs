@@ -198,12 +198,16 @@ export function arDesdeEdgar(facts) {
     const n = niAll.find(e => e.end === end && dias(e.start, e.end) > 350), e = n && eps.find(x => x.end === end && x.accn === n.accn && dias(x.start, x.end) > 350);
     return n && e ? Math.round(n.val / e.val) : null;
   };
+  // cada valor está en moneda del cierre del 20-F en que se presentó primero: los de 2017 salen como comparativos del de
+  // 2018, reexpresados a diciembre de 2018 (NIC 29), y se llevan con el IPC desde ahí, no desde su fecha
+  const finDe = new Map();
+  for (const e of f[eqTag]?.units?.ARS || []) if (!e.start && e.end && e.accn && !(finDe.get(e.accn) >= e.end)) finDe.set(e.accn, e.end);
   const bal = [];
   for (const [end, e] of [...eq].sort((a, b) => a[0].localeCompare(b[0]))) {
     if (e.val <= 0) continue;
     const it = intg.get(end)?.val ?? ((gw.get(end)?.val || 0) + (io.get(end)?.val || 0));
     const anual = end.slice(5) === "12-31";
-    bal.push({ end, c: end, bv: e.val, tbv: e.val - it, sh: shOf(end), pub: Math.min(pubDe(end, e.filed, anual ? 75 : 60), tOf(end) + (anual ? 75 : 60) * DAY), src: "SEC 20-F" });
+    bal.push({ end, c: finDe.get(e.accn) || end, bv: e.val, tbv: e.val - it, sh: shOf(end), pub: Math.min(pubDe(end, e.filed, anual ? 75 : 60), tOf(end) + (anual ? 75 : 60) * DAY), src: "SEC 20-F" });
   }
   // ROE de cada ejercicio: resultado del año y patrimonio de cierre y de apertura del mismo balance (accn)
   const roe = [];
