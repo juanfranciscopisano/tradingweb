@@ -1,10 +1,15 @@
 name: BCRA (datos por entidad)
 
 on:
+  schedule:
+    - cron: "37 12 * * *"   # todos los días 9:37 de Buenos Aires: el BCRA sube el mes nuevo sin aviso
+  push:
+    branches: [main]
+    paths: ["scripts/bcra.mjs", ".github/workflows/bcra.yml"]
   workflow_dispatch:
     inputs:
       modo:
-        description: "diario: bcra.json con los meses nuevos; historia: lo rearma desde 2001; diagnostico: qué traen los archivos, solo en el log"
+        description: "diario: bcra.json si hay un mes nuevo; historia: también los indicadores de todos los archivos desde 2011"
         required: false
         default: "diario"
 
