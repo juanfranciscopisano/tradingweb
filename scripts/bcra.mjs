@@ -5,16 +5,16 @@
 //   de 1996, en miles de pesos de cada mes (desde 2020, con ajuste por inflación). De ahí: patrimonio neto (cuentas 4, 5 y 6:
 //   patrimonio, resultados y otros resultados integrales), acciones (capital social en circulación y pendiente de emisión,
 //   valor nominal $1), activo, intangibles y el resultado acumulado de cada ejercicio.
-// - Indicadores (Entfin/Tec_Cont/indicad) de cada archivo mensual desde 2001: mora, mora de consumo, previsiones y capital.
-//   Cada archivo trae cinco fechas por entidad (dos cierres y los últimos tres meses) y el valor del sistema de la última;
-//   desde diciembre de 2013 el sistema (AA000) tiene su propio archivo con las cinco. Los nombres y códigos cambiaron dos
-//   veces (2006 y 2014): cada indicador se busca por su texto en las tres épocas.
+// - Indicadores (Entfin/Tec_Cont/indicad): mora, mora de consumo, previsiones y capital. Cada archivo trae cinco fechas por
+//   entidad y por el sistema (AA000): los dos diciembres anteriores y los últimos tres meses. Hasta 2010 hay archivo solo en
+//   diciembre (de los otros meses, solo PDF) y en 2002-2004 sin indicadores; desde 2011, todos los meses. Los nombres y
+//   códigos cambiaron dos veces (2006 y 2014): cada indicador se busca por su texto en las tres épocas.
 // - Inflación para antes de 2017 (los balances no tenían ajuste hasta 2020): serie empalmada de INDEC (hasta 2006) y los IPC
 //   de CABA, Córdoba y San Luis, encadenada con el IPC nacional del INDEC desde diciembre de 2016 (indec.json).
 //
 //   MODO=diario (por defecto): si el BCRA publicó un mes nuevo, rearma con ese archivo. MODO=historia: también los
-//   indicadores de los archivos desde 2001 (todos hasta 2013, para el sistema mes a mes; después, uno de cada tres).
-//   MODO=diagnostico: qué traen los archivos, solo en el log.
+//   indicadores de los archivos desde 2001, los que hacen falta para cubrir cada mes. MODO=diagnostico: qué traen los
+//   archivos, solo en el log.
 import { execFileSync } from "node:child_process";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { readFileSync } from "node:fs";
@@ -312,13 +312,13 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
     const p0 = s.pn.findIndex(v => v != null);
     log(`${cod} ${info.corto}: desde ${mesDe(p0, BASE_MES)}; patrimonio ${s.pn.at(-1)} miles; acciones ${s.acciones.at(-1)} miles; intangibles ${s.intang.at(-1)}; descuadre máximo ${(s.descuadre * 100).toFixed(3)}% del activo; ${ci.length} cierres (${ci.slice(0, 4).map(i => mesDe(i, BASE_MES)).join(" ")} … ${ci.slice(-2).map(i => mesDe(i, BASE_MES)).join(" ")}); ROE ${ej.filter(e => /^(2000|2001|2002|2005|2010|2015|2019|2024|2025)/.test(e.fin)).map(e => e.fin + " " + e.roe + "%").join(", ")}`);
   }
-  // indicadores: el último archivo (diario) o, en historia, del más nuevo al más viejo: hasta noviembre de 2013 todos (el
-  // sistema viene de a un mes por archivo) y después los que hagan falta para cubrir cada mes (cada uno trae tres)
+  // indicadores: el último archivo (diario) o, en historia, del más nuevo al más viejo, los que hagan falta para cubrir cada
+  // mes (cada uno trae los últimos tres)
   const deCarpeta = d => capital(leerIndicad(leer(buscar(d, "indicad/completo\\.txt")) + "\n" + leer(buscar(d, "indicad/aa000\\.txt")),
     fechasEntidades(leer(buscar(d, "entidad/completo\\.txt"))), conSistema));
   const lista = [], cubiertos = new Set(), resumen = x => Object.entries(x || {}).map(([k, o]) => k + " " + Object.keys(o).length).join(", ") || "—";
   for (const m of modo === "historia" ? [...meses].reverse() : [ult]) {
-    if (m > "201311" && cubiertos.has(m)) continue;
+    if (cubiertos.has(m)) continue;
     try {
       let d = dUlt;
       if (m !== ult) {

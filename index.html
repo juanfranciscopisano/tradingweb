@@ -5434,10 +5434,10 @@ const METODO = [
         x: 'La beta de los bancos argentinos contra el Merval: el Merval ya tiene el riesgo país adentro y se contaría dos veces. Una beta fija: la de la regresión pasó de 1,4 en 2012 a 1,0 en 2026.',
         o: 'Sumar el riesgo país entero supone que la acción tiene el riesgo del bono soberano; Damodaran lo multiplica por la volatilidad de las acciones sobre la de los bonos, lo que lo subiría. La tasa real de EE.UU. hace de tasa real argentina de largo plazo. Si una fuente no responde, queda el dato de la corrida anterior, con su fecha a la vista.' },
       { d: 'Percentil y mediana del P/VL contra los últimos 10 años (o desde el primer dato), con al menos 3 años de datos.' },
-      { d: 'Mora y capital: indicadores mensuales del BCRA de cada banco argentino y del sistema financiero, desde 2001 (la mora) y 2000 (el capital). Mora: cartera irregular (situación 3 a 6) / financiaciones. Mora de consumo: la de las financiaciones de consumo. Previsiones / cartera irregular, desde 2014. Capital: patrimonio neto / activo; de cada banco, su balance mensual; del sistema, el indicador de apalancamiento del BCRA pasado a patrimonio / activo.',
+      { d: 'Mora y capital: indicadores del BCRA de cada banco argentino y del sistema financiero, mensuales desde 2011 y anuales desde 2001. Mora: cartera irregular (situación 3 a 6) / financiaciones. Mora de consumo: la de las financiaciones de consumo. Previsiones / cartera irregular, desde 2014. Capital: patrimonio neto / activo; de cada banco, su balance mensual; del sistema, el indicador de apalancamiento del BCRA pasado a patrimonio / activo.',
         p: 'La mora es lo primero que mueve el ROE: cada punto de mora nueva pide previsiones. Contra el sistema se separa lo del banco de lo del ciclo; el capital dice cuánto colchón hay para absorberla.',
         x: 'Comparar la mora de consumo de un banco minorista con la de uno de empresas: la cartera es otra.',
-        o: 'El BCRA cambió los códigos y los textos de los indicadores en 2006 y en 2014: cada uno se busca por su texto y, en los meses que se pisan, dan lo mismo. De 2002 a 2005 no publicó los indicadores de varios meses: el gráfico tiene huecos. Hasta 2013 el sistema sale de a un dato por archivo. Es la entidad: Galicia es el banco, no el grupo.' },
+        o: 'El BCRA cambió los códigos y los textos de los indicadores en 2006 y en 2014: cada uno se busca por su texto y, en los meses que se pisan, dan lo mismo. Hasta 2010 publicó el archivo con los datos solo en diciembre (de los demás meses, solo el PDF): hasta ahí hay octubre, noviembre y diciembre de cada año y el gráfico une un punto por año; de 2002 no hay y de 2003 y 2004, solo diciembre. Desde 2011, todos los meses. Es la entidad: Galicia es el banco, no el grupo.' },
     ] },
 
   { id: 'cd', t: 'Flujo de caja y deuda (opcional)',
@@ -6446,7 +6446,9 @@ function drawBcoBand(hover) {
   const t0 = Math.max(bcoT(first), bcoRange ? bcoT(last) - bcoRange * YR_S : -Infinity), chartY = (bcoT(last) - t0) / YR_S;
   const idx = []; for (let i = 0; i <= last; i++) if (bcoT(i) >= t0 && a[i] != null) idx.push(i);
   const lineV = i => precio ? (b.precio[i] > 0 ? b.precio[i] : null) : a[i];
-  const bandV = (i, j) => { const B = bands[i]; if (!B) return null; const v = B.mult[j]; if (!precio) return roe || v > 0 ? v : null; return v > 0 && a[i] > 0 && b.precio[i] > 0 ? v * b.precio[i] / a[i] : null; };
+  // en precio, una banda de menos de un décimo del múltiplo de esa semana no se dibuja: cerca de cero (2002, con la media
+  // de 3 años que todavía tiene la crisis adentro) en escala logarítmica se iría al piso
+  const bandV = (i, j) => { const B = bands[i]; if (!B) return null; const v = B.mult[j]; if (!precio) return roe || v > 0 ? v : null; return v > 0.1 * a[i] && a[i] > 0 && b.precio[i] > 0 ? v * b.precio[i] / a[i] : null; };
   const vals = []; idx.forEach(i => { const v = lineV(i); if (v != null) vals.push(v); for (let j = 0; j < 5; j++) { const x = bandV(i, j); if (x != null) vals.push(x); } });
   let lo = Math.min(...vals), hi = Math.max(...vals);
   // en precio, con pesos de 2017 a hoy el rango pasa de 10 veces: escala logarítmica, si no los primeros años quedan planos
@@ -6646,7 +6648,8 @@ function renderBcoMora() {
     + '<th title="Patrimonio neto / activo">Patrimonio / activo</th><th>Dato</th></tr></thead><tbody>' + filas.join('') + '</tbody></table>';
   document.getElementById('bcoMoraNote').textContent = 'Datos del BCRA (Información de entidades financieras), mes a mes, de cada banco como entidad: Galicia es el banco, no el grupo. '
     + 'Tocá una fila para sumarla al gráfico o sacarla. Mora: cartera en situación 3 a 6 sobre el total de financiaciones; previsiones, desde 2014 (antes el BCRA no las publica en este archivo). '
-    + 'Patrimonio / activo: de cada banco, su balance mensual; del sistema, el indicador del BCRA. Cada mes se publica unos 60 días después de su cierre. Huecos: meses que el BCRA no publicó (2002-2005).';
+    + 'Patrimonio / activo: de cada banco, su balance mensual; del sistema, el indicador del BCRA. Cada mes se publica unos 60 días después de su cierre. '
+    + 'Hasta 2010 el BCRA publicó estos datos solo en diciembre (octubre a diciembre y los dos diciembres anteriores): ahí el gráfico une un punto por año; de 2002 no hay. Desde 2011, todos los meses.';
   drawBcoMora();
 }
 function drawBcoMora() {
@@ -6657,7 +6660,8 @@ function drawBcoMora() {
   document.getElementById('bcoMoraTitle').innerHTML = 'Mora y capital <span>' + M[0] + ': ' + M[1] + ', mensual</span>';
   if (!BCRA) { drawLines(id, [], null, null, bcraLoading ? 'Cargando…' : 'Sin datos del BCRA'); return; }
   const since = bcoMoraRange ? Date.now() / 1000 - bcoMoraRange * YR_S : 0;
-  const series = BCO_MORA_ENT.filter(([c]) => bcoMoraSel.includes(c)).map(([c, n, tk, col]) => ({ k: c, name: n, color: cssVar(col), w: c === 'AA000' ? 2.6 : 1.6, gap: 100 * 86400,
+  // hasta 2010 hay un dato por año (octubre a diciembre): se unen; se corta donde falta más de un año (2002)
+  const series = BCO_MORA_ENT.filter(([c]) => bcoMoraSel.includes(c)).map(([c, n, tk, col]) => ({ k: c, name: n, color: cssVar(col), w: c === 'AA000' ? 2.6 : 1.6, gap: 400 * 86400,
     pts: bcoMoraSerie(c, bcoMoraK).filter(p => p.t >= since) })).filter(s => s.pts.length > 1);
   drawLines(id, series, (v, tip) => numAR(v, tip ? 2 : 1, tip ? 2 : 1) + '%', null, 'Tocá el sistema o un banco en la tabla');
 }
