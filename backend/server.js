@@ -7,7 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
-import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, fillPub, PUB_MAX_DAYS, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
+import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, bookQuarterly, fillPub, PUB_MAX_DAYS, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
 const app = express();
@@ -242,7 +242,9 @@ async function edgarEPS(sym, splits = []) {
   try { q = quality(raw, n.rows); } catch (e) { console.log(`pebg ${sym}: calidad ${e.message}`); }
   let ventas = [];
   try { ventas = quarterSeries(raw.rev).map(x => ({ date: Math.floor(x.t / 1000), v: Math.round(x.eps / 1e5) / 10 })); } catch (e) { /* sin ventas */ }
-  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], normNonOp: n.nonop || [], cd, q, ventas };
+  let bv = [];
+  try { bv = bookQuarterly(raw, f, gaap); } catch (e) { console.log(`pebg ${sym}: valor libro ${e.message}`); }
+  return { gaap, norm: n.eps, normMethod: n.method, normAdj: n.adj || [], normFlags: n.flags || [], normNonOp: n.nonop || [], cd, q, ventas, bv };
 }
 
 // ---------------------------------------------------------------- EPS cargado a mano
@@ -636,6 +638,8 @@ app.get("/api/pebg", async (req, res) => {
         calidad: manual ? null : (edgarAll.q || null),
         // ventas trimestrales de la SEC (millones de US$), para comparar con las esperadas
         ventas: manual ? [] : (edgarAll.ventas || []),
+        // valor libro por acción de cada cierre (P/BV), desde la presentación del mismo trimestre que el EPS
+        bv: manual ? [] : fillPub((edgarAll.bv || []).map(x => ({ date: x.date, bvps: x.bvps })), capS, eps).map(x => ({ date: x.date, bvps: x.bvps, pub: x.pub, ...(x.pubEst ? { pubEst: 1 } : {}) })),
         histNote,
         epsCount: eps.length,
         epsSource: source,

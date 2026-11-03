@@ -1,4 +1,4 @@
-// Arma bancos.json: precio / valor libro (P/VL), P/VL tangible y ROE, semana a semana, de los bancos argentinos y de los
+// Arma bancos.json: precio / valor libro (P/BV), P/BV tangible y ROE, semana a semana, de los bancos argentinos y de los
 // de EE.UU. del S&P 500, cada uno y por grupo. Corre en GitHub Actions los días hábiles (.github/workflows/bancos.yml).
 //
 // EE.UU.: los bancos del S&P 500 (subindustrias Diversified Banks y Regional Banks, de spx.json). Balances trimestrales de
@@ -628,7 +628,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       series[c.s] = x;
       bancos[c.s] = { n: c.n, pais: "us", grupo: US_SUBS[c.sub], moneda: "USD", pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)), precio: x.px.map(r2),
         ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), false, 200), trimestres: bal.length };
-      log(`${c.s}: ${sec.bal.length} balances de la SEC (${sec.bal[0]?.end} a ${ultSec})${yah.bal.length ? ` y ${yah.bal.length} de Yahoo (${yah.bal.map(b => b.end).join(" ")})` : ""}, ${roe.length} ROE, P/VL ${bancos[c.s].ult.pb}, P/VL tangible ${bancos[c.s].ult.ptb}, ROE ${bancos[c.s].ult.roe}%`);
+      log(`${c.s}: ${sec.bal.length} balances de la SEC (${sec.bal[0]?.end} a ${ultSec})${yah.bal.length ? ` y ${yah.bal.length} de Yahoo (${yah.bal.map(b => b.end).join(" ")})` : ""}, ${roe.length} ROE, P/BV ${bancos[c.s].ult.pb}, P/BV tangible ${bancos[c.s].ult.ptb}, ROE ${bancos[c.s].ult.roe}%`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   // Argentina
@@ -655,7 +655,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
         ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), true, 470),
         balances: usados.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]),
         ...(hist.bal.length ? { bcra: { desde: hist.bal[0].end, hasta: hist.bal.at(-1).end, meses: hist.bal.length, aprox: !!BCRA_MAP[c.s]?.aprox, ejercicios: hist.roe.length } } : {}) };
-      log(`${c.s}: ${hist.bal.length ? `BCRA ${hist.bal[0].end} a ${hist.bal.at(-1).end} (${hist.bal.length} meses, ${hist.roe.length} ejercicios); ` : ""}balances ${usados.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.filter(r => r.src !== "BCRA").map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
+      log(`${c.s}: ${hist.bal.length ? `BCRA ${hist.bal[0].end} a ${hist.bal.at(-1).end} (${hist.bal.length} meses, ${hist.roe.length} ejercicios); ` : ""}balances ${usados.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.filter(r => r.src !== "BCRA").map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/BV ${bancos[c.s].ult.pb}`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   const nAr = AR_AGREGADO.filter(s => series[s]).length, nUs = US.filter(c => series[c.s]).length;

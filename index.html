@@ -245,7 +245,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-period.active,.cmp-period.active{background:var(--surf);color:var(--ink);box-shadow:0 1px 0 var(--line2)}
 
 /* P/E histórico */
-.pebg-stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:stretch;flex-wrap:wrap;row-gap:10px}
+.pebg-stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:stretch;flex-wrap:wrap;row-gap:10px;container-type:inline-size}
 /* una sola fila hasta ~1366 px de ancho: los bloques crecen parejo para llenar la barra y el espacio entre ellos se achica con la pantalla */
 .pebg-stat-block{display:flex;flex-direction:column;gap:2px;padding:0 clamp(10px,1vw,18px);border-left:1px solid var(--line);flex:1 1 auto;white-space:nowrap}
 .pebg-stat-block:first-child{padding-left:0;border-left:none}
@@ -254,10 +254,14 @@ td:nth-child(-n+4){text-align:left}
 .pebg-stat-sub{font-size:11.5px;color:var(--faint)}
 .amp-cae{color:var(--accent)!important}
 .pebg-stat-cmp{font-size:11.5px;font-weight:500;color:var(--faint);margin-left:7px;font-stretch:100%}
-/* laptops (1280–1600 px): letra y espacio algo menores para que las doce cifras entren en una fila */
-@media (max-width:1599px) and (min-width:769px){.pebg-stat-block{padding:0 8px}.pebg-stat-lbl{font-size:11px}.pebg-stat-val{font-size:15.5px}.pebg-stat-sub{font-size:10.5px}}
-@media (max-width:1439px) and (min-width:769px){.pebg-stat-block{padding:0 6px}.pebg-stat-val{font-size:15px}.pebg-stat-sub{font-size:10px}.pebg-stat-cmp{font-size:10.5px;margin-left:5px}}
-@media (max-width:1365px) and (min-width:769px){.pebg-stat-block{padding:0 4px}.pebg-stat-lbl{font-size:10.5px}.pebg-stat-val{font-size:14px}.pebg-stat-sub{font-size:9.5px}.pebg-stat-cmp{font-size:10px;margin-left:4px}}
+/* letra y espacio según el ancho de la fila, no de la ventana: la página tiene un máximo (1480 px de contenido), así que
+   en una pantalla ancha la fila no crece. Con las catorce cifras entra en un renglón desde 1280 px de ventana */
+@media (min-width:769px){
+  @container (max-width:1560px){.pebg-stat-block{padding:0 7px}.pebg-stat-lbl{font-size:11px}.pebg-stat-val{font-size:15.5px}.pebg-stat-sub{font-size:10.5px}.pebg-stat-cmp{font-size:10.5px;margin-left:5px}}
+  @container (max-width:1400px){.pebg-stat-block{padding:0 5px}.pebg-stat-val{font-size:15px}.pebg-stat-sub{font-size:10px}}
+  @container (max-width:1300px){.pebg-stat-block{padding:0 4px}.pebg-stat-lbl{font-size:10.5px}.pebg-stat-val{font-size:14px}.pebg-stat-sub{font-size:9.5px}.pebg-stat-cmp{font-size:10px;margin-left:4px}}
+  @container (max-width:1200px){.pebg-stat-block{padding:0 3px}.pebg-stat-lbl{font-size:10px}.pebg-stat-val{font-size:13px}.pebg-stat-sub{font-size:9px}.pebg-stat-cmp{font-size:9.5px;margin-left:3px}}
+}
 #pebgOuter{flex:1;display:flex;min-height:0;overflow:hidden;margin:14px var(--side);border:1px solid var(--line);border-radius:10px;background:var(--chart-bg)}
 #pebgContainer{flex:1;position:relative;overflow:hidden;background:var(--chart-bg);min-width:0;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
 #pebgMain{flex:1;position:relative;min-height:0;overflow:hidden}
@@ -268,6 +272,7 @@ td:nth-child(-n+4){text-align:left}
 .pebg-cmp-box{flex:1;position:relative;min-height:0}
 #pebgCmpCanvas{display:block;width:100%;height:100%}
 .pebg-period.is-off{opacity:.4;pointer-events:none}
+.eps-mode-btns.is-off{opacity:.45}
 .pebg-panel{width:270px;flex-shrink:0;background:var(--surf2);border-left:1px solid var(--line);padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column}
 .pebg-panel-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .pebg-panel-sub{font-size:12px;color:var(--muted);margin-bottom:6px}
@@ -1161,6 +1166,7 @@ function checkPwd(){
     <div class="pebg-period-btns" id="pebgMetricBtns" role="group" aria-label="Múltiplo">
       <span class="pebg-period active" data-k="pe" onclick="setPebgMetric('pe')">P/E</span>
       <span class="pebg-period" data-k="peg" onclick="setPebgMetric('peg')">PEG</span>
+      <span class="pebg-period" data-k="pbv" onclick="setPebgMetric('pbv')" title="Precio / valor libro por acción: patrimonio de los comunes de la SEC (sin preferidas ni minoritarios) sobre las acciones del EPS, cada balance desde el día que se presentó">P/BV</span>
     </div>
     <div class="pebg-period-btns" id="pebgAxisBtns" role="group" aria-label="Qué se grafica">
       <span class="pebg-period active" data-a="precio" onclick="setPebgAxis('precio')" title="Precio con las bandas pasadas a precio (múltiplo × EPS de 12 meses)">Precio</span>
@@ -1335,11 +1341,11 @@ function checkPwd(){
   <div class="ov-clock-bar">
     <span class="arg-title">Bancos: precio / valor libro</span>
     <div class="pebg-period-btns" id="bcoMetricBtns" role="group" aria-label="Métrica">
-      <span class="pebg-period active" data-k="pb" onclick="setBcoMetric('pb')" title="Capitalización / patrimonio de los comunes">P/VL</span>
-      <span class="pebg-period" data-k="ptb" onclick="setBcoMetric('ptb')" title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/VL tangible</span>
+      <span class="pebg-period active" data-k="pb" onclick="setBcoMetric('pb')" title="Capitalización / patrimonio de los comunes">P/BV</span>
+      <span class="pebg-period" data-k="ptb" onclick="setBcoMetric('ptb')" title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/BV tangible</span>
       <span class="pebg-period" data-k="roe" onclick="setBcoMetric('roe')" title="Resultado de los comunes de 12 meses / patrimonio promedio">ROE</span>
-      <span class="pebg-period" data-k="rend" onclick="setBcoMetric('rend')" title="El P/VL ajustado por ROE: ROE ÷ P/VL, lo que gana el banco por cada peso que vale en bolsa. Más alto, más barato">ROE ÷ P/VL</span>
-      <span class="pebg-period" data-k="pe" onclick="setBcoMetric('pe')" title="P/VL ÷ ROE: el precio sobre la ganancia del banco, la cuenta al revés de ROE ÷ P/VL. Más bajo, más barato; sin dato con ROE menor a 3%, como el PEG">P/E</span>
+      <span class="pebg-period" data-k="rend" onclick="setBcoMetric('rend')" title="El P/BV ajustado por ROE: ROE ÷ P/BV, lo que gana el banco por cada peso que vale en bolsa. Más alto, más barato">ROE ÷ P/BV</span>
+      <span class="pebg-period" data-k="pe" onclick="setBcoMetric('pe')" title="P/BV ÷ ROE: el precio sobre la ganancia del banco, la cuenta al revés de ROE ÷ P/BV. Más bajo, más barato; sin dato con ROE menor a 3%, como el PEG">P/E</span>
     </div>
     <div class="pebg-period-btns" id="bcoRoeRefBtns" role="group" aria-label="ROE del ajuste" style="display:none">
       <span class="pebg-period active" data-q="3a" onclick="setBcoRoeRef('3a')" title="Promedio de las semanas de los últimos 3 años: saca el ciclo">ROE promedio 3 años</span>
@@ -1351,7 +1357,7 @@ function checkPwd(){
   <div class="sect-body">
     <div class="ov-card">
       <div class="arg-chart-top">
-        <div class="ov-card-title" id="bcoChartTitle">P/VL</div>
+        <div class="ov-card-title" id="bcoChartTitle">P/BV</div>
         <div class="cs"></div>
         <div class="pebg-period-btns" id="bcoRangeBtns" role="group" aria-label="Período del gráfico">
           <span class="pebg-period" data-y="3" onclick="setBcoRange(3)">3A</span>
@@ -1417,7 +1423,7 @@ function checkPwd(){
     </div>
     <div class="ov-card">
       <div class="arg-chart-top">
-        <div class="ov-card-title">P/VL contra ROE</div>
+        <div class="ov-card-title">P/BV contra ROE</div>
         <div class="cs"></div>
         <div class="pebg-period-btns" id="bcoRoeBtns" role="group" aria-label="ROE">
           <span class="pebg-period active" data-x="12m" onclick="setBcoRoeX('12m')">ROE de 12 meses</span>
@@ -3613,6 +3619,31 @@ function buildPESeries(data, eps) {
   return out;
 }
 
+// P/BV de cada día: precio / valor libro por acción del último balance presentado (desde el día siguiente a pub), como el
+// EPS en el P/E. Va en los mismos campos que el P/E (pe: el múltiplo; eps4q: el valor libro por acción) para usar las
+// mismas bandas, el precio a cada banda y el gráfico. Sin dato con patrimonio negativo o con un balance de más de 200 días.
+// Los bancos argentinos (sus 20-F no están en la base de la SEC que usa esto) salen del P/BV semanal de bancos.json
+function pbvSerie(data) {
+  const prices = (data.prices || []).slice().sort((a, b) => a.date - b.date), out = [];
+  const bv = (data.bv || []).slice().sort((a, b) => a.date - b.date);
+  if (bv.length) {
+    let j = 0;
+    for (const p of prices) {
+      while (j < bv.length && bv[j].pub + 86400 <= p.date) j++;
+      if (!j) continue;
+      const b = bv[j - 1];
+      if (p.date - b.date > 200 * 86400 || !(b.bvps > 0)) continue;
+      out.push({ date: p.date, close: p.close, pe: p.close / b.bvps, eps4q: b.bvps, g: null, q: b.date });
+    }
+    return out;
+  }
+  const B = typeof BCO !== 'undefined' && BCO && BCO.bancos[data.symbol];
+  if (!B || !B.pb) return out;
+  const semana = t => Math.floor((t - BCO.monday0) / 604800) - BCO.week0;
+  for (const p of prices) { const i = semana(p.date), m = i >= 0 ? B.pb[i] : null; if (m > 0) out.push({ date: p.date, close: p.close, pe: m, eps4q: p.close / m, g: null, q: null, semanal: true }); }
+  return out;
+}
+
 function peStats(win) {
   const peW = win.map(p => p.pe).filter(x => x > 0 && x < 500);
   const mu = peW.reduce((a, b) => a + b, 0) / peW.length;
@@ -3972,6 +4003,7 @@ async function loadPebg() {
 function updEpsNote(d) {
   const el = document.getElementById('pebgEpsNote');
   if (!el) return;
+  if (pebgMetric === 'pbv') { el.textContent = 'P/BV: patrimonio de los comunes de la SEC'; el.title = 'Valor libro por acción de cada cierre trimestral: patrimonio de los accionistas comunes (sin preferidas ni minoritarios) / acciones diluidas del trimestre. Cada balance cuenta desde el día siguiente a su presentación.'; return; }
   if (epsMode !== 'norm') { el.textContent = ''; el.title = ''; return; }
   if (!hasNorm(d)) {
     el.textContent = 'Sin normalizado para ' + d.symbol + ', va el contable';
@@ -4129,7 +4161,7 @@ function renderPebgEst(d) {
 // ── Bandas móviles: en cada fecha, la media y el desvío (P/E) o los percentiles (PEG) de los N años previos ──
 const YR_S = 365.25 * 86400;
 let pebgMetric = 'pe';
-try { if (localStorage.getItem('pebgMetric') === 'peg') pebgMetric = 'peg'; } catch (e) {}
+try { const m = localStorage.getItem('pebgMetric'); if (m === 'peg' || m === 'pbv') pebgMetric = m; } catch (e) {}
 const PE_BAND_LABELS = ['μ+2σ', 'μ+1σ', 'μ', 'μ-1σ', 'μ-2σ'];
 const PEG_BAND_LABELS = ['p90', 'p75', 'Mediana', 'p25', 'p10'];
 
@@ -4194,12 +4226,12 @@ function syncPebgMetricBtns() {
 let pebgAxisBeforePeg = null;
 function pegAxisSwitch(prev) {
   if (pebgMetric === 'peg' && prev !== 'peg' && pebgAxis !== 'mult') { pebgAxisBeforePeg = pebgAxis; pebgAxis = 'mult'; }
-  else if (pebgMetric === 'pe' && prev === 'peg' && pebgAxisBeforePeg) { pebgAxis = pebgAxisBeforePeg; pebgAxisBeforePeg = null; }
+  else if (pebgMetric !== 'peg' && prev === 'peg' && pebgAxisBeforePeg) { pebgAxis = pebgAxisBeforePeg; pebgAxisBeforePeg = null; }
   syncPebgAxisBtns();
 }
 function setPebgMetric(k) {
   const prev = pebgMetric;
-  pebgMetric = k === 'peg' ? 'peg' : 'pe';
+  pebgMetric = k === 'peg' || k === 'pbv' ? k : 'pe';
   try { localStorage.setItem('pebgMetric', pebgMetric); } catch (e) {}
   syncPebgMetricBtns();
   pegAxisSwitch(prev);
@@ -4275,22 +4307,30 @@ function fixedBands(full, years, metric) {
 }
 
 function renderPebg(data) {
-  const eps = pebgEps(data);
-  const full = buildPESeries(data, eps);
+  const eps = pebgEps(data), pbv = pebgMetric === 'pbv';
+  const full = pbv ? pbvSerie(data) : buildPESeries(data, eps);
   const status = document.getElementById('pebgStatus');
   updEpsNote(data);
   syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns();
+  document.querySelectorAll('#view-pebg .eps-mode-btns').forEach(e => { e.classList.toggle('is-off', pbv); e.title = pbv ? 'Contable y normalizado son para el P/E: el P/BV va con el valor libro' : ''; });
   status.title = data.histNote || '';
-  status.textContent = (data.shortName || data.symbol) + ', ' + eps.length + ' trim. EPS'
-    + (data.histNote ? ' (los más viejos, de los 10-K)' : '')
-    + (pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '')
-    + (data.alias ? '. ' + data.alias + ' va con ' + data.symbol + ', el ADR: EPS de la SEC en dólares, mismo P/E' : '');
-  if (full.length < 10) { status.textContent += '. Pocos datos para el gráfico'; return; }
+  const nBv = (data.bv || []).length, bcoAr = pbv && !nBv && full.length && full[0].semanal;
+  // sin balance de la SEC, el P/BV de la pestaña Bancos (bancos argentinos): bancos.json se baja la primera vez
+  if (pbv && !nBv && !BCO && !data.bcoPedido) { data.bcoPedido = true; loadBancos().then(j => { if (j && pebgData === data && pebgMetric === 'pbv') renderPebg(data); }); }
+  status.textContent = (data.shortName || data.symbol) + ', ' + (pbv ? (nBv ? nBv + ' balances con valor libro' : bcoAr ? 'P/BV semanal de la pestaña Bancos' : 'sin valor libro en la SEC') : eps.length + ' trim. EPS')
+    + (!pbv && data.histNote ? ' (los más viejos, de los 10-K)' : '')
+    + (!pbv && pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '')
+    + (data.alias ? '. ' + data.alias + ' va con ' + data.symbol + ', el ADR: ' + (pbv ? 'mismo P/BV' : 'EPS de la SEC en dólares, mismo P/E') : '');
+  if (full.length < 10) {
+    status.textContent += pbv ? '. Sin P/BV: ' + (nBv ? 'patrimonio negativo o balances viejos' : 'la SEC no tiene su balance en dólares (presenta 20-F en NIIF)') : '. Pocos datos para el gráfico';
+    if (pbv) { pebgView = null; document.getElementById('pebgStatsBar').style.display = 'none'; const c = document.getElementById('pebgCanvas'); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+    return;
+  }
   const peg = pebgMetric === 'peg';
   if (peg) addPeg(full);
   const fija = pebgBand === 'fija';
   const trim = !fija && pebgRecalc === 'trim';
-  let bands = fija ? fixedBands(full, pebgYears, pebgMetric) : rollingBands(full, pebgYears, pebgMetric);
+  let bands = fija ? fixedBands(full, pebgYears, pbv ? 'pe' : pebgMetric) : rollingBands(full, pebgYears, pbv ? 'pe' : pebgMetric);
   if (trim) bands = holdQuarterly(full, bands);
   full.forEach((p, i) => {
     const b = bands[i];
@@ -4301,7 +4341,7 @@ function renderPebg(data) {
   const last = full[full.length - 1];
   const lb = last.band;
   const norm = epsMode === 'norm' && hasNorm(data);
-  const fmtX = v => v.toFixed(peg ? 2 : 1) + (peg ? '' : 'x');
+  const fmtX = v => v.toFixed(peg || pbv ? 2 : 1) + (peg ? '' : 'x');
   const fmtP = v => '$' + Number(v).toFixed(2);
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const winLbl = pebgYears + 'A';
@@ -4310,17 +4350,18 @@ function renderPebg(data) {
   const histHint = 'hay ' + histY.toFixed(1).replace('.', ',') + ' años de datos';
   // con bandas fijas y menos historia que la ventana, se aclara cuántos años entran de verdad
   const bandSub = !lb ? histHint : fija ? (histY < pebgYears - 0.25 ? 'fija, ' + histY.toFixed(1).replace('.', ',') + ' años de datos' : 'fija, últimos ' + yrsTxt(pebgYears)) : trim ? 'móvil, al ' + new Date(lb.asOf * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : 'móvil, ' + yrsTxt(pebgYears);
-  const z = document.getElementById('psStat3');
+  const z = document.getElementById('psStat3'), M = pbv ? 'P/BV' : 'P/E';
   if (!peg) {
-    set('psLbl0', 'P/E actual'); set('psStat0', fmtX(last.pe)); set('psSub0', norm ? 'TTM normalizado' : 'TTM contable');
-    set('psLbl1', 'P/E media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
-    set('psLbl2', 'Desv. std'); set('psStat2', lb ? lb.sd.toFixed(1) + 'x' : '—'); set('psSub2', 'σ');
+    set('psLbl0', M + ' actual'); set('psStat0', fmtX(last.pe)); set('psSub0', pbv ? (last.semanal ? 'Bancos, semanal' : 'último balance') : norm ? 'TTM normalizado' : 'TTM contable');
+    set('psLbl1', M + ' media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
+    set('psLbl2', 'Desv. std'); set('psStat2', lb ? lb.sd.toFixed(pbv ? 2 : 1) + 'x' : '—'); set('psSub2', 'σ');
     const zs = lb && lb.sd > 0 ? (last.pe - lb.center) / lb.sd : null;
     set('psLbl3', 'Z-score');
     z.textContent = zs != null ? (zs >= 0 ? '+' : '') + zs.toFixed(2) + 'σ' : '—';
     z.className = 'pebg-stat-val ' + (zs == null ? '' : zs < -1 ? 'pp' : zs > 1 ? 'pn' : '');
     set('psSub3', zs == null ? '' : zs < -1 ? 'barato' : zs > 1 ? 'caro' : 'justo');
-    set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.');
+    if (pbv) { set('psLbl5', 'BV por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', last.semanal ? 'implícito: precio / P/BV' : 'de los comunes, ' + new Date(last.q * 1000).toLocaleDateString('es-AR', { month: 'short', year: '2-digit', timeZone: 'UTC' })); }
+    else { set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.'); }
   } else {
     set('psLbl0', 'PEG actual'); set('psStat0', last.peg != null ? fmtX(last.peg) : '—'); set('psSub0', 'P/E ÷ crec. EPS 5A');
     set('psLbl1', 'PEG mediana ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
@@ -4344,24 +4385,24 @@ function renderPebg(data) {
   { const el = document.getElementById('psStatFwd');
     if (el) el.innerHTML = (fw.fpe ? fw.fpe.toFixed(1) + 'x' : '—') + (fw.fpe12 && fw.metodo !== 'yahoo'
       ? '<span class="pebg-stat-cmp" title="Fw P/E con el EPS de los 12 meses desde hoy ($' + (pxNow / fw.fpe12).toFixed(2) + '), la convención del mercado">12 m: ' + fw.fpe12.toFixed(1) + 'x</span>' : ''); }
-  const fwStats = pebgFw && !peg && fwEpsS != null;
-  { const b = document.getElementById('pebgFwBtn'); if (b) { b.setAttribute('aria-pressed', pebgFw); b.classList.toggle('is-off', peg || fwEpsS == null);
-    b.title = peg ? 'La proyección es solo para P/E' : fwEpsS == null ? 'Sin EPS esperado de consenso para esta empresa' : 'Precio teórico dentro de un año si se cumple el EPS del Fw P/E (consenso de los cuatro trimestres que va a presentar, $' + fwEpsS.toFixed(2) + ') y el P/E vuelve a cada banda'; } }
+  const fwStats = pebgFw && !peg && !pbv && fwEpsS != null;
+  { const b = document.getElementById('pebgFwBtn'); if (b) { b.setAttribute('aria-pressed', pebgFw); b.classList.toggle('is-off', peg || pbv || fwEpsS == null);
+    b.title = peg || pbv ? 'La proyección es solo para P/E' : fwEpsS == null ? 'Sin EPS esperado de consenso para esta empresa' : 'Precio teórico dentro de un año si se cumple el EPS del Fw P/E (consenso de los cuatro trimestres que va a presentar, $' + fwEpsS.toFixed(2) + ') y el P/E vuelve a cada banda'; } }
   { const sub = document.getElementById('psStatFwd')?.nextElementSibling;
     const rv = revOf(data.symbol, '3m');
-    if (sub) { sub.textContent = (fwEpsS != null ? 'EPS 4 trim. $' + fwEpsS.toFixed(2) : 'consenso') + (rv != null ? ', ' + revTxt(rv) + ' 3M' : '');
+    if (sub) { sub.textContent = (fwEpsS != null ? 'EPS $' + fwEpsS.toFixed(2) : 'consenso') + (rv != null ? ', ' + revTxt(rv) + ' 3M' : '');
       const mt = fw.metodo, win = fwWindowTxt(fw.q), base = 'EPS de consenso de los cuatro trimestres que siguen al último presentado' + (win ? ' (' + win + ')' : '') + ': dentro de un año el P/E va a usar esos cuatro';
       const mtTxt = mt === 'trimestres' ? base + '. Armado por trimestres: los dos que estima el consenso y el resto de cada ejercicio' : mt === 'ejercicios' ? base + '. Ejercicio en curso y siguiente ponderados por lo que falta del primero (no hay trimestres para armarlo)' : mt === 'yahoo' ? 'Fw P/E de Yahoo: sin consenso por trimestres para esta empresa' : base;
       sub.title = [mtTxt, rv != null ? 'Cambio del EPS esperado de los próximos 12 meses en los últimos 3 meses (1 mes: ' + (revTxt(revOf(data.symbol, '1m')) || '—') + '), con el promedio por ejercicios' : ''].filter(Boolean).join('. '); } }
   { const v = document.getElementById('psStatFw2'), b = document.getElementById('psFw2Block');
     if (v) v.textContent = fw.fpe2 ? fw.fpe2.toFixed(1) + 'x' : '—';
-    set('psSubFw2', fw.eps2 ? 'EPS 4 trim. $' + fw.eps2.toFixed(2) : (fw.metodo === 'yahoo' ? 'sin consenso' : 'trim. 5 a 8'));
+    set('psSubFw2', fw.eps2 ? 'EPS $' + fw.eps2.toFixed(2) : (fw.metodo === 'yahoo' ? 'sin consenso' : 'trim. 5 a 8'));
     if (b) { const w2 = fw.q ? fwWindowTxt(fw.q, 2) : '';
       b.title = 'P/E dentro de dos años si el precio no se mueve: precio / EPS de consenso de los trimestres 5 a 8 que siguen al último presentado'
         + (w2 ? ' (' + w2 + ')' : '') + '. Yahoo da consenso hasta el ejercicio siguiente; lo que pasa de ahí va con el mismo trimestre un año antes por el crecimiento del ejercicio siguiente contra el en curso (sin los extraordinarios ya informados), acotado entre −20% y 25%'
         + (fw.eps2 && fw.g2 != null && fw.ext2 > 0.05 ? '. Acá: ' + fw2ExtTxt(fw.ext2, fw.g2) : '')
         + (fw.eps && fw.eps2 ? '. Crecimiento contra los cuatro trimestres anteriores: ' + ((fw.eps2 / fw.eps - 1) * 100).toFixed(1).replace('.', ',') + '%' : '') + '.'; } }
-  ['psStatAnual', 'psStatFwd', 'psStatFw2'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg ? 'none' : ''; });
+  ['psStatAnual', 'psStatFwd', 'psStatFw2'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg || pbv ? 'none' : ''; });
 
   const cols = bandColors(), labels = peg ? PEG_BAND_LABELS : PE_BAND_LABELS;
   // precio implícito en cada banda: múltiplo × EPS de hoy, o × EPS esperado con la proyección prendida
@@ -4372,7 +4413,7 @@ function renderPebg(data) {
     const v = document.getElementById('psStat' + id);
     set('psLbl' + id, (fwStats ? 'Precio fw a ' : 'Precio a ') + labels[i]);
     if (m == null || px == null) { v.textContent = 'N/A'; v.style.color = 'var(--faint)'; set('psSub' + id, ''); }
-    else { v.textContent = fmtP(px); v.style.color = cols[i]; set('psSub' + id, (peg ? 'PEG ' : 'P/E ') + fmtX(m) + (pxNow > 0 ? ', ' + pctTxt2(px / pxNow - 1) : '')); }
+    else { v.textContent = fmtP(px); v.style.color = cols[i]; set('psSub' + id, (peg ? 'PEG ' : M + ' ') + fmtX(m) + (pxNow > 0 ? ', ' + pctTxt2(px / pxNow - 1) : '')); }
   });
   document.getElementById('pebgStatsBar').style.display = 'flex';
   renderPebgNorm(data);
@@ -4639,7 +4680,7 @@ function bindPebgCanvas(canvas) {
 function drawPebgChart(hoverT) {
   if (!pebgView) return;
   const { full, metric, labels, years, fija, trim, prices } = pebgView;
-  const peg = metric === 'peg';
+  const peg = metric === 'peg', pbv = metric === 'pbv', M = pbv ? 'P/BV' : 'P/E';
   const mv = pebgAxis === 'mult';
   const yOf = p => mv ? (peg ? p.peg : p.pe) : p.close;
   const bandOf = (p, b) => mv ? (p.band ? p.band.mult[b] : null) : (p.bandPx ? p.bandPx[b] : null);
@@ -4684,7 +4725,7 @@ function drawPebgChart(hoverT) {
   const px = inWin(prices || []);
   const priceLine = mv ? series.filter(p => { const v = yOf(p); return v != null && v > 0 && isFinite(v); }) : (px.filter(visible).length > 1 ? px : series);
   const lineVis = priceLine.filter(visible);
-  if (lineVis.length < 2) return empty(!mv ? 'Sin datos en este tramo' : peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : 'Sin P/E positivo en este tramo');
+  if (lineVis.length < 2) return empty(!mv ? 'Sin datos en este tramo' : peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : pbv ? 'Sin P/BV en este tramo: patrimonio negativo o sin balances' : 'Sin P/E positivo en este tramo');
 
   const cols = bandColors();
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
@@ -4714,7 +4755,7 @@ function drawPebgChart(hoverT) {
   }
   // proyección con el EPS esperado (botón EPS fw): un año hacia adelante desde el último dato, si está a la vista
   const lastF = full[full.length - 1];
-  const fwEps = !peg ? pebgFwEps(pebgData) : null;
+  const fwEps = !peg && !pbv ? pebgFwEps(pebgData) : null;
   const fwOn = pebgFw && fwEps > 0 && !!lastF.band && t1 >= lastF.date - 5 * 86400;
   const tFw = lastF.date + 365 * 86400;
   // en precio, cada banda × EPS fw; en múltiplo las bandas quedan y la línea va al P/E si el precio no se mueve
@@ -4885,7 +4926,7 @@ function drawPebgChart(hoverT) {
   }
   // etiquetas en el borde derecho: valores en la última fecha visible
   const lastS = series.filter(visible).pop() || null, lastV = yOf(lineVis[lineVis.length - 1]);
-  const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(1) + 'x') : (v => '$' + v.toFixed(1));
+  const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(pbv ? 2 : 1) + 'x') : (v => '$' + v.toFixed(1));
   // con la proyección, el borde derecho es dentro de un año: van los valores proyectados
   const labelsEnd = (fwOn
     ? [{ y: yS(fwLine), txt: mv ? endFmt(fwLine) : '$' + fwLine.toFixed(2), col: C.price, bold: true }]
@@ -4915,12 +4956,12 @@ function drawPebgChart(hoverT) {
   const leg = document.getElementById('pebgLegend');
   if (hoverT == null) {
     const lb = full[full.length - 1].band;
-    const fm = v => peg ? v.toFixed(2) : v.toFixed(1) + 'x';
-    leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>${mv ? (peg ? 'PEG' : 'P/E de 12 meses') : 'Precio'}</div>`
+    const fm = v => peg ? v.toFixed(2) : v.toFixed(pbv ? 2 : 1) + 'x';
+    leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>${mv ? (peg ? 'PEG' : pbv ? 'P/BV' : 'P/E de 12 meses') : 'Precio'}</div>`
       + (lb ? [0, 1, 2, 3, 4].filter(b => lb.mult[b] != null).map(b => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[b]}"></div>${labels[b]} hoy, ${(peg ? 'PEG ' : '') + fm(lb.mult[b])}</div>`).join('') : '')
       + `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>${peg ? 'Rango p25–p75' : 'Zona μ ± 1σ'}</div>`
-      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}${trim ? ', recalculados por trimestre' : ''}</div>`
-      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: crecimiento menor a 3% o sin historia' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
+      + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}${trim ? (pbv ? ', recalculados con cada balance' : ', recalculados por trimestre') : ''}</div>`
+      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: crecimiento menor a 3% o sin historia' : pbv ? 'Huecos: patrimonio negativo o sin balance' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = pebgLegendOn ? 'flex' : 'none';
   }
@@ -4959,15 +5000,15 @@ function drawPebgChart(hoverT) {
         new Date(pp.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
       const rows = [{ color: C.price, label: 'Precio', val: '$' + pp.close.toFixed(2) }];
       if (hasPE) {
-        rows.push({ color: '', label: 'P/E TTM', val: sp.pe.toFixed(1) + 'x' });
+        rows.push({ color: '', label: pbv ? 'P/BV' : 'P/E TTM', val: sp.pe.toFixed(pbv ? 2 : 1) + 'x' });
         if (peg) {
           rows.push({ color: '', label: 'PEG', val: sp.peg != null ? sp.peg.toFixed(2) : 'n/d' });
           rows.push({ color: '', label: 'Crec. EPS 5A', val: sp.g != null ? (sp.g * 100).toFixed(1) + '%' : 'n/d' });
-        } else rows.push({ color: '', label: 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) });
+        } else rows.push({ color: '', label: pbv ? 'BV por acción' : 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) });
         if (sp.q) rows.push({ color: '', label: 'Último trimestre', val: new Date(sp.q * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' }) });
-        if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(1) + 'x') + ')', val: '$' + sp.bandPx[b].toFixed(2) }); });
+        if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(pbv ? 2 : 1) + 'x') + ')', val: '$' + sp.bandPx[b].toFixed(2) }); });
         else rows.push({ color: '', label: 'Bandas', val: 'sin historia suficiente' });
-      } else rows.push({ color: '', label: 'P/E TTM', val: pp.date < full[0].date ? 'sin EPS de esa fecha' : 'sin dato (EPS ≤ 0)' });
+      } else rows.push({ color: '', label: pbv ? 'P/BV' : 'P/E TTM', val: pp.date < full[0].date ? (pbv ? 'sin balance de esa fecha' : 'sin EPS de esa fecha') : (pbv ? 'sin dato (patrimonio ≤ 0)' : 'sin dato (EPS ≤ 0)') });
       document.getElementById('pebgTipRows').innerHTML = rows.map(r =>
         `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:${r.color || 'transparent'};${r.color ? '' : 'border:1px solid var(--line2)'}"></span>${r.label}</span><span class="pebg-tooltip-val">${r.val}</span></div>`).join('');
       tooltip.style.display = 'block';
@@ -5072,8 +5113,11 @@ function drawPebgCmp(geo) {
   const btn = document.getElementById('pebgCmpBtn');
   if (btn) btn.setAttribute('aria-pressed', pebgCmp.on);
   if (!box) return;
-  box.style.display = pebgCmp.on ? 'flex' : 'none';
-  if (!pebgCmp.on || !pebgView) return;
+  // la comparación con el índice y el sector es de P/E: con P/BV no se dibuja
+  const soloPe = pebgView && pebgView.metric === 'pbv';
+  if (btn) { if (!btn.dataset.tit) btn.dataset.tit = btn.title; btn.classList.toggle('is-off', !!soloPe); btn.title = soloPe ? 'La comparación con el S&P 500 y el sector es de P/E' : btn.dataset.tit; }
+  box.style.display = pebgCmp.on && !soloPe ? 'flex' : 'none';
+  if (!pebgCmp.on || !pebgView || soloPe) return;
   const cv = document.getElementById('pebgCmpCanvas'), holder = cv.parentElement;
   const dpr = window.devicePixelRatio || 1, W = holder.clientWidth, H = holder.clientHeight;
   if (!W || !H) return;
@@ -5346,6 +5390,9 @@ const METODO = [
       { d: 'PEG: P/E dividido por el crecimiento tendencial del EPS en porcentaje.',
         p: 'El crecimiento es la pendiente de una regresión log-lineal del EPS de 12 meses de los últimos cinco años (21 puntos trimestrales), con lo que hacen falta seis años de EPS. Con crecimiento menor a 3% no se calcula, porque el cociente se dispara sin decir nada. Las bandas son percentiles (10, 25, 50, 75 y 90) y no desvíos, ya que el PEG es muy asimétrico. Arranca con EPS normalizado, porque un cargo puntual en el contable mueve a la vez el P/E y el crecimiento y el PEG lo cuenta dos veces, y en vista de múltiplo.',
         x: 'El crecimiento punta a punta: un piso o un pico en la base lo hace saltar (con META pasaba de 3% a 51% en tres años).' },
+      { d: 'P/BV (al lado del PEG): el cierre de cada día dividido por el valor libro por acción del último balance presentado antes de esa fecha. Valor libro: patrimonio de los accionistas comunes de la SEC (sin preferidas ni minoritarios) sobre las acciones diluidas del trimestre, las mismas del EPS. Bandas, z-score, precio a cada banda y escalas, como en el P/E; en precio, cada banda es su múltiplo por el valor libro por acción de ese día.',
+        p: 'Para bancos, aseguradoras y empresas de activos es el múltiplo que se mira: la ganancia depende del ciclo y el valor libro es más estable. Cada balance entra desde el día siguiente a su presentación, la misma fecha que el EPS del trimestre.',
+        o: 'Con patrimonio negativo (empresas que recompraron más acciones de las que ganaron, como MCD o HD) no hay P/BV y la línea se corta. Las que presentan 20-F en NIIF no tienen el balance en esa base de la SEC: los bancos argentinos van con el P/BV semanal de la pestaña Bancos; el resto, sin dato. Contable o normalizado y la proyección con el EPS esperado son solo para el P/E.' },
     ] },
 
   { id: 'mult', t: 'P/E del S&P 500, de sus sectores y subindustrias',
@@ -5405,14 +5452,14 @@ const METODO = [
     items: [
       { d: 'Bancos: en Argentina, Galicia, Macro, BBVA, Supervielle, Patagonia, Hipotecario y Valores; el agregado argentino es los cuatro con ADR (Galicia, Macro, BBVA y Supervielle). En EE.UU., los del S&P 500 de las subindustrias Diversified Banks (grandes) y Regional Banks (regionales).',
         p: 'Los cuatro con ADR presentan el 20-F en la SEC; para atrás, el balance mensual del BCRA lleva la historia a 2000 (Supervielle cotiza desde 2016). Patagonia, Hipotecario y Valores quedan afuera del agregado para no cambiar su composición en el medio de la serie.' },
-      { d: 'P/VL = capitalización (precio × acciones del balance) / patrimonio de los comunes (sin preferidas ni minoritarios). Tangible: además sin llave de negocio ni intangibles. Por grupo, suma de capitalizaciones / suma de valores libro.',
-        p: 'Sumar antes de dividir pesa cada banco por su tamaño, como un índice: un banco chico con un P/VL raro no mueve el grupo. En EE.UU. el mercado mira el tangible, porque la llave de negocio de las compras no respalda pérdidas.' },
+      { d: 'P/BV = capitalización (precio × acciones del balance) / patrimonio de los comunes (sin preferidas ni minoritarios). Tangible: además sin llave de negocio ni intangibles. Por grupo, suma de capitalizaciones / suma de valores libro.',
+        p: 'Sumar antes de dividir pesa cada banco por su tamaño, como un índice: un banco chico con un P/BV raro no mueve el grupo. En EE.UU. el mercado mira el tangible, porque la llave de negocio de las compras no respalda pérdidas.' },
       { d: 'EE.UU.: balances trimestrales de la SEC (EDGAR), cada uno desde su presentación. Las preferidas y los intangibles que un banco informa solo en el 10-K (Bank of America) se toman del último 10-K; si el patrimonio solo viene con los minoritarios (Truist), se restan. Los trimestres que la SEC todavía no tiene (Citi en 2026) salen de Yahoo.' },
       { d: 'Argentina: los 20-F (NIIF) desde 2017 y, para los últimos cinco trimestres y cuatro ejercicios, Yahoo. Antes, el balance mensual de cada banco que publica el BCRA (Información de entidades financieras, datos abiertos), cada mes desde 60 días después de su cierre: hasta 2016 en Galicia, Macro y BBVA. Patagonia e Hipotecario no presentan 20-F: van con el BCRA hasta su último mes (contra Yahoo da lo mismo a menos de 1% en 2024 y 2025, y es mensual) y con Yahoo solo si tiene un trimestre más nuevo. Precio en pesos de BYMA.',
         p: 'Del balance del BCRA: patrimonio = cuentas de patrimonio, resultados y otros resultados integrales; acciones = capital social (valor nominal $1); tangible, sin las cuentas de intangibles. Activo = pasivo + patrimonio cierra al peso todos los meses desde 1996. Un 20-F de 2017 sale como comparativo del de 2018, reexpresado a moneda de diciembre de 2018: se lleva con el IPC desde ahí.',
-        o: 'Es el balance del banco. Galicia cotiza como grupo: el banco es una aproximación, con las acciones del grupo (1.092 millones desde 2000 y 1.241 millones desde mayo de 2004, según el 20-F de 2006); hasta la reorganización de 2017, Naranja (Tarjetas Regionales) colgaba del banco, así que el banco se parecía más al grupo que ahora. Macro, desde diciembre de 2003, cuando se fusiona con Bansud, que era la que cotizaba. El balance local no ajustó por inflación entre 2003 y 2019; el 20-F de 2017 viene en NIIF reexpresado, con más patrimonio, y el P/VL baja de golpe en marzo de 2017. Hasta 2024 hay un balance por año: el P/VL de esos años no ve el resultado del año hasta el balance siguiente.' },
+        o: 'Es el balance del banco. Galicia cotiza como grupo: el banco es una aproximación, con las acciones del grupo (1.092 millones desde 2000 y 1.241 millones desde mayo de 2004, según el 20-F de 2006); hasta la reorganización de 2017, Naranja (Tarjetas Regionales) colgaba del banco, así que el banco se parecía más al grupo que ahora. Macro, desde diciembre de 2003, cuando se fusiona con Bansud, que era la que cotizaba. El balance local no ajustó por inflación entre 2003 y 2019; el 20-F de 2017 viene en NIIF reexpresado, con más patrimonio, y el P/BV baja de golpe en marzo de 2017. Hasta 2024 hay un balance por año: el P/BV de esos años no ve el resultado del año hasta el balance siguiente.' },
       { d: 'Inflación: los balances argentinos están en moneda de su cierre (cada ejercicio de Yahoo, en moneda del cierre siguiente, porque sale del balance de ese año como comparativo; el último, en la suya). El valor libro se lleva a pesos de cada semana con el IPC nacional, interpolado por día y, después del último dato, con la inflación promedio de los últimos tres meses.',
-        p: 'Con 2% de inflación por mes, el valor libro de junio comparado con el precio de noviembre queda 10% abajo y el P/VL 10% arriba.',
+        p: 'Con 2% de inflación por mes, el valor libro de junio comparado con el precio de noviembre queda 10% abajo y el P/BV 10% arriba.',
         o: 'Antes de 2020 los bancos no ajustaban por inflación; el valor libro de esos años igual se lleva con el IPC desde su cierre.' },
       { d: 'ROE de 12 meses: resultado de los comunes de los últimos cuatro trimestres / patrimonio promedio de los cierres del año (el del trimestre y los anteriores hasta un año antes). En Argentina, todo en pesos del último cierre: es real. ROE del trimestre: resultado del último trimestre × 4 / promedio de su cierre y el anterior. Donde faltan trimestres, el resultado de 12 meses de Yahoo; en Argentina hasta 2024, el del ejercicio, con el resultado y los dos patrimonios del mismo 20-F.',
         o: 'El resultado de 12 meses de Yahoo es la suma nominal de los cuatro trimestres: en Argentina deja el ROE un poco por debajo del real.' },
@@ -5420,26 +5467,26 @@ const METODO = [
         p: 'Hasta 2019 los bancos no ajustaban por inflación, pero no todo el patrimonio la pierde: lo que está en bienes de uso, participaciones o posiciones que siguen a la inflación, no. El 60% sale de los 12 ejercicios de 2017-2019 de Galicia, Macro, BBVA y Supervielle en que están el balance del BCRA y el 20-F (NIC 29): con 60%, el ROE real queda a 3 puntos del 20-F en promedio; con la inflación entera quedaba 11 puntos abajo (Galicia 2019: 2,6% contra 23%). Con 40% de inflación, un ROE nominal de 30% es 5% real. Inflación: hasta 2016, la serie empalmada de INDEC (hasta 2006) y los IPC de CABA, Córdoba y San Luis (matuteiglesias/IPC-Argentina); desde diciembre de 2016, el IPC nacional.',
         o: 'El cierre de cada ejercicio sale del balance: el mes en que el resultado acumulado vuelve a empezar y pasa a resultados no asignados. En 2002 el ROE real va de −69% (BBVA) a −164% (Hipotecario).' },
       { d: 'Contra el 20-F y Yahoo, en los años en que están los dos (en la misma moneda): desde 2020 el patrimonio del BCRA da igual a 0-2% en Macro, BBVA, Patagonia e Hipotecario (BBVA en 2020, 10%) y el ROE real, a 1-3 puntos (Galicia 2024: 31,1% el 20-F y 34,0% el BCRA). Galicia y Supervielle cotizan como grupo: el grupo tiene 20-30% más patrimonio que el banco, parejo año a año (en Galicia, sobre todo Naranja X, que desde 2017 es del holding y no del banco, y desde 2024 Galicia Más).',
-        o: 'Antes de 2020 el balance local no tenía ajuste por inflación: en 2017-2019 el 20-F reexpresado da 11-46% más patrimonio que el BCRA, y por eso el P/VL baja de golpe en marzo de 2017, cuando entra el 20-F. Para atrás de 2017 esa diferencia no se corrige: el P/VL de esos años está en la base del balance local.' },
+        o: 'Antes de 2020 el balance local no tenía ajuste por inflación: en 2017-2019 el 20-F reexpresado da 11-46% más patrimonio que el BCRA, y por eso el P/BV baja de golpe en marzo de 2017, cuando entra el 20-F. Para atrás de 2017 esa diferencia no se corrige: el P/BV de esos años está en la base del balance local.' },
       { d: 'Cada balance vale desde su presentación a la SEC o, sin esa fecha, desde el cierre más 45 a 75 días; deja de valer a los 200 días en EE.UU. y a los 470 en Argentina (que hasta 2024 tiene uno por año).' },
-      { d: 'Banda móvil (la vista que abre la pestaña): el P/VL semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores; mientras no hay esos años de historia, todas las semanas desde el primer dato (con al menos un año, y el primer año con la banda de su primer año), en un tramo más claro. Fija: un solo juego con los últimos años, para todo el gráfico. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (solo un banco y con P/VL o P/VL tangible: un grupo no tiene precio), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/VL), así que salta cuando entra un balance; si en el período el precio se mueve más de 8 veces, en escala logarítmica. El gráfico muestra toda la historia (Argentina desde 2000; EE.UU. desde 2010) o los últimos 3, 5 o 10 años.',
+      { d: 'Banda móvil (la vista que abre la pestaña): el P/BV semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores; mientras no hay esos años de historia, todas las semanas desde el primer dato (con al menos un año, y el primer año con la banda de su primer año), en un tramo más claro. Fija: un solo juego con los últimos años, para todo el gráfico. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (solo un banco y con P/BV o P/BV tangible: un grupo no tiene precio), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/BV), así que salta cuando entra un balance; si en el período el precio se mueve más de 8 veces, en escala logarítmica. El gráfico muestra toda la historia (Argentina desde 2000; EE.UU. desde 2010) o los últimos 3, 5 o 10 años.',
         p: 'Es la misma lectura que P/E histórico con el múltiplo que se usa para bancos: el resultado de un banco depende del ciclo de crédito y de las previsiones, y el valor libro es más estable que la ganancia.' },
-      { d: 'ROE ÷ P/VL (el P/VL ajustado por ROE): el ROE dividido por el P/VL de cada semana, en %. Es la ganancia sobre la capitalización, la inversa del P/E. Con el ROE promedio de las semanas de los últimos 3 años (por defecto; mientras no hay 3 años de ROE, el de los que hay) o con el de 12 meses. En la banda se lee al revés que el P/VL: más alto es más barato, así que más de +1σ es barato y menos de −1σ, caro. En un banco, el precio a cada banda es el que la lleva ahí con el ROE y el valor libro de hoy: precio × (ROE ÷ P/VL de hoy) / (el de la banda).',
-        p: 'Un P/VL bajo puede estar barato o puede ser el que corresponde a un ROE bajo; dividir por el ROE separa las dos cosas. Va el ROE sobre el P/VL y no al revés porque P/VL ÷ ROE explota cuando el ROE se acerca a cero (Argentina en 2019 y en 2026) y con ROE negativo pierde el sentido; así, solo baja. El promedio de 3 años saca el ciclo: un año con muchas previsiones o con una ganancia extraordinaria lo mueve menos.',
+      { d: 'ROE ÷ P/BV (el P/BV ajustado por ROE): el ROE dividido por el P/BV de cada semana, en %. Es la ganancia sobre la capitalización, la inversa del P/E. Con el ROE promedio de las semanas de los últimos 3 años (por defecto; mientras no hay 3 años de ROE, el de los que hay) o con el de 12 meses. En la banda se lee al revés que el P/BV: más alto es más barato, así que más de +1σ es barato y menos de −1σ, caro. En un banco, el precio a cada banda es el que la lleva ahí con el ROE y el valor libro de hoy: precio × (ROE ÷ P/BV de hoy) / (el de la banda).',
+        p: 'Un P/BV bajo puede estar barato o puede ser el que corresponde a un ROE bajo; dividir por el ROE separa las dos cosas. Va el ROE sobre el P/BV y no al revés porque P/BV ÷ ROE explota cuando el ROE se acerca a cero (Argentina en 2019 y en 2026) y con ROE negativo pierde el sentido; así, solo baja. El promedio de 3 años saca el ciclo: un año con muchas previsiones o con una ganancia extraordinaria lo mueve menos.',
         x: 'Leer el de 3 años sin mirar de qué años sale: si el ROE de esos años no vuelve, el banco no está tan barato como dice. El de 12 meses muestra el otro extremo; los dos juntos dan el rango.',
         o: 'En Argentina el ROE es real y, hasta 2024, del ejercicio: cambia una vez por año, así que el de 12 meses salta con cada 20-F.' },
-      { d: 'P/E = P/VL ÷ ROE: el precio sobre la ganancia del banco, con el mismo ROE que ROE ÷ P/VL (promedio de 3 años o de 12 meses). Va al lado, como el PEG al lado del P/E en P/E histórico; más bajo, más barato. Sin dato donde el ROE es menor a 3%, como el PEG con crecimiento menor a 3%.',
-        p: 'Es la cuenta de ROE ÷ P/VL dada vuelta, en la unidad de siempre: se compara directo con el P/E de cualquier empresa.',
-        o: 'Cerca de ROE cero explota y con ROE negativo no tiene sentido: ahí no hay dato, y en Argentina eso deja huecos en 2002-2005 y en los años de pérdida. Para una lectura sin huecos, ROE ÷ P/VL.' },
-      { d: 'P/VL que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/VL × (costo del capital − crecimiento). Crecimiento de largo plazo fijo: 4% nominal en EE.UU. (2% real + 2% de inflación) y 3% real en Argentina.',
+      { d: 'P/E = P/BV ÷ ROE: el precio sobre la ganancia del banco, con el mismo ROE que ROE ÷ P/BV (promedio de 3 años o de 12 meses). Va al lado, como el PEG al lado del P/E en P/E histórico; más bajo, más barato. Sin dato donde el ROE es menor a 3%, como el PEG con crecimiento menor a 3%.',
+        p: 'Es la cuenta de ROE ÷ P/BV dada vuelta, en la unidad de siempre: se compara directo con el P/E de cualquier empresa.',
+        o: 'Cerca de ROE cero explota y con ROE negativo no tiene sentido: ahí no hay dato, y en Argentina eso deja huecos en 2002-2005 y en los años de pérdida. Para una lectura sin huecos, ROE ÷ P/BV.' },
+      { d: 'P/BV que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/BV × (costo del capital − crecimiento). Crecimiento de largo plazo fijo: 4% nominal en EE.UU. (2% real + 2% de inflación) y 3% real en Argentina.',
         p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal.',
-        x: 'Comparar los P/VL de Argentina y EE.UU. sin más: un banco argentino tiene que ganar más para valer lo mismo, porque su costo del capital es más alto.',
-        o: 'Cada 100 puntos de riesgo país suben un punto el costo del capital argentino y, a 0,85x, 0,85 puntos el ROE que pide el precio; con un ROE real de 15%, el P/VL que corresponde baja alrededor de 8%.' },
+        x: 'Comparar los P/BV de Argentina y EE.UU. sin más: un banco argentino tiene que ganar más para valer lo mismo, porque su costo del capital es más alto.',
+        o: 'Cada 100 puntos de riesgo país suben un punto el costo del capital argentino y, a 0,85x, 0,85 puntos el ROE que pide el precio; con un ROE real de 15%, el P/BV que corresponde baja alrededor de 8%.' },
       { d: 'Costo del capital automático, recalculado cada día hábil con CAPM. EE.UU., nominal: bono del Tesoro a 10 años + beta × prima de riesgo. Argentina, real: bono del Tesoro indexado (TIPS) a 10 años + riesgo país + beta × prima. Beta: regresión de los rendimientos semanales de los últimos 5 años del agregado de bancos de EE.UU. (cada banco pesado por su capitalización de la semana anterior) contra el S&P 500, la misma para los dos países. Prima: la implícita del S&P 500 que publica Damodaran a principio de cada mes (con los flujos de los últimos 12 meses y payout sostenible; antes de 2016, cuando no la publicaba, la sin ajustar el payout más la diferencia promedio entre las dos en 2016). Tasas de FRED (DGS10 y DFII10); riesgo país de argentinadatos. Cualquiera de los cuatro números (costo del capital y crecimiento de cada país) se puede poner a mano; lo que no se toca sigue el automático.',
         p: 'El costo del capital se mueve con el mercado: un número fijo deja de describir el precio cuando el riesgo país pasa de menos de 500 a más de 800 puntos en dos meses, como en 2026. CAPM más riesgo país es la forma habitual de llevarlo a un mercado emergente, y la beta de los bancos de EE.UU. mide el riesgo del negocio contra un mercado que no tiene el riesgo argentino adentro.',
         x: 'La beta de los bancos argentinos contra el Merval: el Merval ya tiene el riesgo país adentro y se contaría dos veces. Una beta fija: la de la regresión pasó de 1,4 en 2012 a 1,0 en 2026.',
         o: 'Sumar el riesgo país entero supone que la acción tiene el riesgo del bono soberano; Damodaran lo multiplica por la volatilidad de las acciones sobre la de los bonos, lo que lo subiría. La tasa real de EE.UU. hace de tasa real argentina de largo plazo. Si una fuente no responde, queda el dato de la corrida anterior, con su fecha a la vista.' },
-      { d: 'Percentil y mediana del P/VL contra los últimos 10 años (o desde el primer dato), con al menos 3 años de datos.' },
+      { d: 'Percentil y mediana del P/BV contra los últimos 10 años (o desde el primer dato), con al menos 3 años de datos.' },
       { d: 'Mora y capital: indicadores del BCRA de cada banco argentino y del sistema financiero, mensuales desde 2011 y anuales desde 2001. Mora: cartera irregular (situación 3 a 6) / financiaciones. Mora de consumo: la de las financiaciones de consumo. Previsiones / cartera irregular, desde 2014. Capital: patrimonio neto / activo; de cada banco, su balance mensual; del sistema, el indicador de apalancamiento del BCRA pasado a patrimonio / activo.',
         p: 'La mora es lo primero que mueve el ROE: cada punto de mora nueva pide previsiones. Contra el sistema se separa lo del banco de lo del ciclo; el capital dice cuánto colchón hay para absorberla.',
         x: 'Comparar la mora de consumo de un banco minorista con la de uno de empresas: la cartera es otra.',
@@ -6176,10 +6223,10 @@ function drawLines(id, series, fmt, hoverT, vacio) {
 }
 
 // ── BANCOS: precio / valor libro y ROE de los bancos argentinos y de EE.UU. (bancos.json, scripts/bancos.mjs) ──
-// P/VL = capitalización / patrimonio de los comunes; tangible, sin llave de negocio ni intangibles. En Argentina el valor
+// P/BV = capitalización / patrimonio de los comunes; tangible, sin llave de negocio ni intangibles. En Argentina el valor
 // libro está llevado a pesos de cada semana con el IPC y el ROE es real; en EE.UU., nominal.
 let BCO = null, bcoLoading = null, bcoMetric = 'pb', bcoRange = 0, bcoRoeX = '12m', bcoSel = ['ar', 'us'];
-// costo del capital y crecimiento de largo plazo de cada país, para el P/VL que corresponde a cada ROE. El costo del
+// costo del capital y crecimiento de largo plazo de cada país, para el P/BV que corresponde a cada ROE. El costo del
 // capital es el automático de bancos.json (CAPM con los datos del día: tasas, riesgo país, prima y beta); el crecimiento,
 // fijo. Cualquiera de los cuatro se puede poner a mano y volver al automático
 const BCO_KE_FIJO = { us: { ke: 10, g: 4 }, ar: { ke: 14, g: 3 } };   // si bancos.json todavía no trae el automático
@@ -6205,13 +6252,13 @@ function bcoKeTexto(c) {
   const man = [x.keMan ? 'costo del capital' : '', x.gMan ? 'crecimiento' : ''].filter(Boolean);
   return (man.length ? '<span class="bco-ke-man">A mano: ' + man.join(' y ') + '.</span> ' : '') + 'Automático: ' + auto;
 }
-const BCO_MET = { pb: ['P/VL', 'precio / valor libro'], ptb: ['P/VL tangible', 'precio / valor libro tangible'], roe: ['ROE', 'ROE de 12 meses (Argentina: real)'],
-  rend: ['ROE ÷ P/VL', 'P/VL ajustado por ROE: lo que gana el banco por cada peso que vale; más alto, más barato'],
-  pe: ['P/E', 'P/VL ÷ ROE: el precio sobre la ganancia; más bajo, más barato'] };
+const BCO_MET = { pb: ['P/BV', 'precio / valor libro'], ptb: ['P/BV tangible', 'precio / valor libro tangible'], roe: ['ROE', 'ROE de 12 meses (Argentina: real)'],
+  rend: ['ROE ÷ P/BV', 'P/BV ajustado por ROE: lo que gana el banco por cada peso que vale; más alto, más barato'],
+  pe: ['P/E', 'P/BV ÷ ROE: el precio sobre la ganancia; más bajo, más barato'] };
 const bcoConRoe = m => m === 'rend' || m === 'pe';   // métricas con el ROE elegido (promedio de 3 años o 12 meses)
 const BCO_PE_MIN = 3;   // ROE mínimo (%) para el P/E, como el crecimiento mínimo del PEG
 const bcoPct = m => m === 'roe' || m === 'rend';   // métricas en porcentaje
-// el P/VL ajustado por ROE va como ROE ÷ P/VL (la ganancia sobre el precio, la inversa del P/E): P/VL ÷ ROE explota
+// el P/BV ajustado por ROE va como ROE ÷ P/BV (la ganancia sobre el precio, la inversa del P/E): P/BV ÷ ROE explota
 // cuando el ROE se acerca a cero (Argentina en 2018 y en 2025-2026) y con ROE negativo pierde el sentido; al revés, solo
 // baja. El ROE: el promedio de las semanas de los últimos 3 años (saca el ciclo) o el de 12 meses
 let bcoRoeRef = '3a';
@@ -6221,7 +6268,7 @@ function bcoArr(k, m) {
   if (!bcoConRoe(m)) return o[m] || [];
   const key = k + '|' + m + '|' + bcoRoeRef + '|' + BCO.asOf; if (bcoMemo[key]) return bcoMemo[key];
   const pb = o.pb || [], roe = o.roe || [], n = pb.length, out = new Array(n).fill(null);
-  // ROE ÷ P/VL en %; P/E = P/VL ÷ ROE, solo con ROE de 3% o más
+  // ROE ÷ P/BV en %; P/E = P/BV ÷ ROE, solo con ROE de 3% o más
   const val = (r, p) => m === 'rend' ? r / p : r >= BCO_PE_MIN ? 100 * p / r : null;
   if (bcoRoeRef === '12m') { for (let i = 0; i < n; i++) if (pb[i] > 0 && roe[i] != null) out[i] = val(roe[i], pb[i]); }
   else {
@@ -6235,7 +6282,7 @@ function bcoArr(k, m) {
   }
   return (bcoMemo[key] = out);
 }
-// el ROE de la semana i de ROE ÷ P/VL: el de 12 meses o el promedio de 3 años (o de los que hay)
+// el ROE de la semana i de ROE ÷ P/BV: el de 12 meses o el promedio de 3 años (o de los que hay)
 const bcoRoeTxt = (a, i) => { const y = bcoRoeRef === '12m' || !a || !a.anios ? null : a.anios[i];
   return bcoRoeRef === '12m' || (y != null && y < 1) ? 'ROE 12 meses' : y != null && y < 2.95 ? 'ROE promedio de ' + numAR(y, 1, 1) + ' años' : 'ROE promedio 3 años'; };
 function setBcoRoeRef(r) { bcoRoeRef = r === '12m' ? '12m' : '3a'; bcoGuardar(); renderBancos(); }
@@ -6302,7 +6349,7 @@ function bcoHist(k, m) {
   const now = p[p.length - 1], w = p.filter(x => x.t > now.t - 10 * YR_S).map(x => x.v), s = w.slice().sort((a, b) => a - b);
   return { pct: w.filter(v => v <= now.v).length / w.length, med: s[Math.floor(s.length / 2)], desde: new Date(p.find(x => x.t > now.t - 10 * YR_S).t * 1000).getUTCFullYear() };
 }
-// P/VL que corresponde a un ROE con costo del capital Ke y crecimiento g (descuento de dividendos, con lo que no se
+// P/BV que corresponde a un ROE con costo del capital Ke y crecimiento g (descuento de dividendos, con lo que no se
 // reparte reinvertido al mismo ROE): (ROE − g) / (Ke − g). El ROE que paga el precio es la cuenta al revés.
 const bcoJusto = (roe, p) => roe == null ? null : (roe - p.g) / (p.ke - p.g);
 const bcoImpl = (pb, p) => pb == null ? null : p.g + pb * (p.ke - p.g);
@@ -6375,11 +6422,11 @@ function renderBancos() {
     if (S) { S.innerHTML = '<optgroup label="Grupos">' + ['ar', 'us', 'usDiv', 'usReg'].map(op).join('') + '</optgroup><optgroup label="Argentina">' + ar.map(op).join('') + '</optgroup><optgroup label="EE.UU.">' + us.map(op).join('') + '</optgroup>';
       if (!bcoObj(bcoFoco)) bcoFoco = 'ar'; S.value = bcoFoco; } }
   const sec = (t, P, nota) => '<tr class="bco-sec"><td colspan="11">' + t + ' <span>' + nota + ' Costo del capital ' + numAR(P.ke, 1, 1) + '%' + (P.keMan ? ' (a mano)' : P.auto ? '' : ' (fijo)') + ' y crecimiento ' + numAR(P.g, 1, 1) + '%' + (P.gMan ? ' (a mano)' : '') + '.</span></td></tr>';
-  tb.innerHTML = '<table class="ov-tbl sect-tbl bco-tbl"><thead><tr><th>Banco</th><th title="Capitalización / patrimonio de los comunes">P/VL</th><th title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/VL tangible</th>'
+  tb.innerHTML = '<table class="ov-tbl sect-tbl bco-tbl"><thead><tr><th>Banco</th><th title="Capitalización / patrimonio de los comunes">P/BV</th><th title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/BV tangible</th>'
     + '<th title="Resultado de los comunes de 12 meses / patrimonio promedio">ROE 12 meses</th><th title="Resultado del último trimestre por 4 / patrimonio promedio del trimestre">ROE del trimestre</th>'
-    + '<th title="El ROE de largo plazo que hace falta para que este P/VL sea el que corresponde: crecimiento + P/VL × (costo del capital − crecimiento)">ROE que paga el precio</th>'
-    + '<th title="(ROE de 12 meses − crecimiento) / (costo del capital − crecimiento)">P/VL que da el ROE 12 meses</th><th title="(ROE del trimestre − crecimiento) / (costo del capital − crecimiento)">P/VL que da el ROE del trimestre</th>'
-    + '<th title="Qué parte de las semanas de los últimos 10 años (o desde el primer dato) tuvo un P/VL menor o igual al de hoy">Percentil P/VL</th><th title="Mediana del P/VL de los últimos 10 años (o desde el primer dato)">Mediana P/VL</th><th>Balance</th></tr></thead><tbody>'
+    + '<th title="El ROE de largo plazo que hace falta para que este P/BV sea el que corresponde: crecimiento + P/BV × (costo del capital − crecimiento)">ROE que paga el precio</th>'
+    + '<th title="(ROE de 12 meses − crecimiento) / (costo del capital − crecimiento)">P/BV que da el ROE 12 meses</th><th title="(ROE del trimestre − crecimiento) / (costo del capital − crecimiento)">P/BV que da el ROE del trimestre</th>'
+    + '<th title="Qué parte de las semanas de los últimos 10 años (o desde el primer dato) tuvo un P/BV menor o igual al de hoy">Percentil P/BV</th><th title="Mediana del P/BV de los últimos 10 años (o desde el primer dato)">Mediana P/BV</th><th>Balance</th></tr></thead><tbody>'
     + sec('Argentina', BCO_KE.ar, 'ROE real (balances con ajuste por inflación); costo del capital y crecimiento, reales.')
     + fila('ar', 'sect-idx') + ar.map(k => fila(k, 'sect-sub')).join('')
     + sec('EE.UU.', BCO_KE.us, 'ROE nominal; costo del capital y crecimiento, nominales.')
@@ -6387,7 +6434,7 @@ function renderBancos() {
     + '</tbody></table>';
   const err = Object.keys(BCO.errores || {});
   document.getElementById('bcoTblNote').innerHTML = (bcoView === 'banda' ? 'Tocá una fila para ver su banda móvil. ' : 'Tocá una fila para sumarla al gráfico o sacarla. ') + 'El agregado argentino es Galicia, Macro, BBVA y Supervielle, con historia desde 2000: antes de los 20-F, el balance mensual del BCRA (Macro desde 2004; Supervielle cotiza desde 2016). Patagonia e Hipotecario, que no presentan 20-F, van con el balance mensual del BCRA hasta hoy; Valores, desde 2023. '
-    + 'Percentil y mediana del P/VL contra los últimos 10 años (o desde el primer dato). * ROE del último ejercicio: a ese banco le faltan trimestres para el de 12 meses.'
+    + 'Percentil y mediana del P/BV contra los últimos 10 años (o desde el primer dato). * ROE del último ejercicio: a ese banco le faltan trimestres para el de 12 meses.'
     + (err.length ? ' Sin datos hoy: ' + err.join(', ') + '.' : '');
   drawBcoChart(); drawBcoScatter(); renderBcoMora();
 }
@@ -6425,21 +6472,21 @@ function bcoNotaAr(k) {
     : k === 'ar' ? 'hasta 2016, el balance mensual del BCRA de cada banco (en Galicia, el del banco); después, ' : '';
   const salto = k === 'ar' || (h && h.hasta < '2017-06');
   return 'En Argentina: ' + antes + 'un balance por año hasta 2024 (los 20-F) y uno por trimestre desde 2025.'
-    + (salto ? ' En marzo de 2017 el valor libro pasa al 20-F en NIIF reexpresado, más alto que el balance local sin ajuste: el P/VL baja de golpe.' : '');
+    + (salto ? ' En marzo de 2017 el valor libro pasa al 20-F en NIIF reexpresado, más alto que el balance local sin ajuste: el P/BV baja de golpe.' : '');
 }
-const bcoNotaPe = () => 'P/E = P/VL ÷ ROE: el precio sobre la ganancia del banco, la misma cuenta que ROE ÷ P/VL dada vuelta. '
+const bcoNotaPe = () => 'P/E = P/BV ÷ ROE: el precio sobre la ganancia del banco, la misma cuenta que ROE ÷ P/BV dada vuelta. '
   + (bcoRoeRef === '3a' ? 'Con el ROE promedio de las semanas de los últimos 3 años (mientras no hay 3 años, el de los que hay). ' : 'Con el ROE de 12 meses. ')
   + 'Con ROE menor a 3% no hay dato, como el PEG con crecimiento menor a 3%: el P/E explota cuando la ganancia se acerca a cero. En Argentina el ROE es real.';
-const bcoNotaRend = () => 'ROE ÷ P/VL es el P/VL ajustado por la rentabilidad: lo que gana el banco por cada peso que vale en bolsa (la inversa del P/E). Un P/VL bajo con un ROE igual de bajo no sale barato acá. '
+const bcoNotaRend = () => 'ROE ÷ P/BV es el P/BV ajustado por la rentabilidad: lo que gana el banco por cada peso que vale en bolsa (la inversa del P/E). Un P/BV bajo con un ROE igual de bajo no sale barato acá. '
   + (bcoRoeRef === '3a' ? 'Con el ROE promedio de las semanas de los últimos 3 años, para sacar el ciclo (mientras no hay 3 años de ROE, el de los que hay). ' : 'Con el ROE de 12 meses: muestra el último año, con sus pérdidas o ganancias extraordinarias. ')
-  + 'Se divide así y no al revés porque P/VL ÷ ROE explota cuando el ROE se acerca a cero. En Argentina el ROE es real.';
+  + 'Se divide así y no al revés porque P/BV ÷ ROE explota cuando el ROE se acerca a cero. En Argentina el ROE es real.';
 // banda móvil de un grupo o un banco: la métrica semanal con su media y ±1σ y ±2σ, en múltiplo o, para un banco, en
-// precio (cada banda × el valor libro por acción de esa semana: precio / P/VL)
+// precio (cada banda × el valor libro por acción de esa semana: precio / P/BV)
 function drawBcoBand(hover) {
   const cv = document.getElementById('bcoCanvas'); if (!cv || !BCO) return;
   if (!bcoObj(bcoFoco)) bcoFoco = 'ar';
   const k = bcoFoco, m = bcoMetric, b = BCO.bancos[k], roe = bcoPct(m), inv = m === 'rend';
-  // múltiplo o precio: solo para un banco y con P/VL (un grupo no tiene precio)
+  // múltiplo o precio: solo para un banco y con P/BV (un grupo no tiene precio)
   const conEje = !!b && (m === 'pb' || m === 'ptb') && Array.isArray(b.precio);
   document.getElementById('bcoEjeBtns').style.display = conEje ? '' : 'none';
   const precio = bcoEje === 'precio' && conEje;
@@ -6513,8 +6560,8 @@ function drawBcoBand(hover) {
     const B = bands[hover], z = B && B.sd > 0 ? (a[hover] - B.mu) / B.sd : null;
     tip.innerHTML = '<div class="pebg-tooltip-date">' + new Date(bcoT(hover) * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) + '</div>'
       + '<div>' + M[0] + ' ' + fmtM(a[hover]) + (precio && b.precio[hover] ? ', precio ' + fmtP(b.precio[hover]) : '') + '</div>'
-      + (inv && pbA[hover] > 0 ? '<div>' + bcoRoeTxt(a, hover) + ' ' + numAR(a[hover] * pbA[hover], 1, 1) + '% ÷ P/VL ' + numAR(pbA[hover], 2, 2) + 'x</div>' : '')
-      + (m === 'pe' && pbA[hover] > 0 ? '<div>P/VL ' + numAR(pbA[hover], 2, 2) + 'x ÷ ' + bcoRoeTxt(a, hover) + ' ' + numAR(100 * pbA[hover] / a[hover], 1, 1) + '%</div>' : '')
+      + (inv && pbA[hover] > 0 ? '<div>' + bcoRoeTxt(a, hover) + ' ' + numAR(a[hover] * pbA[hover], 1, 1) + '% ÷ P/BV ' + numAR(pbA[hover], 2, 2) + 'x</div>' : '')
+      + (m === 'pe' && pbA[hover] > 0 ? '<div>P/BV ' + numAR(pbA[hover], 2, 2) + 'x ÷ ' + bcoRoeTxt(a, hover) + ' ' + numAR(100 * pbA[hover] / a[hover], 1, 1) + '%</div>' : '')
       + (B ? '<div>Media ' + fmtM(B.mu) + ', σ ' + fmtM(B.sd) + '</div><div>Z ' + (z >= 0 ? '+' : '−') + numAR(Math.abs(z), 2, 2) + 'σ</div>'
         + (B.relleno ? '<div class="bco-tip-nota">Media del primer año de datos</div>' : B.corto && B.anios < bcoWin - 0.05 ? '<div class="bco-tip-nota">Media de ' + numAR(B.anios, 1, 1) + ' años: todavía no hay ' + bcoWin + '</div>' : '') : '<div>Sin historia suficiente para la banda</div>');
     tip.style.display = 'block'; tip.style.left = Math.min(x + 12, W - 200) + 'px'; tip.style.top = '8px';
@@ -6530,8 +6577,8 @@ function drawBcoBand(hover) {
   const blk = (l, v, sub, cls = '', col = '') => '<div class="pebg-stat-block"><div class="pebg-stat-lbl">' + l + '</div><div class="pebg-stat-val ' + cls + '"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</div><div class="pebg-stat-sub">' + sub + '</div></div>';
   const lado = z == null || m === 'roe' ? '' : (inv ? -z : z) < -1 ? 'pp' : (inv ? -z : z) > 1 ? 'pn' : '';
   const veredicto = z == null || m === 'roe' ? '' : (inv ? -z : z) < -1 ? 'barato' : (inv ? -z : z) > 1 ? 'caro' : 'justo';
-  let h = blk(M[0] + ' hoy', now == null ? '—' : fmtM(now), inv && pbA[last] > 0 ? bcoRoeTxt(a, last) + ' ' + numAR(now * pbA[last], 1, 1) + '% ÷ P/VL ' + numAR(pbA[last], 2, 2) + 'x'
-      : m === 'pe' && pbA[last] > 0 ? (now == null ? 'ROE menor a 3%' : 'P/VL ' + numAR(pbA[last], 2, 2) + 'x ÷ ' + bcoRoeTxt(a, last) + ' ' + numAR(100 * pbA[last] / now, 1, 1) + '%')
+  let h = blk(M[0] + ' hoy', now == null ? '—' : fmtM(now), inv && pbA[last] > 0 ? bcoRoeTxt(a, last) + ' ' + numAR(now * pbA[last], 1, 1) + '% ÷ P/BV ' + numAR(pbA[last], 2, 2) + 'x'
+      : m === 'pe' && pbA[last] > 0 ? (now == null ? 'ROE menor a 3%' : 'P/BV ' + numAR(pbA[last], 2, 2) + 'x ÷ ' + bcoRoeTxt(a, last) + ' ' + numAR(100 * pbA[last] / now, 1, 1) + '%')
       : 'semana del ' + infDdmmaa(new Date(bcoT(last) * 1000).toISOString().slice(0, 10)))
     + blk('Media ' + bcoWin + 'A', lb ? fmtM(lb.mu) : '—', !lb ? 'falta historia' : lb.anios != null && lb.anios < bcoWin - 0.05 ? 'con ' + numAR(lb.anios, 1, 1) + ' años de datos' : bcoBandT === 'fija' ? 'fija' : 'móvil')
     + blk('Desv. std', lb ? fmtM(lb.sd) : '—', 'σ')
@@ -6540,7 +6587,7 @@ function drawBcoBand(hover) {
   if (b && m !== 'roe' && Array.isArray(b.precio) && lb && b.precio[last] > 0 && now > 0) {
     const px = b.precio[last];
     h += blk('Precio', fmtP(px), b.moneda === 'ARS' ? 'BYMA, en pesos' : 'en dólares');
-    // el precio que pone la métrica en cada banda con el valor libro de hoy (en ROE ÷ P/VL, también con el ROE de hoy)
+    // el precio que pone la métrica en cada banda con el valor libro de hoy (en ROE ÷ P/BV, también con el ROE de hoy)
     [2, 3, 1].forEach(j => { const mj = lb.mult[j], v = mj > 0 ? (inv ? px * now / mj : mj * px / now) : null;
       h += blk('Precio a ' + PE_BAND_LABELS[j], v ? fmtP(v) : 'N/A', v ? M[0] + ' ' + fmtM(mj) + ', ' + (v >= px ? '+' : '−') + Math.abs((v / px - 1) * 100).toFixed(0) + '%' : '', '', v ? cols[j] : ''); });
   }
@@ -6551,7 +6598,7 @@ function drawBcoBand(hover) {
     + (!b && (m === 'pb' || m === 'ptb') ? 'Para verla en precio, elegí un banco: un grupo no tiene precio. ' : '')
     + (BCO.bancos[k]?.pais === 'ar' || k === 'ar' ? bcoNotaAr(k) : 'Cada balance cuenta desde que se presentó a la SEC.');
 }
-// P/VL contra ROE: cada banco y, por país, la línea del P/VL que corresponde a cada ROE con el costo del capital y el
+// P/BV contra ROE: cada banco y, por país, la línea del P/BV que corresponde a cada ROE con el costo del capital y el
 // crecimiento elegidos. Arriba de la línea, el precio pide más ROE que el que tiene; abajo, menos
 function drawBcoScatter(hover) {
   const cv = document.getElementById('bcoScatter'); if (!cv) return;
@@ -6606,7 +6653,7 @@ function drawBcoScatter(hover) {
   if (tip) {
     if (h) {
       const P2 = BCO_KE[h.pais], j = bcoJusto(h.x, P2);
-      tip.innerHTML = '<div class="pebg-tooltip-date">' + h.n + ' (' + h.k + ')</div><div>P/VL ' + numAR(h.y, 2, 2) + 'x</div><div>ROE ' + numAR(h.x, 1, 1) + '%' + (h.pais === 'ar' ? ' real' : '') + '</div>'
+      tip.innerHTML = '<div class="pebg-tooltip-date">' + h.n + ' (' + h.k + ')</div><div>P/BV ' + numAR(h.y, 2, 2) + 'x</div><div>ROE ' + numAR(h.x, 1, 1) + '%' + (h.pais === 'ar' ? ' real' : '') + '</div>'
         + '<div>Con ese ROE corresponde ' + (j > 0 ? numAR(j, 2, 2) + 'x' : 'menos de 0') + '</div><div>El precio paga un ROE de ' + numAR(bcoImpl(h.y, P2), 1, 1) + '%</div>';
       tip.style.display = 'block'; tip.style.left = Math.min(xs(h.x) + 12, W - 190) + 'px'; tip.style.top = Math.max(0, ys(h.y) - 20) + 'px';
     } else tip.style.display = 'none';
@@ -6615,7 +6662,7 @@ function drawBcoScatter(hover) {
     let best = null, bd = 18; for (const p of pts) { const d = Math.hypot(xs(p.x) - mx, ys(p.y) - my); if (d < bd) { bd = d; best = p.k; } }
     if (best !== hover) drawBcoScatter(best); };
   cv.onpointerleave = () => { if (hover) drawBcoScatter(); };
-  document.getElementById('bcoScNote').innerHTML = 'La línea de cada país es el P/VL que corresponde a cada ROE: (ROE − crecimiento) / (costo del capital − crecimiento). Un banco abajo de su línea cotiza por debajo de lo que justifica ese ROE si fuera el de siempre; arriba, por encima. '
+  document.getElementById('bcoScNote').innerHTML = 'La línea de cada país es el P/BV que corresponde a cada ROE: (ROE − crecimiento) / (costo del capital − crecimiento). Un banco abajo de su línea cotiza por debajo de lo que justifica ese ROE si fuera el de siempre; arriba, por encima. '
     + 'La línea punteada fina es 1x. En Argentina el ROE es real, así que van reales el costo del capital y el crecimiento. Pasá el mouse por un punto para ver el detalle.';
 }
 
@@ -6943,22 +6990,22 @@ const INF_CAT = {
   merval: { n: 'S&P Merval (hasta 16/10/26)', g: 'Acciones', u: 'puntos S&P Merval', src: 'Yahoo Finance', load: () => infYahoo('^MERV') },
   msci: { n: 'MSCI MERVAL (base 100.000 el 16/10/26)', g: 'Acciones', u: 'puntos MSCI MERVAL', src: 'BYMA', load: () => infMsci() },
   spx: { n: 'S&P 500', g: 'Acciones', u: 'puntos S&P 500', src: 'Yahoo Finance', load: () => infYahoo('^GSPC') },
-  // bancos (bancos.json, pestaña Bancos): P/VL semanal y ROE de 12 meses, por grupo y de cada banco argentino
-  pvlAr: { n: 'P/VL bancos argentinos', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'pb') },
-  pvlUs: { n: 'P/VL bancos de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'pb') },
-  pvlUsDiv: { n: 'P/VL bancos grandes de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('usDiv', 'pb') },
-  pvlUsReg: { n: 'P/VL bancos regionales de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('usReg', 'pb') },
-  pvltAr: { n: 'P/VL tangible bancos argentinos', g: 'Bancos', u: 'veces el valor libro tangible', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'ptb') },
-  pvltUs: { n: 'P/VL tangible bancos de EE.UU.', g: 'Bancos', u: 'veces el valor libro tangible', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'ptb') },
+  // bancos (bancos.json, pestaña Bancos): P/BV semanal y ROE de 12 meses, por grupo y de cada banco argentino
+  pvlAr: { n: 'P/BV bancos argentinos', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'pb') },
+  pvlUs: { n: 'P/BV bancos de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'pb') },
+  pvlUsDiv: { n: 'P/BV bancos grandes de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('usDiv', 'pb') },
+  pvlUsReg: { n: 'P/BV bancos regionales de EE.UU.', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('usReg', 'pb') },
+  pvltAr: { n: 'P/BV tangible bancos argentinos', g: 'Bancos', u: 'veces el valor libro tangible', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'ptb') },
+  pvltUs: { n: 'P/BV tangible bancos de EE.UU.', g: 'Bancos', u: 'veces el valor libro tangible', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'ptb') },
   roeAr: { n: 'ROE bancos argentinos (real)', g: 'Bancos', u: '%', src: 'SEC y Yahoo Finance', load: () => infBco('ar', 'roe') },
   roeUs: { n: 'ROE bancos de EE.UU. (nominal)', g: 'Bancos', u: '%', src: 'SEC y Yahoo Finance', load: () => infBco('us', 'roe') },
-  pvlGGAL: { n: 'P/VL Galicia', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('GGAL', 'pb') },
-  pvlBMA: { n: 'P/VL Macro', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('BMA', 'pb') },
-  pvlBBAR: { n: 'P/VL BBVA Argentina', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('BBAR', 'pb') },
-  pvlSUPV: { n: 'P/VL Supervielle', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('SUPV', 'pb') },
-  pvlBPAT: { n: 'P/VL Patagonia', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BPAT', 'pb') },
-  pvlBHIP: { n: 'P/VL Hipotecario', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BHIP', 'pb') },
-  pvlVALO: { n: 'P/VL Valores', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('VALO', 'pb') },
+  pvlGGAL: { n: 'P/BV Galicia', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('GGAL', 'pb') },
+  pvlBMA: { n: 'P/BV Macro', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('BMA', 'pb') },
+  pvlBBAR: { n: 'P/BV BBVA Argentina', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('BBAR', 'pb') },
+  pvlSUPV: { n: 'P/BV Supervielle', g: 'Bancos', u: 'veces el valor libro', src: 'SEC y Yahoo Finance', load: () => infBco('SUPV', 'pb') },
+  pvlBPAT: { n: 'P/BV Patagonia', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BPAT', 'pb') },
+  pvlBHIP: { n: 'P/BV Hipotecario', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BHIP', 'pb') },
+  pvlVALO: { n: 'P/BV Valores', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('VALO', 'pb') },
   ibov: { n: 'Bovespa', g: 'Acciones', u: 'puntos Bovespa', src: 'Yahoo Finance', load: () => infYahoo('^BVSP') },
   cau1: { n: 'Caución a 1 día (promedio ponderado)', g: 'Tasas', u: '% TNA', src: 'BYMA', load: () => infCaucion(), nota: 'hay historia desde el 26/02/2026 (BYMA no la publica)' },
   pases1d: { n: 'Pases entre terceros a 1 día', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(150) },
@@ -7056,9 +7103,9 @@ const INF_PRESETS = [
   { id: 'netas', n: 'Reservas brutas y netas', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'resNetas'], trans: 'nivel', period: '2A', t: 'Reservas internacionales brutas y netas' },
   { id: 'netasDes', n: 'Reservas netas: desglose', grupo: 'BCRA', mode: 'serie', keys: ['reservas', 'encajes', 'swapChina', 'resNetas'], trans: 'nivel', period: '1A', t: 'Reservas brutas, encajes, swap con China y reservas netas' },
   { id: 'dinero', n: 'Base monetaria y M2', grupo: 'BCRA', mode: 'serie', keys: ['base', 'm2'], trans: 'nivel', period: '1A', t: 'Base monetaria y M2' },
-  { id: 'bcoPvl', n: 'P/VL: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['pvlAr', 'pvlUs'], trans: 'nivel', period: '5A', t: 'Bancos: precio / valor libro en Argentina y EE.UU.' },
+  { id: 'bcoPvl', n: 'P/BV: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['pvlAr', 'pvlUs'], trans: 'nivel', period: '5A', t: 'Bancos: precio / valor libro en Argentina y EE.UU.' },
   { id: 'bcoRoe', n: 'ROE: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['roeAr', 'roeUs'], trans: 'nivel', period: '5A', t: 'Bancos: ROE de 12 meses en Argentina (real) y EE.UU.' },
-  { id: 'bcoArg', n: 'P/VL de cada banco argentino', grupo: 'Bancos', mode: 'serie', keys: ['pvlGGAL', 'pvlBMA', 'pvlBBAR', 'pvlSUPV'], trans: 'nivel', period: '5A', t: 'Precio / valor libro de los bancos argentinos' },
+  { id: 'bcoArg', n: 'P/BV de cada banco argentino', grupo: 'Bancos', mode: 'serie', keys: ['pvlGGAL', 'pvlBMA', 'pvlBBAR', 'pvlSUPV'], trans: 'nivel', period: '5A', t: 'Precio / valor libro de los bancos argentinos' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
 

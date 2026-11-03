@@ -712,6 +712,29 @@ export function sharesQuarterly(raw, splitFactor, gaap) {
   return [...out.values()].sort((a, b) => a.date - b.date);
 }
 
+// valor libro por acción de cada cierre, para el P/BV: patrimonio de los comunes (StockholdersEquity, que ya no tiene a los
+// minoritarios; si la empresa solo informa el total, menos los minoritarios) menos las preferidas, en la primera
+// presentación de ese balance, sobre las acciones diluidas del trimestre más cercano (las del EPS: ajustadas por splits,
+// así que va con los precios de Yahoo). Negativo si el patrimonio es negativo (recompras): ahí no hay P/BV
+export function bookQuarterly(raw, splitFactor, gaap) {
+  const C = raw?.cd || {};
+  const primero = t => { const m = new Map(); for (const e of C[t] || []) { if (e.start || !e.end || !isFinite(e.val)) continue; const p = m.get(e.end); if (!p || (e.filed || "") < (p.filed || "")) m.set(e.end, e); } return m; };
+  const se = primero("StockholdersEquity"), seT = primero("StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"), mi = primero("MinorityInterest"), pf = primero("PreferredStockValue");
+  const cerca = (m, end) => { const t = Date.parse(end); for (const [k, v] of m) if (Math.abs(Date.parse(k) - t) <= 10 * DAY_MS) return v.val; return null; };
+  const sh = sharesQuarterly(raw, splitFactor, gaap), out = [];
+  for (const end of new Set([...se.keys(), ...seT.keys()])) {
+    let eq = se.get(end)?.val;
+    if (eq == null) eq = seT.get(end).val - (cerca(mi, end) || 0);
+    eq -= cerca(pf, end) || 0;
+    const d = Math.floor(Date.parse(end) / 1000);
+    let s = null, dist = Infinity;
+    for (const x of sh) { const k = Math.abs(x.date - d); if (k < dist) { dist = k; s = x; } }
+    if (!s || dist > 100 * 86400 || !(s.shares > 0)) continue;
+    out.push({ date: d, bvps: +(eq / s.shares).toFixed(4) });
+  }
+  return out.sort((a, b) => a.date - b.date);
+}
+
 // empresas que cambiaron de CIK (reorganización como holding): la historia está en el registro anterior
 export const PREDECESSOR_CIK = { XOM: "0000034088", GOOGL: "0001288776", GOOG: "0001288776" };   // Alphabet: la historia está en Google Inc.
 // EPS informado por otra clase de acción que la que cotiza en el índice: BRK lo publica por acción A (1 A = 1.500 B)
