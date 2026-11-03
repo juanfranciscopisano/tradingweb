@@ -1,4 +1,4 @@
-name: Bancos (P/VL y ROE)
+name: Bancos (P/BV y ROE)
 
 on:
   schedule:
@@ -42,6 +42,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           [ -f bancos.json ] && git add bancos.json
           if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
-          git commit -m "Bancos: P/VL y ROE"
+          git commit -m "Bancos: P/BV y ROE"
           git pull --rebase -X theirs -q
           git push
