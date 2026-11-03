@@ -7,6 +7,8 @@
 //     pesos de su cierre y se lleva a pesos de cada semana con el IPC (indec.json, como en Bancos). El resultado de 12
 //     meses es la suma de los cuatro trimestres (cada uno con su IPC) o, si no están, el del último ejercicio.
 //   - Las que presentan en dólares (YPF y Pampa): precio del ADR en dólares y resultados en dólares por ADR.
+//   - Ternium Argentina (moneda funcional dólar, presenta en pesos al oficial de cada cierre): el balance pasa a dólares
+//     con el oficial de su cierre y a pesos de cada semana con el contado con liquidación.
 //   - Bancos (Galicia, Macro, BBVA, Supervielle y Valores): de bancos.json (el BCRA desde 2000, los 20-F y Yahoo):
 //     valor libro = precio / P/BV y resultado = ROE real × valor libro.
 // Fuentes de los resultados y patrimonios: los 20-F de la SEC (NIIF) de las que tienen ADR, los ejercicios y los
@@ -303,6 +305,7 @@ const precioDe = chart => {
 };
 // tipo de cambio oficial de cada día (argentinadatos: mayorista; si no está, el del BNA): fxAt(t) = el último hasta t
 export const FX_URLS = ["https://api.argentinadatos.com/v1/cotizaciones/dolares/mayorista", "https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial"];
+export const CCL_URL = "https://api.argentinadatos.com/v1/cotizaciones/dolares/contadoconliqui";
 export function fxDe(j) {
   const pts = (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && x.venta > 0).map(x => [tOf(x.fecha), +x.venta]).sort((a, b) => a[0] - b[0]);
   if (pts.length < 100) return null;
@@ -323,7 +326,13 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   let fx = null;
   for (const u of FX_URLS) { try { fx = fxDe(await getJSON(fetchImpl, u, { headers: { "User-Agent": UA, Accept: "application/json" } })); if (fx) break; } catch (e) { log("tipo de cambio: " + u + " " + e.message); } }
   if (!fx) errores.fx = "sin tipo de cambio oficial: todas en pesos con el IPC";
-  const convFX = fx ? (c, t) => fx.at(t) / fx.at(tOf(c) + DAY - 1) : convARS;
+  // con el dólar como moneda funcional, el balance pasa a dólares con el oficial de su cierre (como presenta la empresa) y
+  // a pesos de cada semana con el contado con liquidación, el dólar al que el mercado pone el precio: es el múltiplo de
+  // una cuenta en dólares, como el de un ADR (con el oficial, la brecha de 2020 a 2025 inflaba el P/BV de Ternium a 1,6)
+  let ccl = null;
+  try { ccl = fxDe(await getJSON(fetchImpl, CCL_URL, { headers: { "User-Agent": UA, Accept: "application/json" } })); } catch (e) { log("contado con liquidación: " + e.message); }
+  if (fx && !ccl) errores.ccl = "sin contado con liquidación: el dólar funcional va con el oficial";
+  const convFX = fx ? (c, t) => (ccl || fx).at(t) / fx.at(tOf(c) + DAY - 1) : convARS;
   // SEC
   const secH = { headers: { "User-Agent": secUA, Accept: "application/json" } };
   let lastSec = 0;
@@ -425,7 +434,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   if (MERVAL.filter(c => empresas[c.s]).length < 12) throw new Error(`Faltan empresas: ${JSON.stringify(errores)}`);
-  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult }, tc: fx ? { desde: fx.desde, hasta: fx.hasta } : null,
+  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult }, tc: fx ? { desde: fx.desde, hasta: fx.hasta } : null, ccl: ccl ? { desde: ccl.desde, hasta: ccl.hasta } : null,
     fuente: "SEC (20-F), Yahoo Finance, INDEC y bancos.json", merval: MERVAL.map(c => c.s).filter(s => empresas[s]), extra: EXTRA.map(c => c.s).filter(s => empresas[s]),
     indice: { n: "MSCI MERVAL", desde: "2026-10-19", fuente: "La Nación, 17/10/2026" }, empresas, errores };
   await writeFile(new URL("empresas.json", root), JSON.stringify(out));

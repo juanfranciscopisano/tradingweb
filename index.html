@@ -276,6 +276,30 @@ td:nth-child(-n+4){text-align:left}
 .pebg-panel{width:270px;flex-shrink:0;background:var(--surf2);border-left:1px solid var(--line);padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column}
 .pebg-panel-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .pebg-panel-sub{font-size:12px;color:var(--muted);margin-bottom:6px}
+/* panel del Merval: a la izquierda del gráfico de P/E histórico */
+.pebg-side{width:300px;flex-shrink:0;background:var(--surf2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.pebg-side-hd{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}
+.pebg-side-tit{font-size:14px;font-weight:700;color:var(--ink);flex:1}
+.pebg-side-sub{font-size:11.5px;color:var(--muted);line-height:1.45;padding:0 14px 9px}
+.pebg-side-cols,.pebg-side-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 40px 44px 40px;column-gap:4px;align-items:center}
+.pebg-side-cols{padding:5px 14px;font-size:10.5px;color:var(--faint);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pebg-side-cols span{text-align:right;white-space:nowrap}
+.pebg-side-cols span:first-child{text-align:left}
+.pebg-side-cols .ps-h{cursor:pointer}
+.pebg-side-cols .ps-h:hover{color:var(--ink)}
+.pebg-side-cols .ps-h.active{color:var(--ink);font-weight:700}
+.pebg-side-list{flex:1;overflow-y:auto;min-height:0}
+.pebg-side-row{width:100%;padding:6px 14px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.pebg-side-row:hover{background:var(--surf)}
+.pebg-side-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pebg-side-row.is-cur{background:var(--accent-soft)}
+.ps-id{display:flex;flex-direction:column;min-width:0}
+.ps-tk{font-size:12.5px;font-weight:700;color:var(--ink)}
+.ps-nm{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-v{font-size:12.5px;color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ps-p{font-size:11.5px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.pebg-side-ft{font-size:10.5px;color:var(--faint);padding:8px 14px;border-top:1px solid var(--line);line-height:1.45}
+.pebg-side-msg{font-size:12px;color:var(--muted);padding:12px 14px}
 .pebg-eps-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .pebg-eps-row-lbl{font-size:12.5px;color:var(--ink2);flex:1;min-width:0}
 .pebg-eps-row-pub{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
@@ -636,6 +660,7 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .arg-body{padding:12px var(--side);gap:12px}
   .arg-chart-box{height:240px}
   #pebgOuter{flex-direction:column}
+  .pebg-side{width:auto;max-height:260px;border-right:0;border-bottom:1px solid var(--line)}
   .pebg-panel{width:100%;border-left:none;border-top:1px solid var(--line);max-height:240px}
   .pebg-legend{display:none!important}
   .pebg-hint{display:none}
@@ -1197,6 +1222,7 @@ function checkPwd(){
     <span id="pebgEpsNote" class="pebg-note" style="cursor:help"></span>
     <span id="pebgStatus" class="pebg-note"></span>
     <div class="cs"></div>
+    <button class="btn btn-ghost" onclick="togglePebgSide()" id="pebgSideBtn" aria-pressed="true" title="Mostrar u ocultar el panel con las acciones del Merval">Merval</button>
     <button class="btn btn-ghost" onclick="togglePebgPanel()" id="pebgPersonalizar">Editar EPS</button>
   </div>
   <div class="pebg-stats-bar" id="pebgStatsBar" style="display:none">
@@ -1284,6 +1310,13 @@ function checkPwd(){
     <details id="pebgEstDet"><summary id="pebgEstSum">Resultados y estimaciones</summary><div class="pebg-norm-body" id="pebgEstBody"></div></details>
   </div>
   <div id="pebgOuter">
+    <aside class="pebg-side" id="pebgSide" aria-label="Acciones del Merval">
+      <div class="pebg-side-hd"><div class="pebg-side-tit">Merval</div><span class="pebg-note" id="pebgSideFecha"></span></div>
+      <div class="pebg-side-sub" id="pebgSideSub"></div>
+      <div class="pebg-side-cols" id="pebgSideCols"><span>Empresa</span><span class="ps-h" data-o="pe" onclick="setPebgSideSort('pe')" title="Ordenar por el P/E contra su mediana: la más por debajo, arriba">P/E</span><span>vs med.</span><span class="ps-h" data-o="pbv" onclick="setPebgSideSort('pbv')" title="Ordenar por el P/BV contra su mediana: la más por debajo, arriba">P/BV</span><span>vs med.</span></div>
+      <div class="pebg-side-list" id="pebgSideList" role="list"></div>
+      <div class="pebg-side-ft" id="pebgSideFt"></div>
+    </aside>
     <div id="pebgContainer">
      <div id="pebgMain">
       <canvas id="pebgCanvas" aria-label="Gráfico de bandas: arrastrá para mover, rueda o pellizco para acercar o alejar, doble clic para volver"></canvas>
@@ -1623,13 +1656,14 @@ function switchTab(t) {
   if(t==='chart') initChart(currentSym);
   if(t==='heatmap') renderHeatmap();
   if(t==='compare') initCompareTab();
-  if(t==='pebg') { if(!pebgLoaded) loadPebg(); }
+  if(t==='pebg') { initPebgSide(); if(!pebgLoaded) loadPebg(); }
   if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
   if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
   if(t==='fondos') { if(!FCI) loadFondos(); else renderFondos(); }
   if(t==='sect') { if(!MULT) loadSect(); else renderSect(); }
-  if(t==='bancos') { if(!BCO) loadBancosTab(); else renderBancos(); }
+  // bancos.json puede venir bajado de P/E histórico (el P/BV de los bancos argentinos): bcra.json se pide igual
+  if(t==='bancos') { if(!BCO) loadBancosTab(); else { renderBancos(); if (typeof BCRA !== 'undefined' && !BCRA) loadBcra().then(renderBcoMora); } }
   if(t==='calendar') initCalendar();
   if(t==='informe') initInforme();
   if(t==='metodo') renderMetodo();
@@ -3637,6 +3671,12 @@ function pbvSerie(data) {
     }
     return out;
   }
+  // los que tienen el EPS cargado a mano (Pampa y NU): valor libro por ADR, semanal, de empresas.json
+  const e = empUsd(data.symbol);
+  if (e) {
+    for (const p of prices) { const b = empAt(e, e.bv, p.date); if (b > 0) out.push({ date: p.date, close: p.close, pe: p.close / b, eps4q: b, g: null, q: null, semanal: true, emp: true }); }
+    if (out.length) return out;
+  }
   const B = typeof BCO !== 'undefined' && BCO && BCO.bancos[data.symbol];
   if (!B || !B.pb) return out;
   const semana = t => Math.floor((t - BCO.monday0) / 604800) - BCO.week0;
@@ -3644,6 +3684,153 @@ function pbvSerie(data) {
   return out;
 }
 
+// ── EMPRESAS DEL MERVAL (empresas.json, lo arma la Action de empresas todos los días hábiles) ──
+// Las 19 del MSCI MERVAL, semana a semana: precio, resultado por acción de 12 meses y valor libro por acción en la moneda
+// de esa semana (pesos llevados con el IPC; Ternium, cuya moneda funcional es el dólar, en dólares al oficial de cada
+// cierre y a pesos de cada semana con el contado con liquidación; YPF y Pampa en dólares por ADR). Bancos: de bancos.json, con P/E = P/BV ÷ ROE real. P/E histórico toma el precio diario del
+// backend y divide por el dato de su semana; el panel del Merval usa las semanas. Pampa sigue por el backend con su EPS
+// trimestral cargado a mano (el mismo resultado que acá) y de acá toma el valor libro.
+let EMP = null, empLoading = null, empLive = {}, empLiveT = 0;
+function loadEmpresas() {
+  if (!empLoading) empLoading = fetch('empresas.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)
+    .then(j => { EMP = j && j.empresas && Array.isArray(j.merval) ? j : null; if (!EMP) empLoading = null; return EMP; })
+    .catch(() => { empLoading = null; return null; });
+  return empLoading;
+}
+const EMP_BACKEND = ['PAMP'];
+// clave de empresas.json para un ticker de BYMA o su ADR (YPF, TGS, CRESY...); Pampa no, va por el backend
+function empKey(sym) {
+  if (!EMP || !sym) return null;
+  const s = String(sym).toUpperCase().replace(/\.BA$/, '');
+  const k = EMP.merval.includes(s) ? s : EMP.merval.find(x => EMP.empresas[x].adr === s);
+  return k && !EMP_BACKEND.includes(k) ? k : null;
+}
+// empresa en dólares de empresas.json para un ticker que va por el backend (PAM, NU): para su valor libro
+function empUsd(sym) {
+  if (!EMP || !sym) return null;
+  const k = [...EMP.merval, ...(EMP.extra || [])].find(x => x === sym || EMP.empresas[x].adr === sym);
+  return k && EMP.empresas[k].moneda === 'USD' ? EMP.empresas[k] : null;
+}
+// dato de la semana de t; después de la última semana, el último (hasta 17 días)
+function empAt(e, arr, t) {
+  const i = Math.floor((t - EMP.monday0) / 604800) - e.w0;
+  if (i < 0) return null;
+  if (i < arr.length) return arr[i];
+  return t - (EMP.monday0 + (e.w0 + arr.length - 1) * 604800) <= 17 * 86400 ? arr[arr.length - 1] : null;
+}
+// serie diaria de una empresa argentina: precio de cada día / resultado (o valor libro) de su semana, en los mismos campos
+// que el P/E de EE.UU. (pe: el múltiplo; eps4q: el dato por acción) para usar las mismas bandas y el mismo gráfico
+function arSerie(data, pbv) {
+  const e = data.ar, arr = pbv ? e.bv : e.eps, out = [];
+  for (const p of (data.prices || []).slice().sort((a, b) => a.date - b.date)) {
+    const d = empAt(e, arr, p.date);
+    if (d > 0 && p.close > 0) out.push({ date: p.date, close: p.close, pe: p.close / d, eps4q: d, g: null, q: null, semanal: true });
+  }
+  return out;
+}
+const EMP_MON = { 'pesos': 'en pesos de cada semana (IPC)', 'dólar funcional': 'en dólares al oficial de cada cierre y a pesos de cada semana con el contado con liquidación (su moneda funcional es el dólar)', 'dólares': 'en dólares por ADR' };
+function empMonTxt(e) { return e.banco ? 'de la pestaña Bancos' : EMP_MON[e.regimen] || ''; }
+// P/E histórico de una empresa argentina: precios diarios del backend (el ADR si va en dólares) y datos de empresas.json
+async function loadPebgAr(k, pedido, previo, req) {
+  const e = EMP.empresas[k], status = document.getElementById('pebgStatus');
+  try {
+    const r = await fetch(BASE_URL + '/api/pebg?symbol=' + encodeURIComponent(e.px));
+    const d0 = await r.json();
+    if (req !== pebgReq) return;
+    const prices = (d0.prices || []).filter(p => p.close > 0);
+    if (!prices.length) throw new Error(d0.error || 'sin precios');
+    const d = { symbol: k, arKey: k, ar: e, shortName: e.n, prices, eps: [], epsNorm: [], bv: [], splits: [], histNote: null,
+      currentPrice: d0.currentPrice || prices[prices.length - 1].close,
+      fw: { eps: null, raw: null, fpe: null, fpe12: null, eps2: null, fpe2: null, q: null, metodo: null } };
+    if (pedido !== k) d.alias = pedido;
+    pebgData = d;
+    if (pebgPanelOpen) togglePebgPanel();
+    renderPebg(d);
+  } catch (err) {
+    if (req !== pebgReq) return;
+    status.textContent = pedido + ': error (' + err.message + ')' + (previo ? '. Sigue ' + previo + '.' : '.');
+    if (previo) document.getElementById('pebgSym').value = previo;
+  }
+}
+
+// panel del Merval: múltiplo de hoy de cada una y su percentil en su propia historia (los años del período del gráfico)
+let pebgSideOn = true, pebgSideSort = 'pe';
+try { pebgSideOn = localStorage.getItem('pebgSide') !== 'off' && window.innerWidth > 768; if (localStorage.getItem('pebgSideSort') === 'pbv') pebgSideSort = 'pbv'; } catch (e) {}
+function togglePebgSide() {
+  pebgSideOn = !pebgSideOn;
+  try { localStorage.setItem('pebgSide', pebgSideOn ? 'on' : 'off'); } catch (e) {}
+  renderPebgSide();
+  if (pebgData) renderPebg(pebgData);
+}
+function setPebgSideSort(o) {
+  pebgSideSort = o === 'pbv' ? 'pbv' : 'pe';
+  try { localStorage.setItem('pebgSideSort', pebgSideSort); } catch (e) {}
+  renderPebgSide();
+}
+// múltiplo de hoy (precio en vivo si está) y su lugar en las semanas de los últimos N años: percentil (parte de las
+// semanas con un múltiplo igual o menor), media, desvío y z. Con menos de 30 semanas con dato, sin percentil
+function empStats(k, pbv, years = pebgYears) {
+  const e = EMP.empresas[k], arr = pbv ? e.bv : e.eps, n = e.c.length;
+  const lastD = arr[n - 1], live = empLive[e.px], px = live > 0 ? live : e.c[n - 1];
+  const cur = lastD > 0 && px > 0 ? px / lastD : null;
+  const vals = [];
+  for (let i = Math.max(0, n - Math.round(years * 52.18)); i < n; i++) { const p = e.c[i], d = arr[i]; if (p > 0 && d > 0 && p / d < 500) vals.push(p / d); }
+  const out = { cur, neg: lastD != null && lastD <= 0, yrs: vals.length / 52.18, pct: null, live: live > 0 };
+  if (cur == null || vals.length < 30) return out;
+  const mu = vals.reduce((a, b) => a + b, 0) / vals.length, sd = Math.sqrt(vals.reduce((a, b) => a + (b - mu) ** 2, 0) / vals.length);
+  vals.sort((a, b) => a - b);
+  return { ...out, pct: vals.filter(v => v <= cur).length / vals.length, mu, sd, z: sd > 0 ? (cur - mu) / sd : null, med: vals[Math.floor(vals.length / 2)], min: vals[0], max: vals[vals.length - 1] };
+}
+async function empLivePx() {
+  if (!EMP || Date.now() - empLiveT < 120000) return;
+  empLiveT = Date.now();
+  const syms = [...new Set(EMP.merval.map(k => EMP.empresas[k].px))];
+  try {
+    const j = await fetch(BASE_URL + '/api/spark?symbols=' + syms.map(encodeURIComponent).join(',') + '&range=1d&interval=1d').then(r => r.json());
+    for (const x of (j && j.spark && j.spark.result) || []) { const q = x.quote, p = q && q.regularMarketPrice; if (p > 0) empLive[x.symbol] = p; }
+    renderPebgSide();
+  } catch (e) { /* sin precio en vivo: el cierre de empresas.json */ }
+}
+function initPebgSide() {
+  renderPebgSide();
+  loadEmpresas().then(() => { renderPebgSide(); empLivePx(); });
+}
+function renderPebgSide() {
+  const box = document.getElementById('pebgSide'), btn = document.getElementById('pebgSideBtn');
+  if (btn) btn.setAttribute('aria-pressed', pebgSideOn);
+  if (!box) return;
+  box.style.display = pebgSideOn ? 'flex' : 'none';
+  if (!pebgSideOn) return;
+  const list = document.getElementById('pebgSideList'), sub = document.getElementById('pebgSideSub'), ft = document.getElementById('pebgSideFt');
+  document.querySelectorAll('#pebgSideCols .ps-h').forEach(x => x.classList.toggle('active', x.dataset.o === pebgSideSort));
+  if (!EMP) { list.innerHTML = '<div class="pebg-side-msg">' + (empLoading ? 'Cargando…' : 'No se pudo bajar empresas.json.') + '</div>'; return; }
+  const yrs = pebgYears === 1 ? 'del último año' : 'de los últimos ' + pebgYears + ' años';
+  sub.textContent = 'Múltiplo de hoy y cuánto está de su mediana ' + yrs + ' (el período del gráfico). Verde: en el 20% más bajo de ese lapso; rojo, en el 20% más alto. Clic para verla.';
+  const f = new Date(EMP.asOf); document.getElementById('pebgSideFecha').textContent = 'al ' + f.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+  const rows = EMP.merval.map(k => ({ k, e: EMP.empresas[k], pe: empStats(k, false), pb: empStats(k, true) }));
+  const vsMed = x => x.pct != null && x.med > 0 ? x.cur / x.med - 1 : null;
+  const key = r => { const x = pebgSideSort === 'pbv' ? r.pb : r.pe, d = vsMed(x); return d != null ? d : x.neg ? 1e9 : 1e8; };
+  rows.sort((a, b) => key(a) - key(b) || a.k.localeCompare(b.k));
+  const curK = pebgData ? (pebgData.arKey || EMP.merval.find(x => x === pebgData.symbol || EMP.empresas[x].adr === pebgData.symbol)) : null;
+  const fx = (v, pbv) => v == null ? '—' : (pbv || v < 10 ? v.toFixed(pbv ? 2 : 1) : v < 100 ? v.toFixed(1) : Math.round(v)) + 'x';
+  const cls = x => x.pct == null ? '' : x.pct <= 0.2 ? ' pp' : x.pct >= 0.8 ? ' pn' : '';
+  const dTxt = d => d == null ? '' : (d >= 0 ? '+' : '−') + Math.abs(Math.round(d * 100)) + '%';
+  const tip = (x, M, pbv) => x.cur == null ? M + ': ' + (x.neg ? 'resultado de 12 meses negativo' : 'sin dato') :
+    M + ' ' + fx(x.cur, pbv) + (x.pct == null ? ', poca historia' : ': percentil ' + Math.round(x.pct * 100) + ', mediana ' + fx(x.med, pbv) + ', media ' + fx(x.mu, pbv) + ', rango ' + fx(x.min, pbv) + ' a ' + fx(x.max, pbv) + (x.z != null ? ', z ' + (x.z >= 0 ? '+' : '−') + Math.abs(x.z).toFixed(2) + 'σ' : '') + ' en ' + x.yrs.toFixed(1).replace('.', ',') + ' años de semanas con dato');
+  list.innerHTML = rows.map(r => {
+    const pe = r.pe, pb = r.pb, nm = r.e.n.replace(/</g, '&lt;');
+    const title = r.e.n + (r.e.adr && r.e.adr !== r.k ? ' (ADR ' + r.e.adr + ')' : '') + '. ' + tip(pe, 'P/E', false) + '. ' + tip(pb, 'P/BV', true) + '. Valores ' + empMonTxt(r.e) + '.';
+    return '<button type="button" role="listitem" class="pebg-side-row' + (r.k === curK ? ' is-cur' : '') + '" onclick="openPebgFor(\'' + r.k + '\')" title="' + title.replace(/"/g, '&quot;') + '">'
+      + '<span class="ps-id"><span class="ps-tk">' + r.k + '</span><span class="ps-nm">' + nm + '</span></span>'
+      + '<span class="ps-v">' + (pe.cur != null ? fx(pe.cur, false) : pe.neg ? 'neg.' : '—') + '</span><span class="ps-p' + cls(pe) + '">' + dTxt(vsMed(pe)) + '</span>'
+      + '<span class="ps-v">' + (pb.cur != null ? fx(pb.cur, true) : '—') + '</span><span class="ps-p' + cls(pb) + '">' + dTxt(vsMed(pb)) + '</span></button>';
+  }).join('');
+  const nLive = rows.filter(r => r.pe.live || r.pb.live).length;
+  ft.innerHTML = 'Las 19 del MSCI MERVAL. ' + (nLive ? 'Precio en vivo (Yahoo); ' : 'Precio del último cierre; ') + 'resultados y balances de los 20-F de la SEC y de Yahoo, en pesos con el IPC. Bancos, de la pestaña Bancos (P/E = P/BV ÷ ROE real). <a class="sect-link" onclick="openMetodo(\'merval\')">Cómo se calcula</a>';
+}
+
+// precio con signo $: desde 1.000, sin decimales y con separador de miles (las argentinas cotizan en miles de pesos)
+function pxTxt(v, dec = 2) { const a = Math.abs(v); return (v < 0 ? '−' : '') + '$' + (a >= 1000 ? Math.round(a).toLocaleString('en-US') : a.toFixed(dec)); }
 function peStats(win) {
   const peW = win.map(p => p.pe).filter(x => x > 0 && x < 500);
   const mu = peW.reduce((a, b) => a + b, 0) / peW.length;
@@ -3892,6 +4079,7 @@ const bandColors = () => BAND_VARS.map(cssVar);
 const CANVAS_FONT = "'Archivo', system-ui, sans-serif";
 
 function togglePebgPanel() {
+  if (!pebgPanelOpen && pebgData && pebgData.ar) return;
   pebgPanelOpen = !pebgPanelOpen;
   document.getElementById('pebgPanel').style.display = pebgPanelOpen ? 'flex' : 'none';
   document.getElementById('pebgPersonalizar').textContent = pebgPanelOpen ? 'Cerrar' : 'Editar EPS';
@@ -3958,7 +4146,7 @@ function setPebgPeriod(el) {
   pebgYears = parseInt(el.dataset.y);
   try { localStorage.setItem('pebgYears', String(pebgYears)); } catch (e) {}
   syncPebgPeriodBtns();
-  if (pebgData) renderPebg(pebgData);
+  if (pebgData) renderPebg(pebgData); else renderPebgSide();
 }
 
 // acciones de BYMA que cotizan en Nueva York con otro ticker: el P/E sale del ADR (EPS de la SEC, en dólares por ADR;
@@ -3975,6 +4163,11 @@ async function loadPebg() {
   loadSpx();
   if (pebgCmp.on) loadMultiples();
   const req = ++pebgReq; // si llega una respuesta vieja después de otra más nueva, se descarta
+  // las del Merval (menos Pampa, que va por el backend): P/E y P/BV de empresas.json con el precio diario del backend
+  await loadEmpresas();
+  if (req !== pebgReq) return;
+  const ak = empKey(pedido);
+  if (ak) { document.getElementById('pebgSym').value = ak; return loadPebgAr(ak, pedido, previo, req); }
   try {
     const r = await fetch(BASE_URL + '/api/pebg?symbol=' + encodeURIComponent(sym));
     const d = await r.json();
@@ -3994,15 +4187,37 @@ async function loadPebg() {
     if (req !== pebgReq) return;
     // si no está, queda el gráfico que había con su ticker en la caja, para que no parezca del pedido
     const noEsta = /404|not found|sin precios/i.test(e.message);
-    status.textContent = pedido + (noEsta ? ': no está en Yahoo con ese nombre (de BYMA, solo las que tienen ADR en Nueva York)' : ': error (' + e.message + ')')
+    status.textContent = pedido + (noEsta ? ': no está en Yahoo con ese nombre (de BYMA: las del Merval y las que tienen ADR en Nueva York)' : ': error (' + e.message + ')')
       + (previo ? '. Sigue ' + previo + '.' : '.');
     if (previo) document.getElementById('pebgSym').value = previo;
   }
 }
 
+// estado de una argentina: de qué cierre es el dato (corto, para que la barra entre en un renglón); en el título, de
+// dónde sale y en qué moneda
+function arStatus(data, pbv, full) {
+  const e = data.ar, u = e.ult || {}, fd = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '';
+  const tipo = { '4 trimestres': 'cuatro trimestres', 'ejercicio': 'ejercicio', '12 meses': '12 meses de Yahoo' };
+  let t = e.n + (data.alias && data.alias !== data.symbol && data.alias !== e.n ? ' (' + data.alias + ')' : '') + ', ';
+  if (e.banco) t += pbv ? 'P/BV de la pestaña Bancos' : 'P/BV ÷ ROE de la pestaña Bancos';
+  else if (pbv) t += u.balance ? 'balance al ' + fd(u.balance.cierre) : 'sin balance';
+  else t += u.resultado ? (tipo[u.resultado.tipo] || u.resultado.tipo) + ' al ' + fd(u.resultado.cierre) : 'sin resultado';
+  if (full.length < 10) t += '. Sin ' + (pbv ? 'P/BV' : 'P/E: resultado de 12 meses negativo o sin datos');
+  const tip = (e.banco ? (pbv ? 'P/BV semanal de la pestaña Bancos.' : 'P/E = P/BV ÷ ROE real, de la pestaña Bancos.')
+    : (pbv ? 'Valor libro' : 'Resultado de 12 meses') + ' ' + empMonTxt(e) + '.') + ' Precio ' + (e.moneda === 'USD' ? 'del ADR ' + e.px + ', en dólares.' : 'de BYMA, en pesos.');
+  return { t, tip };
+}
 function updEpsNote(d) {
   const el = document.getElementById('pebgEpsNote');
   if (!el) return;
+  if (d && d.ar) {
+    const e = d.ar;
+    el.textContent = e.banco ? 'Bancos: BCRA, 20-F y Yahoo' : e.regimen === 'dólares' ? 'Resultados en US$ por ADR' : e.regimen === 'dólar funcional' ? 'En dólares, al contado con liquidación' : 'Pesos de cada semana (IPC)';
+    el.title = e.banco ? 'Valor libro = precio / P/BV y resultado = ROE real × valor libro, semana a semana, de bancos.json (balance mensual del BCRA desde 2000, los 20-F y Yahoo).'
+      : 'Resultado de 12 meses (cuatro trimestres o el último ejercicio) y valor libro de los 20-F de la SEC y de Yahoo, cada uno desde su presentación (el plazo de la CNV). '
+        + (e.regimen === 'pesos' ? 'Cada balance está en pesos de su cierre (NIC 29) y se lleva a pesos de cada semana con el IPC; el patrimonio anterior a la NIC 29 no se usa.' : e.regimen === 'dólar funcional' ? 'Su moneda funcional es el dólar: presenta en pesos al oficial de cada cierre. El balance vuelve a dólares con ese oficial y pasa a pesos de cada semana con el contado con liquidación, el dólar con el que el mercado pone el precio: es el múltiplo de una cuenta en dólares, como el de un ADR.' : 'Presenta en dólares: precio del ADR y resultados por ADR.');
+    return;
+  }
   if (pebgMetric === 'pbv') { el.textContent = 'P/BV: patrimonio de los comunes de la SEC'; el.title = 'Valor libro por acción de cada cierre trimestral: patrimonio de los accionistas comunes (sin preferidas ni minoritarios) / acciones diluidas del trimestre. Cada balance cuenta desde el día siguiente a su presentación.'; return; }
   if (epsMode !== 'norm') { el.textContent = ''; el.title = ''; return; }
   if (!hasNorm(d)) {
@@ -4307,30 +4522,41 @@ function fixedBands(full, years, metric) {
 }
 
 function renderPebg(data) {
-  const eps = pebgEps(data), pbv = pebgMetric === 'pbv';
-  const full = pbv ? pbvSerie(data) : buildPESeries(data, eps);
+  // las argentinas del Merval (data.ar, de empresas.json): P/E y P/BV de los balances, sin PEG, normalizado ni EPS a mano
+  const ar = !!data.ar, metric = ar && pebgMetric === 'peg' ? 'pe' : pebgMetric;
+  const eps = ar ? [] : pebgEps(data), pbv = metric === 'pbv';
+  const full = ar ? arSerie(data, pbv) : pbv ? pbvSerie(data) : buildPESeries(data, eps);
   const status = document.getElementById('pebgStatus');
   updEpsNote(data);
   syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns();
-  document.querySelectorAll('#view-pebg .eps-mode-btns').forEach(e => { e.classList.toggle('is-off', pbv); e.title = pbv ? 'Contable y normalizado son para el P/E: el P/BV va con el valor libro' : ''; });
+  document.querySelectorAll('#pebgMetricBtns .pebg-period').forEach(x => {
+    if (x.dataset.k === 'peg') { x.classList.toggle('is-off', ar); x.title = ar ? 'El PEG usa el crecimiento del EPS trimestral de la SEC: para las argentinas hay P/E y P/BV' : ''; }
+    if (ar && pebgMetric === 'peg') x.classList.toggle('active', x.dataset.k === 'pe');
+  });
+  { const b = document.getElementById('pebgPersonalizar'); if (b) { b.disabled = ar; b.title = ar ? 'Las argentinas van con los balances de empresas.json' : ''; } }
+  document.querySelectorAll('#view-pebg .eps-mode-btns').forEach(e => { e.classList.toggle('is-off', pbv || ar); e.title = ar ? 'Para las argentinas, el resultado contable de los balances: no hay normalizado' : pbv ? 'Contable y normalizado son para el P/E: el P/BV va con el valor libro' : ''; });
   status.title = data.histNote || '';
-  const nBv = (data.bv || []).length, bcoAr = pbv && !nBv && full.length && full[0].semanal;
-  // sin balance de la SEC, el P/BV de la pestaña Bancos (bancos argentinos): bancos.json se baja la primera vez
-  if (pbv && !nBv && !BCO && !data.bcoPedido) { data.bcoPedido = true; loadBancos().then(j => { if (j && pebgData === data && pebgMetric === 'pbv') renderPebg(data); }); }
-  status.textContent = (data.shortName || data.symbol) + ', ' + (pbv ? (nBv ? nBv + ' balances con valor libro' : bcoAr ? 'P/BV semanal de la pestaña Bancos' : 'sin valor libro en la SEC') : eps.length + ' trim. EPS')
+  const nBv = (data.bv || []).length, empBv = !ar && pbv && !nBv && full.length && full[0].emp, bcoAr = !ar && pbv && !nBv && full.length && full[0].semanal && !empBv;
+  // sin balance de la SEC: el valor libro de empresas.json (Pampa y NU, con el EPS a mano) o el P/BV de la pestaña
+  // Bancos (bancos argentinos). Los dos archivos se bajan la primera vez
+  if (!ar && pbv && !nBv && !EMP && !data.empPedido) { data.empPedido = true; loadEmpresas().then(j => { if (j && pebgData === data && pebgMetric === 'pbv') renderPebg(data); }); }
+  if (!ar && pbv && !nBv && !BCO && !data.bcoPedido) { data.bcoPedido = true; loadBancos().then(j => { if (j && pebgData === data && pebgMetric === 'pbv') renderPebg(data); }); }
+  if (ar) { const a = arStatus(data, pbv, full); status.textContent = a.t; status.title = a.tip; }
+  else status.textContent = (data.shortName || data.symbol) + ', ' + (pbv ? (nBv ? nBv + ' balances con valor libro' : empBv ? 'valor libro por ADR de los 20-F y de Yahoo' : bcoAr ? 'P/BV semanal de la pestaña Bancos' : 'sin valor libro en la SEC') : eps.length + ' trim. EPS')
     + (!pbv && data.histNote ? ' (los más viejos, de los 10-K)' : '')
     + (!pbv && pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '')
     + (data.alias ? '. ' + data.alias + ' va con ' + data.symbol + ', el ADR: ' + (pbv ? 'mismo P/BV' : 'EPS de la SEC en dólares, mismo P/E') : '');
+  renderPebgSide();
   if (full.length < 10) {
-    status.textContent += pbv ? '. Sin P/BV: ' + (nBv ? 'patrimonio negativo o balances viejos' : 'la SEC no tiene su balance en dólares (presenta 20-F en NIIF)') : '. Pocos datos para el gráfico';
-    if (pbv) { pebgView = null; document.getElementById('pebgStatsBar').style.display = 'none'; const c = document.getElementById('pebgCanvas'); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+    if (!ar) status.textContent += pbv ? '. Sin P/BV: ' + (nBv ? 'patrimonio negativo o balances viejos' : 'la SEC no tiene su balance en dólares (presenta 20-F en NIIF)') : '. Pocos datos para el gráfico';
+    if (pbv || ar) { pebgView = null; document.getElementById('pebgStatsBar').style.display = 'none'; const c = document.getElementById('pebgCanvas'); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
     return;
   }
-  const peg = pebgMetric === 'peg';
+  const peg = metric === 'peg';
   if (peg) addPeg(full);
   const fija = pebgBand === 'fija';
   const trim = !fija && pebgRecalc === 'trim';
-  let bands = fija ? fixedBands(full, pebgYears, pbv ? 'pe' : pebgMetric) : rollingBands(full, pebgYears, pbv ? 'pe' : pebgMetric);
+  let bands = fija ? fixedBands(full, pebgYears, pbv ? 'pe' : metric) : rollingBands(full, pebgYears, pbv ? 'pe' : metric);
   if (trim) bands = holdQuarterly(full, bands);
   full.forEach((p, i) => {
     const b = bands[i];
@@ -4342,7 +4568,7 @@ function renderPebg(data) {
   const lb = last.band;
   const norm = epsMode === 'norm' && hasNorm(data);
   const fmtX = v => v.toFixed(peg || pbv ? 2 : 1) + (peg ? '' : 'x');
-  const fmtP = v => '$' + Number(v).toFixed(2);
+  const fmtP = v => pxTxt(Number(v));
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const winLbl = pebgYears + 'A';
   const histY = (last.date - full[0].date) / YR_S;
@@ -4352,7 +4578,7 @@ function renderPebg(data) {
   const bandSub = !lb ? histHint : fija ? (histY < pebgYears - 0.25 ? 'fija, ' + histY.toFixed(1).replace('.', ',') + ' años de datos' : 'fija, últimos ' + yrsTxt(pebgYears)) : trim ? 'móvil, al ' + new Date(lb.asOf * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : 'móvil, ' + yrsTxt(pebgYears);
   const z = document.getElementById('psStat3'), M = pbv ? 'P/BV' : 'P/E';
   if (!peg) {
-    set('psLbl0', M + ' actual'); set('psStat0', fmtX(last.pe)); set('psSub0', pbv ? (last.semanal ? 'Bancos, semanal' : 'último balance') : norm ? 'TTM normalizado' : 'TTM contable');
+    set('psLbl0', M + ' actual'); set('psStat0', fmtX(last.pe)); set('psSub0', ar ? (pbv ? 'último balance' : '12 meses, contable') : pbv ? (last.emp ? 'último balance' : last.semanal ? 'Bancos, semanal' : 'último balance') : norm ? 'TTM normalizado' : 'TTM contable');
     set('psLbl1', M + ' media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
     set('psLbl2', 'Desv. std'); set('psStat2', lb ? lb.sd.toFixed(pbv ? 2 : 1) + 'x' : '—'); set('psSub2', 'σ');
     const zs = lb && lb.sd > 0 ? (last.pe - lb.center) / lb.sd : null;
@@ -4360,7 +4586,9 @@ function renderPebg(data) {
     z.textContent = zs != null ? (zs >= 0 ? '+' : '') + zs.toFixed(2) + 'σ' : '—';
     z.className = 'pebg-stat-val ' + (zs == null ? '' : zs < -1 ? 'pp' : zs > 1 ? 'pn' : '');
     set('psSub3', zs == null ? '' : zs < -1 ? 'barato' : zs > 1 ? 'caro' : 'justo');
-    if (pbv) { set('psLbl5', 'BV por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', last.semanal ? 'implícito: precio / P/BV' : 'de los comunes, ' + new Date(last.q * 1000).toLocaleDateString('es-AR', { month: 'short', year: '2-digit', timeZone: 'UTC' })); }
+    const enMon = ar ? (data.ar.moneda === 'USD' ? 'US$ por ADR' : 'pesos de hoy') : '';
+    if (ar) { set('psLbl5', pbv ? 'BV por acción' : 'Resultado por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (pbv ? 'último balance, ' : '12 meses, ') + enMon); }
+    else if (pbv) { set('psLbl5', 'BV por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', last.emp ? 'por ADR, 20-F y Yahoo' : last.semanal ? 'implícito: precio / P/BV' : 'de los comunes, ' + new Date(last.q * 1000).toLocaleDateString('es-AR', { month: 'short', year: '2-digit', timeZone: 'UTC' })); }
     else { set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.'); }
   } else {
     set('psLbl0', 'PEG actual'); set('psStat0', last.peg != null ? fmtX(last.peg) : '—'); set('psSub0', 'P/E ÷ crec. EPS 5A');
@@ -4376,7 +4604,7 @@ function renderPebg(data) {
   { const a = ampInfo(), v = document.getElementById('psStatMkt'), b = document.getElementById('psMktBlock');
     if (v) { v.textContent = a ? (a.cae ? 'Cayendo' : 'Normal') : '—'; v.classList.toggle('amp-cae', !!(a && a.cae)); }
     set('psSubMkt', a ? a.txt + ', 3A' : 'sin dato');
-    if (b) b.title = a ? a.tip : 'Sin la amplitud del proceso de múltiplos.'; }
+    if (b) { b.title = a ? a.tip : 'Sin la amplitud del proceso de múltiplos.'; b.style.display = ar ? 'none' : ''; } }
   set('psStat4', fmtP(data.currentPrice || last.close));
   const lastQ = (eps.find(e => e.date === last.q) || eps[eps.length - 1])?.eps;   // el último que entra en el P/E de hoy
   const peAnual = (lastQ && lastQ > 0) ? last.close / (lastQ * 4) : null;
@@ -4402,7 +4630,7 @@ function renderPebg(data) {
         + (w2 ? ' (' + w2 + ')' : '') + '. Yahoo da consenso hasta el ejercicio siguiente; lo que pasa de ahí va con el mismo trimestre un año antes por el crecimiento del ejercicio siguiente contra el en curso (sin los extraordinarios ya informados), acotado entre −20% y 25%'
         + (fw.eps2 && fw.g2 != null && fw.ext2 > 0.05 ? '. Acá: ' + fw2ExtTxt(fw.ext2, fw.g2) : '')
         + (fw.eps && fw.eps2 ? '. Crecimiento contra los cuatro trimestres anteriores: ' + ((fw.eps2 / fw.eps - 1) * 100).toFixed(1).replace('.', ',') + '%' : '') + '.'; } }
-  ['psStatAnual', 'psStatFwd', 'psStatFw2'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg || pbv ? 'none' : ''; });
+  ['psStatAnual', 'psStatFwd', 'psStatFw2'].forEach(id => { const el = document.getElementById(id); if (el) el.parentElement.style.display = peg || pbv || ar ? 'none' : ''; });
 
   const cols = bandColors(), labels = peg ? PEG_BAND_LABELS : PE_BAND_LABELS;
   // precio implícito en cada banda: múltiplo × EPS de hoy, o × EPS esperado con la proyección prendida
@@ -4426,7 +4654,7 @@ function renderPebg(data) {
     if (!pebgZoomKey.startsWith(data.symbol + '|')) { pebgMeasure = null; const m = document.getElementById('pebgMeasure'); if (m) m.style.display = 'none'; }
     pebgZoom = null; pebgYExp = 0; pebgZoomKey = zKey;
   }
-  pebgView = { full, metric: pebgMetric, labels, years: pebgYears, fija, trim, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
+  pebgView = { full, metric, ar, labels, years: pebgYears, fija, trim, chartYears: fija ? pebgYears : (CHART_YEARS[pebgYears] || pebgYears),
     prices: (data.prices || []).slice().sort((a, b) => a.date - b.date) };
   drawPebgChart();
 }
@@ -4789,7 +5017,7 @@ function drawPebgChart(hoverT) {
   }
   const num = v => v >= 10 ? v.toFixed(0) : v >= 1 ? String(+v.toFixed(1)) : String(+v.toFixed(2));
   const money = mv ? (v => num(v) + (peg ? '' : 'x'))
-    : (v => '$' + (Math.abs(v - Math.round(v)) < 1e-9 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)));
+    : (v => v >= 1000 ? pxTxt(v) : '$' + (Math.abs(v - Math.round(v)) < 1e-9 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)));
   ctx.save();
   ctx.beginPath(); ctx.rect(0, PAD.top - 1, W, cH + 2); ctx.clip();
   ctx.font = `12px ${CANVAS_FONT}`; ctx.lineWidth = 1;
@@ -4926,12 +5154,12 @@ function drawPebgChart(hoverT) {
   }
   // etiquetas en el borde derecho: valores en la última fecha visible
   const lastS = series.filter(visible).pop() || null, lastV = yOf(lineVis[lineVis.length - 1]);
-  const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(pbv ? 2 : 1) + 'x') : (v => '$' + v.toFixed(1));
+  const endFmt = mv ? (v => peg ? v.toFixed(2) : v.toFixed(pbv ? 2 : 1) + 'x') : (v => pxTxt(v, 1));
   // con la proyección, el borde derecho es dentro de un año: van los valores proyectados
   const labelsEnd = (fwOn
-    ? [{ y: yS(fwLine), txt: mv ? endFmt(fwLine) : '$' + fwLine.toFixed(2), col: C.price, bold: true }]
+    ? [{ y: yS(fwLine), txt: mv ? endFmt(fwLine) : pxTxt(fwLine), col: C.price, bold: true }]
       .concat([0, 1, 2, 3, 4].filter(b => fwB[b] >= yMin && fwB[b] <= yMax).map(b => ({ y: yS(fwB[b]), txt: endFmt(fwB[b]), col: cols[b] })))
-    : [{ y: yS(lastV), txt: mv ? endFmt(lastV) : '$' + lastV.toFixed(2), col: C.price, bold: true }]
+    : [{ y: yS(lastV), txt: mv ? endFmt(lastV) : pxTxt(lastV), col: C.price, bold: true }]
       .concat([0, 1, 2, 3, 4].filter(b => lastS && has(lastS, b) && bandOf(lastS, b) <= yMax * 1.5).map(b => ({ y: yS(bandOf(lastS, b)), txt: endFmt(bandOf(lastS, b)), col: cols[b] }))))
     .sort((a, b) => a.y - b.y);
   for (let i = 1; i < labelsEnd.length; i++) if (labelsEnd[i].y - labelsEnd[i - 1].y < 15) labelsEnd[i].y = labelsEnd[i - 1].y + 15;
@@ -4998,15 +5226,15 @@ function drawPebgChart(hoverT) {
       const hasPE = sp != null && Math.abs(sp.date - pp.date) <= 4 * 86400;
       document.getElementById('pebgTipDate').textContent =
         new Date(pp.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
-      const rows = [{ color: C.price, label: 'Precio', val: '$' + pp.close.toFixed(2) }];
+      const rows = [{ color: C.price, label: 'Precio', val: pxTxt(pp.close) }];
       if (hasPE) {
         rows.push({ color: '', label: pbv ? 'P/BV' : 'P/E TTM', val: sp.pe.toFixed(pbv ? 2 : 1) + 'x' });
         if (peg) {
           rows.push({ color: '', label: 'PEG', val: sp.peg != null ? sp.peg.toFixed(2) : 'n/d' });
           rows.push({ color: '', label: 'Crec. EPS 5A', val: sp.g != null ? (sp.g * 100).toFixed(1) + '%' : 'n/d' });
-        } else rows.push({ color: '', label: pbv ? 'BV por acción' : 'EPS TTM', val: '$' + sp.eps4q.toFixed(2) });
+        } else rows.push({ color: '', label: pbv ? 'BV por acción' : pebgView.ar ? 'Resultado por acción' : 'EPS TTM', val: pxTxt(sp.eps4q) });
         if (sp.q) rows.push({ color: '', label: 'Último trimestre', val: new Date(sp.q * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' }) });
-        if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(pbv ? 2 : 1) + 'x') + ')', val: '$' + sp.bandPx[b].toFixed(2) }); });
+        if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(pbv ? 2 : 1) + 'x') + ')', val: pxTxt(sp.bandPx[b]) }); });
         else rows.push({ color: '', label: 'Bandas', val: 'sin historia suficiente' });
       } else rows.push({ color: '', label: pbv ? 'P/BV' : 'P/E TTM', val: pp.date < full[0].date ? (pbv ? 'sin balance de esa fecha' : 'sin EPS de esa fecha') : (pbv ? 'sin dato (patrimonio ≤ 0)' : 'sin dato (EPS ≤ 0)') });
       document.getElementById('pebgTipRows').innerHTML = rows.map(r =>
@@ -5114,8 +5342,8 @@ function drawPebgCmp(geo) {
   if (btn) btn.setAttribute('aria-pressed', pebgCmp.on);
   if (!box) return;
   // la comparación con el índice y el sector es de P/E: con P/BV no se dibuja
-  const soloPe = pebgView && pebgView.metric === 'pbv';
-  if (btn) { if (!btn.dataset.tit) btn.dataset.tit = btn.title; btn.classList.toggle('is-off', !!soloPe); btn.title = soloPe ? 'La comparación con el S&P 500 y el sector es de P/E' : btn.dataset.tit; }
+  const soloPe = pebgView && (pebgView.metric === 'pbv' || pebgView.ar);
+  if (btn) { if (!btn.dataset.tit) btn.dataset.tit = btn.title; btn.classList.toggle('is-off', !!soloPe); btn.title = soloPe ? (pebgView.ar ? 'La comparación con el S&P 500 y el sector es para las de EE.UU.' : 'La comparación con el S&P 500 y el sector es de P/E') : btn.dataset.tit; }
   box.style.display = pebgCmp.on && !soloPe ? 'flex' : 'none';
   if (!pebgCmp.on || !pebgView || soloPe) return;
   const cv = document.getElementById('pebgCmpCanvas'), holder = cv.parentElement;
@@ -5291,6 +5519,8 @@ const METODO = [
       { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar; argentinadatos también para el riesgo país. Bancos: la Información de entidades financieras del BCRA (un archivo por mes desde 2001, con el balance de cada entidad desde 1996 y sus indicadores), que baja un workflow cada día y la página lee en bcra.json.' },
       { d: 'INDEC: su API (Catálogo API-INDEC, en beta) para IPC por región y apertura, EMAE, industria, precios mayoristas, salarios, canastas y mercado de trabajo. Pide token, así que la consulta un workflow y la página lee indec.json.' },
       { d: 'Fondos: la API de FCI de 1816, con los datos diarios que publica la CAFCI (patrimonio, suscripciones netas, fees, facturación y valor de la cuotaparte de cada clase).' },
+      { d: 'Empresas argentinas del Merval (panel del Merval y P/E histórico): 20-F de la SEC con NIIF de las que tienen ADR, los balances de Yahoo, el IPC del INDEC y el dólar oficial y el contado con liquidación de argentinadatos. Bancos, de la pestaña Bancos.',
+        p: 'Las que no tienen ADR no presentan en la SEC; la CNV y BYMA publican los balances en PDF.' },
       { d: 'Cuándo se actualiza cada cosa.',
         p: 'Los fondos se bajan cada día hábil a las 10:17 y a las 19:17 de Buenos Aires (la CAFCI publica el día anterior a la mañana). Los fundamentals (market cap, Fw P/E, P/BV) se bajan cada día hábil a las 18:47 de Buenos Aires; los múltiplos y el EPS por empresa, a las 19:17. GitHub a veces demora las corridas programadas un par de horas. En la página, el Resumen se refresca cada minuto, y el backend guarda los precios entre 45 y 60 segundos, P/E histórico 30 minutos y lo de la SEC 12 horas.' },
     ] },
@@ -5446,6 +5676,32 @@ const METODO = [
         p: 'El S&P 500 queda siempre primero como referencia. En la vista de sectores, las subindustrias se ordenan dentro de cada sector; la vista Subindustrias las pone todas en una sola lista para compararlas entre sectores.' },
       { d: 'Empresas del grupo elegido: peso por capitalización, P/E contable y normalizado, Fw P/E y la parte de la ganancia del grupo que pone cada una.',
         p: 'Usa el mismo precio y el mismo EPS que arman el P/E del grupo, así que se puede ver qué lo explica: una empresa que pesa mucho en capitalización y poco en ganancias lo sube (hoy, en Application Software, PLTR es 29% de la capitalización y 6% de las ganancias). Clic en una empresa abre su P/E histórico.' },
+    ] },
+
+  { id: 'merval', t: 'Panel del Merval y las argentinas en P/E histórico',
+    i: 'Lo arma todos los días hábiles a las 20:11 la Action de empresas (empresas.json), después de la de Bancos.',
+    items: [
+      { d: 'Empresas: las 19 del MSCI MERVAL, el índice que calcula MSCI desde el 19/10/2026 (entró Cresud y salieron Telecom y Comercial del Plata). Clic en una la abre en P/E histórico; también se puede escribir su ticker de BYMA o el del ADR (YPF, TGS, CRESY).',
+        p: 'Es el panel líder que mira el mercado. Las que salieron del índice no tienen el proceso diario.' },
+      { d: 'Precio: el de BYMA en pesos (Yahoo). YPF y Pampa van con el ADR en dólares, porque presentan sus balances en dólares.',
+        p: 'El múltiplo es el mismo con la acción local o con el ADR; lo que cambia es la moneda del gráfico de precio.' },
+      { d: 'Resultado de 12 meses: la suma de los últimos cuatro trimestres presentados o, si no están los cuatro, el último ejercicio. Trimestres: los últimos cinco de Yahoo; para atrás, los 20-F de la SEC (desde 2015) de las que tienen ADR y los ejercicios de Yahoo (desde 2022) del resto. Si a un ejercicio le falta un trimestre, sale del ejercicio menos los otros tres.',
+        p: 'Cada balance cuenta desde su presentación, con el plazo de la CNV (42 días el trimestre, 70 el ejercicio) o la fecha de la SEC si es anterior: el múltiplo de cada día usa lo que se sabía ese día. Un resultado o un balance de más de 470 días ya no se usa.' },
+      { d: 'Inflación: en pesos, cada balance está en pesos de su cierre (NIC 29) y se lleva a pesos de cada semana con el IPC; en el resultado de 12 meses, cada trimestre con el suyo.',
+        p: 'Dividir el precio de hoy por un resultado en pesos de hace un año infla el P/E en la inflación del año.',
+        x: 'La suma nominal de los cuatro trimestres, que es lo que hace Yahoo: con 30% de inflación anual da un P/E cerca de 15% más alto.' },
+      { d: 'Valor libro en pesos: solo desde los balances con NIC 29 (septiembre de 2018 en adelante).',
+        p: 'Antes el patrimonio era a costo histórico: el de TGS a fin de 2017 era la sexta parte del reexpresado, y su P/BV daba 14 contra 2 después. Mezclar las dos épocas desarma la media.' },
+      { d: 'Ternium Argentina va en dólares, no con el IPC: su moneda funcional es el dólar y presenta en pesos al oficial de cada cierre. El balance vuelve a dólares con ese oficial y pasa a pesos de cada semana con el contado con liquidación.',
+        p: 'Su patrimonio en dólares da 4,75, 4,33, 4,94 y 4,68 mil millones a fin de 2022 a 2025; en pesos constantes salta con cada devaluación. El contado con liquidación es el dólar con que el mercado pone el precio, así que el múltiplo es el de una cuenta en dólares, como el de un ADR. El proceso compara cuál serie es más pareja en cada empresa y lo deja en el registro; Ternium está fijada a mano porque la prueba sola no la separa.',
+        x: 'El oficial para pasar a pesos: con la brecha de 2020 a 2025, el valor libro en pesos quedaba inflado contra el precio y el P/BV de Ternium daba 1,6 a mediados de 2023 contra 0,85 en dólares.' },
+      { d: 'Controles: el 20-F contra Yahoo del mismo ejercicio (el patrimonio coincide a menos de 1% en 2022 a 2024 llevado a la misma moneda); un resultado del 20-F de menos de 0,05% del patrimonio se descarta por escala (TGS cargó 2018 a 2020 en miles) y vale el de la presentación siguiente; las acciones que Yahoo ya da ajustadas por splits no se vuelven a ajustar (BYMA); y el precio anterior a un salto de más de cuatro veces sin split no se usa (Ecogas, al empezar a cotizar).' },
+      { d: 'Bancos (Galicia, Macro, BBVA, Supervielle y Valores): de la pestaña Bancos. Valor libro = precio / P/BV; resultado = ROE real × valor libro, así que el P/E es P/BV ÷ ROE.',
+        o: 'Usa el ROE sobre el patrimonio promedio y el valor libro de hoy: con un patrimonio que crece rápido, el P/E queda un poco más bajo que capitalización / resultado.' },
+      { d: 'Pampa sigue en P/E histórico con su EPS trimestral cargado a mano de los 6-K (el mismo resultado que usa el panel) y toma de acá el valor libro por ADR para el P/BV: 20-F anuales y los trimestres de Yahoo. NU, igual.' },
+      { d: 'Panel: múltiplo de hoy (precio en vivo sobre el último dato) y su percentil en las semanas de los últimos N años, el período elegido en el gráfico: p0 es el más bajo de ese lapso. Verde hasta p20, rojo desde p80. Clic en P/E o P/BV ordena de la más barata contra su historia a la más cara. Pasando el mouse: mediana, media, rango y z.',
+        p: 'Percentil y no z: los P/E argentinos van de 3 a 300 cuando el resultado, con el ajuste por inflación, queda cerca de cero, y la media y el desvío se los lleva un pico. El percentil no.',
+        o: 'Las que no tienen ADR tienen poca historia (los ejercicios de Yahoo arrancan en 2022) y con menos de 30 semanas con dato no hay percentil. El resultado con NIC 29 incluye el resultado por exposición a la inflación, que mueve el P/E sin que cambie el negocio; el P/BV es más estable para comparar contra la historia.' },
     ] },
 
   { id: 'bancos', t: 'Pestaña Bancos: precio / valor libro y ROE',
