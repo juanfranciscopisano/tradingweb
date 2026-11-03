@@ -99,8 +99,13 @@ const pubDe = (end, filed, lag) => { const t = tOf(end), f = filed ? tOf(filed) 
 export function usDesdeEdgar(facts) {
   const g = facts?.facts?.["us-gaap"] || {}, dei = facts?.facts?.dei || {};
   const I = (tags, unit = "USD") => unir(tags.map(t => instantes(g[t], unit)));
-  const eq = I(["StockholdersEquity"]), pref = I(["PreferredStockValue", "PreferredStockValueOutstanding", "PreferredStockIncludingAdditionalPaidInCapitalNetOfDiscount", "PreferredStockIncludingAdditionalPaidInCapital"]);
-  const gw = I(["Goodwill"]), intg = I(["IntangibleAssetsNetExcludingGoodwill", "OtherIntangibleAssetsNet", "FiniteLivedIntangibleAssetsNet"]), gwi = I(["IntangibleAssetsNetIncludingGoodwill"]);
+  // patrimonio de la controlante; si no lo etiqueta (Truist), el total con minoritarios menos los minoritarios
+  const eqNci = I(["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"]), mi = I(["MinorityInterest"]);
+  const eq = unir([I(["StockholdersEquity"]), new Map([...eqNci].map(([k, v]) => [k, { ...v, val: v.val - (mi.get(k)?.val || 0) }]))]);
+  const pref = I(["PreferredStockValue", "PreferredStockValueOutstanding", "PreferredStockIncludingAdditionalPaidInCapitalNetOfDiscount", "PreferredStockIncludingAdditionalPaidInCapital"]);
+  const gw = I(["Goodwill"]), intg = I(["IntangibleAssetsNetExcludingGoodwill", "OtherIntangibleAssetsNet"]), gwi = I(["IntangibleAssetsNetIncludingGoodwill"]);
+  const fin = I(["FiniteLivedIntangibleAssetsNet"]), indef = I(["IndefiniteLivedIntangibleAssetsExcludingGoodwill"]);
+  for (const k of new Set([...fin.keys(), ...indef.keys()])) if (!intg.has(k)) intg.set(k, { val: (fin.get(k)?.val || 0) + (indef.get(k)?.val || 0) });
   const shBal = I(["CommonStockSharesOutstanding"], "shares"), shDei = instantes(dei.EntityCommonStockSharesOutstanding, "shares");
   const shProm = new Map((g.WeightedAverageNumberOfDilutedSharesOutstanding?.units?.shares || []).filter(e => e.start && e.end && dias(e.start, e.end) >= 80 && dias(e.start, e.end) <= 100).map(e => [e.end, { val: e.val }]));
   // resultado de los comunes: el informado; si no, resultado neto menos dividendos de preferidas
@@ -110,11 +115,14 @@ export function usDesdeEdgar(facts) {
   for (const x of niTot) if (!niMap.has(x.end)) niMap.set(x.end, { end: x.end, val: x.val - (pd.get(x.end) || 0), filed: x.filed });
   ni = [...niMap.values()].sort((a, b) => a.end.localeCompare(b.end));
   const near = (m, end, tol = 10) => { if (m.has(end)) return m.get(end); for (const [k, v] of m) if (Math.abs(dias(k, end)) <= tol) return v; return null; };
+  // preferidas e intangibles que solo van en el 10-K (Bank of America informa las preferidas una vez por año): el último
+  // saldo de hasta un año antes (cambian poco)
+  const previo = (m, end) => { const v = near(m, end); if (v) return v; let best = null; for (const [k, x] of m) { const d = dias(k, end); if (d > 0 && d <= 400 && (!best || k > best.k)) best = { k, ...x }; } return best; };
   const bal = [];
   for (const [end, e] of [...eq].sort((a, b) => a[0].localeCompare(b[0]))) {
     if (!/^10-[KQ]/.test(e.form || "") || e.val <= 0) continue;
-    const p = near(pref, end)?.val || 0, ce = e.val - p;
-    const gwv = near(gw, end)?.val, inv = near(intg, end)?.val, comb = near(gwi, end)?.val;
+    const p = previo(pref, end)?.val || 0, ce = e.val - p;
+    const gwv = previo(gw, end)?.val, inv = previo(intg, end)?.val, comb = previo(gwi, end)?.val;
     const intang = gwv != null || inv != null ? (gwv || 0) + (inv || 0) : comb || 0;
     // acciones: las del balance; si no, las de la carátula (a la fecha de presentación, hasta 120 días después)
     let sh = near(shBal, end)?.val;
@@ -123,7 +131,20 @@ export function usDesdeEdgar(facts) {
     if (!sh) sh = near(shProm, end)?.val;
     bal.push({ end, c: end, bv: ce, tbv: ce - intang, sh: sh || null, pub: pubDe(end, e.filed, /^10-K/.test(e.form) ? 60 : 45), src: "SEC" });
   }
-  return { bal, roe: roeTrimestral(bal, ni, () => 1) };
+  return { bal, ni, roe: roeTrimestral(bal, ni, () => 1) };
+}
+// trimestres de Yahoo posteriores al último de la SEC (Citi dejó de aparecer en los datos XBRL de la SEC en 2026): valor
+// libro de los comunes, tangible, resultado de los comunes y acciones; vale desde el cierre más 45 días (60 el cuarto)
+export function usDesdeYahoo(ys, desdeEnd, hoyS) {
+  const bal = [], ni = [];
+  for (const [end, o] of Object.entries(ys.q).sort((a, b) => a[0].localeCompare(b[0]))) {
+    if (desdeEnd && end <= desdeEnd) continue;
+    const pub = Math.min(tOf(end) + (end.slice(5) === "12-31" ? 60 : 45) * DAY, hoyS);
+    const bv = o.CommonStockEquity ?? null;
+    if (bv > 0 && o.OrdinarySharesNumber > 0) bal.push({ end, c: end, bv, tbv: o.TangibleBookValue ?? bv, sh: o.OrdinarySharesNumber, pub, src: "Yahoo trimestral" });
+    if (isFinite(o.NetIncomeCommonStockholders)) ni.push({ end, val: o.NetIncomeCommonStockholders, pub });
+  }
+  return { bal, ni };
 }
 
 // ROE de 12 meses en cada cierre con cuatro trimestres seguidos de resultado: resultado / promedio de los valores libro de
@@ -190,13 +211,13 @@ export function arDesdeEdgar(facts) {
 // ---- Yahoo: últimos trimestres y ejercicios (los bancos argentinos)
 export const Y_TIPOS = ["CommonStockEquity", "StockholdersEquity", "TangibleBookValue", "NetIncomeCommonStockholders", "OrdinarySharesNumber"];
 export function yahooSerie(j) {
-  const out = { q: {}, a: {} };
+  const out = { q: {}, a: {}, t: {} };
   for (const r of j?.timeseries?.result || []) {
-    const t = r?.meta?.type?.[0], m = /^(quarterly|annual)(.+)$/.exec(t || "");
+    const t = r?.meta?.type?.[0], m = /^(quarterly|annual|trailing)(.+)$/.exec(t || "");
     if (!m) continue;
     for (const x of (r[t] || []).filter(Boolean)) {
       if (!x.asOfDate || !isFinite(x.reportedValue?.raw)) continue;
-      const k = m[1] === "quarterly" ? "q" : "a";
+      const k = m[1] === "quarterly" ? "q" : m[1] === "annual" ? "a" : "t";
       ((out[k][x.asOfDate] ||= {}))[m[2]] = +x.reportedValue.raw;
     }
   }
@@ -222,6 +243,21 @@ export function arDesdeYahoo(ys, hoyS) {
     roe.push({ end, c: fin, pub: pub(end, 75), roe: o.NetIncomeCommonStockholders / avg, ni: o.NetIncomeCommonStockholders, avg, roeQ: null, tipo: "ejercicio" });
   }
   return { bal, roe, ni };
+}
+
+// ROE de 12 meses con el resultado de 12 meses que publica Yahoo, en los cierres en que faltan trimestres (a Macro le falta
+// el cuarto de 2025): es la suma nominal de los cuatro trimestres, así que en Argentina queda un poco por debajo del real
+export function roeConTrailing(bal, ys, conv, hechos, hoyS) {
+  const out = [], B = bal.filter(b => b.bv > 0);
+  for (const [end, o] of Object.entries(ys.t || {})) {
+    const n = o.NetIncomeCommonStockholders;
+    if (!isFinite(n) || hechos.some(r => Math.abs(dias(r.end, end)) <= 10)) continue;
+    const bEnd = B.find(x => Math.abs(dias(x.end, end)) <= 10), b = B.filter(x => dias(x.end, end) >= -10 && dias(x.end, end) <= 375);
+    if (!bEnd || b.length < 2) continue;
+    const avg = b.reduce((a, x) => a + x.bv * conv(x.c, bEnd.c), 0) / b.length;
+    out.push({ end, c: bEnd.c, pub: Math.min(Math.max(bEnd.pub, tOf(end) + 60 * DAY), hoyS), roe: n / avg, ni: n, avg, roeQ: null, tipo: "12m" });
+  }
+  return out;
 }
 
 // une fuentes: por fecha de cierre manda la primera que lo tiene (±10 días)
@@ -325,15 +361,16 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const yH = { "User-Agent": UA, Accept: "application/json", ...(ys ? { Cookie: ys.cookie } : {}) }, cr = ys ? `&crumb=${encodeURIComponent(ys.crumb)}` : "";
   const p1 = Date.UTC(2009, 11, 28) / 1000;
   const chartDe = sym => getJSON(fetchImpl, `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${p1}&period2=${hoyS}&interval=1wk&events=splits`, { "User-Agent": UA, Accept: "application/json" }).then(j => j?.chart?.result?.[0] || null);
-  const tipos = ["quarterly", "annual"].flatMap(p => Y_TIPOS.map(t => p + t)).join(",");
+  const tipos = [...["quarterly", "annual"].flatMap(p => Y_TIPOS.map(t => p + t)), "trailingNetIncomeCommonStockholders"].join(",");
   const yFund = sym => getJSON(fetchImpl, `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${tipos}&period1=${Date.UTC(2015, 0, 1) / 1000}&period2=${hoyS + DAY}${cr}`, yH);
 
   const weeks = []; for (let w = W0; w <= weekOf(hoyS); w++) weeks.push(w);
   const series = {}, bancos = {};
-  const resumen = (x, b, bal, roe, precio, monedaConv) => {
+  const resumen = (x, b, bal, roe, precio, monedaConv, maxRoe) => {
     const k = weeks.length - 1, ultBal = bal.filter(y => y.pub <= hoyS && y.bv > 0).sort((a, c) => a.end.localeCompare(c.end)).pop();
-    const ultR = roe.filter(y => y.pub <= hoyS).sort((a, c) => a.end.localeCompare(c.end) || (a.tipo === "12m") - (c.tipo === "12m")).pop();
-    const ult12 = roe.filter(y => y.pub <= hoyS && y.tipo === "12m").sort((a, c) => a.end.localeCompare(c.end)).pop();
+    const vig = roe.filter(y => y.pub <= hoyS && hoyS - tOf(y.end) <= maxRoe * DAY);
+    const ultR = vig.slice().sort((a, c) => a.end.localeCompare(c.end) || (a.tipo === "12m") - (c.tipo === "12m")).pop();
+    const ult12 = vig.filter(y => y.tipo === "12m").sort((a, c) => a.end.localeCompare(c.end)).pop();
     return { precio: precio != null ? +precio.toFixed(2) : null, cap: x.cap[k] != null ? Math.round(x.cap[k]) : null, pb: r3(x.pb[k]), ptb: r3(x.ptb[k]),
       bv: x.bvT[k] != null ? Math.round(x.bvT[k]) : null, tbv: x.tbvT[k] != null ? Math.round(x.tbvT[k]) : null,
       balance: ultBal ? ultBal.end : null, fuente: ultBal ? ultBal.src : null, ajusteIPC: ultBal && monedaConv ? r3(conv(ultBal.c, hoyS)) : null,
@@ -342,14 +379,16 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   // EE.UU.
   for (const c of US) {
     try {
-      const [facts, chart] = await Promise.all([secGet(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`), chartDe(c.s)]);
+      const [facts, chart, yj] = await Promise.all([secGet(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`), chartDe(c.s), yFund(c.s).catch(e => { errores[c.s + " Yahoo"] = e.message; return null; })]);
       if (!facts || !chart) { errores[c.s] = facts ? "sin precios" : "sin EDGAR"; continue; }
-      const { bal, roe } = usDesdeEdgar(facts), { m, splits } = precioDe(chart);
+      const sec = usDesdeEdgar(facts), ultSec = sec.bal.length ? sec.bal[sec.bal.length - 1].end : null, yah = usDesdeYahoo(yahooSerie(yj), ultSec, hoyS);
+      const bal = [...sec.bal, ...yah.bal], ni = [...sec.ni, ...yah.ni.filter(q => !sec.ni.some(z => Math.abs(dias(z.end, q.end)) <= 10))].sort((a, b) => a.end.localeCompare(b.end));
+      const roe = roeTrimestral(bal, ni, () => 1), { m, splits } = precioDe(chart);
       const x = semanal({ price: m, bal, roe, conv: () => 1, splits, weeks, hoyS, maxBal: 200, maxRoe: 200 });
       series[c.s] = x;
       bancos[c.s] = { n: c.n, pais: "us", grupo: US_SUBS[c.sub], moneda: "USD", pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)),
-        ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), false), trimestres: bal.length };
-      log(`${c.s}: ${bal.length} balances (${bal[0]?.end} a ${bal.at(-1)?.end}), ${roe.length} ROE, P/VL ${bancos[c.s].ult.pb}, ROE ${bancos[c.s].ult.roe}%`);
+        ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), false, 200), trimestres: bal.length };
+      log(`${c.s}: ${sec.bal.length} balances de la SEC (${sec.bal[0]?.end} a ${ultSec})${yah.bal.length ? ` y ${yah.bal.length} de Yahoo (${yah.bal.map(b => b.end).join(" ")})` : ""}, ${roe.length} ROE, P/VL ${bancos[c.s].ult.pb}, P/VL tangible ${bancos[c.s].ult.ptb}, ROE ${bancos[c.s].ult.roe}%`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   // Argentina
@@ -363,12 +402,13 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       // acciones que faltan: las del balance más cercano que las tenga
       for (const b of bal) if (!b.sh) { const o = bal.filter(y => y.sh).sort((p, q) => Math.abs(dias(p.end, b.end)) - Math.abs(dias(q.end, b.end)))[0]; if (o) b.sh = o.sh; }
       // ROE: 12 meses con los trimestres (Yahoo, con los balances del 20-F para el promedio) y, para atrás, los ejercicios
-      const roe = [...roeTrimestral(bal, yah.ni, conv), ...unirObs([sec.roe, yah.roe])];
+      const r12 = roeTrimestral(bal, yah.ni, conv);
+      const roe = [...r12, ...roeConTrailing(bal, yser, conv, r12, hoyS), ...unirObs([sec.roe, yah.roe])];
       const { m, splits } = precioDe(chart);
       const x = semanal({ price: m, bal, roe, conv, splits, weeks, hoyS, maxBal: 470, maxRoe: 470 });
       series[c.s] = x;
       bancos[c.s] = { n: c.n, pais: "ar", grupo: AR_AGREGADO.includes(c.s) ? "ar" : "arOtros", moneda: "ARS", px: c.px, pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)),
-        ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), true),
+        ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), true, 470),
         balances: bal.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]) };
       log(`${c.s}: balances ${bal.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
