@@ -5,13 +5,16 @@
 //   de 1996, en miles de pesos de cada mes (desde 2020, con ajuste por inflación). De ahí: patrimonio neto (cuentas 4, 5 y 6:
 //   patrimonio, resultados y otros resultados integrales), acciones (capital social en circulación y pendiente de emisión,
 //   valor nominal $1), activo, intangibles y el resultado acumulado de cada ejercicio.
-// - Indicadores (Entfin/Tec_Cont/indicad) de cada archivo mensual desde julio de 2011: mora, previsiones, capital, ROE; cada
-//   archivo trae cinco fechas (dos cierres y los últimos tres meses), así que alcanza con uno de cada tres.
+// - Indicadores (Entfin/Tec_Cont/indicad) de cada archivo mensual desde 2001: mora, mora de consumo, previsiones y capital.
+//   Cada archivo trae cinco fechas por entidad (dos cierres y los últimos tres meses) y el valor del sistema de la última;
+//   desde diciembre de 2013 el sistema (AA000) tiene su propio archivo con las cinco. Los nombres y códigos cambiaron dos
+//   veces (2006 y 2014): cada indicador se busca por su texto en las tres épocas.
 // - Inflación para antes de 2017 (los balances no tenían ajuste hasta 2020): serie empalmada de INDEC (hasta 2006) y los IPC
 //   de CABA, Córdoba y San Luis, encadenada con el IPC nacional del INDEC desde diciembre de 2016 (indec.json).
 //
 //   MODO=diario (por defecto): si el BCRA publicó un mes nuevo, rearma con ese archivo. MODO=historia: también los
-//   indicadores de todos los archivos desde 2011. MODO=diagnostico: qué traen los archivos, solo en el log.
+//   indicadores de los archivos desde 2001 (todos hasta 2013, para el sistema mes a mes; después, uno de cada tres).
+//   MODO=diagnostico: qué traen los archivos, solo en el log.
 import { execFileSync } from "node:child_process";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { readFileSync } from "node:fs";
@@ -21,24 +24,29 @@ import { pathToFileURL } from "node:url";
 
 export const VERSION = 1;
 // cambia cuando cambia cómo se calcula algo: la corrida diaria rearma los balances aunque no haya un mes nuevo
-export const REV = 4;
+export const REV = 5;
 export const BASE = "https://www.bcra.gob.ar/archivos/Pdfs/PublicacionesEstadisticas/Entidades/";
 export const FECHAS = "https://www.bcra.gob.ar/api/endpoints/informacion-entidades.php?action=fechas&lang=es";
 export const IPC_HIST = "https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv";
 const UA = "Mozilla/5.0 (tradingweb; datos de bancos)";
-// las entidades de la pestaña Bancos con su código del BCRA; AAA00 es el total del sistema financiero
+// las entidades de la pestaña Bancos con su código del BCRA; AA000 es el total del sistema financiero
 export const ENT = {
   "00007": { corto: "Galicia", ticker: "GGAL" }, "00285": { corto: "Macro", ticker: "BMA" }, "00017": { corto: "BBVA", ticker: "BBAR" },
   "00027": { corto: "Supervielle", ticker: "SUPV" }, "00034": { corto: "Patagonia", ticker: "BPAT" }, "00044": { corto: "Hipotecario", ticker: "BHIP" },
   "00198": { corto: "Valores", ticker: "VALO" },
 };
-export const SISTEMA = "AAA00";
-// indicadores que se guardan: clave y cómo empieza la descripción en el archivo
+export const SISTEMA = "AA000";
+// indicadores que se guardan: clave y cómo empieza la descripción, en las tres épocas del archivo (2001-2005, 2006-2013 y
+// desde 2014). En los meses que se pisan dan lo mismo: mora A10 = A9 y consumo A12 = A16 en diciembre de 2012 y de 2013
 export const INDICADORES = [
-  ["mora", /^A9 /], ["moraPriv", /^A11 /], ["moraCons", /^A16 /], ["moraCom", /^A17 /], ["cobertura", /^A14 /],
-  ["apalanc", /^C1 /], ["roe", /^R1 /], ["roa", /^RG1 /],
+  ["mora", /^A10 - Cartera irregular sobre financiaciones|^A9 - Total Cartera Irregular/i],
+  ["moraCons", /^A12 - Cartera de Consumo irregular|^A16 - Cartera Irregular Consumo/i],
+  // previsiones sobre cartera irregular: desde 2014 (de 2006 a 2013 el archivo trae 99999)
+  ["cobertura", /^A14 - Previsiones sobre Cartera Irregular/i],
+  // capital, cada época con su cuenta; `capital` las pasa a patrimonio / activo (%)
+  ["capA", /^C1 - Pasivos neteados sobre patrimonio/i], ["capB", /^C8 - Patrimonio Neto sobre activos neteados/i], ["capC", /^C1 - Apalancamiento/i],
 ];
-export const BASE_MES = "199607", BASE_IND = "201105";
+export const BASE_MES = "199607", BASE_IND = "200001";
 
 // ---- meses "YYYYMM" e índices desde un mes base
 export const mesIdx = (m, base) => (+m.slice(0, 4) - +base.slice(0, 4)) * 12 + (+m.slice(4, 6) - +base.slice(4, 6));
@@ -113,12 +121,19 @@ export function ejercicios(s, base, idx) {
 }
 
 // ---- indicadores de un archivo mensual: las cinco fechas de cada entidad salen de entidad/COMPLETO.TXT
+// (hasta 2005 la línea no trae el CUIT y todo va una columna antes: las fechas son las primeras cinco seguidas AAAAMM y el
+// mes de cierre, el primer número de 1 a 12)
 export function fechasEntidades(texto) {
   const out = {};
   for (const l of texto.split(/\r?\n/)) {
-    const c = l.split("\t"); if (c.length < 17) continue;
-    const ent = sinComillas(c[0]), f = c.slice(12, 17).map(sinComillas);
-    if (f.some(x => /^\d{6}$/.test(x)) && f.every(x => /^\d{6}$/.test(x) || x === "")) out[ent] = { fechas: f, cierre: num(c[5]), nombre: sinComillas(c[1]) };
+    const c = l.split("\t").map(sinComillas); if (c.length < 15) continue;
+    for (let j = 5; j + 5 <= c.length; j++) {
+      const f = c.slice(j, j + 5);
+      if (f.filter(x => /^\d{6}$/.test(x)).length >= 3 && f.every(x => /^\d{6}$/.test(x) || x === "")) {
+        const cierre = c.slice(4, 6).map(Number).find(v => Number.isInteger(v) && v >= 1 && v <= 12) ?? null;
+        out[c[0]] = { fechas: f, cierre, nombre: c[1] }; break;
+      }
+    }
   }
   return out;
 }
@@ -126,7 +141,7 @@ export function fechasEntidades(texto) {
 // financiero de las filas de cada entidad, que es la de su última fecha
 export function leerIndicad(texto, fechas, codigos) {
   const out = {}, colSis = {};
-  // los agregados (AAA00, AA910...) no están en el archivo de entidades: llevan las fechas más comunes
+  // los agregados (AA000, AA910...) no están en el archivo de entidades: llevan las fechas más comunes
   const cuenta = {}; for (const x of Object.values(fechas)) { const k = x.fechas.join(","); cuenta[k] = (cuenta[k] || 0) + 1; }
   const modal = Object.entries(cuenta).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(",") || null;
   for (const l of texto.split(/\r?\n/)) {
@@ -136,13 +151,27 @@ export function leerIndicad(texto, fechas, codigos) {
     const f = fechas[ent]?.fechas || (/^AA/.test(ent) ? modal : null);
     if (codigos.has(ent) && f) {
       const o = ((out[ent] ??= {})[ind[0]] ??= {});
-      for (let k = 0; k < 5; k++) { const v = num(c[5 + k]); if (f[k] && v != null) o[f[k]] = v; }
+      for (let k = 0; k < 5; k++) { const v = valor(c[5 + k]); if (f[k] && v != null) o[f[k]] = v; }
     }
-    const sis = num(c[12]), ult = (f || []).filter(Boolean).at(-1);
+    const sis = valor(c[12]), ult = (f || []).filter(Boolean).at(-1);
     if (!/^AA/.test(ent) && sis != null && ult) { const o = (colSis[ind[0]] ??= {}); if (o[ult] == null) o[ult] = sis; }
   }
   if (!out[SISTEMA] && Object.keys(colSis).length) out[SISTEMA] = colSis;
   return out;
+}
+// 99999: el dato no está
+const valor = s => { const v = num(s); return v == null || Math.abs(v) >= 99998 ? null : v; };
+// el capital de las tres épocas como patrimonio / activo (%): pasivo / patrimonio en % (hasta 2005), patrimonio / activo
+// (2006-2013) y pasivo / patrimonio en veces (desde 2014). Con el balance de Galicia da lo mismo a unas décimas
+export function capital(ind) {
+  for (const o of Object.values(ind)) {
+    const cap = {};
+    for (const [k, f] of [["capA", v => 100 / (1 + v / 100)], ["capB", v => v], ["capC", v => 100 / (1 + v)]])
+      for (const [m, v] of Object.entries(o[k] || {})) if (v > 0 && v < 1e6) cap[m] = +f(v).toFixed(2);
+    delete o.capA; delete o.capB; delete o.capC;
+    if (Object.keys(cap).length) o.capital = cap;
+  }
+  return ind;
 }
 // une los indicadores de varios archivos en series mensuales (los archivos que van después pisan a los anteriores)
 export function unirIndicadores(lista, base, hasta) {
@@ -201,9 +230,10 @@ async function bajar(fetchImpl, url, dest) {
     } catch (e) { if (a >= 2) throw e; await new Promise(res => setTimeout(res, 3000 * (a + 1))); }
   }
 }
-// saca del .7z las carpetas pedidas (sin distinguir mayúsculas) y busca adentro un archivo por el final de su ruta
+// saca del .7z las carpetas pedidas (sin distinguir mayúsculas) y busca adentro un archivo por el final de su ruta. Hasta
+// 2017 y en 2020 los archivos traen todo dentro de una carpeta con el nombre del mes (201105d/, 202004e/): las dos formas
 function extraer(archivo, destino, rutas) {
-  try { execFileSync("7z", ["x", "-y", "-ssc-", "-o" + destino, archivo, ...rutas], { stdio: "ignore", maxBuffer: 1 << 26 }); } catch (e) { /* alguna ruta no está */ }
+  try { execFileSync("7z", ["x", "-y", "-ssc-", "-o" + destino, archivo, ...rutas, ...rutas.map(r => "*/" + r)], { stdio: "ignore", maxBuffer: 1 << 26 }); } catch (e) { /* alguna ruta no está */ }
 }
 function buscar(destino, sufijo) {
   const p = execFileSync("bash", ["-c", `find "${destino}" -type f | grep -i -E '${sufijo}$' | head -1`], { encoding: "utf8" }).trim();
@@ -230,10 +260,10 @@ async function diagnostico({ fetchImpl, log, meses }) {
     log(`${m}: ${(tam / 1e6).toFixed(1)} MB, cabecera ${cab}, ${rutas.length} archivos${rutas.length ? "" : "; " + txt.slice(0, 300).replace(/\s+/g, " ")}`);
     const ind = rutas.filter(r => /Tec_Cont\/indicad\//i.test(r)), ent = rutas.filter(r => /Tec_Cont\/entidad\//i.test(r));
     log(`  indicad: ${ind.length} archivos (${ind.slice(0, 8).map(r => r.split("/").pop()).join(" ")}); entidad: ${ent.length} (${ent.filter(r => !/\/\d{5}\.txt$/i.test(r)).slice(0, 6).map(r => r.split("/").pop()).join(" ")}); bal_hist: ${rutas.filter(r => /bal_?hist/i.test(r)).map(r => r.split("/").pop()).join(" ") || "no"}`);
-    const d = join(dir, m); extraer(f, d, ["Entfin/Tec_Cont/entidad/*", "Entfin/Tec_Cont/indicad/*", "*/Entfin/Tec_Cont/entidad/*", "*/Entfin/Tec_Cont/indicad/*"]);
+    const d = join(dir, m); extraer(f, d, ["Entfin/Tec_Cont/entidad/*", "Entfin/Tec_Cont/indicad/*"]);
     const ti = leer(buscar(d, "indicad/completo\\.txt")), te = leer(buscar(d, "entidad/completo\\.txt"));
     const li = ti.split(/\r?\n/).filter(Boolean), le = te.split(/\r?\n/).filter(Boolean);
-    log(`  indicad/completo: ${li.length} líneas; ${li.filter(l => /^"?AAA00/.test(l)).length} del sistema; primera: ${JSON.stringify(li[0] || "").slice(0, 260)}`);
+    log(`  indicad/completo: ${li.length} líneas; ${li.filter(l => /^"?AA000/.test(l)).length} del sistema; primera: ${JSON.stringify(li[0] || "").slice(0, 260)}`);
     log(`    Galicia: ${li.filter(l => /^"?00007"?\t/.test(l)).map(l => { const c = l.split("\t"); return sinComillas(c[4]) + " [" + c.slice(5, 13).join(" ") + "]"; }).join(" | ")}`);
     log(`    grupos en indicad: ${ind.filter(r => /\/AA[^/]*$/i.test(r)).map(r => r.split("/").pop()).join(" ") || "ninguno"}; en entidad/completo: ${le.filter(l => /^"?AA/.test(l)).map(l => { const c = l.split("\t"); return sinComillas(c[0]) + " " + sinComillas(c[1]); }).join(", ") || "ninguno"}`);
     const aa = buscar(d, "indicad/aa000\\.txt"); if (aa) log(`    AA000: ${JSON.stringify(leer(aa).split(/\r?\n/).slice(0, 2).join(" // ")).slice(0, 400)}`);
@@ -282,11 +312,13 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
     const p0 = s.pn.findIndex(v => v != null);
     log(`${cod} ${info.corto}: desde ${mesDe(p0, BASE_MES)}; patrimonio ${s.pn.at(-1)} miles; acciones ${s.acciones.at(-1)} miles; intangibles ${s.intang.at(-1)}; descuadre máximo ${(s.descuadre * 100).toFixed(3)}% del activo; ${ci.length} cierres (${ci.slice(0, 4).map(i => mesDe(i, BASE_MES)).join(" ")} … ${ci.slice(-2).map(i => mesDe(i, BASE_MES)).join(" ")}); ROE ${ej.filter(e => /^(2000|2001|2002|2005|2010|2015|2019|2024|2025)/.test(e.fin)).map(e => e.fin + " " + e.roe + "%").join(", ")}`);
   }
-  // indicadores: uno de cada tres archivos desde julio de 2011 (historia) o el último (diario)
-  const deCarpeta = d => leerIndicad(leer(buscar(d, "indicad/completo\\.txt")), fechasEntidades(leer(buscar(d, "entidad/completo\\.txt"))), conSistema);
-  const lista = [];
-  const pedidos = modo === "historia" ? meses.filter(m => m >= "201107" && mesIdx(ult, m) % 3 === 0) : [ult];
-  for (const m of pedidos) {
+  // indicadores: el último archivo (diario) o, en historia, del más nuevo al más viejo: hasta noviembre de 2013 todos (el
+  // sistema viene de a un mes por archivo) y después los que hagan falta para cubrir cada mes (cada uno trae tres)
+  const deCarpeta = d => capital(leerIndicad(leer(buscar(d, "indicad/completo\\.txt")) + "\n" + leer(buscar(d, "indicad/aa000\\.txt")),
+    fechasEntidades(leer(buscar(d, "entidad/completo\\.txt"))), conSistema));
+  const lista = [], cubiertos = new Set(), resumen = x => Object.entries(x || {}).map(([k, o]) => k + " " + Object.keys(o).length).join(", ") || "—";
+  for (const m of modo === "historia" ? [...meses].reverse() : [ult]) {
+    if (m > "201311" && cubiertos.has(m)) continue;
     try {
       let d = dUlt;
       if (m !== ult) {
@@ -295,13 +327,16 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
         d = join(dir, m); extraer(fm, d, ["Entfin/Tec_Cont/entidad/*", "Entfin/Tec_Cont/indicad/*"]); await rm(fm, { force: true });
       }
       const x = deCarpeta(d);
-      log(`${m}: indicadores de ${Object.keys(x).length} entidades; Galicia ${Object.entries(x["00007"] || {}).map(([k, o]) => k + " " + Object.keys(o).length).join(", ") || "—"}; sistema ${Object.keys(x[SISTEMA] || {}).length}`);
-      lista.push(x);
+      log(`${m}: Galicia ${resumen(x["00007"])}; sistema ${resumen(x[SISTEMA])}`);
+      if (Object.keys(x).length) { lista.push(x); for (let k = 0; k < 3; k++) cubiertos.add(mesDe(mesIdx(m, BASE_IND) - k, BASE_IND)); }
       if (m !== ult) await rm(d, { recursive: true, force: true });
     } catch (e) { log(`${m}: ${e.message}`); }
   }
+  lista.reverse();   // del más viejo al más nuevo: el que va después pisa
   // en diario se suman a lo que ya había (lo nuevo pisa)
-  const desdePrev = (prev && modo !== "historia" && prev.ind && prev.i0) ? [Object.fromEntries(Object.entries(prev.ind).map(([ent, o]) => [ent, Object.fromEntries(Object.entries(o).map(([k, a]) => [k, Object.fromEntries(a.map((v, i) => [mesDe(i, prev.i0), v]).filter(([, v]) => v != null))]))]))] : [];
+  // (solo las entidades y las claves de ahora: una corrida vieja pudo guardar otras)
+  const claves = new Set(["mora", "moraCons", "cobertura", "capital"]);
+  const desdePrev = (prev && modo !== "historia" && prev.ind && prev.i0) ? [Object.fromEntries(Object.entries(prev.ind).filter(([ent]) => conSistema.has(ent)).map(([ent, o]) => [ent, Object.fromEntries(Object.entries(o).filter(([k]) => claves.has(k)).map(([k, a]) => [k, Object.fromEntries(a.map((v, i) => [mesDe(i, prev.i0), v]).filter(([, v]) => v != null))]))]))] : [];
   const ind = unirIndicadores([...desdePrev, ...lista], BASE_IND, ult);
   // inflación anterior a 2017
   let ipc = prev?.ipc || null;
