@@ -154,6 +154,26 @@ export function unirIndicadores(lista, base, hasta) {
   return out;
 }
 
+// ---- ROE real de cada ejercicio. Desde 2020 y en 2002 los balances vienen en moneda de cada mes (ajuste por inflación):
+// el resultado ya es real y va sobre el patrimonio promedio de los meses del ejercicio llevado a moneda del cierre con el
+// IPC. Los demás años son nominales: ROE real = (1 + ROE) / (1 + inflación de esos meses) − 1
+export const ajustePorInflacion = fin => fin >= "202001" || fin.startsWith("2002");
+export function roeReales(entidades, ipc) {
+  for (const e of Object.values(entidades)) for (const x of e.ejercicios) {
+    const fin = mesIdx(x.fin, ipc.m0), ini = fin - x.meses, a = ipc.v[ini], b = ipc.v[fin];
+    if (!(ini >= 0 && a > 0 && b > 0)) continue;
+    const pi = Math.pow(b / a, 12 / x.meses) - 1; x.inflacion = +(pi * 100).toFixed(2);
+    if (!ajustePorInflacion(x.fin)) { x.roeReal = +(((1 + x.roe / 100) / (1 + pi) - 1) * 100).toFixed(2); continue; }
+    const fe = mesIdx(x.fin, BASE_MES); let suma = 0, n = 0;
+    for (let k = fe - x.meses + 1; k <= fe; k++) {
+      const pn = e.pn?.[k], ik = ipc.v[mesIdx(mesDe(k, BASE_MES), ipc.m0)];
+      if (pn > 0 && ik > 0) { suma += pn * b / ik; n++; }
+    }
+    if (n >= 0.75 * x.meses) { x.ajustado = true; x.pnPromReal = Math.round(suma / n); x.roeReal = +(x.res / (suma / n) * 12 / x.meses * 100).toFixed(2); }
+  }
+  return entidades;
+}
+
 // ---- inflación: la serie empalmada (CSV: fecha, log, índice, ...) hasta noviembre de 2016 y el IPC nacional del INDEC
 // desde diciembre de 2016, en un solo índice mensual desde enero de 2000
 export function ipcHistorico(csv, indec) {
@@ -214,7 +234,9 @@ async function diagnostico({ fetchImpl, log, meses }) {
     const ti = leer(buscar(d, "indicad/completo\\.txt")), te = leer(buscar(d, "entidad/completo\\.txt"));
     const li = ti.split(/\r?\n/).filter(Boolean), le = te.split(/\r?\n/).filter(Boolean);
     log(`  indicad/completo: ${li.length} líneas; ${li.filter(l => /^"?AAA00/.test(l)).length} del sistema; primera: ${JSON.stringify(li[0] || "").slice(0, 260)}`);
-    for (const l of li.filter(l => /^"?00007"?\t/.test(l) && INDICADORES.some(([, re]) => re.test(sinComillas(l.split("\t")[4])))).slice(0, 3)) log("    " + JSON.stringify(l).slice(0, 260));
+    log(`    Galicia: ${li.filter(l => /^"?00007"?\t/.test(l)).map(l => { const c = l.split("\t"); return sinComillas(c[4]) + " [" + c.slice(5, 13).join(" ") + "]"; }).join(" | ")}`);
+    log(`    grupos en indicad: ${ind.filter(r => /\/AA[^/]*$/i.test(r)).map(r => r.split("/").pop()).join(" ") || "ninguno"}; en entidad/completo: ${le.filter(l => /^"?AA/.test(l)).map(l => { const c = l.split("\t"); return sinComillas(c[0]) + " " + sinComillas(c[1]); }).join(", ") || "ninguno"}`);
+    const aa = buscar(d, "indicad/aa000\\.txt"); if (aa) log(`    AA000: ${JSON.stringify(leer(aa).split(/\r?\n/).slice(0, 2).join(" // ")).slice(0, 400)}`);
     log(`  entidad/completo: ${le.length} líneas; Galicia: ${JSON.stringify(le.find(l => /^"?00007"?\t/.test(l)) || "").slice(0, 300)}`);
     const fe = fechasEntidades(te), x = leerIndicad(ti, fe, new Set(["00007", SISTEMA]));
     log(`  leído: Galicia ${Object.entries(x["00007"] || {}).map(([k, o]) => k + " " + Object.keys(o).join("/")).slice(0, 3).join(", ") || "—"}; sistema ${Object.entries(x[SISTEMA] || {}).map(([k, o]) => k + " " + Object.keys(o).length).join(", ") || "—"}`);
@@ -289,11 +311,7 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
     if (x) ipc = { ...x, fuente: "hasta noviembre de 2016, serie empalmada de INDEC (hasta 2006) y los IPC de CABA, Córdoba y San Luis (matuteiglesias/IPC-Argentina en GitHub); desde diciembre de 2016, IPC nacional del INDEC" };
     else log("inflación: no se pudo encadenar (falta diciembre de 2016)");
   } catch (e) { log("inflación: " + e.message); }
-  // ROE real de cada ejercicio, con la inflación de esos meses
-  if (ipc) for (const e of Object.values(entidades)) for (const x of e.ejercicios) {
-    const fin = mesIdx(x.fin, ipc.m0), ini = fin - x.meses, a = ipc.v[ini], b = ipc.v[fin];
-    if (ini >= 0 && a > 0 && b > 0) { const pi = Math.pow(b / a, 12 / x.meses) - 1; x.inflacion = +(pi * 100).toFixed(2); x.roeReal = +(((1 + x.roe / 100) / (1 + pi) - 1) * 100).toFixed(2); }
-  }
+  if (ipc) roeReales(entidades, ipc);
   const out = { version: VERSION, rev: REV, asOf: now.toISOString(), mes: ult, m0: BASE_MES, i0: BASE_IND, fuente: "BCRA, Información de entidades financieras (datos abiertos)", entidades, ind, ipc };
   await writeFile(new URL("bcra.json", root), JSON.stringify(out));
   log(`bcra.json: ${Object.keys(entidades).length} entidades, balances desde ${BASE_MES}, indicadores desde ${BASE_IND} hasta ${ult}; sistema: ${Object.entries(ind[SISTEMA] || {}).map(([k, a]) => k + " " + a.filter(v => v != null).length).join(", ")}`);
