@@ -303,23 +303,15 @@ const precioDe = chart => {
   const splits = Object.values(chart?.events?.splits || {}).map(s => ({ date: s.date, ratio: s.numerator / s.denominator })).filter(s => s.ratio > 0 && isFinite(s.ratio) && s.ratio !== 1);
   return { m, splits };
 };
-// tipo de cambio oficial de cada día (argentinadatos: mayorista; si no está, el del BNA): fxAt(t) = el último hasta t
-export const FX_URLS = ["https://api.argentinadatos.com/v1/cotizaciones/dolares/mayorista", "https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial"];
+// dólar oficial de cada día: el mayorista de referencia del BCRA (Comunicación A 3500, variable 5 de su API); si no
+// responde, el del BNA de argentinadatos. El mayorista de argentinadatos no sirve: quedó en 366,45 del 12/12/2023 a fin
+// de año, con la devaluación del 13/12 adentro. fxAt(t) = el último hasta t
+export const BCRA_FX = (desde, hasta) => `https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/5?desde=${desde}${hasta ? "&hasta=" + hasta : ""}&limit=3000`;
+export const FX_BNA = "https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial";
 export const CCL_URL = "https://api.argentinadatos.com/v1/cotizaciones/dolares/contadoconliqui";
 const ptsDe = j => (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && x.venta > 0).map(x => [tOf(x.fecha), +x.venta]).sort((a, b) => a[0] - b[0]);
-// el mayorista de argentinadatos tiene huecos (no tiene nada del 13/12/2023, la devaluación, a fin de mes): donde faltan
-// más de siete días, el del BNA por la relación entre los dos en los diez datos anteriores al hueco
-export function completarFx(may, ofi) {
-  const M = ptsDe(may), O = ptsDe(ofi);
-  if (!M.length) return O;
-  const out = [...M];
-  for (let i = 1; i < M.length; i++) {
-    if (M[i][0] - M[i - 1][0] <= 7 * DAY) continue;
-    const ant = O.filter(o => o[0] <= M[i - 1][0]).slice(-10), rel = ant.length ? ant.reduce((a, o) => a + (M.filter(m => m[0] <= o[0]).at(-1)?.[1] || o[1]) / o[1], 0) / ant.length : 1;
-    for (const o of O) if (o[0] > M[i - 1][0] && o[0] < M[i][0]) out.push([o[0], +(o[1] * rel).toFixed(4)]);
-  }
-  return out.sort((a, b) => a[0] - b[0]).map(([t, v]) => ({ fecha: isoOf(t), venta: v }));
-}
+// la API del BCRA: { results: [{ detalle: [{ fecha, valor }] }] } al formato de argentinadatos
+export const bcraFx = (...js) => js.flatMap(j => j?.results?.[0]?.detalle || []).map(x => ({ fecha: x.fecha, venta: +x.valor }));
 export function fxDe(j, min = 100) {
   const pts = ptsDe(j);
   if (pts.length < min) return null;
@@ -337,10 +329,11 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const ipc = ipcDe(indec, bcra?.ipc);
   if (!ipc) throw new Error("indec.json sin el IPC nacional");
   const convARS = (c, t) => ipc.at(t) / ipc.at(tOf(c) + DAY - 1), convUSD = () => 1;
-  let fx = null;
+  let fx = null, fxSrc = null;
   { const H = { headers: { "User-Agent": UA, Accept: "application/json" } }, bajar = u => getJSON(fetchImpl, u, H).catch(e => { log("tipo de cambio: " + u + " " + e.message); return null; });
-    const [may, ofi] = await Promise.all(FX_URLS.map(bajar));
-    fx = fxDe(completarFx(may, ofi)); }
+    const [a, b] = await Promise.all([bajar(BCRA_FX("2013-01-01", "2019-12-31")), bajar(BCRA_FX("2020-01-01"))]);
+    fx = a && b ? fxDe(bcraFx(a, b)) : null; fxSrc = "BCRA, Comunicación A 3500";
+    if (!fx) { fx = fxDe(await bajar(FX_BNA)); fxSrc = "BNA (argentinadatos)"; } }
   if (!fx) errores.fx = "sin tipo de cambio oficial: todas en pesos con el IPC";
   // con el dólar como moneda funcional, el balance pasa a dólares con el oficial de su cierre (como presenta la empresa) y
   // a pesos de cada semana con el contado con liquidación, el dólar al que el mercado pone el precio: es el múltiplo de
@@ -349,7 +342,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   try { ccl = fxDe(await getJSON(fetchImpl, CCL_URL, { headers: { "User-Agent": UA, Accept: "application/json" } })); } catch (e) { log("contado con liquidación: " + e.message); }
   if (fx && !ccl) errores.ccl = "sin contado con liquidación: el dólar funcional va con el oficial";
   { const fechas = ["2019-12-31", "2023-12-12", "2023-12-14", "2023-12-29", "2024-12-31", "2025-04-14", "2025-12-31", isoOf(hoyS)];
-    if (fx) log("dólar oficial: " + fechas.map(d => d + " " + fx.at(tOf(d) + DAY - 1)).join(", ") + `; ${fx.n} datos de ${fx.desde} a ${fx.hasta}`);
+    if (fx) log(`dólar oficial (${fxSrc}): ` + fechas.map(d => d + " " + fx.at(tOf(d) + DAY - 1)).join(", ") + `; ${fx.n} datos de ${fx.desde} a ${fx.hasta}`);
     if (ccl) log("contado con liquidación: " + fechas.map(d => d + " " + ccl.at(tOf(d) + DAY - 1)).join(", ") + `; ${ccl.n} datos de ${ccl.desde} a ${ccl.hasta}`); }
   const convFX = fx ? (c, t) => (ccl || fx).at(t) / fx.at(tOf(c) + DAY - 1) : convARS;
   // SEC
@@ -453,7 +446,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   if (MERVAL.filter(c => empresas[c.s]).length < 12) throw new Error(`Faltan empresas: ${JSON.stringify(errores)}`);
-  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult }, tc: fx ? { desde: fx.desde, hasta: fx.hasta } : null, ccl: ccl ? { desde: ccl.desde, hasta: ccl.hasta } : null,
+  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult }, tc: fx ? { desde: fx.desde, hasta: fx.hasta, fuente: fxSrc } : null, ccl: ccl ? { desde: ccl.desde, hasta: ccl.hasta } : null,
     fuente: "SEC (20-F), Yahoo Finance, INDEC y bancos.json", merval: MERVAL.map(c => c.s).filter(s => empresas[s]), extra: EXTRA.map(c => c.s).filter(s => empresas[s]),
     indice: { n: "MSCI MERVAL", desde: "2026-10-19", fuente: "La Nación, 17/10/2026" }, empresas, errores };
   await writeFile(new URL("empresas.json", root), JSON.stringify(out));
