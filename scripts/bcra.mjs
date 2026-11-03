@@ -20,6 +20,8 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const VERSION = 1;
+// cambia cuando cambia cómo se calcula algo: la corrida diaria rearma los balances aunque no haya un mes nuevo
+export const REV = 2;
 export const BASE = "https://www.bcra.gob.ar/archivos/Pdfs/PublicacionesEstadisticas/Entidades/";
 export const FECHAS = "https://www.bcra.gob.ar/api/endpoints/informacion-entidades.php?action=fechas&lang=es";
 export const IPC_HIST = "https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv";
@@ -79,18 +81,18 @@ export function serieEntidad(meses, base, hasta) {
   }
   return s;
 }
-// cierres de ejercicio: el mes anterior a uno en que el resultado acumulado pasa a resultados no asignados (sube en lo
-// mismo) y vuelve a empezar. Sin resultados no asignados para saberlo, el mes de cierre de la entidad
+// cierres de ejercicio, en junio o diciembre (los bancos que cerraban en junio pasaron a diciembre en 1998-2002): el mes
+// anterior a uno en que el resultado acumulado pasa a resultados no asignados (sube en lo mismo); en diciembre alcanza con
+// que el acumulado vuelva a empezar (cambie de signo o quede en menos de 60%)
 export function cierres(s, base, mesCierre = 12) {
   const out = [];
   for (let i = 1; i < s.resEj.length; i++) {
-    const a = s.resEj[i - 1], b = s.resEj[i], ra = s.rna[i - 1], rb = s.rna[i];
-    if (a == null || b == null) continue;
-    // el acumulado vuelve a empezar: cambia de signo o queda en menos de 60% de lo que era
+    const a = s.resEj[i - 1], b = s.resEj[i], ra = s.rna[i - 1], rb = s.rna[i], mes = +mesDe(i - 1, base).slice(4, 6);
+    if (a == null || b == null || (mes !== 12 && mes !== 6 && mes !== mesCierre)) continue;
     const vuelve = a !== 0 && (Math.sign(b) !== Math.sign(a) || Math.abs(b) < 0.6 * Math.abs(a));
     const salto = ra != null && rb != null ? rb - ra : null;
-    const pasaARna = salto != null && Math.abs(salto - a) <= 0.25 * Math.abs(a) + 0.01 * Math.abs(s.pn[i] || 0);
-    if (vuelve && (pasaARna || +mesDe(i - 1, base).slice(4, 6) === mesCierre)) out.push(i - 1);
+    const pasaARna = salto != null && a !== 0 && Math.abs(salto - a) <= 0.25 * Math.abs(a) + 0.01 * Math.abs(s.pn[i] || 0);
+    if (pasaARna || (vuelve && mes === mesCierre)) out.push(i - 1);
   }
   return out;
 }
@@ -123,17 +125,20 @@ export function fechasEntidades(texto) {
 // financiero de las filas de cada entidad, que es la de su última fecha
 export function leerIndicad(texto, fechas, codigos) {
   const out = {}, colSis = {};
+  // los agregados (AAA00, AA910...) no están en el archivo de entidades: llevan las fechas más comunes
+  const cuenta = {}; for (const x of Object.values(fechas)) { const k = x.fechas.join(","); cuenta[k] = (cuenta[k] || 0) + 1; }
+  const modal = Object.entries(cuenta).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(",") || null;
   for (const l of texto.split(/\r?\n/)) {
     const c = l.split("\t"); if (c.length < 10) continue;
     const ent = sinComillas(c[0]), desc = sinComillas(c[4]);
     const ind = INDICADORES.find(([, re]) => re.test(desc)); if (!ind) continue;
-    const f = fechas[ent]?.fechas;
+    const f = fechas[ent]?.fechas || (/^AA/.test(ent) ? modal : null);
     if (codigos.has(ent) && f) {
       const o = ((out[ent] ??= {})[ind[0]] ??= {});
       for (let k = 0; k < 5; k++) { const v = num(c[5 + k]); if (f[k] && v != null) o[f[k]] = v; }
     }
     const sis = num(c[12]), ult = (f || []).filter(Boolean).at(-1);
-    if (sis != null && ult) { const o = (colSis[ind[0]] ??= {}); if (o[ult] == null) o[ult] = sis; }
+    if (!/^AA/.test(ent) && sis != null && ult) { const o = (colSis[ind[0]] ??= {}); if (o[ult] == null) o[ult] = sis; }
   }
   if (!out[SISTEMA] && Object.keys(colSis).length) out[SISTEMA] = colSis;
   return out;
@@ -192,7 +197,7 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
   const meses = (fechas?.data?.fechas || []).map(x => x.value).filter(v => /^\d{6}$/.test(v)).sort();
   const ult = meses.at(-1);
   if (!ult) throw new Error("el BCRA no devolvió la lista de meses");
-  if (modo === "diario" && prev?.mes === ult && prev?.version === VERSION) { log(`bcra.json ya tiene ${ult}`); return prev; }
+  if (modo === "diario" && prev?.mes === ult && prev?.version === VERSION && prev?.rev === REV) { log(`bcra.json ya tiene ${ult}`); return prev; }
   const dir = await mkdtemp(join(tmpdir(), "bcra-")), codigos = new Set(Object.keys(ENT)), conSistema = new Set([...codigos, SISTEMA]);
   // el último archivo: balance histórico, plan de cuentas, datos de las entidades e indicadores
   const f = join(dir, ult + ".7z"), tam = await bajar(fetchImpl, BASE + ult + "d.7z", f);
@@ -203,7 +208,7 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
   await rm(f, { force: true });
   // intangibles: las cuentas del activo que lo dicen en el plan de cuentas
   const intang = new Set();
-  for (const l of leer(buscar(dUlt, "cuentas/cuentas\\.txt")).split(/\r?\n/)) { const c = l.split("\t"), cod = sinComillas(c[0]), d = sinComillas(c[1]); if (/^1\d{5}$/.test(cod) && /INTANG|LLAVE DE NEG/i.test(d)) intang.add(cod); }
+  for (const l of leer(buscar(dUlt, "cuentas/cuentas\\.txt")).split(/\r?\n/)) { const c = l.split("\t"), cod = sinComillas(c[0]), d = sinComillas(c[1]); if (/^[12]\d{5}$/.test(cod) && /INTANG|LLAVE DE NEG/i.test(d)) intang.add(cod); }
   log(`cuentas de intangibles: ${[...intang].sort().join(" ") || "ninguna"}`);
   // del balance histórico, solo las líneas de nuestras entidades
   const bh = buscar(dUlt, "bal_hist/balhist\\.txt");
@@ -253,7 +258,7 @@ export async function main({ fetchImpl = globalThis.fetch, root = new URL("../",
     const fin = mesIdx(x.fin, ipc.m0), ini = fin - x.meses, a = ipc.v[ini], b = ipc.v[fin];
     if (ini >= 0 && a > 0 && b > 0) { const pi = Math.pow(b / a, 12 / x.meses) - 1; x.inflacion = +(pi * 100).toFixed(2); x.roeReal = +(((1 + x.roe / 100) / (1 + pi) - 1) * 100).toFixed(2); }
   }
-  const out = { version: VERSION, asOf: now.toISOString(), mes: ult, m0: BASE_MES, i0: BASE_IND, fuente: "BCRA, Información de entidades financieras (datos abiertos)", entidades, ind, ipc };
+  const out = { version: VERSION, rev: REV, asOf: now.toISOString(), mes: ult, m0: BASE_MES, i0: BASE_IND, fuente: "BCRA, Información de entidades financieras (datos abiertos)", entidades, ind, ipc };
   await writeFile(new URL("bcra.json", root), JSON.stringify(out));
   log(`bcra.json: ${Object.keys(entidades).length} entidades, balances desde ${BASE_MES}, indicadores desde ${BASE_IND} hasta ${ult}; sistema: ${Object.entries(ind[SISTEMA] || {}).map(([k, a]) => k + " " + a.filter(v => v != null).length).join(", ")}`);
   await rm(dir, { recursive: true, force: true });

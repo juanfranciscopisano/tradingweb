@@ -21,15 +21,16 @@ import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { yahooSession } from "./fundamentals.mjs";
 import { readXlsx, unzip, toISO, parseFredCsv } from "./macro.mjs";
+import { mesDe } from "./bcra.mjs";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const DAY = 86400, WEEK = 7 * DAY;
 export const MONDAY0 = Date.UTC(1990, 0, 1) / 1000;          // las semanas se cuentan como en multiples.json
 export const weekOf = t => Math.floor((t - MONDAY0) / WEEK);
-export const W0 = weekOf(Date.UTC(2010, 0, 4) / 1000);        // primera semana de las series
+export const W0 = weekOf(Date.UTC(2000, 0, 3) / 1000);        // primera semana de las series
 const tOf = d => Math.floor(Date.parse(d + "T00:00:00Z") / 1000);
 const isoOf = t => new Date(t * 1000).toISOString().slice(0, 10);
-export const VERSION = 3;   // 2: precio semanal de cada banco (para la banda en precio); 3: costo del capital (ke)
+export const VERSION = 4;   // 2: precio semanal de cada banco; 3: costo del capital (ke); 4: historia desde 2000 con el BCRA
 
 // Argentina: el precio es el de BYMA en pesos. CIK de los que presentan el 20-F en la SEC
 export const AR = [
@@ -47,11 +48,16 @@ export const US_SUBS = { "Diversified Banks": "usDiv", "Regional Banks": "usReg"
 
 // ---- IPC: nivel a fin de cada mes; entre cierres, interpolado por día (geométrico); después del último, con la
 // variación promedio de los últimos tres meses
-export function ipcDe(indec) {
+// Antes del primer dato del INDEC, la serie histórica de bcra.json (hist: { m0: "YYYYMM", v }), en la misma escala
+export function ipcDe(indec, hist = null) {
   const I = indec?.datos?.ipc_nacional, s = (I?.series || []).find(x => /^nacional$/i.test(x.region || "") && /nivel general/i.test(x.descripcion || ""));
   if (!s || !I.d0) return null;
-  const [y0, m0] = I.d0.split("-").map(Number), pts = [];
-  s.v.forEach((v, i) => { if (v > 0) pts.push([Date.UTC(y0, m0 - 1 + i + 1, 0) / 1000 + DAY - 1, v]); });   // fin de cada mes
+  const [y0, m0] = I.d0.split("-").map(Number), pts = [], fin = (y, m) => Date.UTC(y, m, 0) / 1000 + DAY - 1;   // fin de cada mes (m de 1 a 12)
+  if (hist?.m0 && Array.isArray(hist.v)) {
+    const hy = +hist.m0.slice(0, 4), hm = +hist.m0.slice(4, 6), lim = fin(y0, m0);
+    hist.v.forEach((v, i) => { const t = fin(hy, hm + i); if (v > 0 && t < lim) pts.push([t, v]); });
+  }
+  s.v.forEach((v, i) => { if (v > 0) pts.push([fin(y0, m0 + i), v]); });
   if (pts.length < 4) return null;
   const n = pts.length, r = Math.pow(pts[n - 1][1] / pts[n - 4][1], 1 / 3);   // variación mensual promedio de los últimos tres
   const at = t => {
@@ -273,6 +279,34 @@ export function unirObs(listas) {
   return out.sort((a, b) => a.end.localeCompare(b.end));
 }
 
+// ---- Argentina antes de los 20-F y de Yahoo: el balance mensual del BCRA (bcra.json). Es el del banco: Macro, BBVA,
+// Hipotecario y Patagonia cotizan como banco; Galicia cotiza como grupo y el banco es una aproximación, con las acciones
+// del grupo (20-F de 2006: 1.092.407.017 desde el canje de julio de 2000 y 1.241.407.017 desde el aumento del 13/5/2004).
+// Macro, desde 2003: antes cotizaba Bansud, otra entidad. Cada mes vale desde 60 días después de su cierre
+export const BCRA_MAP = {
+  GGAL: { cod: "00007", aprox: true, acciones: [["2000-07-01", 1092407017], ["2004-05-13", 1241407017]] },
+  BMA: { cod: "00285", desde: "200301" }, BBAR: { cod: "00017" }, BHIP: { cod: "00044" }, BPAT: { cod: "00034" },
+};
+const finDeMes = m => new Date(Date.UTC(+m.slice(0, 4), +m.slice(4, 6), 0)).toISOString().slice(0, 10);
+export function balancesBcra(bcra, s, hastaBal, hastaRoe) {
+  const m = BCRA_MAP[s], e = m && bcra?.entidades?.[m.cod];
+  if (!e || !bcra.m0) return { bal: [], roe: [] };
+  const bal = [];
+  e.pn.forEach((pn, i) => {
+    const mes = mesDe(i, bcra.m0), end = finDeMes(mes);
+    if ((m.desde && mes < m.desde) || !(pn > 0) || (hastaBal && end >= hastaBal)) return;
+    let sh = e.acciones?.[i] > 0 ? e.acciones[i] * 1000 : null;
+    if (m.acciones) { const a = m.acciones.filter(([d]) => d <= end).pop(); sh = a ? a[1] : null; }
+    if (!sh) return;
+    bal.push({ end, pub: tOf(end) + 60 * DAY, bv: pn * 1000, tbv: (pn - Math.max(0, e.intang?.[i] || 0)) * 1000, sh, c: end, src: "BCRA" });
+  });
+  const roe = (e.ejercicios || []).filter(x => x.roeReal != null && (!m.desde || x.fin >= m.desde)).map(x => {
+    const end = finDeMes(x.fin), r = x.roeReal / 100;
+    return { end, pub: tOf(end) + 60 * DAY, roe: r, tipo: "ejercicio", ni: r * x.pnProm * 1000, avg: x.pnProm * 1000, c: end, src: "BCRA" };
+  }).filter(r => !hastaRoe || r.end < hastaRoe);
+  return { bal, roe };
+}
+
 // ---- series semanales de un banco
 // precio: Map semana → cierre. conv(c, t): de pesos de la fecha c a pesos del momento t (segundos); en EE.UU., 1.
 // splits: [{ date, ratio }] (las acciones de un balance anterior a un split se multiplican por el ratio)
@@ -307,7 +341,7 @@ export function semanal({ price, bal, roe, conv, splits = [], weeks, hoyS, maxBa
 
 // agregado de un grupo por semana: suma de capitalizaciones / suma de valores libro; ROE = suma de resultados / suma de
 // patrimonios promedio. Solo las semanas en que las que tienen dato pesan al menos minCov de la capitalización de hoy.
-export function agregado(series, syms, n, minCov = 0.85) {
+export function agregado(series, syms, n, minCov = 0.85) {   // el argentino usa 0,5: para atrás no estaban todos
   const capHoy = s => { const c = series[s]?.cap || []; for (let k = c.length - 1; k >= 0; k--) if (c[k] != null) return c[k]; return 0; };
   const tot = syms.reduce((a, s) => a + capHoy(s), 0);
   const pb = [], ptb = [], roe = [];
@@ -539,7 +573,9 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const hoyS = Math.floor(now.getTime() / 1000), errores = {};
   const spx = JSON.parse(await readFile(new URL("spx.json", root), "utf8"));
   const indec = JSON.parse(await readFile(new URL("indec.json", root), "utf8"));
-  const ipc = ipcDe(indec);
+  let bcra = null;
+  try { bcra = JSON.parse(await readFile(new URL("bcra.json", root), "utf8")); } catch (e) { log("bcra.json: no está; Argentina arranca con los 20-F"); }
+  const ipc = ipcDe(indec, bcra?.ipc);
   if (!ipc) throw new Error("indec.json sin el IPC nacional");
   const conv = (c, t) => ipc.at(typeof t === "number" ? t : tOf(t) + DAY - 1) / ipc.at(tOf(c) + DAY - 1);
   const US = spx.list.filter(c => US_SUBS[c.sub]).map(c => ({ s: c.s, n: c.n, cik: c.cik, sub: c.sub }));
@@ -549,7 +585,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   let ys = null;
   try { ys = await yahooSession(fetchImpl); } catch (e) { log("Yahoo (sesión): " + e.message); }
   const yH = { "User-Agent": UA, Accept: "application/json", ...(ys ? { Cookie: ys.cookie } : {}) }, cr = ys ? `&crumb=${encodeURIComponent(ys.crumb)}` : "";
-  const p1 = Date.UTC(2009, 11, 28) / 1000;
+  const p1 = Date.UTC(1999, 11, 27) / 1000;
   const chartDe = sym => getJSON(fetchImpl, `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${p1}&period2=${hoyS}&interval=1wk&events=splits`, { "User-Agent": UA, Accept: "application/json" }).then(j => j?.chart?.result?.[0] || null);
   const tipos = [...["quarterly", "annual"].flatMap(p => Y_TIPOS.map(t => p + t)), "trailingNetIncomeCommonStockholders"].join(",");
   const yFund = sym => getJSON(fetchImpl, `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${tipos}&period1=${Date.UTC(2015, 0, 1) / 1000}&period2=${hoyS + DAY}${cr}`, yH);
@@ -588,19 +624,23 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       if (!chart) { errores[c.s] = "sin precios"; continue; }
       const yser = yahooSerie(yj), sec = facts ? arDesdeEdgar(facts) : { bal: [], roe: [] }, yah = arDesdeYahoo(yser, hoyS);
       // por cierre: el trimestre de Yahoo, después el 20-F, después el ejercicio de Yahoo (reexpresado)
-      const bal = unirObs([yah.bal.filter(b => b.src === "Yahoo trimestral"), sec.bal, yah.bal.filter(b => b.src === "Yahoo anual")]);
+      const bal0 = unirObs([yah.bal.filter(b => b.src === "Yahoo trimestral"), sec.bal, yah.bal.filter(b => b.src === "Yahoo anual")]);
+      // para atrás, el BCRA: solo antes del primer balance de los 20-F o de Yahoo
+      const roe0 = unirObs([sec.roe, yah.roe]), hist = balancesBcra(bcra, c.s, bal0[0]?.end, roe0[0]?.end);
+      const bal = [...hist.bal, ...bal0];
       // acciones que faltan: las del balance más cercano que las tenga
       for (const b of bal) if (!b.sh) { const o = bal.filter(y => y.sh).sort((p, q) => Math.abs(dias(p.end, b.end)) - Math.abs(dias(q.end, b.end)))[0]; if (o) b.sh = o.sh; }
       // ROE: 12 meses con los trimestres (Yahoo, con los balances del 20-F para el promedio) y, para atrás, los ejercicios
       const r12 = roeTrimestral(bal, yah.ni, conv);
-      const roe = [...r12, ...roeConTrailing(bal, yser, conv, r12, hoyS), ...unirObs([sec.roe, yah.roe])];
+      const roe = [...r12, ...roeConTrailing(bal, yser, conv, r12, hoyS), ...roe0, ...hist.roe];
       const { m, splits } = precioDe(chart);
       const x = semanal({ price: m, bal, roe, conv, splits, weeks, hoyS, maxBal: 470, maxRoe: 470 });
       series[c.s] = x;
       bancos[c.s] = { n: c.n, pais: "ar", grupo: AR_AGREGADO.includes(c.s) ? "ar" : "arOtros", moneda: "ARS", ticker: c.px, pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)), precio: x.px.map(r2),
         ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), true, 470),
-        balances: bal.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]) };
-      log(`${c.s}: balances ${bal.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
+        balances: bal0.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]),
+        ...(hist.bal.length ? { bcra: { desde: hist.bal[0].end, hasta: hist.bal.at(-1).end, meses: hist.bal.length, aprox: !!BCRA_MAP[c.s]?.aprox, ejercicios: hist.roe.length } } : {}) };
+      log(`${c.s}: ${hist.bal.length ? `BCRA ${hist.bal[0].end} a ${hist.bal.at(-1).end} (${hist.bal.length} meses, ${hist.roe.length} ejercicios); ` : ""}balances ${bal0.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.filter(r => r.src !== "BCRA").map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   const nAr = AR_AGREGADO.filter(s => series[s]).length, nUs = US.filter(c => series[c.s]).length;
@@ -612,13 +652,13 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   try { ke = await datosKe({ fetchImpl, weeks, hoyS, series, usSyms: US.map(c => c.s), chartDe, prev, log }); }
   catch (e) { errores.ke = e.message; log("costo del capital: " + e.message); ke = prev?.ke ? { ...prev.ke, anterior: true } : null; }
   const grupos = {
-    ar: { n: "Bancos argentinos", desc: "Galicia, Macro, BBVA y Supervielle", ...agregado(series, AR_AGREGADO, weeks.length) },
+    ar: { n: "Bancos argentinos", desc: "Galicia, Macro, BBVA y Supervielle", ...agregado(series, AR_AGREGADO, weeks.length, 0.5) },
     us: { n: "Bancos de EE.UU.", desc: "los del S&P 500: grandes y regionales", ...agregado(series, US.map(c => c.s), weeks.length) },
     usDiv: { n: "Bancos grandes de EE.UU.", desc: US.filter(c => c.sub === "Diversified Banks").map(c => c.s).join(", "), ...agregado(series, US.filter(c => c.sub === "Diversified Banks").map(c => c.s), weeks.length) },
     usReg: { n: "Bancos regionales de EE.UU.", desc: US.filter(c => c.sub === "Regional Banks").map(c => c.s).join(", "), ...agregado(series, US.filter(c => c.sub === "Regional Banks").map(c => c.s), weeks.length) },
   };
-  // la primera semana con algún dato
-  const first = Math.min(...Object.values(grupos).map(g => g.pb.findIndex(v => v != null)).filter(i => i >= 0));
+  // la primera semana con algún dato (de un grupo o de un banco)
+  const first = Math.min(...[...Object.values(grupos), ...Object.values(bancos)].map(g => g.pb.findIndex(v => v != null)).filter(i => i >= 0));
   const cut = a => a.slice(first);
   for (const g of Object.values(grupos)) { g.pb = cut(g.pb); g.ptb = cut(g.ptb); g.roe = cut(g.roe); }
   for (const b of Object.values(bancos)) { b.pb = cut(b.pb); b.ptb = cut(b.ptb); b.roe = cut(b.roe); b.precio = cut(b.precio); }
