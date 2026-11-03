@@ -56,8 +56,26 @@ export async function diagnostico({ fetchImpl = globalThis.fetch, log = console.
   }
 }
 
+// segundo diagnóstico: la estructura técnico-contable (balances, balance histórico, indicadores, deudores) y la
+// información histórica del último archivo, con el formato de cada tema y las primeras y últimas líneas de Galicia
+export async function diagnostico2({ fetchImpl = globalThis.fetch, log = console.log, mes = "202607" } = {}) {
+  const sh = (cmd, args) => { try { return execFileSync(cmd, args, { encoding: "latin1", maxBuffer: 1 << 29 }); } catch (e) { return "ERR " + String(e.stderr || e.message).slice(0, 300); } };
+  const dir = await mkdtemp(join(tmpdir(), "bcra-"));
+  const r = await fetchImpl(BASE + mes + "d.7z", { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(180000) });
+  const f = join(dir, "a.7z"); await writeFile(f, Buffer.from(await r.arrayBuffer()));
+  const out = join(dir, "x"); sh("7z", ["x", "-y", "-o" + out, f]);
+  log(sh("bash", ["-c", `cd '${out}' && find . -type d | sort | while read d; do n=$(find "$d" -maxdepth 1 -type f | wc -l); s=$(du -sk "$d" | cut -f1); echo "$d  $n archivos  $s KB"; done`]).slice(0, 12000));
+  const temas = sh("bash", ["-c", `cd '${out}' && find . -type d \\( -ipath '*Tec_Cont*' -o -ipath '*Info_Hist*' -o -ipath '*Nomina*' \\) | sort`]).split("\n").filter(Boolean);
+  for (const d of temas) {
+    log(`\n##### ${d}`);
+    log(sh("bash", ["-c", `cd '${out}/${d}' && ls -la | head -12 && for f in $(ls | grep -i -E '^formato'); do echo "--- $f"; cat "$f"; done`]).slice(0, 6000));
+    log(sh("bash", ["-c", `cd '${out}/${d}' && for f in $(ls | grep -i -E '^(00007|galicia|completo|nomina)' | head -3); do echo "--- $f ($(wc -l < "$f") líneas)"; head -6 "$f"; echo "   ..."; tail -3 "$f"; done`]).slice(0, 8000));
+  }
+}
+
 export async function main({ modo = process.env.MODO || "diario", log = console.log } = {}) {
   if (modo === "diagnostico") return diagnostico({ log });
+  if (modo === "diagnostico2") return diagnostico2({ log });
   log("bcra: modo " + modo + " todavía no implementado");
 }
 
