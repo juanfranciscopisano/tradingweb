@@ -12,9 +12,15 @@
 // tienen ajuste por inflación: cada valor libro está en pesos de su cierre (los ejercicios de Yahoo, en pesos del último
 // ejercicio, como los comparativos del último balance) y se lleva a pesos de cada semana con el IPC (indec.json). El
 // precio es el local, en pesos (BYMA, vía Yahoo). El ROE es real: el resultado ya descuenta la inflación.
+//
+// Costo del capital (CAPM), cada semana y el de hoy: EE.UU., nominal = bono del Tesoro a 10 años + beta × prima de
+// riesgo; Argentina, real = bono del Tesoro indexado (TIPS) a 10 años + riesgo país + beta × prima. Beta: regresión
+// semanal de 5 años del agregado de bancos de EE.UU. contra el S&P 500, para los dos países. Prima: la implícita del
+// S&P 500 que publica Damodaran cada mes. Tasas de FRED; riesgo país de argentinadatos.
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { yahooSession } from "./fundamentals.mjs";
+import { readXlsx, toISO, parseFredCsv } from "./macro.mjs";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const DAY = 86400, WEEK = 7 * DAY;
@@ -23,7 +29,7 @@ export const weekOf = t => Math.floor((t - MONDAY0) / WEEK);
 export const W0 = weekOf(Date.UTC(2010, 0, 4) / 1000);        // primera semana de las series
 const tOf = d => Math.floor(Date.parse(d + "T00:00:00Z") / 1000);
 const isoOf = t => new Date(t * 1000).toISOString().slice(0, 10);
-export const VERSION = 2;   // 2: precio semanal de cada banco (para la banda en precio)
+export const VERSION = 3;   // 2: precio semanal de cada banco (para la banda en precio); 3: costo del capital (ke)
 
 // Argentina: el precio es el de BYMA en pesos. CIK de los que presentan el 20-F en la SEC
 export const AR = [
@@ -320,6 +326,180 @@ export function agregado(series, syms, n, minCov = 0.85) {
   return { pb, ptb, roe };
 }
 
+// ---- costo del capital
+export const FRED_CSV = id => "https://fred.stlouisfed.org/graph/fredgraph.csv?id=" + id + "&cosd=2005-01-01";
+export const RP_URL = "https://api.argentinadatos.com/v1/finanzas/indices/riesgo-pais";
+export const ERP_HOME = "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/home.htm";
+export const ERP_MES = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx";
+const MESES_EN = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+
+// la prima de la página de Damodaran: "Implied ERP on November 1, 2026 = 4.41% (Trailing 12 month, with adjusted payout)".
+// Publica varias, con distintos flujos de caja; se usa esa, la principal, o si no está, la primera
+export function erpDeHome(html) {
+  const txt = String(html || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/\s+/g, " ");
+  const all = [...txt.matchAll(/Implied ERP (?:on|for) ([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s*=\s*(\d+(?:\.\d+)?)\s*%\s*(\([^)]*\))?/gi)];
+  const m = all.find(x => /trailing 12 month/i.test(x[5] || "") && /adjusted payout/i.test(x[5] || "")) || all[0];
+  if (!m) return null;
+  const mes = MESES_EN.indexOf(m[1].toLowerCase()) + 1, v = +m[4];
+  if (!mes || !(v > 0 && v < 20)) return null;
+  return { fecha: `${m[3]}-${String(mes).padStart(2, "0")}-${m[2].padStart(2, "0")}`, erp: v };
+}
+// fecha de una planilla de EE.UU.: número de serie de Excel, ISO, m/d/aaaa o "Sep-08" / "September 2008" (el día 1)
+export function fechaUS(v) {
+  if (typeof v === "number") return toISO(v);
+  const s = String(v ?? "").trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/))) return `${m[3].length === 2 ? 2000 + +m[3] : m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
+  if ((m = s.match(/^([A-Za-z]{3,})\.?[\s-]+(\d{2}|\d{4})$/))) {
+    const k = MESES_EN.findIndex(x => x.startsWith(m[1].toLowerCase().slice(0, 3)));
+    return k >= 0 ? `${m[2].length === 2 ? 2000 + +m[2] : m[2]}-${String(k + 1).padStart(2, "0")}-01` : null;
+  }
+  return null;
+}
+// la planilla mensual (ERPbymonth.xlsx): la fila de encabezados con la fecha y columnas de ERP; la de los últimos 12 meses
+// con payout ajustado (la principal de la página), si no la de los últimos 12 meses, si no la primera. En % (0,0441 → 4,41)
+export function erpDeExcel(hojas) {
+  for (const [hoja, filas] of Object.entries(hojas || {})) {
+    for (let h = 0; h < Math.min(filas.length, 40); h++) {
+      const head = (filas[h] || []).map(c => typeof c === "string" ? c.replace(/\s+/g, " ").trim() : "");
+      const iF = head.findIndex(c => /^(start of (the )?month|month|date|fecha)\b/i.test(c));
+      const cols = head.map((c, i) => /\bERP\b|risk premium/i.test(c) ? i : -1).filter(i => i >= 0 && i !== iF);
+      if (iF < 0 || !cols.length) continue;
+      const iE = cols.find(i => /(adjusted|sustainable) payout/i.test(head[i])) ?? cols.find(i => /t12m|trailing 12/i.test(head[i])) ?? cols[0];
+      const serie = [];
+      for (const r of filas.slice(h + 1)) {
+        const d = fechaUS(r?.[iF]), v = r?.[iE];
+        if (d && typeof v === "number" && isFinite(v) && v > 0) serie.push({ fecha: d, erp: +(v < 1 ? v * 100 : v).toFixed(2) });
+      }
+      if (serie.length >= 12) return { serie: serie.sort((a, b) => a.fecha.localeCompare(b.fecha)), hoja, columna: head[iE] };
+    }
+  }
+  return null;
+}
+// riesgo país de argentinadatos: [{ fecha, valor }] en puntos básicos
+export function rpDeArgentinadatos(j) {
+  return (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && isFinite(x.valor) && x.valor > 0)
+    .map(x => [x.fecha, +x.valor]).sort((a, b) => a[0].localeCompare(b[0]));
+}
+// el último dato de cada semana hasta el viernes (la semana en curso, hasta hoy), si no tiene más de maxDias
+export function porSemana(obs, weeks, hoyS, maxDias = 10) {
+  const out = []; let j = -1;
+  for (const w of weeks) {
+    const t = Math.min(MONDAY0 + w * WEEK + 4 * DAY, hoyS), d = isoOf(t);
+    while (j + 1 < obs.length && obs[j + 1][0] <= d) j++;
+    out.push(j >= 0 && t - tOf(obs[j][0]) <= maxDias * DAY ? obs[j][1] : null);
+  }
+  return out;
+}
+// rendimiento semanal del agregado: cada banco pesado por su capitalización de la semana anterior
+export function rendimientos(series, syms, n, minBancos = 5) {
+  const out = new Array(n).fill(null);
+  for (let k = 1; k < n; k++) {
+    let W = 0, R = 0, c = 0;
+    for (const s of syms) {
+      const x = series[s]; if (!x) continue;
+      const p0 = x.px[k - 1], p1 = x.px[k], w = x.cap[k - 1];
+      if (p0 > 0 && p1 > 0 && w > 0) { W += w; R += w * (p1 / p0 - 1); c++; }
+    }
+    if (c >= minBancos) out[k] = R / W;
+  }
+  return out;
+}
+// beta de cada semana: regresión de los rendimientos de las últimas `ventana` semanas contra el mercado (al menos `minimo`)
+export function betaRodante(rb, rm, ventana = 260, minimo = 104) {
+  const n = rb.length, beta = new Array(n).fill(null), obs = new Array(n).fill(0);
+  for (let k = 0; k < n; k++) {
+    let c = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (let i = Math.max(0, k - ventana + 1); i <= k; i++) {
+      const x = rm[i], y = rb[i];
+      if (x == null || y == null) continue;
+      c++; sx += x; sy += y; sxx += x * x; sxy += x * y;
+    }
+    const vx = sxx - sx * sx / (c || 1);
+    if (c >= minimo && vx > 0) { beta[k] = (sxy - sx * sy / c) / vx; obs[k] = c; }
+  }
+  return { beta, obs };
+}
+// costo del capital: EE.UU. = 10 años + beta × prima; Argentina = TIPS + riesgo país (puntos básicos / 100) + beta × prima
+export function costoCapital({ ust, tips, rp, erp, beta }) {
+  const us = [], ar = [];
+  for (let k = 0; k < beta.length; k++) {
+    const b = beta[k], e = erp[k], prima = b != null && e != null ? b * e : null;
+    us.push(prima != null && ust[k] != null ? r2(ust[k] + prima) : null);
+    ar.push(prima != null && tips[k] != null && rp[k] != null ? r2(tips[k] + rp[k] / 100 + prima) : null);
+  }
+  return { us, ar };
+}
+// baja todo y arma las series semanales y el de hoy. Lo que no se puede bajar queda como estaba en el bancos.json
+// anterior (con su fecha) y se anota en errores
+export async function datosKe({ fetchImpl, weeks, hoyS, series, usSyms, chartDe, prev, log = () => {} }) {
+  const errores = {}, H = { "User-Agent": "Mozilla/5.0 (tradingweb; costo del capital)" };
+  const bajar = async (url, bin) => {
+    const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 60000);
+    try { const r = await fetchImpl(url, { headers: H, signal: ctrl.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return bin ? Buffer.from(await r.arrayBuffer()) : await r.text(); }
+    finally { clearTimeout(tm); }
+  };
+  const previa = c => { const a = prev?.ke?.serie?.[c], w0 = prev?.week0; return weeks.map(w => a && w0 != null && w - w0 >= 0 && w - w0 < a.length ? a[w - w0] : null); };
+  const hoyPrev = c => prev?.ke?.hoy?.comp?.[c] || null;
+  const comp = {}, hoy = {};
+  for (const [c, id] of [["ust", "DGS10"], ["tips", "DFII10"]]) {
+    try {
+      const s = parseFredCsv(await bajar(FRED_CSV(id)));
+      if (s.length < 1000) throw new Error(s.length + " datos");
+      comp[c] = porSemana(s, weeks, hoyS, 10); hoy[c] = { v: s.at(-1)[1], fecha: s.at(-1)[0], fuente: "FRED " + id };
+    } catch (e) { errores[c] = id + ": " + e.message; comp[c] = previa(c); hoy[c] = hoyPrev(c); }
+  }
+  try {
+    const s = rpDeArgentinadatos(JSON.parse(await bajar(RP_URL)));
+    if (s.length < 1000) throw new Error(s.length + " datos");
+    comp.rp = porSemana(s, weeks, hoyS, 10); hoy.rp = { v: s.at(-1)[1], fecha: s.at(-1)[0], fuente: "argentinadatos" };
+  } catch (e) { errores.rp = "riesgo país: " + e.message; comp.rp = previa("rp"); hoy.rp = hoyPrev("rp"); }
+  // prima: la serie mensual y, si es más nueva, la de la página
+  let erpObs = null, pag = null;
+  try {
+    const x = erpDeExcel(readXlsx(await bajar(ERP_MES, true)));
+    if (!x) throw new Error("no encontré la columna de la prima");
+    erpObs = x.serie.map(o => [o.fecha, o.erp]);
+  } catch (e) { errores.erpMes = "prima mensual: " + e.message; }
+  try { pag = erpDeHome(await bajar(ERP_HOME)); if (!pag) throw new Error("no encontré la prima en la página"); }
+  catch (e) { errores.erpPagina = "prima de la página: " + e.message; }
+  if (erpObs) {
+    if (pag && pag.fecha > erpObs.at(-1)[0]) erpObs.push([pag.fecha, pag.erp]);
+    comp.erp = porSemana(erpObs, weeks, hoyS, 70);
+    hoy.erp = { v: erpObs.at(-1)[1], fecha: erpObs.at(-1)[0], fuente: "Damodaran" };
+  } else {
+    comp.erp = previa("erp"); hoy.erp = hoyPrev("erp");
+    if (pag) {   // sin la planilla: la historia anterior y, desde su fecha, la de la página
+      let ult = null;
+      weeks.forEach((w, k) => { const t = Math.min(MONDAY0 + w * WEEK + 4 * DAY, hoyS); if (isoOf(t) >= pag.fecha) comp.erp[k] = pag.erp; else if (comp.erp[k] != null) ult = comp.erp[k]; else if (ult != null) comp.erp[k] = ult; });
+      hoy.erp = { v: pag.erp, fecha: pag.fecha, fuente: "Damodaran" };
+    }
+  }
+  try {
+    const chart = await chartDe("^GSPC");
+    if (!chart) throw new Error("sin precios del S&P 500");
+    const m = new Map(); (chart.timestamp || []).forEach((t, i) => { const c = chart.indicators?.quote?.[0]?.close?.[i]; if (c > 0) m.set(weekOf(t), c); });
+    const pm = weeks.map(w => m.get(w) ?? null), rm = pm.map((p, k) => k && p > 0 && pm[k - 1] > 0 ? p / pm[k - 1] - 1 : null);
+    const { beta, obs } = betaRodante(rendimientos(series, usSyms, weeks.length), rm);
+    comp.beta = beta;
+    let k = beta.length - 1; while (k >= 0 && beta[k] == null) k--;
+    if (k < 0) throw new Error("menos de dos años de rendimientos");
+    hoy.beta = { v: beta[k], semanas: obs[k], fecha: isoOf(Math.min(MONDAY0 + weeks[k] * WEEK + 4 * DAY, hoyS)), fuente: "regresión semanal contra el S&P 500" };
+  } catch (e) { errores.beta = "beta: " + e.message; comp.beta = previa("beta"); hoy.beta = hoyPrev("beta"); }
+  const ke = costoCapital(comp);
+  const ok = c => hoy[c] && isFinite(hoy[c].v);
+  const prima = ok("beta") && ok("erp") ? hoy.beta.v * hoy.erp.v : null;
+  const usHoy = prima != null && ok("ust") ? r2(hoy.ust.v + prima) : null, arHoy = prima != null && ok("tips") && ok("rp") ? r2(hoy.tips.v + hoy.rp.v / 100 + prima) : null;
+  const red = (a, d) => a.map(v => v == null ? null : +v.toFixed(d));
+  for (const c of Object.keys(hoy)) if (hoy[c]) hoy[c] = { ...hoy[c], v: +hoy[c].v.toFixed(c === "beta" ? 3 : 2) };
+  log(`costo del capital: EE.UU. ${usHoy}% (10 años ${hoy.ust?.v}% al ${hoy.ust?.fecha} + beta ${hoy.beta?.v} × prima ${hoy.erp?.v}% del ${hoy.erp?.fecha}), Argentina ${arHoy}% (TIPS ${hoy.tips?.v}% + riesgo país ${hoy.rp?.v} al ${hoy.rp?.fecha})` + (Object.keys(errores).length ? "; errores: " + JSON.stringify(errores) : ""));
+  return {
+    hoy: { us: usHoy, ar: arHoy, comp: hoy },
+    serie: { us: ke.us, ar: ke.ar, ust: red(comp.ust, 2), tips: red(comp.tips, 2), rp: red(comp.rp, 0), erp: red(comp.erp, 2), beta: red(comp.beta, 3) },
+    errores,
+  };
+}
+
 // ---- red
 async function getJSON(f, url, headers, tries = 3) {
   for (let a = 0; ; a++) {
@@ -346,6 +526,7 @@ const r3 = v => v == null ? null : +v.toFixed(3), r2 = v => v == null ? null : +
 export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(), log = console.log,
   secUA = process.env.SEC_UA || "tradingweb research@example.com", modo = process.env.MODO || "diario", secGapMs = 150 } = {}) {
   if (modo === "diagnostico") return diagnostico({ fetchImpl, log, secUA });
+  if (modo === "ke") return diagnosticoKe({ fetchImpl, log });
   const hoyS = Math.floor(now.getTime() / 1000), errores = {};
   const spx = JSON.parse(await readFile(new URL("spx.json", root), "utf8"));
   const indec = JSON.parse(await readFile(new URL("indec.json", root), "utf8"));
@@ -415,6 +596,12 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   }
   const nAr = AR_AGREGADO.filter(s => series[s]).length, nUs = US.filter(c => series[c.s]).length;
   if (nAr < 3 || nUs < 8) throw new Error(`Faltan bancos: ${nAr} argentinos y ${nUs} de EE.UU. (${JSON.stringify(errores)})`);
+  // costo del capital: si algo falla, lo de la corrida anterior
+  let prev = null;
+  try { prev = JSON.parse(await readFile(new URL("bancos.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  let ke = null;
+  try { ke = await datosKe({ fetchImpl, weeks, hoyS, series, usSyms: US.map(c => c.s), chartDe, prev, log }); }
+  catch (e) { errores.ke = e.message; log("costo del capital: " + e.message); ke = prev?.ke ? { ...prev.ke, anterior: true } : null; }
   const grupos = {
     ar: { n: "Bancos argentinos", desc: "Galicia, Macro, BBVA y Supervielle", ...agregado(series, AR_AGREGADO, weeks.length) },
     us: { n: "Bancos de EE.UU.", desc: "los del S&P 500: grandes y regionales", ...agregado(series, US.map(c => c.s), weeks.length) },
@@ -426,12 +613,43 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const cut = a => a.slice(first);
   for (const g of Object.values(grupos)) { g.pb = cut(g.pb); g.ptb = cut(g.ptb); g.roe = cut(g.roe); }
   for (const b of Object.values(bancos)) { b.pb = cut(b.pb); b.ptb = cut(b.ptb); b.roe = cut(b.roe); b.precio = cut(b.precio); }
+  // las series del costo del capital, con las mismas semanas (las de la corrida anterior ya están cortadas)
+  if (ke && ke.serie && !ke.anterior) for (const c of Object.keys(ke.serie)) ke.serie[c] = cut(ke.serie[c]);
+  if (ke) ke.fuentes = { ust: "FRED (DGS10)", tips: "FRED (DFII10)", rp: "argentinadatos", erp: "Damodaran, prima implícita del S&P 500", beta: "agregado de bancos de EE.UU. contra el S&P 500, semanal, 5 años" };
   const out = { version: VERSION, asOf: now.toISOString(), week0: weeks[first], monday0: MONDAY0, weeks: weeks.length - first,
     ipc: { desde: ipc.desde, hasta: ipc.ult },
-    fuente: "SEC (EDGAR), Yahoo Finance e INDEC", grupos, bancos, errores };
+    fuente: "SEC (EDGAR), Yahoo Finance e INDEC", grupos, bancos, ke, errores };
   await writeFile(new URL("bancos.json", root), JSON.stringify(out));
   log(`bancos.json: ${Object.keys(bancos).length} bancos, ${out.weeks} semanas desde ${isoOf(MONDAY0 + out.week0 * WEEK)}; errores: ${JSON.stringify(errores)}`);
   return out;
+}
+
+// ---- diagnóstico del costo del capital: qué trae cada fuente, crudo y leído (solo en el log)
+export async function diagnosticoKe({ fetchImpl = globalThis.fetch, log = console.log } = {}) {
+  const H = { "User-Agent": "Mozilla/5.0 (tradingweb; costo del capital)" };
+  const bajar = async (url, bin) => { const r = await fetchImpl(url, { headers: H, signal: AbortSignal.timeout(60000) }); if (!r.ok) throw new Error("HTTP " + r.status); return bin ? Buffer.from(await r.arrayBuffer()) : r.text(); };
+  for (const id of ["DGS10", "DFII10"]) {
+    try { const s = parseFredCsv(await bajar(FRED_CSV(id))); log(`${id}: ${s.length} datos, de ${s[0]?.join(" ")} a ${s.at(-1)?.join(" ")}`); } catch (e) { log(`${id}: ${e.message}`); }
+  }
+  try { const s = rpDeArgentinadatos(JSON.parse(await bajar(RP_URL))); log(`riesgo país: ${s.length} datos, de ${s[0]?.join(" ")} a ${s.at(-1)?.join(" ")}; últimos ${s.slice(-5).map(x => x.join(" ")).join(", ")}`); } catch (e) { log("riesgo país: " + e.message); }
+  try {
+    const html = await bajar(ERP_HOME), i = html.search(/Implied ERP/i);
+    log("página de Damodaran: " + JSON.stringify(erpDeHome(html)) + "; texto: " + (i >= 0 ? html.slice(i, i + 400).replace(/\s+/g, " ") : "sin 'Implied ERP'"));
+  } catch (e) { log("página de Damodaran: " + e.message); }
+  try {
+    const hojas = readXlsx(await bajar(ERP_MES, true));
+    for (const [n, filas] of Object.entries(hojas)) {
+      log(`hoja "${n}": ${filas.length} filas`);
+      filas.slice(0, 10).forEach((f, i) => log(`  ${i + 1}: ${JSON.stringify(f).slice(0, 400)}`));
+      log(`  última: ${JSON.stringify(filas.at(-1)).slice(0, 400)}`);
+    }
+    const x = erpDeExcel(hojas);
+    log("leída: " + (x ? `${x.serie.length} meses, hoja "${x.hoja}", columna "${x.columna}", de ${JSON.stringify(x.serie[0])} a ${JSON.stringify(x.serie.at(-1))}` : "no encontré la columna"));
+  } catch (e) { log("planilla mensual de Damodaran: " + e.message); }
+  try {
+    const j = await getJSON(fetchImpl, `https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=1mo&interval=1wk`, { "User-Agent": UA, Accept: "application/json" });
+    const r = j?.chart?.result?.[0]; log("S&P 500 semanal: " + (r ? r.timestamp.map((t, i) => isoOf(t) + " " + r.indicators.quote[0].close[i]?.toFixed(2)).join(", ") : "sin datos"));
+  } catch (e) { log("S&P 500: " + e.message); }
 }
 
 // ---- diagnóstico: qué trae cada fuente (solo en el log)
