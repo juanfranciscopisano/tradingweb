@@ -556,12 +556,17 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .bco-tbl tbody tr.bco-sec:hover td{background:none}
 .bco-tbl tbody tr:focus-visible td{outline:2px solid var(--accent);outline-offset:-2px}
 .bco-tk{font-size:11px;color:var(--muted);font-weight:600}
-.bco-ke{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:2px 0 10px}
+.bco-ke{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr));gap:10px 30px;font-size:12.5px;color:var(--muted);margin:2px 0 10px}
 .bco-ke-pais{font-weight:700;color:var(--ink)}
-.bco-ke-g{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.bco-ke-fila{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.bco-ke-cap{margin-top:5px;line-height:1.5}
+.bco-ke-cap b{color:var(--ink);font-weight:600}
+.bco-ke-man{color:var(--warn);font-weight:600}
+.bco-ke-acc{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .bco-ke label{display:inline-flex;align-items:center;gap:5px}
-.bco-ke input{width:3.6em;font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);text-align:right}
+.bco-ke input{width:4.4em;font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);text-align:right}
 .bco-ke input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.bco-ke input.man{border-color:var(--warn)}
 .bco-ke-msg{color:var(--down)}
 .bco-sc-box{position:relative;height:380px}
 .bco-tip-nota{color:var(--muted);font-size:11.5px;margin-top:2px}
@@ -1396,14 +1401,16 @@ function checkPwd(){
         </div>
       </div>
       <div class="bco-ke">
-        <span class="bco-ke-g"><span class="bco-ke-pais">EE.UU., nominal</span>
-        <label>Costo del capital <input type="text" inputmode="decimal" id="bcoKeUs" onchange="bcoSetKe()" aria-label="Costo del capital de EE.UU., en %">%</label>
-        <label>Crecimiento <input type="text" inputmode="decimal" id="bcoGUs" onchange="bcoSetKe()" aria-label="Crecimiento de largo plazo de EE.UU., en %">%</label></span>
-        <span class="bco-ke-g"><span class="bco-ke-pais">Argentina, real</span>
-        <label>Costo del capital <input type="text" inputmode="decimal" id="bcoKeAr" onchange="bcoSetKe()" aria-label="Costo del capital de Argentina, real, en %">%</label>
-        <label>Crecimiento <input type="text" inputmode="decimal" id="bcoGAr" onchange="bcoSetKe()" aria-label="Crecimiento de largo plazo de Argentina, real, en %">%</label></span>
-        <button type="button" class="inf-link" onclick="bcoKeDefault()">Volver a 10% y 4%, 14% y 3%</button>
-        <span class="bco-ke-msg" id="bcoKeMsg" role="status"></span>
+        <div><div class="bco-ke-fila"><span class="bco-ke-pais">EE.UU., nominal</span>
+          <label>Costo del capital <input type="text" inputmode="decimal" id="bcoKeUs" onchange="bcoSetKe()" aria-label="Costo del capital de EE.UU., en %">%</label>
+          <label>Crecimiento <input type="text" inputmode="decimal" id="bcoGUs" onchange="bcoSetKe()" aria-label="Crecimiento de largo plazo de EE.UU., en %">%</label></div>
+          <div class="bco-ke-cap" id="bcoKeCapUs"></div></div>
+        <div><div class="bco-ke-fila"><span class="bco-ke-pais">Argentina, real</span>
+          <label>Costo del capital <input type="text" inputmode="decimal" id="bcoKeAr" onchange="bcoSetKe()" aria-label="Costo del capital de Argentina, real, en %">%</label>
+          <label>Crecimiento <input type="text" inputmode="decimal" id="bcoGAr" onchange="bcoSetKe()" aria-label="Crecimiento de largo plazo de Argentina, real, en %">%</label></div>
+          <div class="bco-ke-cap" id="bcoKeCapAr"></div></div>
+        <div class="bco-ke-acc"><button type="button" class="inf-link" id="bcoKeAutoBtn" onclick="bcoKeDefault()">Volver al automático</button>
+          <span class="bco-ke-msg" id="bcoKeMsg" role="status"></span></div>
       </div>
       <div class="bco-sc-box"><canvas id="bcoScatter"></canvas><div class="pebg-tooltip" id="bcoScatterTip"></div></div>
       <div class="arg-note" id="bcoScNote"></div>
@@ -5201,7 +5208,7 @@ const METODO = [
       { d: 'Composición del S&P 500: la lista de datasets/s-and-p-500-companies, que sale de Wikipedia, con sector y subindustria GICS y el CIK de cada empresa.',
         p: 'S&P no publica la composición gratis. Wikipedia se actualiza el día de cada cambio, y el CIK permite cruzar cada empresa con la SEC sin depender del ticker.' },
       { d: 'Tasas y Fed: curva oficial del Tesoro, Yahoo para los plazos con dato intradiario, la Fed de Nueva York para la EFFR y el rango objetivo, y FRED como respaldo.' },
-      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar.' },
+      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar; argentinadatos también para el riesgo país.' },
       { d: 'INDEC: su API (Catálogo API-INDEC, en beta) para IPC por región y apertura, EMAE, industria, precios mayoristas, salarios, canastas y mercado de trabajo. Pide token, así que la consulta un workflow y la página lee indec.json.' },
       { d: 'Fondos: la API de FCI de 1816, con los datos diarios que publica la CAFCI (patrimonio, suscripciones netas, fees, facturación y valor de la cuotaparte de cada clase).' },
       { d: 'Cuándo se actualiza cada cosa.',
@@ -5379,10 +5386,14 @@ const METODO = [
         p: 'Un P/VL bajo puede estar barato o puede ser el que corresponde a un ROE bajo; dividir por el ROE separa las dos cosas. Va el ROE sobre el P/VL y no al revés porque P/VL ÷ ROE explota cuando el ROE se acerca a cero (Argentina en 2019 y en 2026) y con ROE negativo pierde el sentido; así, solo baja. El promedio de 3 años saca el ciclo: un año con muchas previsiones o con una ganancia extraordinaria lo mueve menos.',
         x: 'Leer el de 3 años sin mirar de qué años sale: si el ROE de esos años no vuelve, el banco no está tan barato como dice. El de 12 meses muestra el otro extremo; los dos juntos dan el rango.',
         o: 'En Argentina el ROE es real y, hasta 2024, del ejercicio: cambia una vez por año, así que el de 12 meses salta con cada 20-F.' },
-      { d: 'P/VL que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/VL × (costo del capital − crecimiento). Costo del capital y crecimiento editables: por defecto 10% y 4% nominales en EE.UU. y 14% y 3% reales en Argentina.',
-        p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal. Los valores por defecto son supuestos, armados con CAPM a fines de octubre de 2026: en EE.UU., bono del Tesoro a 10 años (~5%) + beta de los bancos (~1,1) × prima de mercado (~4,2%, la implícita de Damodaran) ≈ 9,6%, redondeado a 10%, y crecimiento nominal de 4% (2% real + 2% de inflación); en Argentina, en términos reales, tasa real del Tesoro a 10 años (TIPS, ~2,6%) + riesgo país (~6,5%) + 1,1 × 4,2% ≈ 13,7%, redondeado a 14%, y crecimiento real de 3%.',
+      { d: 'P/VL que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/VL × (costo del capital − crecimiento). Crecimiento de largo plazo fijo: 4% nominal en EE.UU. (2% real + 2% de inflación) y 3% real en Argentina.',
+        p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal.',
         x: 'Comparar los P/VL de Argentina y EE.UU. sin más: un banco argentino tiene que ganar más para valer lo mismo, porque su costo del capital es más alto.',
-        o: 'El resultado depende mucho del costo del capital argentino (riesgo país más prima por acciones): con 12% y 3%, un P/VL de 1x pide 12% de ROE real; con 16%, 16%.' },
+        o: 'Cada 100 puntos de riesgo país suben un punto el costo del capital argentino y, a 0,85x, 0,85 puntos el ROE que pide el precio; con un ROE real de 15%, el P/VL que corresponde baja alrededor de 8%.' },
+      { d: 'Costo del capital automático, recalculado cada día hábil con CAPM. EE.UU., nominal: bono del Tesoro a 10 años + beta × prima de riesgo. Argentina, real: bono del Tesoro indexado (TIPS) a 10 años + riesgo país + beta × prima. Beta: regresión de los rendimientos semanales de los últimos 5 años del agregado de bancos de EE.UU. (cada banco pesado por su capitalización de la semana anterior) contra el S&P 500, la misma para los dos países. Prima: la implícita del S&P 500 que publica Damodaran a principio de cada mes (con los flujos de los últimos 12 meses y payout sostenible; antes de 2016, sin ajustar el payout). Tasas de FRED (DGS10 y DFII10); riesgo país de argentinadatos. Cualquiera de los cuatro números (costo del capital y crecimiento de cada país) se puede poner a mano; lo que no se toca sigue el automático.',
+        p: 'El costo del capital se mueve con el mercado: un número fijo deja de describir el precio cuando el riesgo país pasa de menos de 500 a más de 800 puntos en dos meses, como en 2026. CAPM más riesgo país es la forma habitual de llevarlo a un mercado emergente, y la beta de los bancos de EE.UU. mide el riesgo del negocio contra un mercado que no tiene el riesgo argentino adentro.',
+        x: 'La beta de los bancos argentinos contra el Merval: el Merval ya tiene el riesgo país adentro y se contaría dos veces. Una beta fija: la de la regresión pasó de 1,4 en 2012 a 1,0 en 2026.',
+        o: 'Sumar el riesgo país entero supone que la acción tiene el riesgo del bono soberano; Damodaran lo multiplica por la volatilidad de las acciones sobre la de los bonos, lo que lo subiría. La tasa real de EE.UU. hace de tasa real argentina de largo plazo. Si una fuente no responde, queda el dato de la corrida anterior, con su fecha a la vista.' },
       { d: 'Percentil y mediana del P/VL contra los últimos 10 años (Argentina, desde 2017), con al menos 3 años de datos.' },
     ] },
 
@@ -6118,10 +6129,32 @@ function drawLines(id, series, fmt, hoverT, vacio) {
 // P/VL = capitalización / patrimonio de los comunes; tangible, sin llave de negocio ni intangibles. En Argentina el valor
 // libro está llevado a pesos de cada semana con el IPC y el ROE es real; en EE.UU., nominal.
 let BCO = null, bcoLoading = null, bcoMetric = 'pb', bcoRange = 0, bcoRoeX = '12m', bcoSel = ['ar', 'us'];
-// costo del capital y crecimiento de largo plazo de cada país, para el P/VL que corresponde a cada ROE (editables)
-const BCO_KE0 = { us: { ke: 10, g: 4 }, ar: { ke: 14, g: 3 } };
-let BCO_KE = JSON.parse(JSON.stringify(BCO_KE0));
-try { const k = JSON.parse(localStorage.getItem('bcoKe') || 'null'); if (k && k.us && k.ar && k.us.ke > k.us.g && k.ar.ke > k.ar.g) BCO_KE = k; } catch (e) {}
+// costo del capital y crecimiento de largo plazo de cada país, para el P/VL que corresponde a cada ROE. El costo del
+// capital es el automático de bancos.json (CAPM con los datos del día: tasas, riesgo país, prima y beta); el crecimiento,
+// fijo. Cualquiera de los cuatro se puede poner a mano y volver al automático
+const BCO_KE_FIJO = { us: { ke: 10, g: 4 }, ar: { ke: 14, g: 3 } };   // si bancos.json todavía no trae el automático
+let bcoKeMan = {};   // lo puesto a mano: { us: { ke?, g? }, ar: { ke?, g? } }
+try { localStorage.removeItem('bcoKe'); const m = JSON.parse(localStorage.getItem('bcoKeMan') || 'null'); if (m && typeof m === 'object') bcoKeMan = m; } catch (e) {}
+const bcoKeAuto = c => BCO && BCO.ke && BCO.ke.hoy && isFinite(BCO.ke.hoy[c]) && BCO.ke.hoy[c] != null ? BCO.ke.hoy[c] : null;
+function bcoKeDe(c) {
+  const m = bcoKeMan[c] || {}, auto = bcoKeAuto(c);
+  return { ke: m.ke ?? auto ?? BCO_KE_FIJO[c].ke, g: m.g ?? BCO_KE_FIJO[c].g, keMan: m.ke != null, gMan: m.g != null, auto: auto != null };
+}
+let BCO_KE = { us: bcoKeDe('us'), ar: bcoKeDe('ar') };
+const bcoKeSync = () => { BCO_KE = { us: bcoKeDe('us'), ar: bcoKeDe('ar') }; };
+// cómo sale el automático, con la fecha de cada dato
+function bcoKeTexto(c) {
+  const K = BCO && BCO.ke && BCO.ke.hoy, C = K && K.comp, x = BCO_KE[c];
+  const pc = v => numAR(v, 2, 2) + '%', mes = d => MES_CORTO[+d.slice(5, 7) - 1].toLowerCase() + '-' + d.slice(2, 4);
+  let auto = 'todavía no está en bancos.json; va ' + numAR(BCO_KE_FIJO[c].ke, 0, 0) + '% fijo.';
+  if (bcoKeAuto(c) != null && C && C.beta && C.erp) {
+    const prima = ' + beta ' + numAR(C.beta.v, 2, 2) + ' × prima ' + pc(C.erp.v) + ' (Damodaran, ' + mes(C.erp.fecha) + ') = <b>' + pc(K[c]) + '</b>';
+    auto = c === 'us' ? 'bono del Tesoro a 10 años ' + pc(C.ust.v) + ' (' + infDdmmaa(C.ust.fecha) + ')' + prima
+      : 'TIPS a 10 años ' + pc(C.tips.v) + ' + riesgo país ' + pc(C.rp.v / 100) + ' (' + numAR(C.rp.v, 0, 0) + ' puntos al ' + infDdmmaa(C.rp.fecha) + ')' + prima;
+  }
+  const man = [x.keMan ? 'costo del capital' : '', x.gMan ? 'crecimiento' : ''].filter(Boolean);
+  return (man.length ? '<span class="bco-ke-man">A mano: ' + man.join(' y ') + '.</span> ' : '') + 'Automático: ' + auto;
+}
 const BCO_MET = { pb: ['P/VL', 'precio / valor libro'], ptb: ['P/VL tangible', 'precio / valor libro tangible'], roe: ['ROE', 'ROE de 12 meses (Argentina: real)'],
   rend: ['ROE ÷ P/VL', 'P/VL ajustado por ROE: lo que gana el banco por cada peso que vale; más alto, más barato'] };
 const bcoPct = m => m === 'roe' || m === 'rend';   // métricas en porcentaje
@@ -6223,6 +6256,7 @@ function setBcoMetric(m) { bcoMetric = m; renderBancos(); }
 function setBcoRange(y) { bcoRange = y; bcoGuardar(); drawBcoChart(); }
 function setBcoRoeX(x) { bcoRoeX = x; drawBcoScatter(); }
 function bcoToggle(k) { bcoSel = bcoSel.includes(k) ? bcoSel.filter(x => x !== k) : [...bcoSel, k]; renderBancos(); }
+// lo que se cambió a mano queda a mano; lo que no se tocó sigue el automático
 function bcoSetKe() {
   const v = id => parseFloat(String(document.getElementById(id)?.value || '').replace(',', '.'));
   const n = { us: { ke: v('bcoKeUs'), g: v('bcoGUs') }, ar: { ke: v('bcoKeAr'), g: v('bcoGAr') } };
@@ -6230,10 +6264,19 @@ function bcoSetKe() {
   const msg = document.getElementById('bcoKeMsg');
   if (msg) msg.textContent = ok ? '' : 'El costo del capital tiene que ser mayor que el crecimiento.';
   if (!ok) return;
-  BCO_KE = n; try { localStorage.setItem('bcoKe', JSON.stringify(n)); } catch (e) {}
+  const man = {};
+  for (const c of ['us', 'ar']) {
+    const m = {};
+    for (const f of ['ke', 'g']) {
+      const ant = bcoKeMan[c]?.[f], vis = +BCO_KE[c][f].toFixed(2);
+      if (Math.abs(n[c][f] - vis) > 1e-9) m[f] = n[c][f]; else if (ant != null) m[f] = ant;
+    }
+    if (Object.keys(m).length) man[c] = m;
+  }
+  bcoKeMan = man; try { Object.keys(man).length ? localStorage.setItem('bcoKeMan', JSON.stringify(man)) : localStorage.removeItem('bcoKeMan'); } catch (e) {}
   renderBancos();
 }
-function bcoKeDefault() { BCO_KE = JSON.parse(JSON.stringify(BCO_KE0)); try { localStorage.removeItem('bcoKe'); } catch (e) {} renderBancos(); }
+function bcoKeDefault() { bcoKeMan = {}; try { localStorage.removeItem('bcoKeMan'); } catch (e) {} const msg = document.getElementById('bcoKeMsg'); if (msg) msg.textContent = ''; renderBancos(); }
 function renderBancos() {
   const st = document.getElementById('bcoStatus'), tb = document.getElementById('bcoTable');
   if (!st || !tb) return;
@@ -6241,7 +6284,16 @@ function renderBancos() {
   { const q = document.getElementById('bcoRoeRefBtns'); if (q) { q.style.display = bcoMetric === 'rend' ? '' : 'none'; q.querySelectorAll('.pebg-period').forEach(e => e.classList.toggle('active', e.dataset.q === bcoRoeRef)); } }
   document.querySelectorAll('#bcoRangeBtns .pebg-period').forEach(e => e.classList.toggle('active', +e.dataset.y === bcoRange));
   document.querySelectorAll('#bcoRoeBtns .pebg-period').forEach(e => e.classList.toggle('active', e.dataset.x === bcoRoeX));
-  for (const [id, c, f] of [['bcoKeUs', 'us', 'ke'], ['bcoGUs', 'us', 'g'], ['bcoKeAr', 'ar', 'ke'], ['bcoGAr', 'ar', 'g']]) { const e = document.getElementById(id); if (e && document.activeElement !== e) e.value = String(BCO_KE[c][f]).replace('.', ','); }
+  bcoKeSync();
+  for (const [id, c, f] of [['bcoKeUs', 'us', 'ke'], ['bcoGUs', 'us', 'g'], ['bcoKeAr', 'ar', 'ke'], ['bcoGAr', 'ar', 'g']]) {
+    const e = document.getElementById(id); if (!e) continue;
+    const man = BCO_KE[c][f + 'Man'];
+    if (document.activeElement !== e) e.value = String(+BCO_KE[c][f].toFixed(2)).replace('.', ',');
+    e.classList.toggle('man', man); e.title = man ? 'Puesto a mano' : f === 'ke' ? (BCO_KE[c].auto ? 'Automático: CAPM con los datos del día' : 'Fijo, hasta que bancos.json traiga el automático') : 'Fijo';
+  }
+  { const cu = document.getElementById('bcoKeCapUs'), ca = document.getElementById('bcoKeCapAr'), bt = document.getElementById('bcoKeAutoBtn');
+    if (cu) cu.innerHTML = bcoKeTexto('us'); if (ca) ca.innerHTML = bcoKeTexto('ar');
+    if (bt) bt.style.display = Object.keys(bcoKeMan).length ? '' : 'none'; }
   if (!BCO) { st.textContent = 'Todavía no está bancos.json: se arma cada día hábil después del cierre.'; tb.innerHTML = ''; drawBcoChart(); drawBcoScatter(); return; }
   st.innerHTML = 'Al cierre del ' + infDdmmaa(BCO.asOf.slice(0, 10)) + '. Argentina: precio en BYMA y valor libro llevado a pesos de hoy con el IPC. EE.UU.: los bancos del S&amp;P 500. <a class="sect-link" onclick="openMetodo(\'bancos\')">Cómo se calcula</a>';
   const na = '<span class="na">—</span>', x = v => v == null ? na : numAR(v, 2, 2) + 'x', pc = v => v == null ? na : numAR(v, 1, 1) + '%';
@@ -6267,7 +6319,7 @@ function renderBancos() {
   { const S = document.getElementById('bcoFoco'), op = k => '<option value="' + k + '">' + (BCO.grupos[k] ? BCO.grupos[k].n : BCO.bancos[k].n + ' (' + k + ')') + '</option>';
     if (S) { S.innerHTML = '<optgroup label="Grupos">' + ['ar', 'us', 'usDiv', 'usReg'].map(op).join('') + '</optgroup><optgroup label="Argentina">' + ar.map(op).join('') + '</optgroup><optgroup label="EE.UU.">' + us.map(op).join('') + '</optgroup>';
       if (!bcoObj(bcoFoco)) bcoFoco = 'ar'; S.value = bcoFoco; } }
-  const sec = (t, P, nota) => '<tr class="bco-sec"><td colspan="11">' + t + ' <span>' + nota + ' Costo del capital ' + numAR(P.ke, 1, 1) + '% y crecimiento ' + numAR(P.g, 1, 1) + '%.</span></td></tr>';
+  const sec = (t, P, nota) => '<tr class="bco-sec"><td colspan="11">' + t + ' <span>' + nota + ' Costo del capital ' + numAR(P.ke, 1, 1) + '%' + (P.keMan ? ' (a mano)' : P.auto ? '' : ' (fijo)') + ' y crecimiento ' + numAR(P.g, 1, 1) + '%' + (P.gMan ? ' (a mano)' : '') + '.</span></td></tr>';
   tb.innerHTML = '<table class="ov-tbl sect-tbl bco-tbl"><thead><tr><th>Banco</th><th title="Capitalización / patrimonio de los comunes">P/VL</th><th title="Capitalización / patrimonio de los comunes sin llave de negocio ni intangibles">P/VL tangible</th>'
     + '<th title="Resultado de los comunes de 12 meses / patrimonio promedio">ROE 12 meses</th><th title="Resultado del último trimestre por 4 / patrimonio promedio del trimestre">ROE del trimestre</th>'
     + '<th title="El ROE de largo plazo que hace falta para que este P/VL sea el que corresponde: crecimiento + P/VL × (costo del capital − crecimiento)">ROE que paga el precio</th>'
