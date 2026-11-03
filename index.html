@@ -564,6 +564,7 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .bco-ke input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .bco-ke-msg{color:var(--down)}
 .bco-sc-box{position:relative;height:380px}
+.bco-tip-nota{color:var(--muted);font-size:11.5px;margin-top:2px}
 .bco-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px 0 10px}
 .bco-ctl .arg-chips{margin-bottom:0}
 .bco-ctl-lbl{font-size:12.5px;color:var(--muted)}
@@ -5367,7 +5368,7 @@ const METODO = [
       { d: 'ROE de 12 meses: resultado de los comunes de los últimos cuatro trimestres / patrimonio promedio de los cierres del año (el del trimestre y los anteriores hasta un año antes). En Argentina, todo en pesos del último cierre: es real. ROE del trimestre: resultado del último trimestre × 4 / promedio de su cierre y el anterior. Donde faltan trimestres, el resultado de 12 meses de Yahoo; en Argentina hasta 2024, el del ejercicio, con el resultado y los dos patrimonios del mismo 20-F.',
         o: 'El resultado de 12 meses de Yahoo es la suma nominal de los cuatro trimestres: en Argentina deja el ROE un poco por debajo del real.' },
       { d: 'Cada balance vale desde su presentación a la SEC o, sin esa fecha, desde el cierre más 45 a 75 días; deja de valer a los 200 días en EE.UU. y a los 470 en Argentina (que hasta 2024 tiene uno por año).' },
-      { d: 'Banda móvil (la vista que abre la pestaña): el P/VL semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores (hace falta 60% con dato); fija: un solo juego con los últimos años. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (un banco), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/VL), así que salta cuando entra un balance. El gráfico muestra toda la historia (Argentina desde marzo de 2017, con el balance de diciembre de 2016; EE.UU. desde 2010) o los últimos 3, 5 o 10 años.',
+      { d: 'Banda móvil (la vista que abre la pestaña): el P/VL semanal de un grupo o un banco con su media y ±1σ y ±2σ. Móvil: en cada semana, las semanas de los 1, 3, 5 o 10 años anteriores; mientras no hay esos años de historia, todas las semanas desde el primer dato (con al menos un año, y el primer año con la banda de su primer año), en un tramo más claro. Fija: un solo juego con los últimos años, para todo el gráfico. Z-score y percentil contra esa ventana; menos de −1σ es barato y más de +1σ, caro, como en P/E histórico. En precio (un banco), cada banda es su múltiplo por el valor libro por acción de esa semana (precio / P/VL), así que salta cuando entra un balance. El gráfico muestra toda la historia (Argentina desde marzo de 2017, con el balance de diciembre de 2016; EE.UU. desde 2010) o los últimos 3, 5 o 10 años.',
         p: 'Es la misma lectura que P/E histórico con el múltiplo que se usa para bancos: el resultado de un banco depende del ciclo de crédito y de las previsiones, y el valor libro es más estable que la ganancia.' },
       { d: 'P/VL que corresponde a un ROE: (ROE − crecimiento) / (costo del capital − crecimiento). ROE que paga el precio: crecimiento + P/VL × (costo del capital − crecimiento). Costo del capital y crecimiento editables: por defecto 10% y 4% nominales en EE.UU. y 14% y 3% reales en Argentina.',
         p: 'Es el descuento de dividendos con lo que no se reparte reinvertido al mismo ROE: un banco que gana justo su costo del capital vale su valor libro. El ROE que paga el precio dice qué rentabilidad de largo plazo ya está en el precio sin tener que elegir un ROE normal. Los valores por defecto son supuestos, armados con CAPM a fines de octubre de 2026: en EE.UU., bono del Tesoro a 10 años (~5%) + beta de los bancos (~1,1) × prima de mercado (~4,2%, la implícita de Damodaran) ≈ 9,6%, redondeado a 10%, y crecimiento nominal de 4% (2% real + 2% de inflación); en Argentina, en términos reales, tasa real del Tesoro a 10 años (TIPS, ~2,6%) + riesgo país (~6,5%) + 1,1 × 4,2% ≈ 13,7%, redondeado a 14%, y crecimiento real de 3%.',
@@ -6129,24 +6130,31 @@ function bcoFila(k) {
   setBcoFoco(k);
   const c = document.getElementById('bcoCanvas'); if (c && c.scrollIntoView) c.closest('.ov-card').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
-// media y desvío de cada semana. Móvil: las semanas de los N años anteriores, incluida esa (al menos 60% con dato).
-// Fija: un solo juego con los últimos N años, aplicado a esos N años
+// media y desvío de cada semana. Móvil: las semanas de los N años anteriores, incluida esa. Mientras no hay N años de
+// historia, todas las semanas desde el primer dato, con al menos un año (corto); el primer año, con la banda de su primer
+// año (relleno: usa semanas posteriores). Fija: un solo juego con los últimos N años, para todo el gráfico
 function bcoBanda(a, years, tipo) {
-  const n = a.length, W = Math.round(years * 52.18), min = Math.round(W * 0.6), out = new Array(n).fill(null);
-  const banda = (mu, sd) => ({ mu, sd, mult: [mu + 2 * sd, mu + sd, mu, mu - sd, mu - 2 * sd] });
+  const n = a.length, W = Math.round(years * 52.18), out = new Array(n).fill(null), first = a.findIndex(v => v != null);
+  if (first < 0) return out;
+  const banda = (mu, sd, extra) => ({ mu, sd, mult: [mu + 2 * sd, mu + sd, mu, mu - sd, mu - 2 * sd], ...extra });
   if (tipo === 'fija') {
     const v = []; for (let i = Math.max(0, n - W); i < n; i++) if (a[i] != null) v.push(a[i]);
     if (v.length < 26) return out;
-    const mu = v.reduce((x, y) => x + y, 0) / v.length, sd = Math.sqrt(v.reduce((x, y) => x + (y - mu) ** 2, 0) / v.length), b = banda(mu, sd);
-    for (let i = Math.max(0, n - W); i < n; i++) out[i] = b;
+    const mu = v.reduce((x, y) => x + y, 0) / v.length, sd = Math.sqrt(v.reduce((x, y) => x + (y - mu) ** 2, 0) / v.length);
+    const b = banda(mu, sd, { anios: Math.min(years, (n - Math.max(first, n - W)) / 52.18) });
+    for (let i = first; i < n; i++) if (a[i] != null) out[i] = b;
     return out;
   }
-  let sx = 0, sxx = 0, cnt = 0;
+  let sx = 0, sxx = 0, cnt = 0, primera = null;
   for (let i = 0; i < n; i++) {
     if (a[i] != null) { sx += a[i]; sxx += a[i] * a[i]; cnt++; }
     const j = i - W; if (j >= 0 && a[j] != null) { sx -= a[j]; sxx -= a[j] * a[j]; cnt--; }
-    if (cnt >= min && a[i] != null) { const mu = sx / cnt; out[i] = banda(mu, Math.sqrt(Math.max(0, sxx / cnt - mu * mu))); }
+    if (a[i] == null || cnt < 52) continue;
+    const mu = sx / cnt;
+    out[i] = banda(mu, Math.sqrt(Math.max(0, sxx / cnt - mu * mu)), { anios: Math.min(years, (i - Math.max(first, i - W + 1) + 1) / 52.18), corto: i - first + 1 < W });
+    if (primera == null) primera = i;
   }
+  if (primera != null) for (let i = first; i < primera; i++) if (a[i] != null) out[i] = { ...out[primera], corto: true, relleno: true };
   return out;
 }
 function loadBancos() {
@@ -6299,16 +6307,18 @@ function drawBcoBand(hover) {
   // fechas: comienzo de cada año o de cada trimestre según el largo
   ctx.textAlign = 'center'; { let lastX = -1e9; const d0 = new Date(t0 * 1000), step = chartY > 6 ? 12 : chartY > 2 ? 6 : 3;
     for (let q = d0.getUTCFullYear() * 12 + d0.getUTCMonth() + 1; ; q++) { const t = Date.UTC(Math.floor(q / 12), q % 12, 1) / 1000; if (t > t1) break; if (q % step) continue; const x = xs(t); if (x - lastX < 56) continue; lastX = x; ctx.fillStyle = C.text; ctx.fillText(MES_CORTO[q % 12] + ' ' + String(Math.floor(q / 12)).slice(2), x, H - 8); } }
-  // franja entre −1σ y +1σ
+  // franja entre −1σ y +1σ. Donde la media todavía no tiene los N años (el principio de la historia), más clara
   const tramos = []; let cur = []; idx.forEach(i => { if (bandV(i, 1) != null && bandV(i, 3) != null) cur.push(i); else if (cur.length) { tramos.push(cur); cur = []; } }); if (cur.length) tramos.push(cur);
+  const corto = i => !!(bands[i] && bands[i].corto), runs = [];
+  tramos.forEach(tr => { let r = [tr[0]]; for (let q = 1; q < tr.length; q++) { const i = tr[q]; r.push(i); if (corto(i) !== corto(r[0])) { runs.push({ ix: r, c: corto(r[0]) }); r = [i]; } } if (r.length > 1 || !runs.length) runs.push({ ix: r, c: corto(r[0]) }); });
   ctx.fillStyle = C.fill;
-  tramos.forEach(tr => { ctx.beginPath(); tr.forEach((i, q) => q ? ctx.lineTo(xs(bcoT(i)), ys(bandV(i, 1))) : ctx.moveTo(xs(bcoT(i)), ys(bandV(i, 1)))); tr.slice().reverse().forEach(i => ctx.lineTo(xs(bcoT(i)), ys(bandV(i, 3)))); ctx.closePath(); ctx.fill(); });
+  runs.forEach(({ ix, c }) => { ctx.globalAlpha = c ? 0.45 : 1; ctx.beginPath(); ix.forEach((i, q) => q ? ctx.lineTo(xs(bcoT(i)), ys(bandV(i, 1))) : ctx.moveTo(xs(bcoT(i)), ys(bandV(i, 1)))); ix.slice().reverse().forEach(i => ctx.lineTo(xs(bcoT(i)), ys(bandV(i, 3)))); ctx.closePath(); ctx.fill(); });
   // bandas: la media llena, ±1σ finas, ±2σ punteadas
   for (let j = 0; j < 5; j++) {
     ctx.strokeStyle = cols[j]; ctx.lineWidth = j === 2 ? 1.6 : 1.1; ctx.setLineDash(j === 0 || j === 4 ? [4, 3] : []);
-    tramos.forEach(tr => { ctx.beginPath(); let on = false; tr.forEach(i => { const v = bandV(i, j); if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); ctx.stroke(); });
+    runs.forEach(({ ix, c }) => { ctx.globalAlpha = c ? 0.45 : 1; ctx.beginPath(); let on = false; ix.forEach(i => { const v = bandV(i, j); if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); ctx.stroke(); });
   }
-  ctx.setLineDash([]);
+  ctx.globalAlpha = 1; ctx.setLineDash([]);
   // la línea
   ctx.strokeStyle = C.line; ctx.lineWidth = 1.9; ctx.beginPath(); { let on = false; idx.forEach(i => { const v = lineV(i); if (v == null) { on = false; return; } on ? ctx.lineTo(xs(bcoT(i)), ys(v)) : ctx.moveTo(xs(bcoT(i)), ys(v)); on = true; }); } ctx.stroke();
   // a la derecha: el valor de hoy de cada banda y de la línea, sin pisarse
@@ -6325,7 +6335,8 @@ function drawBcoBand(hover) {
     const B = bands[hover], z = B && B.sd > 0 ? (a[hover] - B.mu) / B.sd : null;
     tip.innerHTML = '<div class="pebg-tooltip-date">' + new Date(bcoT(hover) * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) + '</div>'
       + '<div>' + M[0] + ' ' + fmtM(a[hover]) + (precio && b.precio[hover] ? ', precio ' + fmtP(b.precio[hover]) : '') + '</div>'
-      + (B ? '<div>Media ' + fmtM(B.mu) + ', σ ' + fmtM(B.sd) + '</div><div>Z ' + (z >= 0 ? '+' : '−') + numAR(Math.abs(z), 2, 2) + 'σ</div>' : '<div>Sin historia suficiente para la banda</div>');
+      + (B ? '<div>Media ' + fmtM(B.mu) + ', σ ' + fmtM(B.sd) + '</div><div>Z ' + (z >= 0 ? '+' : '−') + numAR(Math.abs(z), 2, 2) + 'σ</div>'
+        + (B.relleno ? '<div class="bco-tip-nota">Media del primer año de datos</div>' : B.corto ? '<div class="bco-tip-nota">Media de ' + numAR(B.anios, 1, 1) + ' años: todavía no hay ' + bcoWin + '</div>' : '') : '<div>Sin historia suficiente para la banda</div>');
     tip.style.display = 'block'; tip.style.left = Math.min(x + 12, W - 200) + 'px'; tip.style.top = '8px';
   } else if (tip) tip.style.display = 'none';
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(), t = t0 + (e.clientX - r.left - P.l) / (W - P.l - P.r) * (t1 - t0);
@@ -6338,7 +6349,7 @@ function drawBcoBand(hover) {
   const blk = (l, v, sub, cls = '', col = '') => '<div class="pebg-stat-block"><div class="pebg-stat-lbl">' + l + '</div><div class="pebg-stat-val ' + cls + '"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</div><div class="pebg-stat-sub">' + sub + '</div></div>';
   const lado = z == null || roe ? '' : z < -1 ? 'pp' : z > 1 ? 'pn' : '';
   let h = blk(M[0] + ' hoy', fmtM(now), 'semana del ' + infDdmmaa(new Date(bcoT(last) * 1000).toISOString().slice(0, 10)))
-    + blk('Media ' + bcoWin + 'A', lb ? fmtM(lb.mu) : '—', lb ? (bcoBandT === 'fija' ? 'fija' : 'móvil') : 'falta historia')
+    + blk('Media ' + bcoWin + 'A', lb ? fmtM(lb.mu) : '—', !lb ? 'falta historia' : lb.anios != null && lb.anios < bcoWin - 0.05 ? 'con ' + numAR(lb.anios, 1, 1) + ' años de datos' : bcoBandT === 'fija' ? 'fija' : 'móvil')
     + blk('Desv. std', lb ? fmtM(lb.sd) : '—', 'σ')
     + blk('Z-score', z != null ? (z >= 0 ? '+' : '−') + numAR(Math.abs(z), 2, 2) + 'σ' : '—', z == null || roe ? '' : z < -1 ? 'barato' : z > 1 ? 'caro' : 'justo', lado)
     + blk('Percentil ' + bcoWin + 'A', pct != null ? Math.round(pct * 100) + '%' : '—', 'semanas con ' + M[0] + ' menor o igual');
@@ -6349,7 +6360,7 @@ function drawBcoBand(hover) {
       h += blk('Precio a ' + PE_BAND_LABELS[j], v ? fmtP(v) : 'N/A', v ? M[0] + ' ' + fmtM(lb.mult[j]) + ', ' + (v >= px ? '+' : '−') + Math.abs((v / px - 1) * 100).toFixed(0) + '%' : '', '', v ? cols[j] : ''); });
   }
   st.innerHTML = h;
-  document.getElementById('bcoChartNote').textContent = (bcoBandT === 'fija' ? 'Media y desvío de las semanas de los últimos ' + wTxt + ', los mismos para todo el gráfico. ' : 'En cada semana, media y desvío de las semanas de los ' + wTxt + ' anteriores (hace falta 60% con dato). ')
+  document.getElementById('bcoChartNote').textContent = (bcoBandT === 'fija' ? 'Media y desvío de las semanas de los últimos ' + wTxt + ', los mismos para todo el gráfico. ' : 'En cada semana, media y desvío de las semanas de los ' + wTxt + ' anteriores; mientras no hay ' + wTxt + ' de historia, de todo lo que hay desde el primer dato (el primer año, con la de su primer año), en el tramo más claro. ')
     + (precio ? 'En precio, cada banda es su múltiplo por el valor libro por acción de esa semana' + (b.moneda === 'ARS' ? ', que en Argentina se lleva a pesos de cada semana con el IPC. ' : '. ') : '')
     + (BCO.bancos[k]?.pais === 'ar' || k === 'ar' ? 'En Argentina, hasta 2024 hay un balance por año (los 20-F); desde 2025, uno por trimestre.' : 'Cada balance cuenta desde que se presentó a la SEC.');
 }
