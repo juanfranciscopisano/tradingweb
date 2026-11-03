@@ -208,9 +208,17 @@ async function diagnostico({ fetchImpl, log, meses }) {
     try { txt = execFileSync("7z", ["l", "-ba", "-slt", f], { encoding: "latin1", maxBuffer: 1 << 28 }); } catch (e) { txt = "7z falló: " + String(e.stdout || e.message).slice(0, 400); }
     const rutas = [...txt.matchAll(/^Path = (.*)$/gm)].map(x => x[1]);
     log(`${m}: ${(tam / 1e6).toFixed(1)} MB, cabecera ${cab}, ${rutas.length} archivos${rutas.length ? "" : "; " + txt.slice(0, 300).replace(/\s+/g, " ")}`);
-    const carpetas = [...new Set(rutas.map(r => r.split(/[\\/]/).slice(0, -1).join("/")))];
-    log(`  carpetas: ${carpetas.slice(0, 30).join(" | ")}`);
-    for (const r of rutas.filter(r => /indicad|entidad|bal_?hist|cuentas|\.(7z|zip|rar)$/i.test(r)).slice(0, 25)) log("  " + JSON.stringify(r));
+    const ind = rutas.filter(r => /Tec_Cont\/indicad\//i.test(r)), ent = rutas.filter(r => /Tec_Cont\/entidad\//i.test(r));
+    log(`  indicad: ${ind.length} archivos (${ind.slice(0, 8).map(r => r.split("/").pop()).join(" ")}); entidad: ${ent.length} (${ent.filter(r => !/\/\d{5}\.txt$/i.test(r)).slice(0, 6).map(r => r.split("/").pop()).join(" ")}); bal_hist: ${rutas.filter(r => /bal_?hist/i.test(r)).map(r => r.split("/").pop()).join(" ") || "no"}`);
+    const d = join(dir, m); extraer(f, d, ["Entfin/Tec_Cont/entidad/*", "Entfin/Tec_Cont/indicad/*", "*/Entfin/Tec_Cont/entidad/*", "*/Entfin/Tec_Cont/indicad/*"]);
+    const ti = leer(buscar(d, "indicad/completo\\.txt")), te = leer(buscar(d, "entidad/completo\\.txt"));
+    const li = ti.split(/\r?\n/).filter(Boolean), le = te.split(/\r?\n/).filter(Boolean);
+    log(`  indicad/completo: ${li.length} líneas; ${li.filter(l => /^"?AAA00/.test(l)).length} del sistema; primera: ${JSON.stringify(li[0] || "").slice(0, 260)}`);
+    for (const l of li.filter(l => /^"?00007"?\t/.test(l) && INDICADORES.some(([, re]) => re.test(sinComillas(l.split("\t")[4])))).slice(0, 3)) log("    " + JSON.stringify(l).slice(0, 260));
+    log(`  entidad/completo: ${le.length} líneas; Galicia: ${JSON.stringify(le.find(l => /^"?00007"?\t/.test(l)) || "").slice(0, 300)}`);
+    const fe = fechasEntidades(te), x = leerIndicad(ti, fe, new Set(["00007", SISTEMA]));
+    log(`  leído: Galicia ${Object.entries(x["00007"] || {}).map(([k, o]) => k + " " + Object.keys(o).join("/")).slice(0, 3).join(", ") || "—"}; sistema ${Object.entries(x[SISTEMA] || {}).map(([k, o]) => k + " " + Object.keys(o).length).join(", ") || "—"}`);
+    await rm(d, { recursive: true, force: true });
     await rm(f, { force: true });
   }
   await rm(dir, { recursive: true, force: true });
