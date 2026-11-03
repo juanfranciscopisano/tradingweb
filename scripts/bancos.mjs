@@ -20,7 +20,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { yahooSession } from "./fundamentals.mjs";
-import { readXlsx, toISO, parseFredCsv } from "./macro.mjs";
+import { readXlsx, unzip, toISO, parseFredCsv } from "./macro.mjs";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const DAY = 86400, WEEK = 7 * DAY;
@@ -344,9 +344,10 @@ export function erpDeHome(html) {
   if (!mes || !(v > 0 && v < 20)) return null;
   return { fecha: `${m[3]}-${String(mes).padStart(2, "0")}-${m[2].padStart(2, "0")}`, erp: v };
 }
-// fecha de una planilla de EE.UU.: número de serie de Excel, ISO, m/d/aaaa o "Sep-08" / "September 2008" (el día 1)
-export function fechaUS(v) {
-  if (typeof v === "number") return toISO(v);
+// fecha de una planilla de EE.UU.: número de serie de Excel, ISO, m/d/aaaa o "Sep-08" / "September 2008" (el día 1). Los
+// libros hechos en Mac pueden contar los días desde 1904 (la planilla de Damodaran): son 1.462 días más
+export function fechaUS(v, d1904 = false) {
+  if (typeof v === "number") return toISO(d1904 ? v + 1462 : v);
   const s = String(v ?? "").trim(); let m;
   if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
   if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/))) return `${m[3].length === 2 ? 2000 + +m[3] : m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
@@ -356,9 +357,12 @@ export function fechaUS(v) {
   }
   return null;
 }
-// la planilla mensual (ERPbymonth.xlsx): la fila de encabezados con la fecha y columnas de ERP; la de los últimos 12 meses
-// con payout ajustado (la principal de la página), si no la de los últimos 12 meses, si no la primera. En % (0,0441 → 4,41)
-export function erpDeExcel(hojas) {
+// si el libro cuenta las fechas desde 1904
+export const fecha1904 = buf => { try { return /<workbookPr\b[^>]*\bdate1904="(1|true)"/i.test(unzip(buf)["xl/workbook.xml"]?.toString("utf8") || ""); } catch (e) { return false; } };
+// la planilla mensual (ERPbymonth.xlsx, hoja "Historical ERP"): la fila de encabezados con la fecha y columnas de ERP; la
+// de los últimos 12 meses con payout ajustado o sostenible (la principal de la página), si no la de los últimos 12 meses,
+// si no la primera. En % (0,0441 → 4,41)
+export function erpDeExcel(hojas, d1904 = false) {
   for (const [hoja, filas] of Object.entries(hojas || {})) {
     for (let h = 0; h < Math.min(filas.length, 40); h++) {
       const head = (filas[h] || []).map(c => typeof c === "string" ? c.replace(/\s+/g, " ").trim() : "");
@@ -368,7 +372,7 @@ export function erpDeExcel(hojas) {
       const iE = cols.find(i => /(adjusted|sustainable) payout/i.test(head[i])) ?? cols.find(i => /t12m|trailing 12/i.test(head[i])) ?? cols[0];
       const serie = [];
       for (const r of filas.slice(h + 1)) {
-        const d = fechaUS(r?.[iF]), v = r?.[iE];
+        const d = fechaUS(r?.[iF], d1904), v = r?.[iE];
         if (d && typeof v === "number" && isFinite(v) && v > 0) serie.push({ fecha: d, erp: +(v < 1 ? v * 100 : v).toFixed(2) });
       }
       if (serie.length >= 12) return { serie: serie.sort((a, b) => a.fecha.localeCompare(b.fecha)), hoja, columna: head[iE] };
@@ -457,8 +461,10 @@ export async function datosKe({ fetchImpl, weeks, hoyS, series, usSyms, chartDe,
   // prima: la serie mensual y, si es más nueva, la de la página
   let erpObs = null, pag = null;
   try {
-    const x = erpDeExcel(readXlsx(await bajar(ERP_MES, true)));
+    const buf = await bajar(ERP_MES, true), x = erpDeExcel(readXlsx(buf), fecha1904(buf));
     if (!x) throw new Error("no encontré la columna de la prima");
+    // tiene que llegar hasta hace poco: si no, las fechas están mal leídas
+    if (hoyS - tOf(x.serie.at(-1).fecha) > 75 * DAY) throw new Error("la planilla termina el " + x.serie.at(-1).fecha);
     erpObs = x.serie.map(o => [o.fecha, o.erp]);
   } catch (e) { errores.erpMes = "prima mensual: " + e.message; }
   try { pag = erpDeHome(await bajar(ERP_HOME)); if (!pag) throw new Error("no encontré la prima en la página"); }
@@ -637,13 +643,14 @@ export async function diagnosticoKe({ fetchImpl = globalThis.fetch, log = consol
     log("página de Damodaran: " + JSON.stringify(erpDeHome(html)) + "; texto: " + (i >= 0 ? html.slice(i, i + 400).replace(/\s+/g, " ") : "sin 'Implied ERP'"));
   } catch (e) { log("página de Damodaran: " + e.message); }
   try {
-    const hojas = readXlsx(await bajar(ERP_MES, true));
+    const buf = await bajar(ERP_MES, true), hojas = readXlsx(buf), d1904 = fecha1904(buf);
+    log(`fechas desde ${d1904 ? 1904 : 1900}`);
     for (const [n, filas] of Object.entries(hojas)) {
       log(`hoja "${n}": ${filas.length} filas`);
-      filas.slice(0, 10).forEach((f, i) => log(`  ${i + 1}: ${JSON.stringify(f).slice(0, 400)}`));
-      log(`  última: ${JSON.stringify(filas.at(-1)).slice(0, 400)}`);
+      filas.slice(0, 4).forEach((f, i) => log(`  ${i + 1}: ${JSON.stringify(f || []).slice(0, 400)}`));
+      if (filas.length) log(`  última: ${JSON.stringify(filas.at(-1) || []).slice(0, 400)}`);
     }
-    const x = erpDeExcel(hojas);
+    const x = erpDeExcel(hojas, d1904);
     log("leída: " + (x ? `${x.serie.length} meses, hoja "${x.hoja}", columna "${x.columna}", de ${JSON.stringify(x.serie[0])} a ${JSON.stringify(x.serie.at(-1))}` : "no encontré la columna"));
   } catch (e) { log("planilla mensual de Damodaran: " + e.message); }
   try {
