@@ -72,8 +72,9 @@ export function desdeSec(facts, { unidad = "ARS", hoyS = Infinity } = {}) {
     for (const e of arr) { const k = key(e), p = m.get(k); if (!p || (e.filed || "") < (p.filed || "")) m.set(k, e); }
     return [...m.values()];
   };
+  // cierre de cada presentación: el más reciente de sus saldos y resultados (Cresud presentó el 20-F de 2024 sin el patrimonio)
   const finDe = new Map();
-  for (const t of ["EquityAttributableToOwnersOfParent", "Equity"]) for (const e of f[t]?.units?.[unidad] || []) if (!e.start && e.end && e.accn && !(finDe.get(e.accn) >= e.end)) finDe.set(e.accn, e.end);
+  for (const t of ["EquityAttributableToOwnersOfParent", "Equity", "ProfitLossAttributableToOwnersOfParent", "ProfitLoss"]) for (const e of f[t]?.units?.[unidad] || []) if (e.end && e.accn && !(finDe.get(e.accn) >= e.end)) finDe.set(e.accn, e.end);
   const moneda = e => unidad !== "ARS" || (e.filed || "") < "2018-09-01" ? e.end : (finDe.get(e.accn) || e.end);
   // patrimonio de los propietarios; sin esa etiqueta, el total menos los minoritarios (si no están, el total)
   const eqA = (f.EquityAttributableToOwnersOfParent?.units?.[unidad] || []).filter(e => !e.start && isFinite(e.val));
@@ -87,8 +88,17 @@ export function desdeSec(facts, { unidad = "ARS", hoyS = Infinity } = {}) {
     eq.push({ end: e.end, val: e.val - (m ? m.val : 0), c: moneda(e), pub: pubDe(e.end, "a", hoyS, e.filed), src: "SEC 20-F", tag: m ? "total − minoritarios" : "total" });
   }
   const niTag = f.ProfitLossAttributableToOwnersOfParent?.units?.[unidad] ? "ProfitLossAttributableToOwnersOfParent" : "ProfitLoss";
-  const ni = first((f[niTag]?.units?.[unidad] || []).filter(e => e.start && e.end && isFinite(e.val) && anual(e.start, e.end)), e => e.start + e.end)
-    .map(e => ({ end: e.end, tipo: "a", val: e.val, c: moneda(e), pub: pubDe(e.end, "a", hoyS, e.filed), src: "SEC 20-F", accn: e.accn }));
+  // la primera presentación con escala creíble: TGS cargó 2018 a 2020 en miles sin escalar (11,4 millones en vez de 11.400);
+  // un resultado de menos de 0,05% del patrimonio del mismo 20-F se descarta y vale el de la presentación siguiente
+  const eqDe = new Map(); for (const e of [...eqA, ...eqT]) eqDe.set(e.accn + "|" + e.end, e.val);
+  const creible = e => { const q = eqDe.get(e.accn + "|" + e.end); return !(q > 0) || e.val === 0 || Math.abs(e.val / q) >= 0.0005; };
+  const porPeriodo = new Map();
+  for (const e of (f[niTag]?.units?.[unidad] || []).filter(e => e.start && e.end && isFinite(e.val) && anual(e.start, e.end))) { const k = e.start + e.end; if (!porPeriodo.has(k)) porPeriodo.set(k, []); porPeriodo.get(k).push(e); }
+  const ni = [];
+  for (const arr of porPeriodo.values()) {
+    const e = arr.sort((a, b) => (a.filed || "").localeCompare(b.filed || "")).find(creible);
+    if (e) ni.push({ end: e.end, tipo: "a", val: e.val, c: moneda(e), pub: pubDe(e.end, "a", hoyS, e.filed), src: "SEC 20-F", accn: e.accn });
+  }
   // acciones de cada ejercicio: las de la tapa (dei) cerca del cierre, el promedio ponderado o resultado / EPS
   const cand = end => {
     const out = [];
@@ -162,6 +172,57 @@ export function completarAcciones(lista, otras = []) {
     if (o) x.sh = o.sh;
   }
   return lista;
+}
+
+// splits: Yahoo da las acciones viejas a veces como se informaron y a veces ya ajustadas (BYMA: 7.625 millones en 2022,
+// antes de los splits de 2024 y 2025). Se multiplica por los splits posteriores solo si eso las acerca a las de hoy (ref)
+export function ajustarSplits(lista, splits, ref) {
+  if (!splits.length || !(ref > 0)) return lista;
+  for (const x of lista) {
+    if (!(x.sh > 0)) continue;
+    const f = splits.filter(s => s.date > tOf(x.end)).reduce((a, s) => a * s.ratio, 1);
+    if (f !== 1 && Math.abs(Math.log(x.sh * f / ref)) < Math.abs(Math.log(x.sh / ref))) x.sh *= f;
+  }
+  return lista;
+}
+// acciones que saltan más de 12% contra las de los dos lados (a 200 días o menos) que coinciden entre sí: dato malo de
+// Yahoo (Pampa, 3T25: 46 millones de ADR con 54 antes y después)
+export function limpiarAcciones(lista, otras = []) {
+  const todas = [...lista, ...otras].filter(x => x.sh > 0);
+  for (const x of lista) {
+    if (!(x.sh > 0)) continue;
+    const ant = todas.filter(y => y !== x && y.end < x.end && dias(y.end, x.end) <= 200).map(y => y.sh);
+    const pos = todas.filter(y => y !== x && y.end > x.end && dias(x.end, y.end) <= 200).map(y => y.sh);
+    if (!ant.length || !pos.length) continue;
+    const a = ant.at(-1), p = pos[0];
+    if (Math.abs(Math.log(a / p)) < 0.05 && Math.abs(Math.log(x.sh / a)) > 0.12 && Math.abs(Math.log(x.sh / p)) > 0.12) x.sh = Math.sqrt(a * p);
+  }
+  return lista;
+}
+// precio con un salto de más de 4 veces en una semana sin split (Ecogas pasó de 26.925 a 1.725 al empezar a cotizar):
+// lo de antes del último salto no se usa
+export function cortarSaltos(price, splits) {
+  const ws = [...price.keys()].sort((a, b) => a - b);
+  let corte = null;
+  for (let i = 1; i < ws.length; i++) {
+    const r = price.get(ws[i]) / price.get(ws[i - 1]);
+    const conSplit = splits.some(s => Math.abs(weekOf(s.date) - ws[i]) <= 2);
+    if (!conSplit && (r > 4 || r < 0.25)) corte = ws[i];
+  }
+  if (corte != null) for (const w of ws) if (w < corte) price.delete(w);
+  return corte;
+}
+// ¿la empresa tiene el dólar como moneda funcional (presenta en pesos convertidos al tipo de cambio de cada cierre)?
+// Ternium Argentina: el patrimonio en dólares (pesos / tipo de cambio del cierre) es casi constante y en pesos
+// constantes (IPC) salta con cada devaluación. Se compara qué serie es más pareja: los cambios anuales de cada una
+export function monedaFuncional(eq, convIpc, fxAt, hoyS) {
+  const o = eq.filter(x => x.end >= "2019-06-30" && x.val > 0).sort((a, b) => a.end.localeCompare(b.end));
+  const sd = vals => { const d = []; for (let i = 1; i < vals.length; i++) { const yrs = dias(vals[i - 1][0], vals[i][0]) / 365.25; if (yrs >= 0.2) d.push(Math.log(vals[i][1] / vals[i - 1][1]) / yrs); }
+    if (d.length < 2) return null; const m = d.reduce((a, b) => a + b, 0) / d.length; return Math.sqrt(d.reduce((a, b) => a + (b - m) ** 2, 0) / d.length); };
+  // en pesos constantes: cada valor en su moneda (c) llevado a hoy con el IPC; en dólares: el valor en pesos de su
+  // cierre (así presenta la que tiene el dólar como moneda funcional) sobre el tipo de cambio de ese día
+  const ars = sd(o.map(x => [x.end, x.val * convIpc(x.c, hoyS)])), usd = sd(o.map(x => [x.end, x.val / fxAt(tOf(x.end) + DAY - 1)]));
+  return { ars, usd, dolar: ars != null && usd != null && usd < 0.6 * ars };
 }
 
 // ---- series semanales: precio, resultado por acción de 12 meses y valor libro por acción, en la moneda de cada semana.
@@ -238,6 +299,14 @@ const precioDe = chart => {
   const splits = Object.values(chart?.events?.splits || {}).map(s => ({ date: s.date, ratio: s.numerator / s.denominator })).filter(s => s.ratio > 0 && isFinite(s.ratio) && s.ratio !== 1);
   return { m, splits };
 };
+// tipo de cambio oficial de cada día (argentinadatos: mayorista; si no está, el del BNA): fxAt(t) = el último hasta t
+export const FX_URLS = ["https://api.argentinadatos.com/v1/cotizaciones/dolares/mayorista", "https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial"];
+export function fxDe(j) {
+  const pts = (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && x.venta > 0).map(x => [tOf(x.fecha), +x.venta]).sort((a, b) => a[0] - b[0]);
+  if (pts.length < 100) return null;
+  const at = t => { if (t <= pts[0][0]) return pts[0][1]; let lo = 0, hi = pts.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m][0] <= t) lo = m; else hi = m; } return pts[hi][0] <= t ? pts[hi][1] : pts[lo][1]; };
+  return { at, desde: isoOf(pts[0][0]), hasta: isoOf(pts.at(-1)[0]) };
+}
 const Y_TIPOS = ["NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares"];
 
 export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(), log = console.log,
@@ -249,6 +318,10 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const ipc = ipcDe(indec, bcra?.ipc);
   if (!ipc) throw new Error("indec.json sin el IPC nacional");
   const convARS = (c, t) => ipc.at(t) / ipc.at(tOf(c) + DAY - 1), convUSD = () => 1;
+  let fx = null;
+  for (const u of FX_URLS) { try { fx = fxDe(await getJSON(fetchImpl, u, { headers: { "User-Agent": UA, Accept: "application/json" } })); if (fx) break; } catch (e) { log("tipo de cambio: " + u + " " + e.message); } }
+  if (!fx) errores.fx = "sin tipo de cambio oficial: todas en pesos con el IPC";
+  const convFX = fx ? (c, t) => fx.at(t) / fx.at(tOf(c) + DAY - 1) : convARS;
   // SEC
   const secH = { headers: { "User-Agent": secUA, Accept: "application/json" } };
   let lastSec = 0;
@@ -290,24 +363,45 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       ]);
       if (!chart) throw new Error("sin precios de " + px);
       const { m: price, splits } = precioDe(chart);
+      const corte = cortarSaltos(price, splits);
+      if (corte != null) log(`${c.s}: precio desde ${isoOf(MONDAY0 + corte * WEEK)} (salto sin split antes)`);
       // en dólares, las acciones por ADR: las del promedio diluido del ADR en Yahoo (las de la acción local vienen mal en YPF)
       const yah = desdeYahoo(yahooSerie(yj), { hoyS, acc: usd ? "DilutedAverageShares" : "OrdinarySharesNumber" });
       const sec = facts ? desdeSec(facts, { unidad: usd ? "USD" : "ARS", hoyS }) : { ni: [], eq: [], cand: () => [] };
       const man = c.manual ? desdeManual(manual[c.manual], { ratio: c.ratio || 1, hoyS }) : [];
-      // acciones de los 20-F: la candidata más cercana a las de Yahoo (o a las de los trimestres a mano)
-      const ref = [...man, ...yah.ni, ...yah.eq].filter(x => x.sh > 0).sort((a, b) => b.end.localeCompare(a.end))[0];
+      // acciones de los 20-F: las de los trimestres a mano o de Yahoo del mismo cierre; si no hay, la candidata del 20-F
+      // más cercana a las de la observación confiable más próxima en el tiempo
+      const conf = [...man, ...yah.ni, ...yah.eq].filter(x => x.sh > 0);
       for (const x of [...sec.ni, ...sec.eq]) {
+        const igual = conf.find(y => Math.abs(dias(y.end, x.end)) <= 10);
+        if (igual) { x.sh = igual.sh; continue; }
         const cs = sec.cand(x.end).map(v => v / (usd ? (c.ratio || 1) : 1));
         if (!cs.length) continue;
+        const ref = conf.slice().sort((a, b) => Math.abs(dias(a.end, x.end)) - Math.abs(dias(b.end, x.end)))[0];
         x.sh = ref ? cs.sort((a, b) => Math.abs(Math.log(a / ref.sh)) - Math.abs(Math.log(b / ref.sh)))[0] : cs.sort((a, b) => a - b)[Math.floor(cs.length / 2)];
       }
+      // moneda funcional (las que presentan en pesos): con el dólar, los ejercicios de Yahoo están en pesos de su cierre
+      // y todo se lleva de un cierre a otro con el tipo de cambio oficial, no con el IPC
+      let regimen = usd ? "dólares" : "pesos";
+      if (!usd && fx) {
+        // la prueba en pesos constantes lleva cada valor desde su moneda de NIC 29 (c) y la de dólares desde su cierre
+        const mf = monedaFuncional(unir([yah.eq.filter(x => x.src === "Yahoo trimestral"), sec.eq, yah.eq.filter(x => x.src === "Yahoo anual")].map(L => L.map(x => ({ ...x, tipo: "b" })))), convARS, fx.at, hoyS);
+        if (mf.dolar) regimen = "dólar funcional";
+        log(`${c.s}: moneda funcional, desvío de los cambios anuales del patrimonio en pesos constantes ${mf.ars?.toFixed(3)} y en dólares ${mf.usd?.toFixed(3)}: ${regimen}`);
+      }
+      if (regimen === "dólar funcional") for (const x of [...yah.ni, ...yah.eq]) x.c = x.end;
       // por cierre manda: los trimestres a mano, Yahoo trimestral, los 20-F y los ejercicios de Yahoo
       let ni = unir([man, yah.ni.filter(x => x.tipo === "q"), sec.ni, yah.ni.filter(x => x.tipo !== "q")]);
-      const conv = usd ? convUSD : convARS;
+      const conv = usd ? convUSD : regimen === "dólar funcional" ? convFX : convARS;
       ni = completarTrimestres(ni, conv);
-      const eq = unir([yah.eq.filter(x => x.src === "Yahoo trimestral").map(x => ({ ...x, tipo: "b" })), sec.eq.map(x => ({ ...x, tipo: "b" })), yah.eq.filter(x => x.src === "Yahoo anual").map(x => ({ ...x, tipo: "b" }))]);
+      let eq = unir([yah.eq.filter(x => x.src === "Yahoo trimestral").map(x => ({ ...x, tipo: "b" })), sec.eq.map(x => ({ ...x, tipo: "b" })), yah.eq.filter(x => x.src === "Yahoo anual").map(x => ({ ...x, tipo: "b" }))]);
+      // en pesos, el patrimonio anterior a la NIC 29 (costo histórico, sin reexpresar) no se compara con el de después
+      if (regimen === "pesos") eq = eq.filter(x => x.end >= "2018-09-30");
       completarAcciones(ni, eq); completarAcciones(eq, ni);
-      const s = semanalEmpresa({ price, ni, eq, conv, splits, weeks, hoyS });
+      limpiarAcciones(ni, eq); limpiarAcciones(eq, ni);
+      const ref = [...ni, ...eq].filter(x => x.sh > 0).sort((a, b) => b.end.localeCompare(a.end))[0]?.sh;
+      ajustarSplits(ni, splits, ref); ajustarSplits(eq, splits, ref);
+      const s = semanalEmpresa({ price, ni, eq, conv, splits: [], weeks, hoyS });
       const x = recortar(weeks, s);
       if (!x) throw new Error("sin resultados ni balances que empalmen con el precio");
       const k = s.c.length - 1, u = s.uso[k];
@@ -316,9 +410,9 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const ctrl = [];
       for (const a of sec.ni) { const y = yah.ni.find(z => z.tipo === "a" && z.end === a.end); if (y && y.val) ctrl.push(`resultado ${a.end}: ${(a.val * conv(a.c, tOf(y.c) + DAY - 1) / y.val).toFixed(2)}`); }
       for (const a of sec.eq) { const y = yah.eq.find(z => z.src === "Yahoo anual" && z.end === a.end); if (y && y.val) ctrl.push(`patrimonio ${a.end}: ${(a.val * conv(a.c, tOf(y.c) + DAY - 1) / y.val).toFixed(2)}${a.tag !== "atribuible" ? " (" + a.tag + ")" : ""}`); }
-      empresas[c.s] = { ...base, px, moneda: usd ? "USD" : "ARS", ...(usd ? { ratio: c.ratio || 1 } : {}), ...x,
+      empresas[c.s] = { ...base, px, moneda: usd ? "USD" : "ARS", regimen, ...(usd ? { ratio: c.ratio || 1 } : {}), ...x,
         ult: { precio, eps: sig(s.eps[k]), bv: sig(s.bv[k]), resultado: u.ni ? { cierre: u.ni.end, tipo: u.ni.tipo, fuente: u.ni.src } : null, balance: u.eq ? { cierre: u.eq.end, fuente: u.eq.src } : null,
-          ajusteIPC: !usd && u.eq ? +convARS(u.eq.c, hoyS).toFixed(3) : null },
+          ajusteIPC: regimen === "pesos" && u.eq ? +convARS(u.eq.c, hoyS).toFixed(3) : null, ajusteTC: regimen === "dólar funcional" && u.eq ? +convFX(u.eq.c, hoyS).toFixed(3) : null },
         obs: { resultados: ni.map(o => [o.end, o.tipo, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]),
           balances: eq.map(o => [o.end, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]) },
         ...(splits.length ? { splits: splits.map(z => [isoOf(z.date), z.ratio]) } : {}) };
@@ -329,7 +423,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
   if (MERVAL.filter(c => empresas[c.s]).length < 12) throw new Error(`Faltan empresas: ${JSON.stringify(errores)}`);
-  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult },
+  const out = { version: VERSION, asOf: now.toISOString(), monday0: MONDAY0, ipc: { desde: ipc.desde, hasta: ipc.ult }, tc: fx ? { desde: fx.desde, hasta: fx.hasta } : null,
     fuente: "SEC (20-F), Yahoo Finance, INDEC y bancos.json", merval: MERVAL.map(c => c.s).filter(s => empresas[s]), extra: EXTRA.map(c => c.s).filter(s => empresas[s]),
     indice: { n: "MSCI MERVAL", desde: "2026-10-19", fuente: "La Nación, 17/10/2026" }, empresas, errores };
   await writeFile(new URL("empresas.json", root), JSON.stringify(out));
