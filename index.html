@@ -3905,8 +3905,12 @@ function setPebgPeriod(el) {
   if (pebgData) renderPebg(pebgData);
 }
 
+// acciones de BYMA que cotizan en Nueva York con otro ticker: el P/E sale del ADR (EPS de la SEC, en dólares por ADR;
+// el múltiplo es el mismo que el de la acción local). Las que tienen el mismo ticker (GGAL, BMA, CEPU...) ya andan
+const PEBG_ADR = { PAMP: 'PAM', YPFD: 'YPF', TGSU2: 'TGS', TECO2: 'TEO', CRES: 'CRESY', IRSA: 'IRS' };
 async function loadPebg() {
-  const sym = (document.getElementById('pebgSym').value.trim().toUpperCase() || 'META');
+  const pedido = (document.getElementById('pebgSym').value.trim().toUpperCase().replace(/\.BA$/, '') || 'META');
+  const sym = PEBG_ADR[pedido] || pedido, previo = pebgData && pebgData.symbol;
   document.getElementById('pebgSym').value = sym;
   const status = document.getElementById('pebgStatus');
   status.textContent = 'Cargando...';
@@ -3926,11 +3930,17 @@ async function loadPebg() {
     if (req !== pebgReq) return;
     d.fw = pebgFwInfo(d);
     d.forwardPE = d.fw.fpe;
+    if (sym !== pedido) d.alias = pedido;
     pebgData = d;
     renderPebg(d);
     if (pebgPanelOpen) populatePebgPanel(d);
   } catch (e) {
-    if (req === pebgReq) status.textContent = 'Error: ' + e.message;
+    if (req !== pebgReq) return;
+    // si no está, queda el gráfico que había con su ticker en la caja, para que no parezca del pedido
+    const noEsta = /404|not found|sin precios/i.test(e.message);
+    status.textContent = pedido + (noEsta ? ': no está en Yahoo con ese nombre (de BYMA, solo las que tienen ADR en Nueva York)' : ': error (' + e.message + ')')
+      + (previo ? '. Sigue ' + previo + '.' : '.');
+    if (previo) document.getElementById('pebgSym').value = previo;
   }
 }
 
@@ -4248,7 +4258,8 @@ function renderPebg(data) {
   status.title = data.histNote || '';
   status.textContent = (data.shortName || data.symbol) + ', ' + eps.length + ' trim. EPS'
     + (data.histNote ? ' (los más viejos, de los 10-K)' : '')
-    + (pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '');
+    + (pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '')
+    + (data.alias ? '. ' + data.alias + ' va con ' + data.symbol + ', el ADR: EPS de la SEC en dólares, mismo P/E' : '');
   if (full.length < 10) { status.textContent += '. Pocos datos para el gráfico'; return; }
   const peg = pebgMetric === 'peg';
   if (peg) addPeg(full);
