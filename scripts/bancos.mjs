@@ -23,7 +23,7 @@ export const weekOf = t => Math.floor((t - MONDAY0) / WEEK);
 export const W0 = weekOf(Date.UTC(2010, 0, 4) / 1000);        // primera semana de las series
 const tOf = d => Math.floor(Date.parse(d + "T00:00:00Z") / 1000);
 const isoOf = t => new Date(t * 1000).toISOString().slice(0, 10);
-export const VERSION = 1;
+export const VERSION = 2;   // 2: precio semanal de cada banco (para la banda en precio)
 
 // Argentina: el precio es el de BYMA en pesos. CIK de los que presentan el 20-F en la SEC
 export const AR = [
@@ -274,7 +274,7 @@ export function semanal({ price, bal, roe, conv, splits = [], weeks, hoyS, maxBa
   const MAX_BAL = maxBal * DAY, MAX_ROE = maxRoe * DAY;
   const B = bal.filter(b => b.bv > 0 && b.sh > 0).sort((a, b) => a.pub - b.pub || a.end.localeCompare(b.end));
   const R = roe.slice().sort((a, b) => a.pub - b.pub || a.end.localeCompare(b.end));
-  const pb = [], ptb = [], ro = [], cap = [], bvT = [], tbvT = [], niT = [], avgT = [];
+  const pb = [], ptb = [], ro = [], cap = [], bvT = [], tbvT = [], niT = [], avgT = [], px = [];
   let i = -1, j = -1;
   for (const w of weeks) {
     const t = Math.min(MONDAY0 + w * WEEK + 4 * DAY, hoyS);
@@ -289,14 +289,14 @@ export function semanal({ price, bal, roe, conv, splits = [], weeks, hoyS, maxBa
       const f = conv(b.c, t), sp = splits.filter(s => s.date > tOf(b.end)).reduce((a, s) => a * s.ratio, 1);
       c = p * b.sh * sp; bv = b.bv * f; tbv = b.tbv * f;
     }
-    cap.push(c); bvT.push(bv); tbvT.push(tbv);
+    cap.push(c); bvT.push(bv); tbvT.push(tbv); px.push(p > 0 ? p : null);
     pb.push(c != null && bv > 0 ? c / bv : null);
     ptb.push(c != null && tbv > 0 ? c / tbv : null);
     const rOk = r && t - tOf(r.end) <= MAX_ROE;
     ro.push(rOk ? r.roe : null);
     niT.push(rOk ? r.ni * conv(r.c, t) : null); avgT.push(rOk ? r.avg * conv(r.c, t) : null);
   }
-  return { pb, ptb, roe: ro, cap, bvT, tbvT, niT, avgT };
+  return { pb, ptb, roe: ro, cap, bvT, tbvT, niT, avgT, px };
 }
 
 // agregado de un grupo por semana: suma de capitalizaciones / suma de valores libro; ROE = suma de resultados / suma de
@@ -386,7 +386,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const roe = roeTrimestral(bal, ni, () => 1), { m, splits } = precioDe(chart);
       const x = semanal({ price: m, bal, roe, conv: () => 1, splits, weeks, hoyS, maxBal: 200, maxRoe: 200 });
       series[c.s] = x;
-      bancos[c.s] = { n: c.n, pais: "us", grupo: US_SUBS[c.sub], moneda: "USD", pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)),
+      bancos[c.s] = { n: c.n, pais: "us", grupo: US_SUBS[c.sub], moneda: "USD", pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)), precio: x.px.map(r2),
         ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), false, 200), trimestres: bal.length };
       log(`${c.s}: ${sec.bal.length} balances de la SEC (${sec.bal[0]?.end} a ${ultSec})${yah.bal.length ? ` y ${yah.bal.length} de Yahoo (${yah.bal.map(b => b.end).join(" ")})` : ""}, ${roe.length} ROE, P/VL ${bancos[c.s].ult.pb}, P/VL tangible ${bancos[c.s].ult.ptb}, ROE ${bancos[c.s].ult.roe}%`);
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
@@ -407,7 +407,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const { m, splits } = precioDe(chart);
       const x = semanal({ price: m, bal, roe, conv, splits, weeks, hoyS, maxBal: 470, maxRoe: 470 });
       series[c.s] = x;
-      bancos[c.s] = { n: c.n, pais: "ar", grupo: AR_AGREGADO.includes(c.s) ? "ar" : "arOtros", moneda: "ARS", px: c.px, pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)),
+      bancos[c.s] = { n: c.n, pais: "ar", grupo: AR_AGREGADO.includes(c.s) ? "ar" : "arOtros", moneda: "ARS", ticker: c.px, pb: x.pb.map(r3), ptb: x.ptb.map(r3), roe: x.roe.map(v => v == null ? null : r2(v * 100)), precio: x.px.map(r2),
         ult: resumen(x, c, bal, roe, chart?.meta?.regularMarketPrice ?? [...m.values()].pop(), true, 470),
         balances: bal.map(b => [b.end, b.src, Math.round(b.bv / 1e6), b.c]) };
       log(`${c.s}: balances ${bal.map(b => b.end + "(" + b.src.split(" ")[0] + ")").join(" ")}; ROE ${roe.map(r => r.end + " " + (r.roe * 100).toFixed(1) + "% " + r.tipo).join(", ")}; P/VL ${bancos[c.s].ult.pb}`);
@@ -425,7 +425,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   const first = Math.min(...Object.values(grupos).map(g => g.pb.findIndex(v => v != null)).filter(i => i >= 0));
   const cut = a => a.slice(first);
   for (const g of Object.values(grupos)) { g.pb = cut(g.pb); g.ptb = cut(g.ptb); g.roe = cut(g.roe); }
-  for (const b of Object.values(bancos)) { b.pb = cut(b.pb); b.ptb = cut(b.ptb); b.roe = cut(b.roe); }
+  for (const b of Object.values(bancos)) { b.pb = cut(b.pb); b.ptb = cut(b.ptb); b.roe = cut(b.roe); b.precio = cut(b.precio); }
   const out = { version: VERSION, asOf: now.toISOString(), week0: weeks[first], monday0: MONDAY0, weeks: weeks.length - first,
     ipc: { desde: ipc.desde, hasta: ipc.ult },
     fuente: "SEC (EDGAR), Yahoo Finance e INDEC", grupos, bancos, errores };
