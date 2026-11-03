@@ -1,0 +1,38 @@
+name: Empresas del Merval (P/E y P/BV)
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "diagnostico: qué trae cada fuente, solo en el log"
+        required: false
+        default: "diagnostico"
+      solo:
+        description: "tickers de BYMA separados por coma (vacío: las 19)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: empresas
+  cancel-in-progress: false
+
+jobs:
+  armar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Empresas del Merval
+        run: node scripts/empresas.mjs
+        env:
+          SEC_UA: ${{ secrets.SEC_UA }}
+          MODO: ${{ inputs.modo || 'diagnostico' }}
+          SOLO: ${{ inputs.solo || '' }}
