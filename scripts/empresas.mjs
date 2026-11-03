@@ -310,7 +310,7 @@ export function fxDe(j) {
   const pts = (Array.isArray(j) ? j : []).filter(x => x && /^\d{4}-\d\d-\d\d$/.test(x.fecha || "") && x.venta > 0).map(x => [tOf(x.fecha), +x.venta]).sort((a, b) => a[0] - b[0]);
   if (pts.length < 100) return null;
   const at = t => { if (t <= pts[0][0]) return pts[0][1]; let lo = 0, hi = pts.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m][0] <= t) lo = m; else hi = m; } return pts[hi][0] <= t ? pts[hi][1] : pts[lo][1]; };
-  return { at, desde: isoOf(pts[0][0]), hasta: isoOf(pts.at(-1)[0]) };
+  return { at, n: pts.length, desde: isoOf(pts[0][0]), hasta: isoOf(pts.at(-1)[0]) };
 }
 const Y_TIPOS = ["NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares"];
 
@@ -332,6 +332,9 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   let ccl = null;
   try { ccl = fxDe(await getJSON(fetchImpl, CCL_URL, { headers: { "User-Agent": UA, Accept: "application/json" } })); } catch (e) { log("contado con liquidación: " + e.message); }
   if (fx && !ccl) errores.ccl = "sin contado con liquidación: el dólar funcional va con el oficial";
+  { const fechas = ["2019-12-31", "2023-12-12", "2023-12-14", "2023-12-29", "2024-12-31", "2025-04-14", "2025-12-31", isoOf(hoyS)];
+    if (fx) log("dólar oficial: " + fechas.map(d => d + " " + fx.at(tOf(d) + DAY - 1)).join(", ") + `; ${fx.n} datos de ${fx.desde} a ${fx.hasta}`);
+    if (ccl) log("contado con liquidación: " + fechas.map(d => d + " " + ccl.at(tOf(d) + DAY - 1)).join(", ") + `; ${ccl.n} datos de ${ccl.desde} a ${ccl.hasta}`); }
   const convFX = fx ? (c, t) => (ccl || fx).at(t) / fx.at(tOf(c) + DAY - 1) : convARS;
   // SEC
   const secH = { headers: { "User-Agent": secUA, Accept: "application/json" } };
