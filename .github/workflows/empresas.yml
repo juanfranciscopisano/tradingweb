@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "diario: empresas.json; diagnostico: qué trae cada fuente, solo en el log"
+        description: "diario: empresas.json; diagnostico: qué trae cada fuente; ebitda: partidas del EV/EBITDA (solo en el log)"
         required: false
         default: "diario"
       solo:

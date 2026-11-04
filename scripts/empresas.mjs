@@ -322,6 +322,7 @@ const Y_TIPOS = ["NetIncomeCommonStockholders", "StockholdersEquity", "CommonSto
 
 export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(), log = console.log,
   secUA = process.env.SEC_UA || "tradingweb research@example.com", modo = process.env.MODO || "diario" } = {}) {
+  if (modo === "ebitda") return diagnosticoEbitda({ fetchImpl, log, secUA, solo: process.env.SOLO ? process.env.SOLO.split(",") : null });
   if (modo === "diagnostico") return diagnostico({ fetchImpl, log, secUA, solo: process.env.SOLO ? process.env.SOLO.split(",") : null, extraY: (process.env.EXTRA_Y || "").split(",").filter(Boolean) });
   const hoyS = Math.floor(now.getTime() / 1000), errores = {};
   const leer = async (p, req = true) => { try { return JSON.parse(await readFile(new URL(p, root), "utf8")); } catch (e) { if (req) throw new Error(p + ": " + e.message); log(p + ": " + e.message); return null; } };
@@ -452,6 +453,55 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
   await writeFile(new URL("empresas.json", root), JSON.stringify(out));
   log(`empresas.json: ${Object.keys(empresas).length} empresas; errores: ${JSON.stringify(errores)}`);
   return out;
+}
+
+// ---- diagnóstico del EV/EBITDA: qué trae Yahoo de resultado operativo, amortizaciones, deuda, caja y minoritarios, y qué
+// etiquetas de esas partidas tiene cada 20-F (solo en el log)
+const YE_TIPOS = ["OperatingIncome", "EBIT", "EBITDA", "NormalizedEBITDA", "ReconciledDepreciation", "DepreciationAndAmortization", "DepreciationAmortizationDepletion",
+  "TotalDebt", "NetDebt", "CurrentDebtAndCapitalLeaseObligation", "LongTermDebtAndCapitalLeaseObligation", "CapitalLeaseObligations", "CashAndCashEquivalents",
+  "OtherShortTermInvestments", "CashCashEquivalentsAndShortTermInvestments", "MinorityInterest", "TotalRevenue"];
+export async function diagnosticoEbitda({ fetchImpl = globalThis.fetch, log = console.log, secUA = "tradingweb research@example.com", solo = null } = {}) {
+  const now = Math.floor(Date.now() / 1000);
+  const lista = (solo ? MERVAL.filter(c => solo.includes(c.s)) : MERVAL).filter(c => !c.banco);
+  const secH = { headers: { "User-Agent": secUA, Accept: "application/json" } };
+  let tick = {};
+  try { for (const c of Object.values(await getJSON(fetchImpl, "https://www.sec.gov/files/company_tickers.json", secH) || {})) tick[String(c.ticker).toUpperCase()] = String(c.cik_str).padStart(10, "0"); }
+  catch (e) { log("SEC tickers: " + e.message); }
+  const re = /OperatingActivities|Depreciation|Amortisation|Borrowings|LeaseLiabilities|CashAndCashEquivalents|CurrentInvestments|OtherCurrentFinancialAssets|CurrentFinancialAssets|NoncontrollingInterests|^Revenue$/;
+  for (const c of lista.filter(c => c.sec)) {
+    const id = tick[c.sec]; if (!id) continue;
+    await sleep(250);
+    let facts; try { facts = await getJSON(fetchImpl, `https://data.sec.gov/api/xbrl/companyfacts/CIK${id}.json`, secH); } catch (e) { log(`${c.s}: ${e.message}`); continue; }
+    const f = facts?.facts?.["ifrs-full"] || {};
+    log(`\n=== SEC ${c.s}/${c.sec}`);
+    for (const [tag, o] of Object.entries(f)) {
+      if (!re.test(tag) || /Adjustments|Increase|Decrease|Proceeds|Repayments|Payments|Reclassification|Gains|Losses|Interest|Impairment|Accumulated/.test(tag)) continue;
+      for (const [u, a] of Object.entries(o.units || {})) {
+        const firstBy = new Map(); for (const e of a) { if (e.start && !anual(e.start, e.end)) continue; const k = e.end; const p = firstBy.get(k); if (!p || e.filed < p.filed) firstBy.set(k, e); }
+        const v = [...firstBy.values()].sort((x, y) => x.end.localeCompare(y.end));
+        log(`  ${tag} [${u}] ${v.length}: ` + v.slice(-4).map(e => `${e.end} ${+(e.val / 1e6).toPrecision(5)}M`).join("; "));
+      }
+    }
+    // también las de amortizaciones del flujo de fondos (Adjustments...)
+    for (const tag of Object.keys(f).filter(t => /^AdjustmentsForDepreciation|^AdjustmentsForAmortisation|^AdjustmentsForDepreciationAndAmortisationExpense/.test(t)))
+      for (const [u, a] of Object.entries(f[tag].units || {})) log(`  ${tag} [${u}] ${a.length}: ` + a.filter(e => e.start && anual(e.start, e.end)).sort((x, y) => x.end.localeCompare(y.end) || x.filed.localeCompare(y.filed)).slice(-3).map(e => `${e.end} ${+(e.val / 1e6).toPrecision(5)}M (${e.filed})`).join("; "));
+  }
+  let s = null;
+  try { s = await yahooSession(fetchImpl); } catch (e) { log("Yahoo sesión: " + e.message); }
+  const H = { headers: { "User-Agent": UA, Accept: "application/json", ...(s ? { Cookie: s.cookie } : {}) } }, cr = s ? `&crumb=${encodeURIComponent(s.crumb)}` : "";
+  for (const c of lista) {
+    const sym = c.moneda === "USD" ? c.adr : c.s + ".BA";
+    await sleep(400);
+    const types = ["quarterly", "annual"].flatMap(p => YE_TIPOS.map(t => p + t)).join(",");
+    try {
+      const j = await getJSON(fetchImpl, `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${types}&period1=946684800&period2=${now + DAY}${cr}`, H);
+      log(`\n=== Yahoo ${sym}`);
+      for (const r of j?.timeseries?.result || []) {
+        const t = r?.meta?.type?.[0], pts = (r[t] || []).filter(x => x && x.asOfDate && isFinite(x.reportedValue?.raw));
+        if (pts.length) log(`  ${t}: ${pts.map(x => `${x.asOfDate.slice(2)} ${+(x.reportedValue.raw / 1e6).toPrecision(4)}`).join(", ")}`);
+      }
+    } catch (e) { log(`Yahoo ${sym}: ${e.message}`); }
+  }
 }
 
 // ---- diagnóstico: qué trae cada fuente (solo en el log)
