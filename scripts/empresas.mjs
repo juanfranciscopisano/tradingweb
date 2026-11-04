@@ -40,7 +40,8 @@ export const MERVAL = [
   { s: "TGSU2", n: "Transportadora de Gas del Sur", adr: "TGS", sec: "TGS", sector: "Servicios públicos" },
   { s: "CEPU", n: "Central Puerto", adr: "CEPU", sec: "CEPU", sector: "Servicios públicos" },
   { s: "BBAR", n: "BBVA Argentina", adr: "BBAR", banco: true, sector: "Financiero" },
-  { s: "BYMA", n: "Bolsas y Mercados Argentinos", sector: "Financiero" },
+  // BYMA: sin EV/EBITDA, porque su caja incluye las garantías de los participantes (más que su capitalización)
+  { s: "BYMA", n: "Bolsas y Mercados Argentinos", sector: "Financiero", sinEV: true },
   // Ternium Argentina tiene el dólar como moneda funcional (presenta en pesos al tipo de cambio de cada cierre): su
   // patrimonio en dólares da 4,75, 4,33, 4,94 y 4,68 mil millones a fin de 2022 a 2025, y en pesos constantes salta
   { s: "TXAR", n: "Ternium Argentina", sector: "Materiales", funcional: "USD" },
@@ -276,10 +277,51 @@ export function desdeBancos(B, week0, weeks) {
 
 const sig = (v, n = 5) => v == null || !isFinite(v) ? null : +v.toPrecision(n);
 // recorta los nulos del principio: w0 = primera semana con precio y algún dato
-function recortar(weeks, x) {
+function recortar(weeks, x, ev = null) {
   let i0 = weeks.findIndex((w, i) => x.c[i] != null && (x.eps[i] != null || x.bv[i] != null));
   if (i0 < 0) return null;
-  return { w0: weeks[i0], c: x.c.slice(i0).map(v => sig(v, 6)), eps: x.eps.slice(i0).map(v => sig(v)), bv: x.bv.slice(i0).map(v => sig(v)) };
+  return { w0: weeks[i0], c: x.c.slice(i0).map(v => sig(v, 6)), eps: x.eps.slice(i0).map(v => sig(v)), bv: x.bv.slice(i0).map(v => sig(v)),
+    ...(ev ? { eb: ev.eps.slice(i0).map(v => sig(v)), nd: ev.bv.slice(i0).map(v => sig(v)) } : {}) };
+}
+
+// ---- EV/EBITDA, de Yahoo (los 20-F etiquetan deuda, caja y amortizaciones de muchas maneras distintas, con errores de
+// escala): EBITDA = resultado operativo + amortizaciones, sin el resultado por inflación, las diferencias de cambio ni los
+// intereses, que van abajo del operativo. Deuda neta = deuda financiera (con arrendamientos) − caja e inversiones
+// corrientes + minoritarios (el EBITDA es el consolidado). Monedas: los trimestres en la suya; los ejercicios, en la del
+// último balance que los trae: el patrimonio y la deuda, del año siguiente; los resultados, de dos años después en las que
+// presentan 20-F (tres años de resultados: el operativo de TGS de 2022 en Yahoo es el del 20-F de 2022 por el IPC de dos
+// años) y del año siguiente en las demás. Las que tienen el dólar como moneda funcional, cada uno en la suya.
+const monedaYahoo2 = (end, fin) => { const sig2 = `${+end.slice(0, 4) + 2}${end.slice(4)}`; return sig2 < fin ? sig2 : fin; };
+export function deudaNeta(o) {
+  const caja = o.CashCashEquivalentsAndShortTermInvestments ?? (o.CashAndCashEquivalents != null ? o.CashAndCashEquivalents + (o.OtherShortTermInvestments || 0) : null);
+  if (!isFinite(o.TotalDebt) || caja == null) return null;
+  return o.TotalDebt - caja + Math.max(0, o.MinorityInterest || 0);
+}
+export function evDesdeYahoo(ys, { hoyS = Infinity, acc = "OrdinarySharesNumber", flujos2 = false, propia = false } = {}) {
+  const fin = Object.keys(ys.a).sort().pop();
+  const sh = o => (o[acc] > 0 ? o[acc] : null);
+  const da = o => o.ReconciledDepreciation ?? o.DepreciationAndAmortization;
+  // amortizaciones trimestrales raras: Yahoo da las del 3T25 de casi todas en un tercio de lo normal y las del 1T de Loma
+  // en miles. Con menos de 60% de la mediana de los trimestres, o sin dato y con resultado operativo, va la mediana
+  const qs = Object.entries(ys.q).sort((a, b) => a[0].localeCompare(b[0]));
+  const das = qs.map(([, o]) => da(o)).filter(v => v > 0).sort((a, b) => a - b), med = das.length >= 2 ? das[Math.floor(das.length / 2)] : null;
+  const eb = [], nd = [];
+  for (const [end, o] of qs) {
+    if (isFinite(o.OperatingIncome)) {
+      let d = da(o);
+      if (med != null && !(d >= 0.6 * med)) d = med;
+      if (d != null) eb.push({ end, tipo: "q", val: o.OperatingIncome + d, c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo trimestral" });
+    }
+    const n = deudaNeta(o);
+    if (n != null) nd.push({ end, tipo: "b", val: n, c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo trimestral" });
+  }
+  for (const [end, o] of Object.entries(ys.a)) {
+    const cF = propia ? end : flujos2 ? monedaYahoo2(end, fin) : monedaYahoo(end, fin), cB = propia ? end : monedaYahoo(end, fin);
+    if (isFinite(o.OperatingIncome) && da(o) != null) eb.push({ end, tipo: "a", val: o.OperatingIncome + da(o), c: cF, pub: pubDe(end, "a", hoyS), sh: sh(o), src: "Yahoo anual" });
+    const n = deudaNeta(o);
+    if (n != null) nd.push({ end, tipo: "b", val: n, c: cB, pub: pubDe(end, "a", hoyS), sh: sh(o), src: "Yahoo anual" });
+  }
+  return { eb, nd };
 }
 
 async function getJSON(f, url, opts = {}, tries = 3) {
@@ -318,7 +360,8 @@ export function fxDe(j, min = 100) {
   const at = t => { if (t <= pts[0][0]) return pts[0][1]; let lo = 0, hi = pts.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m][0] <= t) lo = m; else hi = m; } return pts[hi][0] <= t ? pts[hi][1] : pts[lo][1]; };
   return { at, n: pts.length, desde: isoOf(pts[0][0]), hasta: isoOf(pts.at(-1)[0]) };
 }
-const Y_TIPOS = ["NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares"];
+const Y_TIPOS = ["NetIncomeCommonStockholders", "StockholdersEquity", "CommonStockEquity", "OrdinarySharesNumber", "DilutedAverageShares",
+  "OperatingIncome", "ReconciledDepreciation", "DepreciationAndAmortization", "TotalDebt", "CashCashEquivalentsAndShortTermInvestments", "CashAndCashEquivalents", "OtherShortTermInvestments", "MinorityInterest"];
 
 export async function main({ root = new URL("../", import.meta.url), fetchImpl = globalThis.fetch, now = new Date(), log = console.log,
   secUA = process.env.SEC_UA || "tradingweb research@example.com", modo = process.env.MODO || "diario" } = {}) {
@@ -390,7 +433,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const corte = cortarSaltos(price, splits);
       if (corte != null) log(`${c.s}: precio desde ${isoOf(MONDAY0 + corte * WEEK)} (salto sin split antes)`);
       // en dólares, las acciones por ADR: las del promedio diluido del ADR en Yahoo (las de la acción local vienen mal en YPF)
-      const yah = desdeYahoo(yahooSerie(yj), { hoyS, acc: usd ? "DilutedAverageShares" : "OrdinarySharesNumber" });
+      const yser = yahooSerie(yj), yah = desdeYahoo(yser, { hoyS, acc: usd ? "DilutedAverageShares" : "OrdinarySharesNumber" });
       const sec = facts ? desdeSec(facts, { unidad: usd ? "USD" : "ARS", hoyS }) : { ni: [], eq: [], cand: () => [] };
       const man = c.manual ? desdeManual(manual[c.manual], { ratio: c.ratio || 1, hoyS }) : [];
       // acciones de los 20-F: las de los trimestres a mano o de Yahoo del mismo cierre; si no hay, la candidata del 20-F
@@ -426,9 +469,19 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const ref = [...ni, ...eq].filter(x => x.sh > 0).sort((a, b) => b.end.localeCompare(a.end))[0]?.sh;
       ajustarSplits(ni, splits, ref); ajustarSplits(eq, splits, ref);
       const s = semanalEmpresa({ price, ni, eq, conv, splits: [], weeks, hoyS });
-      const x = recortar(weeks, s);
+      // EV/EBITDA: EBITDA de 12 meses y deuda neta por acción de cada semana, con las mismas acciones y monedas
+      let sEv = null, evObs = null;
+      if (!c.sinEV) {
+        const ev = evDesdeYahoo(yser, { hoyS, acc: usd ? "DilutedAverageShares" : "OrdinarySharesNumber", flujos2: !!c.sec, propia: usd || regimen === "dólar funcional" });
+        const eb = completarTrimestres(unir([ev.eb]), conv), nd = unir([ev.nd]);
+        completarAcciones(eb, [...ni, ...eq]); completarAcciones(nd, [...ni, ...eq]);
+        limpiarAcciones(eb, [...ni, ...eq]); limpiarAcciones(nd, [...ni, ...eq]);
+        ajustarSplits(eb, splits, ref); ajustarSplits(nd, splits, ref);
+        if (eb.length && nd.length) { sEv = semanalEmpresa({ price, ni: eb, eq: nd, conv, splits: [], weeks, hoyS }); evObs = { eb, nd }; }
+      }
+      const x = recortar(weeks, s, sEv);
       if (!x) throw new Error("sin resultados ni balances que empalmen con el precio");
-      const k = s.c.length - 1, u = s.uso[k];
+      const k = s.c.length - 1, u = s.uso[k], uEv = sEv ? sEv.uso[k] : null;
       const precio = chart?.meta?.regularMarketPrice ?? x.c.at(-1);
       // control: los 20-F contra los ejercicios de Yahoo del mismo cierre (llevados a la misma moneda)
       const ctrl = [];
@@ -436,13 +489,17 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       for (const a of sec.eq) { const y = yah.eq.find(z => z.src === "Yahoo anual" && z.end === a.end); if (y && y.val) ctrl.push(`patrimonio ${a.end}: ${(a.val * conv(a.c, tOf(y.c) + DAY - 1) / y.val).toFixed(2)}${a.tag !== "atribuible" ? " (" + a.tag + ")" : ""}`); }
       empresas[c.s] = { ...base, px, moneda: usd ? "USD" : "ARS", regimen, ...(usd ? { ratio: c.ratio || 1 } : {}), ...x,
         ult: { precio, eps: sig(s.eps[k]), bv: sig(s.bv[k]), resultado: u.ni ? { cierre: u.ni.end, tipo: u.ni.tipo, fuente: u.ni.src } : null, balance: u.eq ? { cierre: u.eq.end, fuente: u.eq.src } : null,
-          ajusteIPC: regimen === "pesos" && u.eq ? +convARS(u.eq.c, hoyS).toFixed(3) : null, ajusteTC: regimen === "dólar funcional" && u.eq ? +convFX(u.eq.c, hoyS).toFixed(3) : null },
+          ajusteIPC: regimen === "pesos" && u.eq ? +convARS(u.eq.c, hoyS).toFixed(3) : null, ajusteTC: regimen === "dólar funcional" && u.eq ? +convFX(u.eq.c, hoyS).toFixed(3) : null,
+          ...(uEv ? { ebitda: uEv.ni ? { cierre: uEv.ni.end, tipo: uEv.ni.tipo, fuente: uEv.ni.src } : null, deuda: uEv.eq ? { cierre: uEv.eq.end, fuente: uEv.eq.src } : null } : {}) },
         obs: { resultados: ni.map(o => [o.end, o.tipo, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]),
-          balances: eq.map(o => [o.end, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]) },
+          balances: eq.map(o => [o.end, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.sh ? sig(o.sh / 1e6, 6) : null, o.src]),
+          ...(evObs ? { ebitda: evObs.eb.map(o => [o.end, o.tipo, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.src]), deudaNeta: evObs.nd.map(o => [o.end, sig(o.val / 1e6, 6), o.c, isoOf(o.pub), o.src]) } : {}) },
         ...(splits.length ? { splits: splits.map(z => [isoOf(z.date), z.ratio]) } : {}), ...(corte != null ? { precioDesde: isoOf(MONDAY0 + corte * WEEK) } : {}) };
       const pe = x.eps.at(-1) > 0 ? x.c.at(-1) / x.eps.at(-1) : null, pb = x.bv.at(-1) > 0 ? x.c.at(-1) / x.bv.at(-1) : null;
+      const evE = x.eb && x.eb.at(-1) > 0 && x.c.at(-1) + x.nd.at(-1) > 0 ? (x.c.at(-1) + x.nd.at(-1)) / x.eb.at(-1) : null;
       log(`${c.s} (${px}, ${usd ? "US$" : "$"}): desde ${isoOf(MONDAY0 + x.w0 * WEEK)}; resultados ${ni.map(o => o.end + o.tipo + "(" + o.src.split(" ")[0] + ")").join(" ")}; balances ${eq.map(o => o.end + "(" + o.src.split(" ")[0] + ")").join(" ")}`
         + `; hoy P/E ${pe ? pe.toFixed(2) : "—"} (${u.ni ? u.ni.tipo + " al " + u.ni.end : "sin resultado"}), P/BV ${pb ? pb.toFixed(2) : "—"} (${u.eq ? u.eq.end : "sin balance"})`
+        + (x.eb ? `, EV/EBITDA ${evE ? evE.toFixed(2) : "—"} (EBITDA ${uEv?.ni ? uEv.ni.tipo + " al " + uEv.ni.end : "—"}, deuda neta por acción ${x.nd.at(-1)} al ${uEv?.eq?.end || "—"}; EBITDA ${evObs.eb.map(o => o.end + o.tipo).join(" ")})` : "")
         + `; acciones ${[...new Set(eq.map(o => o.sh ? Math.round(o.sh / 1e6) : null))].join("/")} M` + (ctrl.length ? `; 20-F/Yahoo ${ctrl.join(", ")}` : "") + (splits.length ? `; splits ${splits.map(z => isoOf(z.date) + " x" + z.ratio).join(" ")}` : ""));
     } catch (e) { errores[c.s] = e.message; log(`${c.s}: ${e.message}`); }
   }
