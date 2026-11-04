@@ -349,6 +349,21 @@ export function ajustarDeuda(nd, ajustes = [], conv = () => 1) {
   return nd;
 }
 
+// dividendos de Yahoo: uno de más de la mitad del precio de su semana es un error y no se usa; dos con menos de 4 días entre
+// sí y montos a menos de 10% son el mismo cargado dos veces (Ecogas, 339,81 el 17/09/2026 y 331,45 el 18/09: el precio
+// de esa semana bajó 6%, no 23%) y queda el primero
+export function limpiarDividendos(divs, price, log = () => {}) {
+  const out = [];
+  for (const d of divs) {
+    const p = price.get(weekOf(d.date));
+    if (p > 0 && d.amount >= 0.5 * p) { log(`dividendo de ${d.amount} el ${isoOf(d.date)} contra un precio de ${p}: no se usa`); continue; }
+    const prev = out[out.length - 1];
+    if (prev && d.date - prev.date <= 4 * DAY && Math.abs(d.amount / prev.amount - 1) < 0.1) { log(`dividendo de ${d.amount} el ${isoOf(d.date)}: repite el de ${prev.amount} del ${isoOf(prev.date)}, no se suma`); continue; }
+    out.push(d);
+  }
+  return out;
+}
+
 // dividendos cobrados después del balance que usa cada semana: el precio ya los descontó (cotiza ex dividendo) y la caja
 // del balance todavía los tiene, así que se suman a la deuda neta por acción, en la moneda de la semana. Devuelve los
 // de la última semana
@@ -472,8 +487,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       ]);
       if (!chart) throw new Error("sin precios de " + px);
       const { m: price, splits, divs: divs0 } = precioDe(chart);
-      // un dividendo de más de la mitad del precio de su semana es un error de Yahoo: no se usa
-      const divs = divs0.filter(d => { const p = price.get(weekOf(d.date)); const ok = !(p > 0) || d.amount < 0.5 * p; if (!ok) log(`${c.s}: dividendo de ${d.amount} el ${isoOf(d.date)} contra un precio de ${p}: no se usa`); return ok; });
+      const divs = limpiarDividendos(divs0, price, m => log(`${c.s}: ${m}`));
       const corte = cortarSaltos(price, splits);
       if (corte != null) log(`${c.s}: precio desde ${isoOf(MONDAY0 + corte * WEEK)} (salto sin split antes)`);
       // en dólares, las acciones por ADR: las del promedio diluido del ADR en Yahoo (las de la acción local vienen mal en YPF)
