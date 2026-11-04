@@ -1,0 +1,20 @@
+{
+  "_nota": "Partidas de la deuda neta que Yahoo no trae, de los estados financieros de cada cierre, en millones de la moneda de presentación a esa fecha. deuda suma a la deuda neta y caja resta. arrastra: vale también para los balances siguientes (llevada con el IPC) hasta que se cargue la del cierre nuevo. Lo usa scripts/empresas.mjs; el registro avisa cuando un ajuste quedó de un balance viejo.",
+  "EDN": [
+    {
+      "cierre": "2026-06-30",
+      "deuda": 394013,
+      "que": "planes de pago con CAMMESA",
+      "arrastra": true,
+      "fuente": "Edenor, estados financieros al 30/06/2026 (6-K del 10/08/2026): Otras deudas, Payment plan – CAMMESA, NC 324.438 y C 69.575 (nota 2.b)"
+    }
+  ],
+  "TGNO4": [
+    {
+      "cierre": "2026-06-30",
+      "caja": 61024,
+      "que": "cauciones",
+      "fuente": "TGN, estados financieros al 30/06/2026: efectivo y equivalentes 121.381 con cauciones por 61.024; Yahoo da 60.360"
+    }
+  ]
+}

@@ -5,7 +5,7 @@ on:
     - cron: "11 23 * * 1-5"   # días hábiles 20:11 de Buenos Aires, después de Bancos (bancos.json)
   push:
     branches: [main]
-    paths: ["scripts/empresas.mjs", ".github/workflows/empresas.yml", "backend/data/eps_manual.json"]
+    paths: ["scripts/empresas.mjs", ".github/workflows/empresas.yml", "backend/data/eps_manual.json", "backend/data/deuda_ajustes.json"]
   workflow_dispatch:
     inputs:
       modo:
