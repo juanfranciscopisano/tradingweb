@@ -292,10 +292,13 @@ function recortar(weeks, x, ev = null) {
 // presentan 20-F (tres años de resultados: el operativo de TGS de 2022 en Yahoo es el del 20-F de 2022 por el IPC de dos
 // años) y del año siguiente en las demás. Las que tienen el dólar como moneda funcional, cada uno en la suya.
 const monedaYahoo2 = (end, fin) => { const sig2 = `${+end.slice(0, 4) + 2}${end.slice(4)}`; return sig2 < fin ? sig2 : fin; };
-export function deudaNeta(o) {
+// sinDeuda: Yahoo no da la deuda en ningún balance de la empresa (Ecogas no tiene deuda financiera): cuenta como cero.
+// Si la da en algunos y no en otros (Aluar), el balance sin deuda no se usa
+export function deudaNeta(o, sinDeuda = false) {
   const caja = o.CashCashEquivalentsAndShortTermInvestments ?? (o.CashAndCashEquivalents != null ? o.CashAndCashEquivalents + (o.OtherShortTermInvestments || 0) : null);
-  if (!isFinite(o.TotalDebt) || caja == null) return null;
-  return o.TotalDebt - caja + Math.max(0, o.MinorityInterest || 0);
+  const deuda = isFinite(o.TotalDebt) ? o.TotalDebt : sinDeuda ? 0 : null;
+  if (deuda == null || caja == null) return null;
+  return deuda - caja + Math.max(0, o.MinorityInterest || 0);
 }
 export function evDesdeYahoo(ys, { hoyS = Infinity, acc = "OrdinarySharesNumber", flujos2 = false, propia = false } = {}) {
   const fin = Object.keys(ys.a).sort().pop();
@@ -305,20 +308,20 @@ export function evDesdeYahoo(ys, { hoyS = Infinity, acc = "OrdinarySharesNumber"
   // en miles. Con menos de 60% de la mediana de los trimestres, o sin dato y con resultado operativo, va la mediana
   const qs = Object.entries(ys.q).sort((a, b) => a[0].localeCompare(b[0]));
   const das = qs.map(([, o]) => da(o)).filter(v => v > 0).sort((a, b) => a - b), med = das.length >= 2 ? das[Math.floor(das.length / 2)] : null;
-  const eb = [], nd = [];
+  const eb = [], nd = [], sinDeuda = ![...Object.values(ys.q), ...Object.values(ys.a)].some(o => isFinite(o.TotalDebt));
   for (const [end, o] of qs) {
     if (isFinite(o.OperatingIncome)) {
       let d = da(o);
       if (med != null && !(d >= 0.6 * med)) d = med;
       if (d != null) eb.push({ end, tipo: "q", val: o.OperatingIncome + d, c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo trimestral" });
     }
-    const n = deudaNeta(o);
+    const n = deudaNeta(o, sinDeuda);
     if (n != null) nd.push({ end, tipo: "b", val: n, c: end, pub: pubDe(end, "q", hoyS), sh: sh(o), src: "Yahoo trimestral" });
   }
   for (const [end, o] of Object.entries(ys.a)) {
     const cF = propia ? end : flujos2 ? monedaYahoo2(end, fin) : monedaYahoo(end, fin), cB = propia ? end : monedaYahoo(end, fin);
     if (isFinite(o.OperatingIncome) && da(o) != null) eb.push({ end, tipo: "a", val: o.OperatingIncome + da(o), c: cF, pub: pubDe(end, "a", hoyS), sh: sh(o), src: "Yahoo anual" });
-    const n = deudaNeta(o);
+    const n = deudaNeta(o, sinDeuda);
     if (n != null) nd.push({ end, tipo: "b", val: n, c: cB, pub: pubDe(end, "a", hoyS), sh: sh(o), src: "Yahoo anual" });
   }
   return { eb, nd };

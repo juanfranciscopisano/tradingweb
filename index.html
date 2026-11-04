@@ -277,11 +277,12 @@ td:nth-child(-n+4){text-align:left}
 .pebg-panel-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .pebg-panel-sub{font-size:12px;color:var(--muted);margin-bottom:6px}
 /* panel del Merval: a la izquierda del gráfico de P/E histórico */
-.pebg-side{width:300px;flex-shrink:0;background:var(--surf2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.pebg-side{width:392px;flex-shrink:0;background:var(--surf2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
 .pebg-side-hd{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}
 .pebg-side-tit{font-size:14px;font-weight:700;color:var(--ink);flex:1}
 .pebg-side-sub{font-size:11.5px;color:var(--muted);line-height:1.45;padding:0 14px 9px}
-.pebg-side-cols,.pebg-side-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 40px 44px 40px;column-gap:4px;align-items:center}
+.pebg-side-cols,.pebg-side-row{display:grid;grid-template-columns:minmax(0,1fr) 40px 36px 42px 36px 50px 36px;column-gap:4px;align-items:center}
+.pebg-side-sel{font:inherit;font-size:12px;color:var(--ink2);background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:3px 6px;max-width:150px}
 .pebg-side-cols{padding:5px 14px;font-size:10.5px;color:var(--faint);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .pebg-side-cols span{text-align:right;white-space:nowrap}
 .pebg-side-cols span:first-child{text-align:left}
@@ -1192,6 +1193,7 @@ function checkPwd(){
       <span class="pebg-period active" data-k="pe" onclick="setPebgMetric('pe')">P/E</span>
       <span class="pebg-period" data-k="peg" onclick="setPebgMetric('peg')">PEG</span>
       <span class="pebg-period" data-k="pbv" onclick="setPebgMetric('pbv')" title="Precio / valor libro por acción: patrimonio de los comunes de la SEC (sin preferidas ni minoritarios) sobre las acciones del EPS, cada balance desde el día que se presentó">P/BV</span>
+      <span class="pebg-period" data-k="ev" onclick="setPebgMetric('ev')" title="(Capitalización + deuda neta + minoritarios) / EBITDA de 12 meses (resultado operativo + amortizaciones). Por ahora, para las argentinas del Merval que no son financieras">EV/EBITDA</span>
     </div>
     <div class="pebg-period-btns" id="pebgAxisBtns" role="group" aria-label="Qué se grafica">
       <span class="pebg-period active" data-a="precio" onclick="setPebgAxis('precio')" title="Precio con las bandas pasadas a precio (múltiplo × EPS de 12 meses)">Precio</span>
@@ -1311,9 +1313,9 @@ function checkPwd(){
   </div>
   <div id="pebgOuter">
     <aside class="pebg-side" id="pebgSide" aria-label="Acciones del Merval">
-      <div class="pebg-side-hd"><div class="pebg-side-tit">Merval</div><span class="pebg-note" id="pebgSideFecha"></span></div>
+      <div class="pebg-side-hd"><div class="pebg-side-tit">Merval</div><select class="pebg-side-sel" id="pebgSideSec" onchange="setPebgSideSec(this.value)" aria-label="Sector"><option value="">Todas</option></select><span class="pebg-note" id="pebgSideFecha"></span></div>
       <div class="pebg-side-sub" id="pebgSideSub"></div>
-      <div class="pebg-side-cols" id="pebgSideCols"><span>Empresa</span><span class="ps-h" data-o="pe" onclick="setPebgSideSort('pe')" title="Ordenar por el P/E contra su mediana: la más por debajo, arriba">P/E</span><span>vs med.</span><span class="ps-h" data-o="pbv" onclick="setPebgSideSort('pbv')" title="Ordenar por el P/BV contra su mediana: la más por debajo, arriba">P/BV</span><span>vs med.</span></div>
+      <div class="pebg-side-cols" id="pebgSideCols"><span>Empresa</span><span class="ps-h" data-o="pe:nivel" onclick="setPebgSideSort('pe:nivel')" title="Ordenar por P/E, el más bajo arriba">P/E</span><span class="ps-h" data-o="pe" onclick="setPebgSideSort('pe')" title="Ordenar por el P/E contra su mediana: la más por debajo, arriba">vs med.</span><span class="ps-h" data-o="pbv:nivel" onclick="setPebgSideSort('pbv:nivel')" title="Ordenar por P/BV, el más bajo arriba">P/BV</span><span class="ps-h" data-o="pbv" onclick="setPebgSideSort('pbv')" title="Ordenar por el P/BV contra su mediana: la más por debajo, arriba">vs med.</span><span class="ps-h" data-o="ev:nivel" onclick="setPebgSideSort('ev:nivel')" title="Ordenar por EV/EBITDA, el más bajo arriba">EV/EBITDA</span><span class="ps-h" data-o="ev" onclick="setPebgSideSort('ev')" title="Ordenar por el EV/EBITDA contra su mediana: la más por debajo, arriba">vs med.</span></div>
       <div class="pebg-side-list" id="pebgSideList" role="list"></div>
       <div class="pebg-side-ft" id="pebgSideFt"></div>
     </aside>
@@ -3720,11 +3722,16 @@ function empAt(e, arr, t) {
 }
 // serie diaria de una empresa argentina: precio de cada día / resultado (o valor libro) de su semana, en los mismos campos
 // que el P/E de EE.UU. (pe: el múltiplo; eps4q: el dato por acción) para usar las mismas bandas y el mismo gráfico
-function arSerie(data, pbv) {
-  const e = data.ar, arr = pbv ? e.bv : e.eps, out = [];
+// En EV/EBITDA, eps4q es el EBITDA por acción y nd la deuda neta por acción: el precio a cada banda es múltiplo × EBITDA − deuda
+function arSerie(data, m) {
+  if (m === true) m = 'pbv'; else if (m === false || m == null) m = 'pe';
+  const e = data.ar, ev = m === 'ev', arr = m === 'pbv' ? e.bv : ev ? e.eb : e.eps, out = [];
+  if (!arr) return out;
   for (const p of (data.prices || []).slice().sort((a, b) => a.date - b.date)) {
     const d = empAt(e, arr, p.date);
-    if (d > 0 && p.close > 0) out.push({ date: p.date, close: p.close, pe: p.close / d, eps4q: d, g: null, q: null, semanal: true });
+    if (!(d > 0 && p.close > 0)) continue;
+    if (ev) { const nd = empAt(e, e.nd, p.date); if (nd == null || p.close + nd <= 0) continue; out.push({ date: p.date, close: p.close, pe: (p.close + nd) / d, eps4q: d, nd, g: null, q: null, semanal: true }); }
+    else out.push({ date: p.date, close: p.close, pe: p.close / d, eps4q: d, g: null, q: null, semanal: true });
   }
   return out;
 }
@@ -3755,9 +3762,16 @@ async function loadPebgAr(k, pedido, previo, req) {
   }
 }
 
-// panel del Merval: múltiplo de hoy de cada una y su percentil en su propia historia (los años del período del gráfico)
-let pebgSideOn = true, pebgSideSort = 'pe';
-try { pebgSideOn = localStorage.getItem('pebgSide') !== 'off' && window.innerWidth > 768; if (localStorage.getItem('pebgSideSort') === 'pbv') pebgSideSort = 'pbv'; } catch (e) {}
+// panel del Merval: P/E, P/BV y EV/EBITDA de hoy de cada una y cuánto están de su mediana (los años del período del
+// gráfico). Se ordena por el nivel (clic en el múltiplo) o por la distancia a la mediana (clic en "vs med."); se puede
+// filtrar por sector
+let pebgSideOn = true, pebgSideSort = 'pe', pebgSideSec = '';
+const PEBG_SIDE_SORTS = ['pe', 'pe:nivel', 'pbv', 'pbv:nivel', 'ev', 'ev:nivel'];
+try {
+  pebgSideOn = localStorage.getItem('pebgSide') !== 'off' && window.innerWidth > 768;
+  const o = localStorage.getItem('pebgSideSort'); if (PEBG_SIDE_SORTS.includes(o)) pebgSideSort = o;
+  pebgSideSec = localStorage.getItem('pebgSideSec') || '';
+} catch (e) {}
 function togglePebgSide() {
   pebgSideOn = !pebgSideOn;
   try { localStorage.setItem('pebgSide', pebgSideOn ? 'on' : 'off'); } catch (e) {}
@@ -3765,19 +3779,34 @@ function togglePebgSide() {
   if (pebgData) renderPebg(pebgData);
 }
 function setPebgSideSort(o) {
-  pebgSideSort = o === 'pbv' ? 'pbv' : 'pe';
+  pebgSideSort = PEBG_SIDE_SORTS.includes(o) ? o : 'pe';
   try { localStorage.setItem('pebgSideSort', pebgSideSort); } catch (e) {}
   renderPebgSide();
 }
+function setPebgSideSec(v) {
+  pebgSideSec = v || '';
+  try { localStorage.setItem('pebgSideSec', pebgSideSec); } catch (e) {}
+  renderPebgSide();
+}
+// múltiplo de una semana: precio / resultado o valor libro por acción; EV/EBITDA = (precio + deuda neta por acción) /
+// EBITDA por acción. Sin dato si el divisor es cero o negativo, o si el EV da negativo (más caja que capitalización)
+function empMult(e, m, p, i) {
+  if (!(p > 0)) return null;
+  if (m === 'ev') { const d = e.eb && e.eb[i], nd = e.nd && e.nd[i]; return d > 0 && nd != null && p + nd > 0 ? (p + nd) / d : null; }
+  const d = (m === 'pbv' ? e.bv : e.eps)[i];
+  return d > 0 ? p / d : null;
+}
 // múltiplo de hoy (precio en vivo si está) y su lugar en las semanas de los últimos N años: percentil (parte de las
-// semanas con un múltiplo igual o menor), media, desvío y z. Con menos de 30 semanas con dato, sin percentil
-function empStats(k, pbv, years = pebgYears) {
-  const e = EMP.empresas[k], arr = pbv ? e.bv : e.eps, n = e.c.length;
-  const lastD = arr[n - 1], live = empLive[e.px], px = live > 0 ? live : e.c[n - 1];
-  const cur = lastD > 0 && px > 0 ? px / lastD : null;
+// semanas con un múltiplo igual o menor), mediana, media, desvío y z. Con menos de 30 semanas con dato, sin percentil
+function empStats(k, m, years = pebgYears) {
+  if (m === true) m = 'pbv'; else if (m === false || m == null) m = 'pe';
+  const e = EMP.empresas[k], n = e.c.length, live = empLive[e.px], px = live > 0 ? live : e.c[n - 1];
+  if (m === 'ev' && !e.eb) return { cur: null, na: !!e.banco || e.sector === 'Financiero', neg: false, yrs: 0, pct: null, live: live > 0 };
+  const cur = empMult(e, m, px, n - 1);
+  const last = m === 'ev' ? e.eb[n - 1] : (m === 'pbv' ? e.bv : e.eps)[n - 1];
   const vals = [];
-  for (let i = Math.max(0, n - Math.round(years * 52.18)); i < n; i++) { const p = e.c[i], d = arr[i]; if (p > 0 && d > 0 && p / d < 500) vals.push(p / d); }
-  const out = { cur, neg: lastD != null && lastD <= 0, yrs: vals.length / 52.18, pct: null, live: live > 0 };
+  for (let i = Math.max(0, n - Math.round(years * 52.18)); i < n; i++) { const v = empMult(e, m, e.c[i], i); if (v != null && v < 500) vals.push(v); }
+  const out = { cur, neg: last != null && last <= 0, cajaNeta: m === 'ev' && cur == null && last > 0, yrs: vals.length / 52.18, pct: null, live: live > 0 };
   if (cur == null || vals.length < 30) return out;
   const mu = vals.reduce((a, b) => a + b, 0) / vals.length, sd = Math.sqrt(vals.reduce((a, b) => a + (b - mu) ** 2, 0) / vals.length);
   vals.sort((a, b) => a - b);
@@ -3797,38 +3826,46 @@ function initPebgSide() {
   renderPebgSide();
   loadEmpresas().then(() => { renderPebgSide(); empLivePx(); });
 }
+const PEBG_SIDE_M = { pe: 'P/E', pbv: 'P/BV', ev: 'EV/EBITDA' };
 function renderPebgSide() {
   const box = document.getElementById('pebgSide'), btn = document.getElementById('pebgSideBtn');
   if (btn) btn.setAttribute('aria-pressed', pebgSideOn);
   if (!box) return;
   box.style.display = pebgSideOn ? 'flex' : 'none';
   if (!pebgSideOn) return;
-  const list = document.getElementById('pebgSideList'), sub = document.getElementById('pebgSideSub'), ft = document.getElementById('pebgSideFt');
+  const list = document.getElementById('pebgSideList'), sub = document.getElementById('pebgSideSub'), ft = document.getElementById('pebgSideFt'), sel = document.getElementById('pebgSideSec');
   document.querySelectorAll('#pebgSideCols .ps-h').forEach(x => x.classList.toggle('active', x.dataset.o === pebgSideSort));
   if (!EMP) { list.innerHTML = '<div class="pebg-side-msg">' + (empLoading ? 'Cargando…' : 'No se pudo bajar empresas.json.') + '</div>'; return; }
+  const secs = [...new Set(EMP.merval.map(k => EMP.empresas[k].sector).filter(Boolean))];
+  if (sel && sel.dataset.n !== String(secs.length)) { sel.innerHTML = '<option value="">Todas</option>' + secs.map(x => '<option>' + x + '</option>').join(''); sel.dataset.n = String(secs.length); }
+  if (pebgSideSec && !secs.includes(pebgSideSec)) pebgSideSec = '';
+  if (sel) sel.value = pebgSideSec;
   const yrs = pebgYears === 1 ? 'del último año' : 'de los últimos ' + pebgYears + ' años';
-  sub.textContent = 'Múltiplo de hoy y cuánto está de su mediana ' + yrs + ' (el período del gráfico). Verde: en el 20% más bajo de ese lapso; rojo, en el 20% más alto. Clic para verla.';
+  sub.textContent = 'Múltiplo de hoy y cuánto está de su mediana ' + yrs + ' (el período del gráfico). Verde: en el 20% más bajo de ese lapso; rojo, en el 20% más alto. Clic en el múltiplo ordena por nivel; en "vs med.", por la distancia.';
   const f = new Date(EMP.asOf); document.getElementById('pebgSideFecha').textContent = 'al ' + f.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
-  const rows = EMP.merval.map(k => ({ k, e: EMP.empresas[k], pe: empStats(k, false), pb: empStats(k, true) }));
+  const rows = EMP.merval.filter(k => !pebgSideSec || EMP.empresas[k].sector === pebgSideSec)
+    .map(k => ({ k, e: EMP.empresas[k], pe: empStats(k, 'pe'), pbv: empStats(k, 'pbv'), ev: empStats(k, 'ev') }));
   const vsMed = x => x.pct != null && x.med > 0 ? x.cur / x.med - 1 : null;
-  const key = r => { const x = pebgSideSort === 'pbv' ? r.pb : r.pe, d = vsMed(x); return d != null ? d : x.neg ? 1e9 : 1e8; };
+  const [sm, sb] = pebgSideSort.split(':');
+  const key = r => { const x = r[sm], v = sb === 'nivel' ? x.cur : vsMed(x); return v != null ? v : x.neg ? 1e9 : 1e8; };
   rows.sort((a, b) => key(a) - key(b) || a.k.localeCompare(b.k));
   const curK = pebgData ? (pebgData.arKey || EMP.merval.find(x => x === pebgData.symbol || EMP.empresas[x].adr === pebgData.symbol)) : null;
   const fx = (v, pbv) => v == null ? '—' : (pbv || v < 10 ? v.toFixed(pbv ? 2 : 1) : v < 100 ? v.toFixed(1) : Math.round(v)) + 'x';
   const cls = x => x.pct == null ? '' : x.pct <= 0.2 ? ' pp' : x.pct >= 0.8 ? ' pn' : '';
   const dTxt = d => d == null ? '' : (d >= 0 ? '+' : '−') + Math.abs(Math.round(d * 100)) + '%';
-  const tip = (x, M, pbv) => x.cur == null ? M + ': ' + (x.neg ? 'resultado de 12 meses negativo' : 'sin dato') :
-    M + ' ' + fx(x.cur, pbv) + (x.pct == null ? ', poca historia' : ': percentil ' + Math.round(x.pct * 100) + ', mediana ' + fx(x.med, pbv) + ', media ' + fx(x.mu, pbv) + ', rango ' + fx(x.min, pbv) + ' a ' + fx(x.max, pbv) + (x.z != null ? ', z ' + (x.z >= 0 ? '+' : '−') + Math.abs(x.z).toFixed(2) + 'σ' : '') + ' en ' + x.yrs.toFixed(1).replace('.', ',') + ' años de semanas con dato');
-  list.innerHTML = rows.map(r => {
-    const pe = r.pe, pb = r.pb, nm = r.e.n.replace(/</g, '&lt;');
-    const title = r.e.n + (r.e.adr && r.e.adr !== r.k ? ' (ADR ' + r.e.adr + ')' : '') + '. ' + tip(pe, 'P/E', false) + '. ' + tip(pb, 'P/BV', true) + '. Valores ' + empMonTxt(r.e) + '.';
+  const sinDato = (x, m) => x.na ? (m === 'ev' ? 'no aplica (financiera)' : 'sin dato') : x.neg ? (m === 'ev' ? 'EBITDA de 12 meses negativo' : 'resultado de 12 meses negativo') : x.cajaNeta ? 'más caja que capitalización' : 'sin dato';
+  const tip = (x, m) => { const M = PEBG_SIDE_M[m], pbv = m === 'pbv'; return x.cur == null ? M + ': ' + sinDato(x, m) :
+    M + ' ' + fx(x.cur, pbv) + (x.pct == null ? ', poca historia' : ': percentil ' + Math.round(x.pct * 100) + ', mediana ' + fx(x.med, pbv) + ', media ' + fx(x.mu, pbv) + ', rango ' + fx(x.min, pbv) + ' a ' + fx(x.max, pbv) + (x.z != null ? ', z ' + (x.z >= 0 ? '+' : '−') + Math.abs(x.z).toFixed(2) + 'σ' : '') + ' en ' + x.yrs.toFixed(1).replace('.', ',') + ' años de semanas con dato'); };
+  const celda = (x, m) => '<span class="ps-v">' + (x.cur != null ? fx(x.cur, m === 'pbv') : x.na ? '—' : x.neg ? 'neg.' : '—') + '</span><span class="ps-p' + cls(x) + '">' + dTxt(vsMed(x)) + '</span>';
+  list.innerHTML = rows.length ? rows.map(r => {
+    const nm = r.e.n.replace(/</g, '&lt;');
+    const title = r.e.n + (r.e.adr && r.e.adr !== r.k ? ' (ADR ' + r.e.adr + ')' : '') + (r.e.sector ? ', ' + r.e.sector.toLowerCase() : '') + '. ' + tip(r.pe, 'pe') + '. ' + tip(r.pbv, 'pbv') + '. ' + tip(r.ev, 'ev') + '. Valores ' + empMonTxt(r.e) + '.';
     return '<button type="button" role="listitem" class="pebg-side-row' + (r.k === curK ? ' is-cur' : '') + '" onclick="openPebgFor(\'' + r.k + '\')" title="' + title.replace(/"/g, '&quot;') + '">'
       + '<span class="ps-id"><span class="ps-tk">' + r.k + '</span><span class="ps-nm">' + nm + '</span></span>'
-      + '<span class="ps-v">' + (pe.cur != null ? fx(pe.cur, false) : pe.neg ? 'neg.' : '—') + '</span><span class="ps-p' + cls(pe) + '">' + dTxt(vsMed(pe)) + '</span>'
-      + '<span class="ps-v">' + (pb.cur != null ? fx(pb.cur, true) : '—') + '</span><span class="ps-p' + cls(pb) + '">' + dTxt(vsMed(pb)) + '</span></button>';
-  }).join('');
-  const nLive = rows.filter(r => r.pe.live || r.pb.live).length;
-  ft.innerHTML = 'Las 19 del MSCI MERVAL. ' + (nLive ? 'Precio en vivo (Yahoo); ' : 'Precio del último cierre; ') + 'resultados y balances de los 20-F de la SEC y de Yahoo, en pesos con el IPC. Bancos, de la pestaña Bancos (P/E = P/BV ÷ ROE real). <a class="sect-link" onclick="openMetodo(\'merval\')">Cómo se calcula</a>';
+      + celda(r.pe, 'pe') + celda(r.pbv, 'pbv') + celda(r.ev, 'ev') + '</button>';
+  }).join('') : '<div class="pebg-side-msg">No hay empresas de ese sector.</div>';
+  const nLive = rows.filter(r => r.pe.live || r.pbv.live).length;
+  ft.innerHTML = 'Las 19 del MSCI MERVAL. ' + (nLive ? 'Precio en vivo (Yahoo); ' : 'Precio del último cierre; ') + 'resultados y balances de los 20-F de la SEC y de Yahoo, en pesos con el IPC. EV/EBITDA: (capitalización + deuda neta + minoritarios) / (resultado operativo + amortizaciones) de 12 meses, de Yahoo; no aplica a bancos ni a BYMA. Bancos, de la pestaña Bancos (P/E = P/BV ÷ ROE real). <a class="sect-link" onclick="openMetodo(\'merval\')">Cómo se calcula</a>';
 }
 
 // precio con signo $: desde 1.000, sin decimales y con separador de miles (las argentinas cotizan en miles de pesos)
@@ -4197,15 +4234,18 @@ async function loadPebg() {
 
 // estado de una argentina: de qué cierre es el dato (corto, para que la barra entre en un renglón); en el título, de
 // dónde sale y en qué moneda
-function arStatus(data, pbv, full) {
+function arStatus(data, pbv, full, evM = null) {
   const e = data.ar, u = e.ult || {}, fd = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '';
   const tipo = { '4 trimestres': 'cuatro trimestres', 'ejercicio': 'ejercicio', '12 meses': '12 meses de Yahoo' };
   let t = e.n + (data.alias && data.alias !== data.symbol && data.alias !== e.n ? ' (' + data.alias + ')' : '') + ', ';
+  const ev = evM != null ? evM : pebgMetric === 'ev' && !!e.eb;
   if (e.banco) t += pbv ? 'P/BV de la pestaña Bancos' : 'P/BV ÷ ROE de la pestaña Bancos';
+  else if (ev) t += 'EBITDA ' + (u.ebitda ? (tipo[u.ebitda.tipo] || u.ebitda.tipo) + ' al ' + fd(u.ebitda.cierre) : 'sin dato') + ', deuda neta al ' + (u.deuda ? fd(u.deuda.cierre) : '—');
   else if (pbv) t += u.balance ? 'balance al ' + fd(u.balance.cierre) : 'sin balance';
   else t += u.resultado ? (tipo[u.resultado.tipo] || u.resultado.tipo) + ' al ' + fd(u.resultado.cierre) : 'sin resultado';
-  if (full.length < 10) t += '. Sin ' + (pbv ? 'P/BV' : 'P/E: resultado de 12 meses negativo o sin datos');
+  if (full.length < 10) t += '. Sin ' + (pbv ? 'P/BV' : ev ? 'EV/EBITDA: EBITDA negativo o sin datos' : 'P/E: resultado de 12 meses negativo o sin datos');
   const tip = (e.banco ? (pbv ? 'P/BV semanal de la pestaña Bancos.' : 'P/E = P/BV ÷ ROE real, de la pestaña Bancos.')
+    : ev ? 'EV/EBITDA = (capitalización + deuda neta + minoritarios) / EBITDA de 12 meses (resultado operativo + amortizaciones), de Yahoo, ' + empMonTxt(e) + '.'
     : (pbv ? 'Valor libro' : 'Resultado de 12 meses') + ' ' + empMonTxt(e) + '.') + ' Precio ' + (e.moneda === 'USD' ? 'del ADR ' + e.px + ', en dólares.' : 'de BYMA, en pesos.');
   return { t, tip };
 }
@@ -4214,7 +4254,7 @@ function updEpsNote(d) {
   if (!el) return;
   if (d && d.ar) {
     const e = d.ar;
-    el.textContent = e.banco ? 'Bancos: BCRA, 20-F y Yahoo' : e.regimen === 'dólares' ? 'Resultados en US$ por ADR' : e.regimen === 'dólar funcional' ? 'En dólares, al contado con liquidación' : 'Pesos de cada semana (IPC)';
+    el.textContent = (pebgMetric === 'ev' && e.eb ? 'EV/EBITDA de Yahoo. ' : '') + (e.banco ? 'Bancos: BCRA, 20-F y Yahoo' : e.regimen === 'dólares' ? 'Resultados en US$ por ADR' : e.regimen === 'dólar funcional' ? 'En dólares, al contado con liquidación' : 'Pesos de cada semana (IPC)');
     el.title = e.banco ? 'Valor libro = precio / P/BV y resultado = ROE real × valor libro, semana a semana, de bancos.json (balance mensual del BCRA desde 2000, los 20-F y Yahoo).'
       : 'Resultado de 12 meses (cuatro trimestres o el último ejercicio) y valor libro de los 20-F de la SEC y de Yahoo, cada uno desde su presentación (el plazo de la CNV). '
         + (e.regimen === 'pesos' ? 'Cada balance está en pesos de su cierre (NIC 29) y se lleva a pesos de cada semana con el IPC; el patrimonio anterior a la NIC 29 no se usa.' : e.regimen === 'dólar funcional' ? 'Su moneda funcional es el dólar: presenta en pesos al oficial de cada cierre. El balance vuelve a dólares con ese oficial y pasa a pesos de cada semana con el contado con liquidación, el dólar con el que el mercado pone el precio: es el múltiplo de una cuenta en dólares, como el de un ADR.' : 'Presenta en dólares: precio del ADR y resultados por ADR.');
@@ -4378,7 +4418,7 @@ function renderPebgEst(d) {
 // ── Bandas móviles: en cada fecha, la media y el desvío (P/E) o los percentiles (PEG) de los N años previos ──
 const YR_S = 365.25 * 86400;
 let pebgMetric = 'pe';
-try { const m = localStorage.getItem('pebgMetric'); if (m === 'peg' || m === 'pbv') pebgMetric = m; } catch (e) {}
+try { const m = localStorage.getItem('pebgMetric'); if (m === 'peg' || m === 'pbv' || m === 'ev') pebgMetric = m; } catch (e) {}
 const PE_BAND_LABELS = ['μ+2σ', 'μ+1σ', 'μ', 'μ-1σ', 'μ-2σ'];
 const PEG_BAND_LABELS = ['p90', 'p75', 'Mediana', 'p25', 'p10'];
 
@@ -4448,7 +4488,7 @@ function pegAxisSwitch(prev) {
 }
 function setPebgMetric(k) {
   const prev = pebgMetric;
-  pebgMetric = k === 'peg' || k === 'pbv' ? k : 'pe';
+  pebgMetric = k === 'peg' || k === 'pbv' || k === 'ev' ? k : 'pe';
   try { localStorage.setItem('pebgMetric', pebgMetric); } catch (e) {}
   syncPebgMetricBtns();
   pegAxisSwitch(prev);
@@ -4525,15 +4565,18 @@ function fixedBands(full, years, metric) {
 
 function renderPebg(data) {
   // las argentinas del Merval (data.ar, de empresas.json): P/E y P/BV de los balances, sin PEG, normalizado ni EPS a mano
-  const ar = !!data.ar, metric = ar && pebgMetric === 'peg' ? 'pe' : pebgMetric;
-  const eps = ar ? [] : pebgEps(data), pbv = metric === 'pbv';
-  const full = ar ? arSerie(data, pbv) : pbv ? pbvSerie(data) : buildPESeries(data, eps);
+  // EV/EBITDA: solo las argentinas que no son financieras (las demás, con EV/EBITDA elegido, muestran el P/E)
+  const ar = !!data.ar, evOk = ar && !!data.ar.eb;
+  const metric = (ar && pebgMetric === 'peg') || (pebgMetric === 'ev' && !evOk) ? 'pe' : pebgMetric;
+  const eps = ar ? [] : pebgEps(data), pbv = metric === 'pbv', ev = metric === 'ev';
+  const full = ar ? arSerie(data, metric) : pbv ? pbvSerie(data) : buildPESeries(data, eps);
   const status = document.getElementById('pebgStatus');
   updEpsNote(data);
   syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns();
   document.querySelectorAll('#pebgMetricBtns .pebg-period').forEach(x => {
     if (x.dataset.k === 'peg') { x.classList.toggle('is-off', ar); x.title = ar ? 'El PEG usa el crecimiento del EPS trimestral de la SEC: para las argentinas hay P/E y P/BV' : ''; }
-    if (ar && pebgMetric === 'peg') x.classList.toggle('active', x.dataset.k === 'pe');
+    if (x.dataset.k === 'ev') { x.classList.toggle('is-off', !evOk); x.title = evOk ? '(Capitalización + deuda neta + minoritarios) / EBITDA de 12 meses (resultado operativo + amortizaciones)' : ar ? (data.ar.banco || data.ar.sector === 'Financiero' ? 'No aplica a bancos ni a BYMA: la deuda y la caja son parte de su negocio' : 'Sin EBITDA o deuda de Yahoo para esta empresa') : 'Por ahora, para las argentinas del Merval que no son financieras'; }
+    if (metric !== pebgMetric) x.classList.toggle('active', x.dataset.k === metric);
   });
   { const b = document.getElementById('pebgPersonalizar'); if (b) { b.disabled = ar; b.title = ar ? 'Las argentinas van con los balances de empresas.json' : ''; } }
   document.querySelectorAll('#view-pebg .eps-mode-btns').forEach(e => { e.classList.toggle('is-off', pbv || ar); e.title = ar ? 'Para las argentinas, el resultado contable de los balances: no hay normalizado' : pbv ? 'Contable y normalizado son para el P/E: el P/BV va con el valor libro' : ''; });
@@ -4543,7 +4586,7 @@ function renderPebg(data) {
   // Bancos (bancos argentinos). Los dos archivos se bajan la primera vez
   if (!ar && pbv && !nBv && !EMP && !data.empPedido) { data.empPedido = true; loadEmpresas().then(j => { if (j && pebgData === data && pebgMetric === 'pbv') renderPebg(data); }); }
   if (!ar && pbv && !nBv && !BCO && !data.bcoPedido) { data.bcoPedido = true; loadBancos().then(j => { if (j && pebgData === data && pebgMetric === 'pbv') renderPebg(data); }); }
-  if (ar) { const a = arStatus(data, pbv, full); status.textContent = a.t; status.title = a.tip; }
+  if (ar) { const a = arStatus(data, pbv, full, ev); status.textContent = a.t; status.title = a.tip; }
   else status.textContent = (data.shortName || data.symbol) + ', ' + (pbv ? (nBv ? nBv + ' balances con valor libro' : empBv ? 'valor libro por ADR de los 20-F y de Yahoo' : bcoAr ? 'P/BV semanal de la pestaña Bancos' : 'sin valor libro en la SEC') : eps.length + ' trim. EPS')
     + (!pbv && data.histNote ? ' (los más viejos, de los 10-K)' : '')
     + (!pbv && pebgManualEps.length ? ' (' + pebgManualEps.length + ' a mano)' : '')
@@ -4558,12 +4601,12 @@ function renderPebg(data) {
   if (peg) addPeg(full);
   const fija = pebgBand === 'fija';
   const trim = !fija && pebgRecalc === 'trim';
-  let bands = fija ? fixedBands(full, pebgYears, pbv ? 'pe' : metric) : rollingBands(full, pebgYears, pbv ? 'pe' : metric);
+  let bands = fija ? fixedBands(full, pebgYears, pbv || ev ? 'pe' : metric) : rollingBands(full, pebgYears, pbv || ev ? 'pe' : metric);
   if (trim) bands = holdQuarterly(full, bands);
   full.forEach((p, i) => {
     const b = bands[i];
     p.band = b;
-    p.bandPx = b ? b.mult.map(m => m == null ? null : peg ? (p.g != null && p.g >= PEG_MIN_G ? m * p.g * 100 * p.eps4q : null) : m * p.eps4q) : null;
+    p.bandPx = b ? b.mult.map(m => m == null ? null : peg ? (p.g != null && p.g >= PEG_MIN_G ? m * p.g * 100 * p.eps4q : null) : ev ? (m * p.eps4q - p.nd > 0 ? m * p.eps4q - p.nd : null) : m * p.eps4q) : null;
   });
 
   const last = full[full.length - 1];
@@ -4578,9 +4621,9 @@ function renderPebg(data) {
   const histHint = 'hay ' + histY.toFixed(1).replace('.', ',') + ' años de datos';
   // con bandas fijas y menos historia que la ventana, se aclara cuántos años entran de verdad
   const bandSub = !lb ? histHint : fija ? (histY < pebgYears - 0.25 ? 'fija, ' + histY.toFixed(1).replace('.', ',') + ' años de datos' : 'fija, últimos ' + yrsTxt(pebgYears)) : trim ? 'móvil, al ' + new Date(lb.asOf * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : 'móvil, ' + yrsTxt(pebgYears);
-  const z = document.getElementById('psStat3'), M = pbv ? 'P/BV' : 'P/E';
+  const z = document.getElementById('psStat3'), M = pbv ? 'P/BV' : ev ? 'EV/EBITDA' : 'P/E';
   if (!peg) {
-    set('psLbl0', M + ' actual'); set('psStat0', fmtX(last.pe)); set('psSub0', ar ? (pbv ? 'último balance' : '12 meses, contable') : pbv ? (last.emp ? 'último balance' : last.semanal ? 'Bancos, semanal' : 'último balance') : norm ? 'TTM normalizado' : 'TTM contable');
+    set('psLbl0', M + ' actual'); set('psStat0', fmtX(last.pe)); set('psSub0', ar ? (pbv ? 'último balance' : ev ? 'EBITDA de 12 meses' : '12 meses, contable') : pbv ? (last.emp ? 'último balance' : last.semanal ? 'Bancos, semanal' : 'último balance') : norm ? 'TTM normalizado' : 'TTM contable');
     set('psLbl1', M + ' media ' + winLbl); set('psStat1', lb ? fmtX(lb.center) : '—'); set('psSub1', bandSub);
     set('psLbl2', 'Desv. std'); set('psStat2', lb ? lb.sd.toFixed(pbv ? 2 : 1) + 'x' : '—'); set('psSub2', 'σ');
     const zs = lb && lb.sd > 0 ? (last.pe - lb.center) / lb.sd : null;
@@ -4589,7 +4632,8 @@ function renderPebg(data) {
     z.className = 'pebg-stat-val ' + (zs == null ? '' : zs < -1 ? 'pp' : zs > 1 ? 'pn' : '');
     set('psSub3', zs == null ? '' : zs < -1 ? 'barato' : zs > 1 ? 'caro' : 'justo');
     const enMon = ar ? (data.ar.moneda === 'USD' ? 'US$ por ADR' : 'pesos de hoy') : '';
-    if (ar) { set('psLbl5', pbv ? 'BV por acción' : 'Resultado por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (pbv ? 'último balance, ' : '12 meses, ') + enMon); }
+    if (ar && ev) { set('psLbl5', 'EBITDA por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (last.nd < 0 ? 'caja neta ' + fmtP(-last.nd) : 'deuda neta ' + fmtP(last.nd)) + ' por acción'); }
+    else if (ar) { set('psLbl5', pbv ? 'BV por acción' : 'Resultado por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (pbv ? 'último balance, ' : '12 meses, ') + enMon); }
     else if (pbv) { set('psLbl5', 'BV por acción'); set('psStat5', fmtP(last.eps4q)); set('psSub5', last.emp ? 'por ADR, 20-F y Yahoo' : last.semanal ? 'implícito: precio / P/BV' : 'de los comunes, ' + new Date(last.q * 1000).toLocaleDateString('es-AR', { month: 'short', year: '2-digit', timeZone: 'UTC' })); }
     else { set('psLbl5', 'EPS TTM'); set('psStat5', fmtP(last.eps4q)); set('psSub5', (norm ? 'normalizado' : 'contable') + ', 4 trim.'); }
   } else {
@@ -4910,7 +4954,7 @@ function bindPebgCanvas(canvas) {
 function drawPebgChart(hoverT) {
   if (!pebgView) return;
   const { full, metric, labels, years, fija, trim, prices } = pebgView;
-  const peg = metric === 'peg', pbv = metric === 'pbv', M = pbv ? 'P/BV' : 'P/E';
+  const peg = metric === 'peg', pbv = metric === 'pbv', evM = metric === 'ev', M = pbv ? 'P/BV' : evM ? 'EV/EBITDA' : 'P/E';
   const mv = pebgAxis === 'mult';
   const yOf = p => mv ? (peg ? p.peg : p.pe) : p.close;
   const bandOf = (p, b) => mv ? (p.band ? p.band.mult[b] : null) : (p.bandPx ? p.bandPx[b] : null);
@@ -4955,7 +4999,7 @@ function drawPebgChart(hoverT) {
   const px = inWin(prices || []);
   const priceLine = mv ? series.filter(p => { const v = yOf(p); return v != null && v > 0 && isFinite(v); }) : (px.filter(visible).length > 1 ? px : series);
   const lineVis = priceLine.filter(visible);
-  if (lineVis.length < 2) return empty(!mv ? 'Sin datos en este tramo' : peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : pbv ? 'Sin P/BV en este tramo: patrimonio negativo o sin balances' : 'Sin P/E positivo en este tramo');
+  if (lineVis.length < 2) return empty(!mv ? 'Sin datos en este tramo' : peg ? 'Sin PEG: hacen falta 6 años de EPS y un crecimiento de al menos 3% anual' : pbv ? 'Sin P/BV en este tramo: patrimonio negativo o sin balances' : evM ? 'Sin EV/EBITDA en este tramo: EBITDA negativo o sin balances' : 'Sin P/E positivo en este tramo');
 
   const cols = bandColors();
   const C = { grid: cssVar('--chart-grid'), text: cssVar('--chart-text'), price: cssVar('--price'), fill: cssVar('--band-fill'), bg: cssVar('--chart-bg') };
@@ -4985,7 +5029,7 @@ function drawPebgChart(hoverT) {
   }
   // proyección con el EPS esperado (botón EPS fw): un año hacia adelante desde el último dato, si está a la vista
   const lastF = full[full.length - 1];
-  const fwEps = !peg && !pbv ? pebgFwEps(pebgData) : null;
+  const fwEps = !peg && !pbv && !evM ? pebgFwEps(pebgData) : null;
   const fwOn = pebgFw && fwEps > 0 && !!lastF.band && t1 >= lastF.date - 5 * 86400;
   const tFw = lastF.date + 365 * 86400;
   // en precio, cada banda × EPS fw; en múltiplo las bandas quedan y la línea va al P/E si el precio no se mueve
@@ -5187,11 +5231,11 @@ function drawPebgChart(hoverT) {
   if (hoverT == null) {
     const lb = full[full.length - 1].band;
     const fm = v => peg ? v.toFixed(2) : v.toFixed(pbv ? 2 : 1) + 'x';
-    leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>${mv ? (peg ? 'PEG' : pbv ? 'P/BV' : 'P/E de 12 meses') : 'Precio'}</div>`
+    leg.innerHTML = `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${C.price}"></div>${mv ? (peg ? 'PEG' : pbv ? 'P/BV' : evM ? 'EV/EBITDA' : 'P/E de 12 meses') : 'Precio'}</div>`
       + (lb ? [0, 1, 2, 3, 4].filter(b => lb.mult[b] != null).map(b => `<div class="pebg-leg-row"><div class="pebg-leg-line" style="background:${cols[b]}"></div>${labels[b]} hoy, ${(peg ? 'PEG ' : '') + fm(lb.mult[b])}</div>`).join('') : '')
       + `<div class="pebg-leg-row"><div class="pebg-leg-line" style="height:10px;background:${C.fill};border:1px solid ${C.grid}"></div>${peg ? 'Rango p25–p75' : 'Zona μ ± 1σ'}</div>`
       + `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Percentiles' : 'Media y σ'} ${fija ? 'fijos, de los últimos' : 'móviles de'} ${years} ${years === 1 ? 'año' : 'años'}${trim ? (pbv ? ', recalculados con cada balance' : ', recalculados por trimestre') : ''}</div>`
-      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: crecimiento menor a 3% o sin historia' : pbv ? 'Huecos: patrimonio negativo o sin balance' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
+      + (gaps ? `<div class="pebg-leg-row" style="color:var(--muted)">${peg ? 'Huecos: crecimiento menor a 3% o sin historia' : pbv ? 'Huecos: patrimonio negativo o sin balance' : evM ? 'Huecos: EBITDA negativo o sin balance' : 'Huecos: EPS negativo o sin historia'}</div>` : '')
       + (useLog ? '<div class="pebg-leg-row" style="color:var(--muted)">Escala logarítmica</div>' : '');
     leg.style.display = pebgLegendOn ? 'flex' : 'none';
   }
@@ -5230,15 +5274,16 @@ function drawPebgChart(hoverT) {
         new Date(pp.date * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
       const rows = [{ color: C.price, label: 'Precio', val: pxTxt(pp.close) }];
       if (hasPE) {
-        rows.push({ color: '', label: pbv ? 'P/BV' : 'P/E TTM', val: sp.pe.toFixed(pbv ? 2 : 1) + 'x' });
+        rows.push({ color: '', label: pbv ? 'P/BV' : evM ? 'EV/EBITDA' : 'P/E TTM', val: sp.pe.toFixed(pbv ? 2 : 1) + 'x' });
         if (peg) {
           rows.push({ color: '', label: 'PEG', val: sp.peg != null ? sp.peg.toFixed(2) : 'n/d' });
           rows.push({ color: '', label: 'Crec. EPS 5A', val: sp.g != null ? (sp.g * 100).toFixed(1) + '%' : 'n/d' });
-        } else rows.push({ color: '', label: pbv ? 'BV por acción' : pebgView.ar ? 'Resultado por acción' : 'EPS TTM', val: pxTxt(sp.eps4q) });
+        } else if (evM) { rows.push({ color: '', label: 'EBITDA por acción', val: pxTxt(sp.eps4q) }); rows.push({ color: '', label: 'Deuda neta por acción', val: pxTxt(sp.nd) }); }
+        else rows.push({ color: '', label: pbv ? 'BV por acción' : pebgView.ar ? 'Resultado por acción' : 'EPS TTM', val: pxTxt(sp.eps4q) });
         if (sp.q) rows.push({ color: '', label: 'Último trimestre', val: new Date(sp.q * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' }) });
         if (sp.band) [0, 1, 2, 3, 4].forEach(b => { if (sp.band.mult[b] != null && sp.bandPx[b] != null) rows.push({ color: cols[b], label: labels[b] + ' (' + (peg ? sp.band.mult[b].toFixed(2) : sp.band.mult[b].toFixed(pbv ? 2 : 1) + 'x') + ')', val: pxTxt(sp.bandPx[b]) }); });
         else rows.push({ color: '', label: 'Bandas', val: 'sin historia suficiente' });
-      } else rows.push({ color: '', label: pbv ? 'P/BV' : 'P/E TTM', val: pp.date < full[0].date ? (pbv ? 'sin balance de esa fecha' : 'sin EPS de esa fecha') : (pbv ? 'sin dato (patrimonio ≤ 0)' : 'sin dato (EPS ≤ 0)') });
+      } else rows.push({ color: '', label: pbv ? 'P/BV' : evM ? 'EV/EBITDA' : 'P/E TTM', val: pp.date < full[0].date ? (pbv || evM ? 'sin balance de esa fecha' : 'sin EPS de esa fecha') : (pbv ? 'sin dato (patrimonio ≤ 0)' : evM ? 'sin dato (EBITDA ≤ 0)' : 'sin dato (EPS ≤ 0)') });
       document.getElementById('pebgTipRows').innerHTML = rows.map(r =>
         `<div class="pebg-tooltip-row"><span class="pebg-tooltip-lbl"><span class="pebg-tooltip-dot" style="background:${r.color || 'transparent'};${r.color ? '' : 'border:1px solid var(--line2)'}"></span>${r.label}</span><span class="pebg-tooltip-val">${r.val}</span></div>`).join('');
       tooltip.style.display = 'block';
@@ -5701,7 +5746,11 @@ const METODO = [
       { d: 'Bancos (Galicia, Macro, BBVA, Supervielle y Valores): de la pestaña Bancos. Valor libro = precio / P/BV; resultado = ROE real × valor libro, así que el P/E es P/BV ÷ ROE.',
         o: 'Usa el ROE sobre el patrimonio promedio y el valor libro de hoy: con un patrimonio que crece rápido, el P/E queda un poco más bajo que capitalización / resultado.' },
       { d: 'Pampa sigue en P/E histórico con su EPS trimestral cargado a mano de los 6-K (el mismo resultado que usa el panel) y toma de acá el valor libro por ADR para el P/BV: 20-F anuales y los trimestres de Yahoo. NU, igual.' },
-      { d: 'Panel: múltiplo de hoy (precio en vivo sobre el último dato) y su percentil en las semanas de los últimos N años, el período elegido en el gráfico: p0 es el más bajo de ese lapso. Verde hasta p20, rojo desde p80. Clic en P/E o P/BV ordena de la más barata contra su historia a la más cara. Pasando el mouse: mediana, media, rango y z.',
+      { d: 'EV/EBITDA (no en bancos ni en BYMA): (capitalización + deuda neta + minoritarios) / EBITDA de 12 meses. Deuda neta = deuda financiera (préstamos, obligaciones negociables y arrendamientos) menos caja e inversiones corrientes, del último balance; EBITDA = resultado operativo + amortizaciones de los últimos cuatro trimestres o, si no están, del último ejercicio, cada uno con su IPC, como el resultado de 12 meses. Todo de Yahoo, por acción y en la moneda de cada semana, como el resto. En P/E histórico, el precio a cada banda es múltiplo × EBITDA por acción − deuda neta por acción.',
+        p: 'Mira el negocio antes de cómo se financia: el resultado por exposición a la inflación, la diferencia de cambio de la deuda en dólares y el impuesto diferido quedan debajo del resultado operativo y no lo mueven. Y cuenta la deuda, que el P/E no ve: dos empresas con el mismo P/E y distinta deuda no valen lo mismo. Sirve para comparar pares con deudas muy distintas, como las transportadoras y distribuidoras de gas y electricidad.',
+        o: 'Contra su propia historia mezcla regímenes de tarifas: con las tarifas congeladas de 2023 y parte de 2024, el EBITDA de las reguladas era bajo y el múltiplo, alto, y esa mediana no es la de una regulada con tarifas actualizadas. Para ellas pesa más el nivel contra las pares y contra los meses desde la normalización. La historia es corta: arranca con los ejercicios de Yahoo (2022). Los minoritarios van a valor libro, no a precio de mercado; en Cresud, que consolida IRSA, el EV/EBITDA es el del grupo.' },
+      { d: 'Controles del EBITDA: las amortizaciones de un trimestre que dan menos del 60% de la mediana de la empresa, o que faltan con resultado operativo, van con la mediana (Yahoo cargó mal varias del tercer trimestre de 2025, y las de Loma Negra del primero, en miles). Si Yahoo no informa deuda en ninguno de los balances de una empresa (Ecogas), la deuda es cero; si la informa en unos y en otros no, el balance sin deuda no se usa. En las que presentan 20-F, los ejercicios de Yahoo del estado de resultados vienen en moneda de dos cierres después (el resultado operativo de 2022 de TGS es 6,8 veces el del 20-F: el IPC de diciembre de 2024 sobre el de 2022) y se reexpresan desde ahí.' },
+      { d: 'Panel: P/E, P/BV y EV/EBITDA de hoy (precio en vivo sobre el último dato) y cuánto están de su mediana de las semanas de los últimos N años, el período elegido en el gráfico. Verde: en el 20% más bajo de ese lapso; rojo, en el 20% más alto. Clic en el múltiplo ordena por nivel; en "vs med.", de la más barata contra su historia a la más cara. Se puede filtrar por sector. Pasando el mouse: percentil, mediana, media, rango y z.',
         p: 'Percentil y no z: los P/E argentinos van de 3 a 300 cuando el resultado, con el ajuste por inflación, queda cerca de cero, y la media y el desvío se los lleva un pico. El percentil no.',
         o: 'Las que no tienen ADR tienen poca historia (los ejercicios de Yahoo arrancan en 2022) y con menos de 30 semanas con dato no hay percentil. El resultado con NIC 29 incluye el resultado por exposición a la inflación, que mueve el P/E sin que cambie el negocio; el P/BV es más estable para comparar contra la historia.' },
     ] },
