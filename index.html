@@ -228,6 +228,41 @@ td:nth-child(-n+4){text-align:left}
 .chart-search::placeholder,.pebg-input::placeholder,.cmp-input::placeholder{text-transform:none;color:var(--faint);font-weight:400}
 .chart-hint{font-size:12.5px;color:var(--muted)}
 #tvContainer,#cmpTvContainer{flex:1;background:var(--surf);margin:14px var(--side);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+/* commodities en Gráfico: el widget a la izquierda y la tabla con la curva de futuros a la derecha */
+.chart-body{flex:1;display:flex;min-height:0}
+#view-chart.cmd-on #tvContainer{margin-right:12px}
+.cmd-panel{display:none;width:404px;flex-shrink:0;margin:14px var(--side) 14px 0;background:var(--surf);border:1px solid var(--line);border-radius:10px;overflow-y:auto;min-height:0}
+#view-chart.cmd-on .cmd-panel{display:flex;flex-direction:column}
+.cmd-sec{padding:12px 14px 14px;border-bottom:1px solid var(--line)}
+.cmd-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.cmd-tit{font-size:14px;font-weight:700;color:var(--ink);flex:1}
+.cmd-sub{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.cmd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.cmd-tbl th{font-size:10.5px;font-weight:600;color:var(--faint);text-align:right;padding:3px 0 5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.cmd-tbl td{padding:6px 0 6px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;color:var(--ink2)}
+.cmd-tbl th:first-child,.cmd-tbl td:first-child{text-align:left;padding-left:0}
+.cmd-tbl tr:last-child td{border-bottom:0}
+.cmd-row{cursor:pointer}
+.cmd-row:hover td{background:var(--surf2)}
+.cmd-row.is-cur td{background:var(--accent-soft)}
+.cmd-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cmd-nm{font-weight:700;color:var(--ink)}
+.cmd-u{display:block;font-size:10.5px;font-weight:400;color:var(--faint)}
+.cmd-lags{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}
+.cmd-lag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 7px;border-radius:5px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer}
+.cmd-lag:hover{color:var(--ink)}
+.cmd-lag.active{color:var(--ink);border-color:var(--line2);background:var(--surf2)}
+.cmd-lag.is-hoy{cursor:default;border-color:transparent;color:var(--ink)}
+.cmd-lag i{width:12px;height:0;border-top:2px solid currentColor;display:inline-block}
+.cmd-lag:not(.active):not(.is-hoy) i{opacity:.35}
+.cmd-chart{position:relative}
+.cmd-svg{display:block;width:100%;height:auto;overflow:visible}
+.cmd-svg text{font-size:10.5px;fill:var(--chart-text)}
+.cmd-tip{position:absolute;top:4px;pointer-events:none;background:var(--surf);border:1px solid var(--line2);border-radius:6px;padding:6px 8px;font-size:11.5px;line-height:1.5;color:var(--ink2);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08);display:none}
+.cmd-tip b{color:var(--ink)}
+.cmd-tbl-c,.cmd-tbl-s{margin-top:10px}
+.cmd-note{font-size:11px;color:var(--faint);line-height:1.5;padding:10px 14px 12px}
+.cmd-msg{font-size:12.5px;color:var(--muted);padding:6px 0}
 .footer{flex-shrink:0;background:var(--surf);border-top:1px solid var(--line);padding:6px var(--side);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
 .cmp-price-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:center}
 .cmp-price-block{display:flex;flex-direction:column;gap:2px;padding:0 24px}
@@ -239,10 +274,10 @@ td:nth-child(-n+4){text-align:left}
 .cmp-vs{font-size:13px;color:var(--muted)}
 
 /* selector segmentado (períodos, EPS) */
-.pebg-period-btns,.cmp-period-btns{display:flex;gap:2px;background:var(--sunk);border-radius:7px;padding:3px}
-.pebg-period,.cmp-period{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;color:var(--muted);user-select:none;white-space:nowrap}
-.pebg-period:hover,.cmp-period:hover{color:var(--ink)}
-.pebg-period.active,.cmp-period.active{background:var(--surf);color:var(--ink);box-shadow:0 1px 0 var(--line2)}
+.pebg-period-btns,.cmp-period-btns,.cmd-btns{display:flex;gap:2px;background:var(--sunk);border-radius:7px;padding:3px}
+.pebg-period,.cmp-period,.cmd-btn{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;color:var(--muted);user-select:none;white-space:nowrap}
+.pebg-period:hover,.cmp-period:hover,.cmd-btn:hover{color:var(--ink)}
+.pebg-period.active,.cmp-period.active,.cmd-btn.active{background:var(--surf);color:var(--ink);box-shadow:0 1px 0 var(--line2)}
 
 /* P/E histórico */
 .pebg-stats-bar{flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px var(--side);display:flex;align-items:stretch;flex-wrap:wrap;row-gap:10px;container-type:inline-size}
@@ -662,6 +697,9 @@ a.cal-chip{text-decoration:none;cursor:pointer}
   .arg-chart-box{height:240px}
   #pebgOuter{flex-direction:column}
   .pebg-side{width:auto;max-height:260px;border-right:0;border-bottom:1px solid var(--line)}
+  .chart-body{flex-direction:column;overflow-y:auto}
+  #view-chart.cmd-on #tvContainer{flex:none;height:min(58vh,420px);margin-right:var(--side)}
+  .cmd-panel{width:auto;margin:0 var(--side) 14px;overflow:visible}
   .pebg-panel{width:100%;border-left:none;border-top:1px solid var(--line);max-height:240px}
   .pebg-legend{display:none!important}
   .pebg-hint{display:none}
@@ -1125,10 +1163,14 @@ function checkPwd(){
     <input class="chart-search" type="text" id="chartTicker" placeholder="Ej: AAPL" value="AAPL" onkeydown="if(event.key==='Enter')loadChart()">
     <button class="btn" onclick="loadChart()">Ver gráfico</button>
     <span class="chart-hint">o hacé click en una fila del screener</span>
+    <div class="cmd-btns" id="cmdBtns" role="group" aria-label="Commodities"></div>
     <div class="cs"></div>
     <span id="chartLabel" style="font-size:14px;font-weight:600;color:var(--ink)">AAPL</span>
   </div>
-  <div id="tvContainer"></div>
+  <div class="chart-body">
+    <div id="tvContainer"></div>
+    <aside class="cmd-panel" id="cmdPanel" aria-label="Commodities"></aside>
+  </div>
 </div>
 
 <div class="view" id="view-heatmap">
@@ -1943,6 +1985,7 @@ function renderCalendar(){
 function initChart(sym) {
   sym = sym || 'AAPL';
   currentSym = sym;
+  cmdSync(sym);
   document.getElementById('chartTicker').value = sym;
   const row = rows.find(r=>r.symbol===sym);
   const nm = row ? row.name : chartNames[sym];
@@ -1970,6 +2013,254 @@ function initChart(sym) {
 function loadChart() { const sym=document.getElementById('chartTicker').value.trim().toUpperCase(); if(sym) initChart(sym); }
 const chartNames = {};
 function openChart(sym, name) { currentSym=sym; if(name) chartNames[sym]=name; switchTab('chart'); }
+
+// ---------------------------------------------------------------- Commodities en la pestaña Gráfico
+// El gráfico es el CFD de Capital.com u OANDA (el widget de TradingView no muestra los futuros de CME ni de ICE). La
+// tabla y la curva salen de los futuros de Yahoo vía /api/spark: el contrato más cercano y cada contrato mensual.
+const CMD = [
+  { k: 'BZ', n: 'Brent', y: 'BZ=F', tv: 'CAPITALCOM:OIL_BRENT', u: 'US$/barril', dec: 2, curva: { raiz: 'BZ', suf: '.NYM', vence: 'bz', n: 'NYMEX BZ' } },
+  { k: 'CL', n: 'WTI', y: 'CL=F', tv: 'CAPITALCOM:OIL_CRUDE', u: 'US$/barril', dec: 2, curva: { raiz: 'CL', suf: '.NYM', vence: 'cl', n: 'NYMEX CL' } },
+  { k: 'ZS', n: 'Soja', y: 'ZS=F', tv: 'OANDA:SOYBNUSD', u: 'US$/tn', f: 0.3674371, dec: 1 },   // Chicago: centavos por bushel
+  { k: 'GC', n: 'Oro', y: 'GC=F', tv: 'CAPITALCOM:GOLD', u: 'US$/oz', dec: 0 },
+];
+const CMD_HZ = [['1S', 7], ['1M', 30], ['3M', 91], ['6M', 182], ['1A', 364]];   // 1A: 52 semanas (Yahoo da un año justo de historia)
+const CMD_TABLA = ['1S', '1M', '6M', '1A'];
+const CMD_COL = { hoy: 'var(--accent)', '1S': 'var(--b1m)', '1M': 'var(--b1p)', '3M': 'var(--b2m)', '6M': 'var(--b2p)', '1A': 'var(--faint)' };
+const MES_FUT = 'FGHJKMNQUVXZ';
+let cmdSel = null, cmdPx = null, cmdPxAt = 0, cmdCurvas = {}, cmdLags = ['1S', '1M', '6M'], cmdVista = null;
+try { const o = JSON.parse(localStorage.getItem('cmdLags') || 'null'); if (Array.isArray(o)) cmdLags = o.filter(k => CMD_HZ.some(h => h[0] === k)); } catch (e) {}
+const cmdOf = k => CMD.find(c => c.k === k);
+
+function renderCmdBtns() {
+  const el = document.getElementById('cmdBtns');
+  if (el) el.innerHTML = CMD.map(c => '<span class="cmd-btn' + (cmdSel === c.k ? ' active' : '') + '" data-k="' + c.k + '" role="button" tabindex="0" title="'
+    + c.n + ': gráfico y variaciones' + (c.curva ? ', con la curva de futuros' : '') + '" onclick="setCmd(\'' + c.k + '\')" onkeydown="if(event.key===\'Enter\')setCmd(\'' + c.k + '\')">' + c.n + '</span>').join('');
+}
+function setCmd(k) { const c = cmdOf(k); if (c) initChart(c.tv); }
+// cada vez que cambia el gráfico: si el símbolo es de un commodity, se arma el panel; si no, se esconde
+function cmdSync(sym) {
+  const c = CMD.find(x => x.tv === sym);
+  cmdSel = c ? c.k : null;
+  if (c) chartNames[c.tv] = c.n;
+  const v = document.getElementById('view-chart');
+  if (v) v.classList.toggle('cmd-on', !!c);
+  renderCmdBtns();
+  if (c) { renderCmd(); loadCmd(); }
+}
+
+// resultado de /api/spark → [[t, cierre], ...]
+function cmdPts(r) {
+  const q = r && r.response && r.response[0];
+  if (!q) return [];
+  const ts = q.timestamp || [], cl = (q.indicators && q.indicators.quote && q.indicators.quote[0] && q.indicators.quote[0].close) || [];
+  return ts.map((t, i) => [t, cl[i]]).filter(p => p[1] != null && isFinite(p[1]) && p[1] > 0);
+}
+// el cierre más cercano anterior a t, si no tiene más de tol (los contratos lejanos no operan todos los días)
+function cmdAt(pts, t, tol = 7 * 86400) {
+  let v = null;
+  for (const [ti, c] of pts) { if (ti <= t + 3600) v = ti >= t - tol ? c : null; else break; }
+  return v;
+}
+// último día de negociación de un contrato (aprox.: días hábiles sin feriados). Brent BZ: el último hábil del segundo
+// mes anterior al de entrega. WTI: 3 hábiles antes del 25 del mes anterior (4 si el 25 no es hábil)
+function cmdVence(tipo, y, m) {
+  const hab = d => d.getUTCDay() !== 0 && d.getUTCDay() !== 6, ant = d => new Date(d.getTime() - 86400000);
+  if (tipo === 'bz') { let d = new Date(Date.UTC(y, m - 2, 0)); while (!hab(d)) d = ant(d); return d.getTime() / 1000; }
+  let d = new Date(Date.UTC(y, m - 2, 25)), k = hab(d) ? 3 : 4;
+  while (k > 0) { d = ant(d); if (hab(d)) k--; }
+  return d.getTime() / 1000;
+}
+function cmdFrente(tipo, t) {
+  const d = new Date(t * 1000);
+  for (let i = -1; i < 4; i++) {
+    const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + i, 1)), y = x.getUTCFullYear(), m = x.getUTCMonth() + 1;
+    if (cmdVence(tipo, y, m) + 86400 > t) return { y, m };
+  }
+  return null;
+}
+function cmdContratos(cv, t, n = 36) {
+  const d0 = new Date(t * 1000), out = [];
+  for (let i = -1; i <= n + 2; i++) {
+    const d = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + i, 1));
+    out.push({ s: cv.raiz + MES_FUT[d.getUTCMonth()] + String(d.getUTCFullYear()).slice(-2) + cv.suf, y: d.getUTCFullYear(), m: d.getUTCMonth() + 1 });
+  }
+  return out;
+}
+
+async function cmdLoadPx() {
+  if (cmdPx && Date.now() - cmdPxAt < 5 * 60 * 1000) return cmdPx;
+  const r = await fetch(BASE_URL + '/api/spark?symbols=' + CMD.map(c => encodeURIComponent(c.y)).join(',') + '&range=2y').then(x => x.json());
+  const m = {};
+  for (const s of (r.spark && r.spark.result) || []) m[s.symbol] = { pts: cmdPts(s), q: s.quote || null };
+  if (!Object.keys(m).length) throw new Error('sin datos');
+  cmdPx = m; cmdPxAt = Date.now();
+  return m;
+}
+async function cmdLoadCurva(c) {
+  const hit = cmdCurvas[c.k];
+  if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit;
+  const cs = cmdContratos(c.curva, Date.now() / 1000);
+  const r = await fetch(BASE_URL + '/api/spark?symbols=' + cs.map(x => encodeURIComponent(x.s)).join(',') + '&range=1y').then(x => x.json());
+  const by = {};
+  for (const s of (r.spark && r.spark.result) || []) by[s.symbol] = cmdPts(s);
+  let lista = cs.filter(x => (by[x.s] || []).length).map(x => ({ ...x, h: by[x.s] }));
+  if (lista.length < 3) throw new Error('sin contratos');
+  const t = Math.max(...lista.map(x => x.h[x.h.length - 1][0]));
+  // fuera los vencidos: los que dejaron de negociarse antes del último dato o cuyo último cierre quedó atrás
+  lista = lista.filter(x => cmdVence(c.curva.vence, x.y, x.m) + 86400 > t && x.h[x.h.length - 1][0] >= t - 7 * 86400).slice(0, 37);
+  return (cmdCurvas[c.k] = { at: Date.now(), t, cs: lista });
+}
+async function loadCmd() {
+  const k = cmdSel, c = cmdOf(k);
+  if (!c) return;
+  try {
+    await Promise.all([cmdLoadPx(), c.curva ? cmdLoadCurva(c) : null]);
+    if (cmdSel === k) renderCmd();
+  } catch (e) {
+    if (cmdSel === k) renderCmd('No se pudieron traer los precios de Yahoo. Probá de nuevo en un rato.');
+  }
+}
+
+const cmdNum = (c, v) => v == null ? '—' : (v * (c.f || 1)).toLocaleString('en-US', { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec });
+// variaciones: en %, y lo menor a 1% en bips
+function cmdPct(v) {
+  if (v == null || !isFinite(v)) return '<span class="na">—</span>';
+  const a = Math.abs(v), sg = v > 0 ? '+' : v < 0 ? '−' : '';
+  const t = a < 0.01 ? Math.round(a * 1e4) + ' bips' : (a * 100).toFixed(1) + '%';
+  return '<span class="' + (v > 0 ? 'pp' : v < 0 ? 'pn' : '') + '">' + (t === '0 bips' ? '0 bips' : sg + t) + '</span>';
+}
+function cmdDif(v) {
+  if (v == null || !isFinite(v)) return '<span class="na">—</span>';
+  return '<span class="' + (v > 0.005 ? 'pp' : v < -0.005 ? 'pn' : '') + '">' + (v > 0.005 ? '+' : v < -0.005 ? '−' : '') + Math.abs(v).toFixed(2) + '</span>';
+}
+const cmdMes = x => MES_CORTO[x.m - 1] + '-' + String(x.y).slice(2);
+
+function cmdTablaHtml() {
+  const head = '<tr><th></th><th>Último</th>' + CMD_TABLA.map(h => '<th>' + h + '</th>').join('') + '</tr>';
+  const rows = CMD.map(c => {
+    const p = cmdPx && cmdPx[c.y], pts = p ? p.pts : [];
+    const last = pts.length ? pts[pts.length - 1] : null;
+    const cols = CMD_TABLA.map(h => {
+      const d = CMD_HZ.find(x => x[0] === h)[1], b = last ? cmdAt(pts, last[0] - d * 86400) : null;
+      return '<td>' + cmdPct(last && b ? last[1] / b - 1 : null) + '</td>';
+    }).join('');
+    const when = last ? new Date(last[0] * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : '';
+    return '<tr class="cmd-row' + (cmdSel === c.k ? ' is-cur' : '') + '" data-k="' + c.k + '" tabindex="0" onclick="setCmd(\'' + c.k + '\')" onkeydown="if(event.key===\'Enter\')setCmd(\'' + c.k + '\')" title="'
+      + c.n + ': contrato más cercano (' + c.y + ')' + (when ? ', último dato del ' + when : '') + '"><td><span class="cmd-nm">' + c.n + '</span><span class="cmd-u">' + c.u + '</span></td><td>'
+      + cmdNum(c, last && last[1]) + '</td>' + cols + '</tr>';
+  }).join('');
+  return '<table class="cmd-tbl"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>';
+}
+
+// curva de futuros: hoy y el mismo contrato hace 1 semana, 1 mes...
+function cmdSerieCurva(cv, lag) {
+  return cv.cs.map(x => lag == null ? x.h[x.h.length - 1][1] : cmdAt(x.h, cv.t - lag * 86400));
+}
+function cmdCurvaSvg(c, cv, W) {
+  const H = 210, L = 40, R = 8, T = 10, B = 24, iw = W - L - R, ih = H - T - B, xs = cv.cs;
+  const idx = x => (x.y - xs[0].y) * 12 + (x.m - xs[0].m), N = Math.max(1, idx(xs[xs.length - 1]));
+  const ser = [{ k: 'hoy', v: cmdSerieCurva(cv, null) }, ...CMD_HZ.filter(h => cmdLags.includes(h[0])).map(([k, d]) => ({ k, v: cmdSerieCurva(cv, d) }))];
+  const vals = ser.flatMap(s => s.v).filter(v => v != null);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
+  const ticks = niceTicks(lo, hi, 4);
+  const X = i => L + iw * idx(xs[i]) / N, Y = v => T + ih * (1 - (v - lo) / (hi - lo));
+  let g = '';
+  for (const t of ticks) g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t).toFixed(1) + '" y2="' + Y(t).toFixed(1) + '" style="stroke:var(--chart-grid)"/>'
+    + '<text x="' + (L - 6) + '" y="' + (Y(t) + 3.5).toFixed(1) + '" text-anchor="end">' + t.toLocaleString('en-US') + '</text>';
+  // meses en el eje: enero y julio (solo enero si no entran); el primer contrato, si la marca siguiente queda lejos
+  const cada = iw / N * 6 >= 64 ? 6 : 12, marca = x => cada === 6 ? x.m === 1 || x.m === 7 : x.m === 1;
+  const sig = xs.findIndex(marca);
+  xs.forEach((x, i) => {
+    if (!(marca(x) || (i === 0 && (sig < 0 || idx(xs[sig]) >= 4)))) return;
+    const xi = X(i), an = xi - L < 18 ? 'start' : W - R - xi < 18 ? 'end' : 'middle';
+    g += '<text x="' + xi.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="' + an + '">' + cmdMes(x) + '</text>';
+  });
+  // los más viejos abajo y hoy arriba de todo
+  const lines = ser.slice().reverse().map(s => {
+    let d = '', on = false;
+    s.v.forEach((v, i) => { if (v == null) { on = false; return; } d += (on ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); on = true; });
+    return d ? '<path class="cmd-l" data-k="' + s.k + '" d="' + d + '" fill="none" style="stroke:' + CMD_COL[s.k] + ';stroke-width:' + (s.k === 'hoy' ? 2.2 : 1.5) + '"/>' : '';
+  }).join('');
+  cmdVista = { c, cv, ser, X, Y, W, L, R, T, ih };
+  return '<svg class="cmd-svg" id="cmdSvg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Curva de futuros del ' + c.n + ': hoy y '
+    + cmdLags.join(', ') + '">' + g + lines + '<line id="cmdCur" y1="' + T + '" y2="' + (T + ih) + '" style="stroke:var(--line2);display:none"/>'
+    + '<rect x="' + L + '" y="' + T + '" width="' + iw + '" height="' + ih + '" fill="transparent" onmousemove="cmdHover(event)" onmouseleave="cmdHover(null)"/></svg>';
+}
+function cmdHover(e) {
+  const tip = document.getElementById('cmdTip'), cur = document.getElementById('cmdCur'), V = cmdVista;
+  if (!tip || !cur || !V) return;
+  if (!e) { tip.style.display = 'none'; cur.style.display = 'none'; return; }
+  const svg = document.getElementById('cmdSvg'), r = svg.getBoundingClientRect();
+  if (!r.width) return;
+  const x = (e.clientX - r.left) * V.W / r.width;
+  let best = 0;
+  V.cv.cs.forEach((_, i) => { if (Math.abs(V.X(i) - x) < Math.abs(V.X(best) - x)) best = i; });
+  const xi = V.X(best), hoy = V.ser[0].v[best];
+  cur.setAttribute('x1', xi); cur.setAttribute('x2', xi); cur.style.display = '';
+  tip.innerHTML = '<b>' + cmdMes(V.cv.cs[best]) + '</b> (' + V.cv.cs[best].s + ')<br>Hoy ' + (hoy != null ? hoy.toFixed(2) : '—')
+    + V.ser.slice(1).map(s => { const v = s.v[best]; return '<br>' + s.k + ' ' + (v != null ? v.toFixed(2) + ' (' + (hoy - v >= 0 ? '+' : '−') + Math.abs(hoy - v).toFixed(2) + ')' : '—'); }).join('');
+  tip.style.display = 'block';
+  const w = tip.offsetWidth, left = xi * r.width / V.W;
+  tip.style.left = Math.max(0, Math.min(r.width - w, left + 12 > r.width - w ? left - w - 12 : left + 12)) + 'px';
+}
+function setCmdLag(k) {
+  cmdLags = cmdLags.includes(k) ? cmdLags.filter(x => x !== k) : CMD_HZ.map(h => h[0]).filter(x => x === k || cmdLags.includes(x));
+  try { localStorage.setItem('cmdLags', JSON.stringify(cmdLags)); } catch (e) {}
+  renderCmd();
+}
+function cmdCurvaHtml(c, cv, W) {
+  const lags = CMD_HZ.filter(h => cmdLags.includes(h[0]));
+  const chips = '<span class="cmd-lag is-hoy" style="color:' + CMD_COL.hoy + '"><i></i><span style="color:var(--ink)">Hoy</span></span>'
+    + CMD_HZ.map(([k]) => '<button type="button" class="cmd-lag' + (cmdLags.includes(k) ? ' active' : '') + '" data-k="' + k + '" aria-pressed="' + cmdLags.includes(k) + '" onclick="setCmdLag(\'' + k + '\')">'
+      + '<i style="color:' + CMD_COL[k] + '"></i>' + k + '</button>').join('');
+  // por contrato: el mismo vencimiento hoy y en cada fecha
+  const TEN = [1, 2, 3, 6, 12, 24, 36].filter(n => cv.cs[n - 1]);
+  const tc = '<table class="cmd-tbl cmd-tbl-c"><thead><tr><th>Contrato</th><th>Hoy</th>' + lags.map(h => '<th>Δ ' + h[0] + '</th>').join('') + '</tr></thead><tbody>'
+    + TEN.map(n => {
+      const x = cv.cs[n - 1], hoy = x.h[x.h.length - 1][1];
+      return '<tr><td title="' + x.s + ', el ' + n + '.º contrato">' + cmdMes(x) + '</td><td>' + hoy.toFixed(2) + '</td>'
+        + lags.map(([k, d]) => { const v = cmdAt(x.h, cv.t - d * 86400); return '<td title="' + (v != null ? 'Hace ' + k + ': ' + v.toFixed(2) + ' (' + ((hoy / v - 1) * 100).toFixed(1) + '%)' : 'Sin cierre en esa fecha') + '">' + cmdDif(v != null ? hoy - v : null) + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</tbody></table>';
+  // pendiente: el contrato más cercano menos el 6.º y el 12.º de cada fecha (el M1 de antes es el continuo de Yahoo)
+  const cont = (cmdPx && cmdPx[c.y] && cmdPx[c.y].pts) || [];
+  const spread = (k, d) => {
+    if (d == null) return cv.cs[k - 1] ? cv.cs[0].h[cv.cs[0].h.length - 1][1] - cv.cs[k - 1].h[cv.cs[k - 1].h.length - 1][1] : null;
+    const t = cv.t - d * 86400, f = cmdFrente(c.curva.vence, t), m1 = cmdAt(cont, t);
+    if (!f || m1 == null) return null;
+    const z = new Date(Date.UTC(f.y, f.m - 1 + k - 1, 1)), x = cv.cs.find(q => q.y === z.getUTCFullYear() && q.m === z.getUTCMonth() + 1);
+    const v = x ? cmdAt(x.h, t) : null;
+    return v != null ? m1 - v : null;
+  };
+  const lvl = v => v == null ? '<span class="na">—</span>' : (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+  const ts = '<table class="cmd-tbl cmd-tbl-s"><thead><tr><th>Pendiente</th><th>Hoy</th>' + lags.map(h => '<th>' + h[0] + '</th>').join('') + '</tr></thead><tbody>'
+    + [6, 12].map(k => '<tr><td title="Contrato más cercano menos el ' + k + '.º: positivo es backwardation (lo corto más caro); negativo, contango">M1 − M' + k + '</td><td>' + lvl(spread(k, null)) + '</td>'
+      + lags.map(([, d]) => '<td>' + lvl(spread(k, d)) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+  const fecha = new Date(cv.t * 1000).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+  return '<div class="cmd-sec"><div class="cmd-hd"><span class="cmd-tit">Curva de futuros del ' + c.n + '</span><span class="cmd-sub">' + c.u + ', ' + c.curva.n + '</span></div>'
+    + '<div class="cmd-lags" role="group" aria-label="Comparar con">' + chips + '</div>'
+    + '<div class="cmd-chart">' + cmdCurvaSvg(c, cv, W) + '<div class="cmd-tip" id="cmdTip"></div></div>'
+    + tc + ts + '<div class="cmd-note" style="padding:8px 0 0">Último precio de cada contrato al ' + fecha + '. Las diferencias son del mismo contrato contra su cierre de hace 1 semana, 1 mes...: los contratos que vencieron en el medio no están en Yahoo.</div></div>';
+}
+
+function renderCmd(err) {
+  const el = document.getElementById('cmdPanel'), c = cmdOf(cmdSel);
+  if (!el || !c) return;
+  const t = cmdPx ? new Date(cmdPxAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+  let h = '<div class="cmd-sec"><div class="cmd-hd"><span class="cmd-tit">Commodities</span><span class="cmd-sub">' + (t ? 'Yahoo, actualizado ' + t : '') + '</span></div>'
+    + (cmdPx ? cmdTablaHtml() : '<div class="cmd-msg">' + (err || 'Cargando precios…') + '</div>') + '</div>';
+  if (c.curva) {
+    const cv = cmdCurvas[c.k];
+    const W = Math.max(260, Math.round((el.clientWidth || 404) - 30));
+    h += cv ? cmdCurvaHtml(c, cv, W) : '<div class="cmd-sec"><div class="cmd-hd"><span class="cmd-tit">Curva de futuros del ' + c.n + '</span></div><div class="cmd-msg">' + (err || 'Cargando contratos…') + '</div></div>';
+  }
+  h += '<div class="cmd-note">Variaciones del contrato más cercano contra el cierre más cercano anterior a 7, 30 y 182 días y a 52 semanas; las menores a 1%, en bips. '
+    + 'Soja en dólares por tonelada (Chicago cotiza en centavos por bushel). El gráfico es el CFD de ' + (c.tv.startsWith('OANDA') ? 'OANDA' : 'Capital.com')
+    + ', porque el widget de TradingView no muestra los futuros de CME ni de ICE. Curva de futuros: por ahora, Brent y WTI.</div>';
+  el.innerHTML = h;
+}
+let cmdRsz = null;
+window.addEventListener('resize', () => { clearTimeout(cmdRsz); cmdRsz = setTimeout(() => { if (cmdSel && cmdOf(cmdSel).curva && cmdCurvas[cmdSel]) renderCmd(); }, 200); });
 
 async function fS(syms) { try{ const r=await fetch(BASE_URL+'/api/spark?symbols='+syms.join(',')); return (await r.json()).spark?.result||[]; }catch(e){ return []; } }
 
@@ -5906,6 +6197,19 @@ const METODO = [
         p: 'Se repite la cuenta con los mismos contratos al cierre más cercano anterior a cada fecha. Las probabilidades pasadas quedan contra el rango de hoy, así que dicen qué tasa esperaba el mercado entonces para después de cada reunión, aunque en el medio haya habido otra.' },
       { d: 'Retornos a plazo: 5, 21 y 252 ruedas; YTD contra el último cierre del año anterior.',
         p: 'Hasta octubre de 2026 el YTD del Resumen medía desde el primer cierre del año y dejaba afuera el movimiento del primer día; ahora es la misma cuenta que el screener.' },
+    ] },
+
+  { id: 'cmd', t: 'Commodities en Gráfico',
+    items: [
+      { d: 'Brent, WTI, soja y oro: el gráfico es el CFD de Capital.com (el de la soja, de OANDA). La tabla y la curva salen de los futuros de Yahoo, con demora: el contrato más cercano de cada uno.',
+        p: 'El widget de TradingView no muestra los futuros de CME ni de ICE.',
+        o: 'El CFD sigue al futuro pero no es igual: puede diferir unos centavos y en el cambio de contrato.' },
+      { d: 'Variaciones contra el cierre más cercano anterior a 7, 30 y 182 días corridos, como en el Resumen, y a 52 semanas; las menores a 1%, en bips. La soja en dólares por tonelada: Chicago cotiza en centavos por bushel (× 0,3674).' },
+      { d: 'Curva de futuros del Brent y del WTI: el último precio de cada contrato mensual de NYMEX hasta tres años (el Brent es el BZ, que liquida contra el de ICE), y el cierre del mismo contrato hace 1 semana, 1 mes, 3 y 6 meses y 1 año.',
+        p: 'Contrato por contrato se ve cuánto se movió cada vencimiento.',
+        o: 'Yahoo no guarda los contratos vencidos: la curva de hace 6 meses no tiene los que vencieron en el medio, así que arranca, como la de hoy, en el primer contrato vivo.' },
+      { d: 'Pendiente: M1 − M6 y M1 − M12, el contrato más cercano menos el 6.º y el 12.º. Positiva es backwardation (lo corto más caro); negativa, contango. Para una fecha pasada, el M1 es el contrato continuo de Yahoo y el otro, el que era el 6.º o el 12.º ese día, si todavía no venció.',
+        p: 'El vencimiento de cada contrato sale de la regla de NYMEX (Brent: el último día hábil del segundo mes anterior al de entrega; WTI: tres hábiles antes del 25 del mes anterior), sin feriados.' },
     ] },
 
   { id: 'arg', t: 'Argentina',
