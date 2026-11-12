@@ -6212,6 +6212,7 @@ const METODO = [
       { d: 'Curva de futuros del Brent y del WTI: el último precio de cada contrato mensual de NYMEX hasta tres años (el Brent es el BZ, que liquida contra el de ICE), y el cierre del mismo contrato hace 1 semana, 1 mes, 3 y 6 meses y 1 año.',
         p: 'Contrato por contrato se ve cuánto se movió cada vencimiento.',
         o: 'Yahoo no guarda los contratos vencidos: la curva de hace 6 meses no tiene los que vencieron en el medio, así que arranca, como la de hoy, en el primer contrato vivo. Y del Brent lejano tiene solo algunos meses (después del año y medio, junio y diciembre): la línea los une derecho.' },
+      { d: 'Las mismas series y las dos curvas están en el Informe, en formato BAVSA (desplegable Commodities).' },
       { d: 'Pendiente: M1 − M6 y M1 − M12, el contrato más cercano menos el 6.º y el 12.º. Positiva es backwardation (lo corto más caro); negativa, contango. Para una fecha pasada, el M1 es el contrato continuo de Yahoo y el otro, el que era el 6.º o el 12.º ese día, si todavía no venció.',
         p: 'El vencimiento de cada contrato sale de la regla de NYMEX (Brent: el último día hábil del segundo mes anterior al de entrega; WTI: tres hábiles antes del 25 del mes anterior), sin feriados.' },
     ] },
@@ -6232,7 +6233,7 @@ const METODO = [
       { d: 'Cada gráfico se dibuja en un canvas blanco al doble de resolución (2400 px de ancho en "Ancho de página"): título navy, bajada azul en mayúsculas con el subrayado corto, leyenda abajo, fuente en Verdana itálica y el logo de BAVSA Fondos. "Copiar imagen" lo deja en el portapapeles como PNG; "Copiar datos", la tabla para Excel.',
         p: 'Es la misma pieza para Word y PowerPoint: se pega tal cual, sin capturas de pantalla ni retoques. Título, bajada y fuente se arman solos y se pueden editar; "Textos automáticos" los vuelve a armar.',
         o: 'En una slide del template el título va en la slide: conviene destildar "Título y bajada en la imagen".' },
-      { d: 'Gráficos armados: los más usados sueltos y el resto en desplegables por tema (BCRA, Tesoro, INDEC, Tasas y monedas). Al elegir uno, en la lista de series suben los grupos que tienen series del gráfico y después los que comparten fuente con ellas; prender o apagar una serie no reordena, para que la lista no salte.' },
+      { d: 'Gráficos armados: los más usados sueltos y el resto en desplegables por tema (BCRA, Tesoro, INDEC, Tasas y monedas, Bancos y Commodities). Al elegir uno, en la lista de series suben los grupos que tienen series del gráfico y después los que comparten fuente con ellas; prender o apagar una serie no reordena, para que la lista no salte.' },
       { d: 'Etiquetas: el último valor de cada serie a la derecha, el valor de cada dato (arriba de cada columna, o de cada punto en líneas de hasta 40 datos) o ninguna. El valor de cada dato va con una decimal en porcentajes y, en niveles, con las de la escala (sin decimales desde 100); si pisa a otro va abajo de su punto y, si tampoco entra, no va. En líneas claras, el texto va en el mismo color oscurecido hasta que se lea. Con datos mensuales, cada dato va a mitad de su mes y abajo va su mes, y los períodos fijos cuentan meses hasta el último dato: el último año son doce meses.' },
       { d: 'Series con dos unidades van con eje izquierdo y derecho. Con tres, dos comparten un eje: va el reparto en que la serie que menos lugar ocupa de su eje ocupe lo más posible, y mezclar un índice con un porcentaje en un eje cuesta (salario real, pobreza e inflación interanual de cinco años: la inflación sola a la derecha, porque con ella la caída de la pobreza queda en menos de un décimo del eje). Con más de tres, base 100, salvo que se elija el eje de cada serie. El eje de cada serie también se elige a mano, en la lista de series del gráfico; en un eje con unidades distintas van todas arriba y cada etiqueta lleva la suya. Base 100 toma como base el primer día en que todas las series tienen dato, o la fecha que se elija (con datos mensuales, el mes de esa fecha; si es anterior al período, la base sale de la serie entera y las líneas no pasan por 100 en el gráfico). Las de flujo (compras de divisas) se acumulan desde el inicio del período. El último valor de cada serie va en una etiqueta de su color.' },
       { d: 'BCRA y Tesoro (API del BCRA, diaria): depósitos del Tesoro en el BCRA en pesos (serie 1265) y en dólares (1266, que viene en pesos y se pasa con el A3500 del día), adelantos transitorios (1268), BOPREAL y LEDIV en circulación (158, en dólares) y letras del BCRA en pesos (1258).',
@@ -6272,6 +6273,12 @@ const METODO = [
         p: 'BYMA no publica la curva histórica ni los pagos finales; argentinadatos sí tiene la TNA de hoy. Con el pago final fijo, los precios de cierre de BYMA dan la tasa de cualquier día con la misma convención que la de hoy.',
         o: 'Fuera los que vencen en menos de 7 días: la tasa es ruido. Por vencimiento (lo que viene elegido) cada instrumento queda en su lugar y se ve cuánto se movió; por días al vencimiento, cada fecha es la curva de ese día. La curva ajustada es tasa = a + b × ln(días), por mínimos cuadrados.' },
       { d: 'Curva de Treasuries: la curva oficial del Tesoro de EE.UU. (cierre diario, de 1 mes a 30 años). Curva de cauciones: BYMA da solo hoy y el cierre anterior.' },
+      { d: 'Commodities: Brent, WTI, soja, trigo, oro y plata, del contrato más cercano de Yahoo (cinco años de cierres diarios, los mismos futuros que la pestaña Gráfico); soja y trigo de Chicago, en dólares por tonelada. "Oro y plata" y "Soja y trigo" van cada uno en su eje; "Brent y WTI" comparten uno.',
+        p: 'En un solo eje la plata (unos US$ 50 contra casi 4.000 del oro) sería una línea plana, y la soja y el trigo, separados por más de US$ 200, quedarían aplastados. Brent y WTI cotizan cerca y en el mismo eje se ve la diferencia entre los dos.',
+        o: 'El contrato más cercano salta cuando vence y pasa al siguiente: con la curva en backwardation, para abajo.' },
+      { d: 'Curvas de futuros del Brent y del WTI: el último cierre de cada contrato de NYMEX hasta tres años, por mes de entrega, contra el cierre del mismo contrato hace 1 semana, 1 mes, 3 o 6 meses o 1 año (de entrada, 1 semana, 1 mes y 6 meses). El valor de hoy va escrito en el primer contrato, en cada diciembre (el contrato de referencia de cada año) y en el último; el eje marca el mes del primer contrato y sigue cada 3 o 6 meses.',
+        p: 'Contra el mismo contrato se ve cuánto se movió cada vencimiento con lo que hay: Yahoo no guarda los contratos vencidos.',
+        o: 'Por eso una curva anterior no es la que había ese día: arranca, como la de hoy, en el primer contrato vivo. Del Brent lejano Yahoo tiene solo junio y diciembre, y la línea los une derecho; se anota abajo del gráfico, igual que una fecha sin cierres.' },
       { d: 'Tipo de cambio: oficial = Comunicación A 3500 del BCRA; MEP y CCL, de argentinadatos (venta); DXY y real, de Yahoo. ITCRM y bilaterales con Brasil y EE.UU.: planilla diaria del BCRA (base 17/12/15 = 100), bajada todos los días por un workflow porque el BCRA no deja leerla desde el navegador.',
         o: 'El BCRA publica el ITCRM con unos días de demora y los últimos valores son provisorios (usan inflación estimada).' },
       { d: 'Merval: S&P Merval de Yahoo hasta el 16/10/2026; desde el 19/10 el índice lo calcula MSCI (MSCI MERVAL, otra base) y no tiene historia pública. La terminal guarda el cierre del MSCI MERVAL todos los días desde el 26/10/2026 (merval.json, de los datos abiertos de BYMA). En dólares: Merval / CCL del mismo día.',
@@ -7627,6 +7634,14 @@ const INF_CAT = {
   pvlBHIP: { n: 'P/BV Hipotecario', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('BHIP', 'pb') },
   pvlVALO: { n: 'P/BV Valores', g: 'Bancos', u: 'veces el valor libro', src: 'Yahoo Finance', load: () => infBco('VALO', 'pb') },
   ibov: { n: 'Bovespa', g: 'Acciones', u: 'puntos Bovespa', src: 'Yahoo Finance', load: () => infYahoo('^BVSP') },
+  // commodities: el contrato más cercano de cada uno (el continuo de Yahoo), los mismos futuros que la pestaña Gráfico.
+  // Soja y trigo en dólares por tonelada (Chicago cotiza en centavos por bushel)
+  brent: { n: 'Brent', g: 'Commodities', u: 'US$ por barril', src: 'Yahoo Finance', load: () => infCmd('BZ') },
+  wti: { n: 'WTI', g: 'Commodities', u: 'US$ por barril', src: 'Yahoo Finance', load: () => infCmd('CL') },
+  soja: { n: 'Soja (Chicago)', g: 'Commodities', u: 'US$ por tonelada', src: 'Yahoo Finance', load: () => infCmd('ZS') },
+  trigo: { n: 'Trigo (Chicago)', g: 'Commodities', u: 'US$ por tonelada', src: 'Yahoo Finance', load: () => infCmd('ZW') },
+  oro: { n: 'Oro', g: 'Commodities', u: 'US$ por onza troy', src: 'Yahoo Finance', load: () => infCmd('GC') },
+  plata: { n: 'Plata', g: 'Commodities', u: 'US$ por onza troy', src: 'Yahoo Finance', load: () => infCmd('SI') },
   cau1: { n: 'Caución a 1 día (promedio ponderado)', g: 'Tasas', u: '% TNA', src: 'BYMA', load: () => infCaucion(), nota: 'hay historia desde el 26/02/2026 (BYMA no la publica)' },
   pases1d: { n: 'Pases entre terceros a 1 día', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(150) },
   baibar: { n: 'BAIBAR (call a 1 día)', g: 'Tasas', u: '% TNA', src: 'BCRA', load: () => infBcra(146) },
@@ -7688,12 +7703,12 @@ const IPC_DIV = [['ipcDivAlim', 'Alimentos y bebidas no alcohólicas', /^aliment
   ['ipcDivTransp', 'Transporte', /transporte/i], ['ipcDivComunic', 'Comunicación', /comunicaci/i], ['ipcDivRecre', 'Recreación y cultura', /recreaci/i], ['ipcDivEduc', 'Educación', /educaci/i],
   ['ipcDivRest', 'Restaurantes y hoteles', /restaurantes/i], ['ipcDivVarios', 'Bienes y servicios varios', /varios/i]];
 IPC_DIV.forEach(([k, n, re]) => { INF_CAT[k] = { n, g: 'IPC por división', u: '% mensual', src: 'INDEC', load: () => infIpc(re, 1, 'la división ' + n) }; });
-const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Bancos', 'Tasas', 'Inflación', 'IPC por división', 'Actividad', 'Salarios y empleo', 'BCRA'];
+const INF_GROUPS = ['Tipo de cambio', 'Acciones', 'Bancos', 'Commodities', 'Tasas', 'Inflación', 'IPC por división', 'Actividad', 'Salarios y empleo', 'BCRA'];
 const INF_GROUP_N = { BCRA: 'BCRA y Tesoro', 'IPC por división': 'IPC por división (mensual)' };
 
 // gráficos armados: cada uno deja elegidas sus series (o su curva) y sus textos; después se puede tocar todo. Los que
 // tienen grupo van en un desplegable con ese nombre, en el orden de INF_PRESET_GRUPOS
-const INF_PRESET_GRUPOS = ['BCRA', 'Tesoro', 'INDEC', 'Tasas y monedas', 'Bancos'];
+const INF_PRESET_GRUPOS = ['BCRA', 'Tesoro', 'INDEC', 'Tasas y monedas', 'Bancos', 'Commodities'];
 const INF_PRESETS = [
   { id: 'fija', n: 'Curva de tasa fija en pesos', mode: 'curva', curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna' },
   { id: 'ust', n: 'Curva de Treasuries', mode: 'curva', curva: 'ust', cmp: { s: true, m: true } },
@@ -7726,6 +7741,12 @@ const INF_PRESETS = [
   { id: 'bcoPvl', n: 'P/BV: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['pvlAr', 'pvlUs'], trans: 'nivel', period: '5A', t: 'Bancos: precio / valor libro en Argentina y EE.UU.' },
   { id: 'bcoRoe', n: 'ROE: Argentina y EE.UU.', grupo: 'Bancos', mode: 'serie', keys: ['roeAr', 'roeUs'], trans: 'nivel', period: '5A', t: 'Bancos: ROE de 12 meses en Argentina (real) y EE.UU.' },
   { id: 'bcoArg', n: 'P/BV de cada banco argentino', grupo: 'Bancos', mode: 'serie', keys: ['pvlGGAL', 'pvlBMA', 'pvlBBAR', 'pvlSUPV'], trans: 'nivel', period: '5A', t: 'Precio / valor libro de los bancos argentinos' },
+  { id: 'brent', n: 'Curva de futuros del Brent', grupo: 'Commodities', mode: 'curva', curva: 'brent', cmp: { s: true, m: true, e: true } },
+  { id: 'wti', n: 'Curva de futuros del WTI', grupo: 'Commodities', mode: 'curva', curva: 'wti', cmp: { s: true, m: true, e: true } },
+  { id: 'petroleo', n: 'Brent y WTI', grupo: 'Commodities', mode: 'serie', keys: ['brent', 'wti'], trans: 'nivel', period: '1A', t: 'Petróleo: Brent y WTI' },
+  { id: 'granos', n: 'Soja y trigo', grupo: 'Commodities', mode: 'serie', keys: ['soja', 'trigo'], trans: 'nivel', period: '1A', ejes: { trigo: 'R' }, t: 'Soja y trigo en Chicago' },
+  { id: 'metales', n: 'Oro y plata', grupo: 'Commodities', mode: 'serie', keys: ['oro', 'plata'], trans: 'nivel', period: '1A', ejes: { plata: 'R' }, t: 'Oro y plata' },
+  { id: 'commodities', n: 'Petróleo, granos y metales (base 100)', grupo: 'Commodities', mode: 'serie', keys: ['brent', 'soja', 'trigo', 'oro', 'plata'], trans: 'base', period: '1A', t: 'Commodities: petróleo, granos y metales' },
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
 
@@ -7775,10 +7796,10 @@ function infDolar(casa) {
   });
 }
 const INF_YH = ['DX-Y.NYB', 'BRL=X', 'CLP=X', 'MXN=X', 'PEN=X', '^MERV', '^GSPC', '^BVSP'];
-function infYahooAll() {
-  return infOnce('yahoo', async () => {
-    const get = range => infJson(BASE_URL + '/api/spark?symbols=' + encodeURIComponent(INF_YH.join(',')) + '&range=' + range + '&interval=1d');
-    let j; try { j = await get('5y'); } catch (e) { j = await get('2y'); }
+// cierres diarios de /api/spark: 5 años (si no responde, 2), un dato por día
+function infSpark(syms) {
+  const get = range => infJson(BASE_URL + '/api/spark?symbols=' + encodeURIComponent(syms.join(',')) + '&range=' + range + '&interval=1d');
+  return get('5y').catch(() => get('2y')).then(j => {
     const out = {};
     for (const r of j.spark?.result || []) {
       const R = r.response?.[0] || {}, ts = R.timestamp || [], cl = R.indicators?.quote?.[0]?.close || [], m = new Map();
@@ -7788,7 +7809,16 @@ function infYahooAll() {
     return out;
   });
 }
+function infYahooAll() { return infOnce('yahoo', () => infSpark(INF_YH)); }
 function infYahoo(sym) { return infYahooAll().then(o => { if (!o[sym]?.length) throw new Error('Yahoo no trajo ' + sym); return o[sym]; }); }
+// commodities: los seis futuros de la pestaña Gráfico (CMD) en una llamada aparte, para no cargarlos en los otros gráficos
+function infCmd(k) {
+  const c = cmdOf(k);
+  return infOnce('yahooCmd', () => infSpark(CMD.map(x => x.y))).then(o => {
+    const s = o[c.y]; if (!s?.length) throw new Error('Yahoo no trajo ' + c.y);
+    return c.f ? s.map(p => ({ d: p.d, t: p.t, v: p.v * c.f })) : s;
+  });
+}
 // tipo de cambio oficial de cada banco central (fx.json, del workflow); si no está, Yahoo sin los saltos de un día
 function infFx(k, sym) {
   return infOnce('fxjson', () => infJson('fx.json?d=' + new Date().toISOString().slice(0, 10))).catch(() => ({})).then(async j => {
@@ -7964,6 +7994,11 @@ function infEnTramo(c, dias) {
   return tr === 'corto' ? dias <= t[0] : tr === 'medio' ? dias > t[0] && dias <= t[1] : dias > t[1];
 }
 const INF_TRAMO_N = { corto: 'tramo corto', medio: 'tramo medio', largo: 'tramo largo' };
+// fechas para comparar una curva (clave, texto, días corridos, color): las de tasas, contra hace una semana y un mes; las de
+// futuros, también contra hace 3 y 6 meses y un año (52 semanas: Yahoo da un año justo de cada contrato)
+const INF_CMP = [['s', 'Hace una semana', 7, BV.azul], ['m', 'Hace un mes', 30, BV.celeste], ['t', 'Hace tres meses', 91, BV.teal], ['e', 'Hace seis meses', 182, BV.texto2], ['a', 'Hace un año', 364, BV.claro]];
+// curvas de futuros: el commodity de la pestaña Gráfico (CMD), la unidad para la bajada y el contrato para la fuente
+const INF_FUT = { brent: { k: 'BZ', n: 'Brent', u: 'US$ por barril', ctr: 'BZ de NYMEX' }, wti: { k: 'CL', n: 'WTI', u: 'US$ por barril', ctr: 'CL de NYMEX' } };
 const INF_TASA_N = { tna: 'TNA 365', tea: 'TEA', tem: 'TEM' };
 const INF_C1816 = {
   usd: { b: 'Curva', t: 'Curva soberana en dólares', baj: 'TIR por duration modificada, precios en dólares MEP' },
@@ -8158,7 +8193,7 @@ async function infBuildSerie() {
   const periodo = INF.desde ? 'desde el ' + infDdmmaa(INF.desde) : { '1M': 'último mes', '3M': 'últimos 3 meses', '6M': 'últimos 6 meses', 'YTD': 'en lo que va del año', '1A': 'último año', '2A': 'últimos 2 años', '5A': 'últimos 5 años' }[INF.period];
   const invIgual = ser.every(s => !!s.inv === !!(preset?.inv || {})[s.k]);   // el título del gráfico armado vale si los pares están como los trae
   const tAuto = (preset && preset.t && sameKeys(preset.keys, keys) && invIgual) ? preset.t : infJoinY(ser.map(s => s.name.replace(/ \(.*\)$/, '')));
-  const bAuto = (units.length === 2 ? unitTxt(units[0]) + ' (eje izq.) y ' + unitTxt(units[1]) + ' (eje der.)' : unitTxt(units[0])) + ', ' + periodo;
+  const bAuto = (units.length === 2 && units[0] !== units[1] ? unitTxt(units[0]) + ' (eje izq.) y ' + unitTxt(units[1]) + ' (eje der.)' : unitTxt(units[0])) + ', ' + periodo;
   const srcs = [...new Set(ser.flatMap(s => s.src.split(' y ')))];
   // con reservas netas, la cuenta va al pie: el número depende de qué se resta
   // los del Tesoro en bancos terminan dos meses antes que el resto: la fecha va en la imagen, no solo en las notas
@@ -8331,7 +8366,8 @@ async function infBuildPagos() {
     fAuto: 'Fuente: ' + infJoinY(fuentes) + '.' };
 }
 async function infBuildCurva() {
-  const cmpTxt = { s: 'hace una semana', m: 'hace un mes' }, notes = [];
+  const cmpTxt = Object.fromEntries(INF_CMP.map(([k, l]) => [k, l.toLowerCase()])), notes = [];
+  if (INF_FUT[INF.curva]) return infBuildFut(INF_FUT[INF.curva], cmpTxt, notes);
   if (INF_C1816[INF.curva]) {
     const j = await infSoberanos(), C = (j.curvas || {})[INF.curva], D = INF_C1816[INF.curva];
     if (!C || !C.fechas || !C.fechas.h) return { kind: 'vacio', msg: '1816 todavía no trajo esta curva.' };
@@ -8401,6 +8437,34 @@ async function infBuildCurva() {
   return { kind: 'curva', curva: 'cau', ser, xNum: true, yU: '%', notes, tAuto: 'Curva de cauciones en pesos', bAuto: 'TNA por plazo en días',
     fAuto: 'Fuente: BYMA (datos abiertos, 20 minutos de demora).', last: new Date().toISOString().slice(0, 10) };
 }
+
+// curva de futuros (Brent o WTI): el último cierre de cada contrato de NYMEX y el del mismo contrato en cada fecha
+// elegida; en el eje, los meses desde el primer contrato (Yahoo no tiene todos los meses del Brent lejano)
+async function infBuildFut(F, cmpTxt, notes) {
+  const c = cmdOf(F.k), cv = await cmdLoadCurva(c), a0 = cv.cs[0], off = x => (x.y - a0.y) * 12 + (x.m - a0.m), n = cv.cs.length;
+  // la fecha de cada curva: el último día con cierres hasta esa fecha
+  const hasta = t => { let b = null; for (const x of cv.cs) for (const [ti] of x.h) if (ti <= t + 3600 && (b == null || ti > b)) b = ti; return b; };
+  const ser = [['h', 0], ...INF_CMP.filter(([k]) => INF.cmp[k]).map(([k, , d]) => [k, d])].map(([k, d], i) => {
+    const t = cv.t - d * 86400, dia = d ? hasta(t) : cv.t;
+    const pts = cv.cs.map((x, j) => { const v = d ? cmdAt(x.h, t) : x.h[x.h.length - 1][1];
+      return v == null ? null : { x: off(x), v, tk: x.s.replace(c.curva.suf, ''), y: x.y, m: x.m, lbl: !d && (j === 0 || j === n - 1 || x.m === 12) }; }).filter(Boolean);
+    if (pts.length < 2) { if (d) notes.push('Yahoo no tiene cierres de ' + cmpTxt[k]); return null; }
+    return { name: 'Al ' + infDdmmaa(infDay(dia)) + (d ? ' (' + cmpTxt[k] + ')' : ''), d: infDay(dia), k, pts, color: i ? INF_CMP.find(z => z[0] === k)[3] : BV.navy };
+  }).filter(Boolean);
+  if (!ser.length) return { kind: 'vacio', msg: 'Yahoo no trajo los contratos del ' + F.n + '.', notes };
+  // los meses que Yahoo no tiene: del Brent lejano, todos menos junio y diciembre
+  const mesDe = o => { const z = new Date(Date.UTC(a0.y, a0.m - 1 + o, 1)); return MES_CORTO[z.getUTCMonth()] + ' ' + String(z.getUTCFullYear()).slice(2); };
+  const faltan = []; for (let j = 1; j < n; j++) for (let o = off(cv.cs[j - 1]) + 1; o < off(cv.cs[j]); o++) faltan.push(o);
+  if (faltan.length) {
+    const j0 = cv.cs.findIndex((x, j) => j && off(x) - off(cv.cs[j - 1]) > 1), ms = [...new Set(cv.cs.slice(j0).map(x => x.m))].sort((a, b) => a - b);
+    notes.push(faltan.length > 4 && ms.length <= 4 ? 'Después de ' + mesDe(off(cv.cs[j0 - 1])) + ', Yahoo tiene solo los contratos de ' + infJoinY(ms.map(m => INF_MES_N[m - 1]))
+      : 'Yahoo no tiene ' + (faltan.length > 1 ? 'los contratos de ' : 'el contrato de ') + infJoinY(faltan.map(mesDe)));
+  }
+  if (ser.length > 1) notes.push('Las curvas anteriores son los contratos de hoy en esa fecha: los que vencieron en el medio no están en Yahoo');
+  return { kind: 'curva', curva: INF.curva, ser, xNum: true, xMes: { y: a0.y, m: a0.m }, yU: F.u, notes, tAuto: 'Curva de futuros del ' + F.n,
+    bAuto: F.u + ', por mes de entrega', fAuto: 'Fuente: Yahoo Finance (futuros ' + F.ctr + '). Precio de cierre de cada contrato.', last: infDay(cv.t) };
+}
+const INF_MES_N = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 // ---- estilo de cada serie: color, grosor y trazo. Se guarda por serie (las curvas, por fecha: hoy, semana, mes), así
 // el DXY que se marcó grueso y punteado como referencia sale igual en cualquier gráfico donde aparezca
@@ -8733,7 +8797,7 @@ function infDateTicks(t0, t1, width) {
 }
 function infPlotCurva(ctx, sp, P) {
   const vals = sp.ser.flatMap(s => s.pts.map(p => p.v)), ay = infAxis(Math.min(...vals), Math.max(...vals), 8);
-  const dY = Math.max(1, infDecs(ay.tk.length > 1 ? ay.tk[1] - ay.tk[0] : 1)), fmtY = v => numAR(v, dY, dY) + '%';
+  const pct = sp.yU === '%', stY = ay.tk.length > 1 ? ay.tk[1] - ay.tk[0] : 1, dY = pct ? Math.max(1, infDecs(stY)) : infDecs(stY), fmtY = v => numAR(v, dY, dY) + (pct ? '%' : '');
   ctx.font = `12px ${BV_SANS}`;
   const wL = Math.max(...ay.tk.map(v => infW(ctx, fmtY(v)))) + 10;
   const x0 = P.x0 + wL + 6, x1 = P.x1 - 14, y0 = P.y0 + 8, y1 = P.y1 - 22;
@@ -8743,9 +8807,13 @@ function infPlotCurva(ctx, sp, P) {
   } else {
     // por duration, el eje arranca cerca del bono más corto (no en cero)
     const xv = sp.ser.flatMap(s => s.pts.map(p => p.x)), xmx = Math.max(...xv), xmn = Math.min(...xv);
-    const lo = sp.xU === 'años' ? Math.max(0, Math.floor((xmn - (xmx - xmn) * 0.06) * 2) / 2) : sp.xU === 'días' ? Math.max(0, xmn - (xmx - xmn) * 0.06) : 0, hi = sp.xU ? xmx + (xmx - lo) * 0.04 : xmx * 1.05;
+    const lo = sp.xMes ? xmn - 0.8 : sp.xU === 'años' ? Math.max(0, Math.floor((xmn - (xmx - xmn) * 0.06) * 2) / 2) : sp.xU === 'días' ? Math.max(0, xmn - (xmx - xmn) * 0.06) : 0, hi = sp.xMes ? xmx + 0.8 : sp.xU ? xmx + (xmx - lo) * 0.04 : xmx * 1.05;
     xs = v => x0 + (v - lo) / (hi - lo) * (x1 - x0);
-    if (sp.xDate) {   // eje de vencimientos: el primero de cada mes
+    if (sp.xMes) {   // meses de entrega desde el primer contrato (que siempre lleva su mes), cada 1, 2, 3, 6 o 12: lo primero que deje 70 px
+      const paso = [1, 2, 3, 6, 12].find(k => k * (x1 - x0) / (hi - lo) >= 70) || 12;
+      xTicks = [];
+      for (let o = 0; o <= hi; o += paso) { const z = new Date(Date.UTC(sp.xMes.y, sp.xMes.m - 1 + o, 1)); xTicks.push([o, MES_CORTO[z.getUTCMonth()] + ' ' + String(z.getUTCFullYear()).slice(2)]); }
+    } else if (sp.xDate) {   // eje de vencimientos: el primero de cada mes
       const base = sp.last, out = [];
       for (let m = 0; m < 30; m++) { const d = new Date(base + 'T12:00:00Z'); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + m + 1); const dias = (d - new Date(argNextHabil(base) + 'T12:00:00Z')) / 86400000; if (dias > hi) break; out.push([dias, MES_CORTO[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2)]); }
       const k = Math.ceil(out.length / Math.max(3, Math.floor((x1 - x0) / 70))); xTicks = out.filter((_, i) => i % k === 0);
@@ -8772,7 +8840,7 @@ function infPlotCurva(ctx, sp, P) {
       for (let k = 0; k <= 60; k++) { const xv = xa * Math.pow(xb / xa, k / 60), yv = a + b * Math.log(xv); k ? ctx.lineTo(xs(xv), ys(yv)) : ctx.moveTo(xs(xv), ys(yv)); }
     } else pts.forEach((p, i) => i ? ctx.lineTo(xs(p.x), ys(p.v)) : ctx.moveTo(xs(p.x), ys(p.v)));
     ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
-    pts.forEach(p => { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(xs(p.x), ys(p.v), (s.w || 2) * 1.6 + 0.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.25; ctx.stroke(); });
+    pts.filter(p => !sp.xMes || p.lbl).forEach(p => { ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(xs(p.x), ys(p.v), (s.w || 2) * 1.6 + 0.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.25; ctx.stroke(); });
   });
   ctx.restore();
   // tickers (o valores) de las curvas de hoy, arriba de cada punto; si choca con una etiqueta ya puesta, va abajo
@@ -8780,7 +8848,7 @@ function infPlotCurva(ctx, sp, P) {
   if (!conTk || INF.tickers) {
     ctx.font = `600 11px ${BV_SANS}`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     const puestas = [], choca = (x, w, y) => puestas.some(o => Math.abs(x - o.x) < (w + o.w) / 2 + 4 && Math.abs(y - o.y) < 13);
-    sp.ser.filter(s => s.k[0] === 'h').forEach(hoy => hoy.pts.forEach(p => {
+    sp.ser.filter(s => s.k[0] === 'h').forEach(hoy => hoy.pts.filter(p => !sp.xMes || p.lbl).forEach(p => {
       const x = xs(p.x), lbl = conTk ? p.tk : numAR(p.v, 2, 2), w = infW(ctx, lbl);
       // arriba, abajo, más arriba o más abajo; si todo choca (bonos casi iguales), sin etiqueta
       const yl = [ys(p.v) - 11, ys(p.v) + 21, ys(p.v) - 24, ys(p.v) + 34].find(y => !choca(x, w, y));
@@ -8801,6 +8869,11 @@ function infTsv() {
     return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
   if (sp.kind === 'pagos') return [(sp.catHdr || 'Período') + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\t' + (sp.marca ? sp.marca.name : 'Total'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.marca ? sp.marca.vals[i] : sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
+  if (sp.xMes) {
+    const byTk = new Map(); sp.ser.forEach(s => s.pts.forEach(p => { if (!byTk.has(p.tk)) byTk.set(p.tk, p); }));
+    const tks = [...byTk.values()].sort((a, b) => a.x - b.x);
+    return ['Contrato\tEntrega\t' + sp.ser.map(s => s.name + ' (' + sp.yU + ')').join('\t'), ...tks.map(q => q.tk + '\t' + String(q.m).padStart(2, '0') + '/' + q.y + '\t' + sp.ser.map(s => n(s.pts.find(p => p.tk === q.tk)?.v)).join('\t'))].join('\n');
+  }
   if (INF_C1816[sp.curva]) {
     const tks = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.tk)))];
     return ['Bono\t' + sp.ser.map(s => s.name + ' ' + INF_TASA_N[sp.tasa || 'tea'] + ' (%)\t' + s.name + ' ' + (sp.xU === 'días' ? 'días' : 'duration')).join('\t'), ...tks.map(t => t + '\t' + sp.ser.map(s => { const p = s.pts.find(q => q.tk === t); return n(p?.v) + '\t' + n(p?.x); }).join('\t'))].join('\n');
@@ -8875,9 +8948,10 @@ function renderInfCtl() {
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infToggle(\'' + k + '\')"><span class="inf-dot" style="background:' + (on ? (infSpec?.ser?.find(s => s.k === k)?.color || BV_RAMPA[i % 6]) : 'transparent') + '"></span>' + c.n + '</button>'; }).join('')
       + '</div></div>').join('') + '</div>';
   } else {
-    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['usd', 'Dólares'], ['cer', 'CER'], ['linked', 'Dólar linked'], ['bopreal', 'BOPREAL']], INF.curva, 'infCurva');
+    cat += '<div class="inf-lbl inf-lbl-first">Curva</div>' + seg([['fija', 'Tasa fija'], ['ust', 'Treasuries'], ['usd', 'Dólares'], ['cer', 'CER'], ['linked', 'Dólar linked'], ['bopreal', 'BOPREAL']], INF.curva, 'infCurva')
+      + '<div class="inf-lbl">Futuros</div>' + seg(Object.entries(INF_FUT).map(([k, F]) => [k, F.n]), INF.curva, 'infCurva');
     if (INF.curva !== 'cau') cat += '<div class="inf-lbl">Comparar con</div><div class="inf-chips">'
-      + [['s', 'Hace una semana', BV.azul], ['m', 'Hace un mes', BV.celeste]].map(([k, l, c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? (infSpec?.kind === 'curva' && infSpec.ser.find(s => s.k === k)?.color) || c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
+      + INF_CMP.filter(([k]) => INF_FUT[INF.curva] || k === 's' || k === 'm').map(([k, l, , c]) => '<button type="button" class="inf-chip' + (INF.cmp[k] ? ' on' : '') + '" aria-pressed="' + !!INF.cmp[k] + '" onclick="infCmp(\'' + k + '\')"><span class="inf-dot" style="background:' + (INF.cmp[k] ? (infSpec?.kind === 'curva' && infSpec.ser.find(s => s.k === k)?.color) || c : 'transparent') + '"></span>' + l + '</button>').join('') + '</div>';
     if (INF.curva === 'fija' || INF_C1816[INF.curva]) cat += '<div class="inf-lbl">Tasa</div>' + seg([['tna', 'TNA 365'], ['tea', 'TEA'], ['tem', 'TEM']], INF.tasa, 'infTasa');
     if (INF.curva === 'fija') cat += '<div class="inf-lbl">Eje horizontal</div>' + seg([['dias', 'Días'], ['vto', 'Vencimiento'], ['dm', 'Duration mod.']], INF.ejeX, 'infEjeX');
     if (INF_C1816[INF.curva]) cat += '<div class="inf-lbl">Eje horizontal</div>' + seg([['dm', 'Duration mod.'], ['dias', 'Días al vto.']], INF.ejeX16, 'infEjeX16');
@@ -8901,7 +8975,7 @@ function infPreset(id) {
   const p = INF_PRESETS.find(x => x.id === id); if (!p) return;
   INF.preset = id; INF.mode = p.mode; INF.edit = { t: false, b: false, f: false }; INF.desde = '';
   if (p.mode === 'serie') infGrpOrd = infOrdenGrupos(p.keys);
-  INF.ejes = {}; INF.base100 = '';
+  INF.ejes = { ...(p.ejes || {}) }; INF.base100 = '';
   if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; INF.tramo = 'toda'; if (p.tasa) INF.tasa = p.tasa; }
   infUpdate();
 }
