@@ -1,5 +1,5 @@
 {
- "_leeme": "EPS trimestral cargado a mano para tickers que EDGAR no cubre (presentan 20-F/6-K). El backend lo usa en /api/pebg antes que Finnhub. 'fin' = cierre del trimestre; 'presentado' (opcional, AAAA-MM-DD) = fecha del 6-K con el resultado, desde el día siguiente entra en el P/E (sin ella, el cierre más 45 días). Montos en millones de US$, acciones en millones. Para sumar un trimestre: agregar una fila al final con los mismos campos.",
+ "_leeme": "EPS trimestral cargado a mano para tickers que EDGAR no cubre (presentan 20-F/6-K). El backend lo usa en /api/pebg antes que Finnhub. 'fin' = cierre del trimestre; 'presentado' (opcional, AAAA-MM-DD) = fecha del 6-K con el resultado, desde el día siguiente entra en el P/E (sin ella, el cierre más 45 días). Montos en millones de US$, acciones en millones. Para sumar un trimestre: agregar una fila al final con los mismos campos. 'patrimonio' (opcional) = patrimonio de los accionistas de la controlante al cierre, en millones: va al P/BV antes que el de Yahoo, que tarda unos días en cargar el trimestre.",
  "NU": {
   "nombre": "Nu Holdings",
   "unidad": "US$ por acción ordinaria (NYSE: 1 acción = 1 título), EPS diluido",
@@ -222,6 +222,16 @@
     "acciones": 4904.837,
     "eps": 0.2162,
     "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426004225/nufs2q26_6k.htm"
+   },
+   {
+    "q": "2026Q3",
+    "fin": "2026-09-30",
+    "resultado": 1090.836,
+    "acciones": 4881.109,
+    "eps": 0.2235,
+    "presentado": "2026-11-12",
+    "patrimonio": 14342.624,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1691493/000129281426005272/nufs3q26_6k.htm"
    }
   ]
  },

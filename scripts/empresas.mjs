@@ -137,10 +137,17 @@ export function desdeYahoo(ys, { hoyS = Infinity, acc = "OrdinarySharesNumber" }
 }
 
 // trimestres cargados a mano (eps_manual.json): resultado en millones y acciones en millones; por ADR con el ratio
+const pubManual = (r, hoyS) => Math.min(/^\d{4}-\d\d-\d\d$/.test(r.presentado || "") ? tOf(r.presentado) : tOf(r.fin) + 45 * DAY, hoyS);
 export function desdeManual(m, { ratio = 1, hoyS = Infinity } = {}) {
   return (m?.trimestres || []).filter(r => r.fin && isFinite(r.resultado) && r.acciones > 0).map(r => ({
-    end: r.fin, tipo: "q", val: r.resultado * 1e6, c: r.fin, sh: r.acciones * 1e6 / ratio,
-    pub: Math.min(/^\d{4}-\d\d-\d\d$/.test(r.presentado || "") ? tOf(r.presentado) : tOf(r.fin) + 45 * DAY, hoyS), src: "a mano (6-K)",
+    end: r.fin, tipo: "q", val: r.resultado * 1e6, c: r.fin, sh: r.acciones * 1e6 / ratio, pub: pubManual(r, hoyS), src: "a mano (6-K)",
+  }));
+}
+// patrimonio a mano (campo patrimonio, en millones, el de los accionistas de la controlante), con las acciones del
+// trimestre como el de Yahoo: va antes que el de Yahoo, que tarda unos días en cargar el trimestre nuevo
+export function patrimonioManual(m, { ratio = 1, hoyS = Infinity } = {}) {
+  return (m?.trimestres || []).filter(r => r.fin && isFinite(r.patrimonio) && r.patrimonio !== null && r.acciones > 0).map(r => ({
+    end: r.fin, tipo: "b", val: r.patrimonio * 1e6, c: r.fin, sh: r.acciones * 1e6 / ratio, pub: pubManual(r, hoyS), src: "a mano (6-K)",
   }));
 }
 
@@ -494,6 +501,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       const yser = yahooSerie(yj), yah = desdeYahoo(yser, { hoyS, acc: usd ? "DilutedAverageShares" : "OrdinarySharesNumber" });
       const sec = facts ? desdeSec(facts, { unidad: usd ? "USD" : "ARS", hoyS }) : { ni: [], eq: [], cand: () => [] };
       const man = c.manual ? desdeManual(manual[c.manual], { ratio: c.ratio || 1, hoyS }) : [];
+      const manEq = c.manual ? patrimonioManual(manual[c.manual], { ratio: c.ratio || 1, hoyS }) : [];
       // acciones de los 20-F: las de los trimestres a mano o de Yahoo del mismo cierre; si no hay, la candidata del 20-F
       // más cercana a las de la observación confiable más próxima en el tiempo
       const conf = [...man, ...yah.ni, ...yah.eq].filter(x => x.sh > 0);
@@ -519,7 +527,7 @@ export async function main({ root = new URL("../", import.meta.url), fetchImpl =
       let ni = unir([man, yah.ni.filter(x => x.tipo === "q"), sec.ni, yah.ni.filter(x => x.tipo !== "q")]);
       const conv = usd ? convUSD : regimen === "dólar funcional" ? convFX : convARS;
       ni = completarTrimestres(ni, conv);
-      let eq = unir([yah.eq.filter(x => x.src === "Yahoo trimestral").map(x => ({ ...x, tipo: "b" })), sec.eq.map(x => ({ ...x, tipo: "b" })), yah.eq.filter(x => x.src === "Yahoo anual").map(x => ({ ...x, tipo: "b" }))]);
+      let eq = unir([manEq, yah.eq.filter(x => x.src === "Yahoo trimestral").map(x => ({ ...x, tipo: "b" })), sec.eq.map(x => ({ ...x, tipo: "b" })), yah.eq.filter(x => x.src === "Yahoo anual").map(x => ({ ...x, tipo: "b" }))]);
       // en pesos, el patrimonio anterior a la NIC 29 (costo histórico, sin reexpresar) no se compara con el de después
       if (regimen === "pesos") eq = eq.filter(x => x.end >= "2018-09-30");
       completarAcciones(ni, eq); completarAcciones(eq, ni);
