@@ -6276,8 +6276,8 @@ const METODO = [
       { d: 'Commodities: Brent, WTI, soja, trigo, oro y plata, del contrato más cercano de Yahoo (cinco años de cierres diarios, los mismos futuros que la pestaña Gráfico); soja y trigo de Chicago, en dólares por tonelada. "Oro y plata" y "Soja y trigo" van cada uno en su eje; "Brent y WTI" comparten uno.',
         p: 'En un solo eje la plata (unos US$ 50 contra casi 4.000 del oro) sería una línea plana, y la soja y el trigo, separados por más de US$ 200, quedarían aplastados. Brent y WTI cotizan cerca y en el mismo eje se ve la diferencia entre los dos.',
         o: 'El contrato más cercano salta cuando vence y pasa al siguiente: con la curva en backwardation, para abajo.' },
-      { d: 'Curvas de futuros del Brent y del WTI: el último cierre de cada contrato de NYMEX hasta tres años, por mes de entrega, contra el cierre del mismo contrato hace 1 semana, 1 mes, 3 o 6 meses o 1 año (de entrada, 1 semana, 1 mes y 6 meses). El valor de hoy va escrito en el primer contrato, en cada diciembre (el contrato de referencia de cada año) y en el último; el eje marca el mes del primer contrato y sigue cada 3 o 6 meses.',
-        p: 'Contra el mismo contrato se ve cuánto se movió cada vencimiento con lo que hay: Yahoo no guarda los contratos vencidos.',
+      { d: 'Curvas de futuros del Brent y del WTI: el cierre de cada contrato de NYMEX hasta tres años, por mes de entrega, del último día con precio de al menos el 80% de los contratos, contra el cierre del mismo contrato hace 1 semana, 1 mes, 3 o 6 meses o 1 año (de entrada, 1 semana, 1 mes y 6 meses). El valor de hoy va escrito en el primer contrato, en cada diciembre (el contrato de referencia de cada año) y en el último; el eje marca el mes del primer contrato y sigue cada 3 o 6 meses.',
+        p: 'Contra el mismo contrato se ve cuánto se movió cada vencimiento con lo que hay: Yahoo no guarda los contratos vencidos. Durante la rueda Yahoo tiene el precio del día solo de los contratos que operaron (el 12/11/2026 al mediodía, 10 de los 19 del Brent): con el último precio de cada uno, la curva mezclaba hoy y ayer y salían escalones (el WTI de junio de 2028, 75 centavos arriba de mayo y de julio). Hasta que casi todos tienen precio, va el cierre anterior, y se anota.',
         o: 'Por eso una curva anterior no es la que había ese día: arranca, como la de hoy, en el primer contrato vivo. Del Brent lejano Yahoo tiene solo junio y diciembre, y la línea los une derecho; se anota abajo del gráfico, igual que una fecha sin cierres.' },
       { d: 'Tipo de cambio: oficial = Comunicación A 3500 del BCRA; MEP y CCL, de argentinadatos (venta); DXY y real, de Yahoo. ITCRM y bilaterales con Brasil y EE.UU.: planilla diaria del BCRA (base 17/12/15 = 100), bajada todos los días por un workflow porque el BCRA no deja leerla desde el navegador.',
         o: 'El BCRA publica el ITCRM con unos días de demora y los últimos valores son provisorios (usan inflación estimada).' },
@@ -8444,9 +8444,15 @@ async function infBuildFut(F, cmpTxt, notes) {
   const c = cmdOf(F.k), cv = await cmdLoadCurva(c), a0 = cv.cs[0], off = x => (x.y - a0.y) * 12 + (x.m - a0.m), n = cv.cs.length;
   // la fecha de cada curva: el último día con cierres hasta esa fecha
   const hasta = t => { let b = null; for (const x of cv.cs) for (const [ti] of x.h) if (ti <= t + 3600 && (b == null || ti > b)) b = ti; return b; };
+  // hoy: el último día con precio de al menos el 80% de los contratos. En la rueda Yahoo tiene el precio del día solo de los
+  // que operaron, y mezclarlo con el cierre anterior de los demás arma escalones que la curva no tiene
+  const porDia = new Map();
+  for (const x of cv.cs) for (const [ti] of x.h.slice(-10)) { const dd = infDay(ti), o = porDia.get(dd) || { n: 0, t: 0 }; o.n++; o.t = Math.max(o.t, ti); porDia.set(dd, o); }
+  const dias = [...porDia].sort((a, b) => b[0].localeCompare(a[0])), [d0, o0] = dias.find(([, o]) => o.n >= 0.8 * n) || dias[0], ult = infDay(cv.t);
+  if (d0 !== ult) notes.push('Va el cierre del ' + infDdmmaa(d0) + ': del ' + infDdmmaa(ult) + ' Yahoo tiene precio de solo ' + porDia.get(ult).n + ' de los ' + n + ' contratos (los que operaron)');
   const ser = [['h', 0], ...INF_CMP.filter(([k]) => INF.cmp[k]).map(([k, , d]) => [k, d])].map(([k, d], i) => {
-    const t = cv.t - d * 86400, dia = d ? hasta(t) : cv.t;
-    const pts = cv.cs.map((x, j) => { const v = d ? cmdAt(x.h, t) : x.h[x.h.length - 1][1];
+    const t = o0.t - d * 86400, dia = d ? hasta(t) : o0.t;
+    const pts = cv.cs.map((x, j) => { const v = cmdAt(x.h, t);
       return v == null ? null : { x: off(x), v, tk: x.s.replace(c.curva.suf, ''), y: x.y, m: x.m, lbl: !d && (j === 0 || j === n - 1 || x.m === 12) }; }).filter(Boolean);
     if (pts.length < 2) { if (d) notes.push('Yahoo no tiene cierres de ' + cmpTxt[k]); return null; }
     return { name: 'Al ' + infDdmmaa(infDay(dia)) + (d ? ' (' + cmpTxt[k] + ')' : ''), d: infDay(dia), k, pts, color: i ? INF_CMP.find(z => z[0] === k)[3] : BV.navy };
@@ -8462,7 +8468,7 @@ async function infBuildFut(F, cmpTxt, notes) {
   }
   if (ser.length > 1) notes.push('Las curvas anteriores son los contratos de hoy en esa fecha: los que vencieron en el medio no están en Yahoo');
   return { kind: 'curva', curva: INF.curva, ser, xNum: true, xMes: { y: a0.y, m: a0.m }, yU: F.u, notes, tAuto: 'Curva de futuros del ' + F.n,
-    bAuto: F.u + ', por mes de entrega', fAuto: 'Fuente: Yahoo Finance (futuros ' + F.ctr + '). Precio de cierre de cada contrato.', last: infDay(cv.t) };
+    bAuto: F.u + ', por mes de entrega', fAuto: 'Fuente: Yahoo Finance (futuros ' + F.ctr + '). Precio de cierre de cada contrato.', last: d0 };
 }
 const INF_MES_N = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
