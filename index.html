@@ -2021,7 +2021,9 @@ const CMD = [
   { k: 'BZ', n: 'Brent', y: 'BZ=F', tv: 'CAPITALCOM:OIL_BRENT', u: 'US$/barril', dec: 2, curva: { raiz: 'BZ', suf: '.NYM', vence: 'bz', n: 'NYMEX BZ' } },
   { k: 'CL', n: 'WTI', y: 'CL=F', tv: 'CAPITALCOM:OIL_CRUDE', u: 'US$/barril', dec: 2, curva: { raiz: 'CL', suf: '.NYM', vence: 'cl', n: 'NYMEX CL' } },
   { k: 'ZS', n: 'Soja', y: 'ZS=F', tv: 'OANDA:SOYBNUSD', u: 'US$/tn', f: 0.3674371, dec: 1 },   // Chicago: centavos por bushel
+  { k: 'ZW', n: 'Trigo', y: 'ZW=F', tv: 'OANDA:WHEATUSD', u: 'US$/tn', f: 0.3674371, dec: 1 },
   { k: 'GC', n: 'Oro', y: 'GC=F', tv: 'CAPITALCOM:GOLD', u: 'US$/oz', dec: 0 },
+  { k: 'SI', n: 'Plata', y: 'SI=F', tv: 'CAPITALCOM:SILVER', u: 'US$/oz', dec: 2 },
 ];
 const CMD_HZ = [['1S', 7], ['1M', 30], ['3M', 91], ['6M', 182], ['1A', 364]];   // 1A: 52 semanas (Yahoo da un año justo de historia)
 const CMD_TABLA = ['1S', '1M', '6M', '1A'];
@@ -2214,18 +2216,20 @@ function cmdCurvaHtml(c, cv, W) {
   const chips = '<span class="cmd-lag is-hoy" style="color:' + CMD_COL.hoy + '"><i></i><span style="color:var(--ink)">Hoy</span></span>'
     + CMD_HZ.map(([k]) => '<button type="button" class="cmd-lag' + (cmdLags.includes(k) ? ' active' : '') + '" data-k="' + k + '" aria-pressed="' + cmdLags.includes(k) + '" onclick="setCmdLag(\'' + k + '\')">'
       + '<i style="color:' + CMD_COL[k] + '"></i>' + k + '</button>').join('');
-  // por contrato: el mismo vencimiento hoy y en cada fecha
-  const TEN = [1, 2, 3, 6, 12, 24, 36].filter(n => cv.cs[n - 1]);
+  // por contrato: el mismo vencimiento hoy y en cada fecha. Los plazos van en meses desde el primero, porque Yahoo no
+  // tiene todos los meses del Brent lejano (después del año y medio, junio y diciembre)
+  const a0 = cv.cs[0], conOff = o => cv.cs.find(x => (x.y - a0.y) * 12 + (x.m - a0.m) === o);
+  const TEN = [0, 1, 2, 5, 11, 23, 35].map(conOff).filter(Boolean);
   const tc = '<table class="cmd-tbl cmd-tbl-c"><thead><tr><th>Contrato</th><th>Hoy</th>' + lags.map(h => '<th>Δ ' + h[0] + '</th>').join('') + '</tr></thead><tbody>'
-    + TEN.map(n => {
-      const x = cv.cs[n - 1], hoy = x.h[x.h.length - 1][1];
-      return '<tr><td title="' + x.s + ', el ' + n + '.º contrato">' + cmdMes(x) + '</td><td>' + hoy.toFixed(2) + '</td>'
+    + TEN.map(x => {
+      const hoy = x.h[x.h.length - 1][1], o = (x.y - a0.y) * 12 + (x.m - a0.m);
+      return '<tr><td title="' + x.s + (o ? ', ' + o + (o === 1 ? ' mes' : ' meses') + ' después del primero' : ', el más cercano') + '">' + cmdMes(x) + '</td><td>' + hoy.toFixed(2) + '</td>'
         + lags.map(([k, d]) => { const v = cmdAt(x.h, cv.t - d * 86400); return '<td title="' + (v != null ? 'Hace ' + k + ': ' + v.toFixed(2) + ' (' + ((hoy / v - 1) * 100).toFixed(1) + '%)' : 'Sin cierre en esa fecha') + '">' + cmdDif(v != null ? hoy - v : null) + '</td>'; }).join('') + '</tr>';
     }).join('') + '</tbody></table>';
   // pendiente: el contrato más cercano menos el 6.º y el 12.º de cada fecha (el M1 de antes es el continuo de Yahoo)
   const cont = (cmdPx && cmdPx[c.y] && cmdPx[c.y].pts) || [];
   const spread = (k, d) => {
-    if (d == null) return cv.cs[k - 1] ? cv.cs[0].h[cv.cs[0].h.length - 1][1] - cv.cs[k - 1].h[cv.cs[k - 1].h.length - 1][1] : null;
+    if (d == null) { const b = conOff(k - 1); return b ? a0.h[a0.h.length - 1][1] - b.h[b.h.length - 1][1] : null; }
     const t = cv.t - d * 86400, f = cmdFrente(c.curva.vence, t), m1 = cmdAt(cont, t);
     if (!f || m1 == null) return null;
     const z = new Date(Date.UTC(f.y, f.m - 1 + k - 1, 1)), x = cv.cs.find(q => q.y === z.getUTCFullYear() && q.m === z.getUTCMonth() + 1);
@@ -2255,7 +2259,7 @@ function renderCmd(err) {
     h += cv ? cmdCurvaHtml(c, cv, W) : '<div class="cmd-sec"><div class="cmd-hd"><span class="cmd-tit">Curva de futuros del ' + c.n + '</span></div><div class="cmd-msg">' + (err || 'Cargando contratos…') + '</div></div>';
   }
   h += '<div class="cmd-note">Variaciones del contrato más cercano contra el cierre más cercano anterior a 7, 30 y 182 días y a 52 semanas; las menores a 1%, en bips. '
-    + 'Soja en dólares por tonelada (Chicago cotiza en centavos por bushel). El gráfico es el CFD de ' + (c.tv.startsWith('OANDA') ? 'OANDA' : 'Capital.com')
+    + 'Soja y trigo en dólares por tonelada (Chicago cotiza en centavos por bushel). El gráfico es el CFD de ' + (c.tv.startsWith('OANDA') ? 'OANDA' : 'Capital.com')
     + ', porque el widget de TradingView no muestra los futuros de CME ni de ICE. Curva de futuros: por ahora, Brent y WTI.</div>';
   el.innerHTML = h;
 }
@@ -6201,13 +6205,13 @@ const METODO = [
 
   { id: 'cmd', t: 'Commodities en Gráfico',
     items: [
-      { d: 'Brent, WTI, soja y oro: el gráfico es el CFD de Capital.com (el de la soja, de OANDA). La tabla y la curva salen de los futuros de Yahoo, con demora: el contrato más cercano de cada uno.',
+      { d: 'Brent, WTI, soja, trigo, oro y plata: el gráfico es el CFD de Capital.com (los de soja y trigo, de OANDA). La tabla y la curva salen de los futuros de Yahoo, con demora: el contrato más cercano de cada uno.',
         p: 'El widget de TradingView no muestra los futuros de CME ni de ICE.',
         o: 'El CFD sigue al futuro pero no es igual: puede diferir unos centavos y en el cambio de contrato.' },
-      { d: 'Variaciones contra el cierre más cercano anterior a 7, 30 y 182 días corridos, como en el Resumen, y a 52 semanas; las menores a 1%, en bips. La soja en dólares por tonelada: Chicago cotiza en centavos por bushel (× 0,3674).' },
+      { d: 'Variaciones contra el cierre más cercano anterior a 7, 30 y 182 días corridos, como en el Resumen, y a 52 semanas; las menores a 1%, en bips. Soja y trigo en dólares por tonelada: Chicago cotiza en centavos por bushel (× 0,3674 en los dos, porque el bushel de soja y el de trigo pesan lo mismo, 60 libras).' },
       { d: 'Curva de futuros del Brent y del WTI: el último precio de cada contrato mensual de NYMEX hasta tres años (el Brent es el BZ, que liquida contra el de ICE), y el cierre del mismo contrato hace 1 semana, 1 mes, 3 y 6 meses y 1 año.',
         p: 'Contrato por contrato se ve cuánto se movió cada vencimiento.',
-        o: 'Yahoo no guarda los contratos vencidos: la curva de hace 6 meses no tiene los que vencieron en el medio, así que arranca, como la de hoy, en el primer contrato vivo.' },
+        o: 'Yahoo no guarda los contratos vencidos: la curva de hace 6 meses no tiene los que vencieron en el medio, así que arranca, como la de hoy, en el primer contrato vivo. Y del Brent lejano tiene solo algunos meses (después del año y medio, junio y diciembre): la línea los une derecho.' },
       { d: 'Pendiente: M1 − M6 y M1 − M12, el contrato más cercano menos el 6.º y el 12.º. Positiva es backwardation (lo corto más caro); negativa, contango. Para una fecha pasada, el M1 es el contrato continuo de Yahoo y el otro, el que era el 6.º o el 12.º ese día, si todavía no venció.',
         p: 'El vencimiento de cada contrato sale de la regla de NYMEX (Brent: el último día hábil del segundo mes anterior al de entrega; WTI: tres hábiles antes del 25 del mes anterior), sin feriados.' },
     ] },
