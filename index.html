@@ -569,6 +569,7 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .bon-card .ov-tbl tbody td{font-variant-numeric:tabular-nums}
 .bon-card .ov-tbl tbody td.bon-ant{color:var(--muted)}
 .bon-vacio{font-size:12.5px;color:var(--muted);margin-top:10px}
+.bon-manual textarea{display:block;width:100%;height:180px;margin-top:10px;font:12.5px/1.45 var(--mono,ui-monospace,monospace);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
 .arg-status{font-size:12.5px;color:var(--muted)}
 .arg-body{display:flex;flex-direction:column;gap:18px;padding:20px var(--side)}
 .arg-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1.2fr);gap:18px;align-items:start}
@@ -877,6 +878,10 @@ function checkPwd(){
   </div>
   <div class="arg-body">
     <div class="bon-nota" id="bonNota"></div>
+    <div class="ov-card bon-manual" id="bonManual" hidden>
+      <div class="bon-head"><div class="ov-card-title">El navegador no dejó copiar <span>seleccioná todo con Ctrl+A y copiá con Ctrl+C</span></div><button class="btn btn-ghost" onclick="document.getElementById('bonManual').hidden = true">Cerrar</button></div>
+      <textarea id="bonManualTxt" readonly spellcheck="false" aria-label="Precios para copiar"></textarea>
+    </div>
     <div class="bon-grid" id="bonGrid"><div class="ov-loading">Cargando precios…</div></div>
   </div>
   <div class="inf-toast" id="bonToast" role="status" aria-live="polite"></div>
@@ -3503,7 +3508,7 @@ const BON_GRUPOS = [
   { id: 'bonte', n: 'Bonte', re: /^(TY\d{2}P|TO\d{2})$/ },
   { id: 'usd', n: 'Soberanos en dólares', re: /^(A[ELNO]\d{2}|GD\d{2}|PAY0)$/, usd: true },
 ];
-const BON = { datos: null, grupos: null, cargando: false, error: null, tok: 0, plazo: (() => { try { return localStorage.getItem('bonPlazo') || '2'; } catch (e) { return '2'; } })() };
+const BON = { datos: null, grupos: null, cargando: false, error: null, tok: 0, bymaFallo: 0, plazo: (() => { try { return localStorage.getItem('bonPlazo') || '2'; } catch (e) { return '2'; } })() };
 
 // vencimiento para ordenar: el de BYMA si viene; si no, el del ticker (los de un solo dígito de año van de 2025 a 2034)
 function bonVence(tk, vto) {
@@ -3571,7 +3576,11 @@ async function bonCopiar(t, msg) {
   catch (e) {
     const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove();
-    if (!ok) { bonToast('No se pudo copiar: el navegador no dio permiso'); return false; }
+    if (!ok) {   // sin permiso para el portapapeles: el texto queda seleccionado en un cuadro, para Ctrl+C
+      const box = document.getElementById('bonManual'), tx = document.getElementById('bonManualTxt');
+      if (box && tx) { tx.value = t; box.hidden = false; tx.focus(); tx.select(); box.scrollIntoView?.({ block: 'nearest' }); }
+      bonToast('El navegador no dejó copiar: copiá el texto seleccionado con Ctrl+C'); return false;
+    }
   }
   bonToast(msg); return true;
 }
@@ -3601,14 +3610,17 @@ function bonData912() {
 async function loadBonos() {
   if (BON.cargando) return;
   const tok = ++BON.tok; BON.cargando = true; renderBonos();
-  const usar = d => { if (tok !== BON.tok) return; BON.datos = d; BON.error = null; renderBonos(); };
+  const usar = d => { if (tok !== BON.tok) return; BON.datos = d; BON.error = null; if (d.fuente === 'byma') BON.bymaFallo = 0; renderBonos(); };
   const byma = bonByma(), d912 = bonData912();
-  byma.catch(() => {}); d912.catch(() => {});
-  const r1 = await Promise.race([byma.then(j => ({ j }), e => ({ e })), new Promise(res => setTimeout(() => res({ tarde: true }), 6000))]);
+  byma.catch(() => { BON.bymaFallo = Date.now(); }); d912.catch(() => {});
+  // si BYMA ya falló hace menos de 2 minutos, se espera 1 segundo y no 6 (si contesta después, igual reemplaza)
+  const espera = BON.bymaFallo && Date.now() - BON.bymaFallo < 120000 ? 1000 : 6000;
+  const r1 = await Promise.race([byma.then(j => ({ j }), e => ({ e })), new Promise(res => setTimeout(() => res({ tarde: true }), espera))]);
   if (r1.j) usar({ fuente: 'byma', filas: r1.j.filas, errores: r1.j.errores || [], at: new Date() });
   else {
-    try { usar({ fuente: 'data912', filas: await d912, at: new Date(), errByma: r1.e ? r1.e.message : 'no contestó en 6 segundos' }); }
-    catch (e2) { if (tok === BON.tok) BON.error = 'No contestó ninguna fuente. BYMA: ' + (r1.e ? r1.e.message : 'no contestó en 6 segundos') + '. data912: ' + e2.message + '.'; }
+    const tarde = 'no contestó en ' + espera / 1000 + (espera > 1000 ? ' segundos' : ' segundo');
+    try { usar({ fuente: 'data912', filas: await d912, at: new Date(), errByma: r1.e ? r1.e.message : tarde }); }
+    catch (e2) { if (tok === BON.tok) BON.error = 'No contestó ninguna fuente. BYMA: ' + (r1.e ? r1.e.message : tarde) + '. data912: ' + e2.message + '.'; }
     // BYMA tarde: si contesta, reemplaza a data912
     if (r1.tarde) byma.then(j => usar({ fuente: 'byma', filas: j.filas, errores: j.errores || [], at: new Date() }),
       e => { if (tok === BON.tok && BON.datos?.fuente === 'data912') { BON.datos.errByma = e.message; renderBonos(); } });
@@ -6421,7 +6433,7 @@ const METODO = [
         p: 'Hace de vector de precios: un ticker y su precio, para buscar con BUSCARV.' },
       { d: 'Fuente: los paneles de títulos públicos y de letras de los datos abiertos de BYMA, con 20 minutos de demora. Los pide el backend cuando se toca Actualizar y los guarda un minuto. Plazo: contado inmediato o 24 hs. Precio: el cierre del día si ya está; si no, el último operado; si no operó, el cierre anterior, en gris.',
         p: 'BYMA es gratis y oficial, no gasta créditos de 1816 y trae todas las especies, también las que no operaron en el día.' },
-      { d: 'Si BYMA no contesta en 6 segundos van los precios de data912, una API gratuita y no oficial: el último operado, que se actualiza cada 20 segundos, sin plazo. Si BYMA contesta después, reemplaza a data912.',
+      { d: 'Si BYMA no contesta en 6 segundos (1 segundo si ya falló en los últimos 2 minutos) van los precios de data912, una API gratuita y no oficial: el último operado, que se actualiza cada 20 segundos, sin plazo. Si BYMA contesta después, reemplaza a data912.',
         p: 'El 16/11/2026 BYMA no contestaba ni desde el navegador ni desde el backend, y data912 sí.',
         o: 'data912 es un proyecto personal sin garantía (dice que es para uso educativo). No informa el plazo ni el cierre anterior, y trae solo lo que cotiza.' },
       { d: 'Grupos por ticker, con las listas de 1816 (Soberanos ARS tasa fija, Duales, USD Linked, Tamar, CER, Botes, Bonares y Globales) y el mismo formato para las especies nuevas: S y T con día, mes y año (Lecap y Boncap); TT, TXM y TMV (duales); D con fecha y TZV (dólar linked); TM, y M con fecha (TAMAR); TX, TZX, X con fecha, DICP, PARP y CUAP (CER); TY con P (Bonte); AL, AE, AN, AO y GD (soberanos en dólares). Van ordenados por vencimiento.',
