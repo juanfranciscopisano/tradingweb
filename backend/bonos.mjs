@@ -31,7 +31,7 @@ export async function bymaBonos(fetchImpl, { paginas = 10, timeout = 15000 } = {
         const tot = j?.content?.page_count ?? j?.page_count ?? 1;
         if (!d.length || pg >= tot) break;
       }
-    } catch (e) { errores.push(panel + ": " + e.message); }
+    } catch (e) { errores.push(panel + ": " + e.message + (e.cause ? " (" + (e.cause.code || e.cause.message || e.cause) + ")" : "")); }
   }
   if (!filas.length) throw new Error("BYMA no respondió (" + errores.join("; ") + ")");
   return { filas, errores };
