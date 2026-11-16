@@ -3510,7 +3510,10 @@ const BON_GRUPOS = [
   { id: 'tamar', n: 'TAMAR', re: /^(TM[EFMAYJLGSOND]\d{2}|M\d{2}[EFMAYJLGSOND]\d)$/ },
   { id: 'cer', n: 'CER', sub: 'Boncer y Lecer', re: /^(TX\d{2}|TZX\d{2}|TZX[EFMAYJLGSOND]\d|X\d{2}[EFMAYJLGSOND]\d|DICP|PARP|CUAP|DIP0|PAP0)$/ },
   { id: 'bonte', n: 'Bonte', re: /^(TY\d{2}P|TO\d{2})$/ },
+  { id: 'badlar', n: 'BADLAR', re: /^(PR\d{2}|TB\d{2}P?|TD\d{2})$/ },
+  // en dólares: el ticker en pesos y sus versiones MEP y cable (AL30, AL30D y AL30C; en BOPREAL, BPOA7, BPA7D y BPA7C)
   { id: 'usd', n: 'Soberanos en dólares', re: /^(A[ELNO]\d{2}|GD\d{2}|PAY0)$/, usd: true },
+  { id: 'bopreal', n: 'BOPREAL', sub: 'BCRA', re: /^BPO([A-D]\d|\d{2})$/, usd: true, dc: b => ['BP' + b.slice(3) + 'D', 'BP' + b.slice(3) + 'C'], base: s => (/^BP[A-D]\d[CD]$/.test(s) ? 'BPO' + s.slice(2, -1) : '') },
 ];
 const BON = { datos: null, grupos: null, cierres: null, cargando: false, error: null, tok: 0, bymaFallo: 0, plazo: (() => { try { return localStorage.getItem('bonPlazo') || '2'; } catch (e) { return '2'; } })() };
 
@@ -3527,6 +3530,9 @@ function bonVence(tk, vto) {
   if ((m = tk.match(/^TY(\d{2})P$/))) return '20' + m[1] + '-05-30';
   if ((m = tk.match(/^TO(\d{2})$/))) return '20' + m[1] + '-10-17';
   if ((m = tk.match(/^(?:A[ELNO]|GD)(\d{2})$/))) return '20' + m[1] + '-07-09';
+  if ((m = tk.match(/^(?:PR|TB|TD)(\d{2})P?$/))) return '20' + m[1] + '-06-30';
+  if ((m = tk.match(/^BPO([A-D])(\d)$/))) return anio(m[2]) + '-10-31-' + m[1];
+  if ((m = tk.match(/^BPO(\d{2})$/))) return '20' + m[1] + '-10-31';
   return { DICP: '2033-12-31', DIP0: '2033-12-31', PARP: '2038-12-31', PAP0: '2038-12-31', PAY0: '2038-12-31', CUAP: '2045-12-31' }[tk] || '9999';
 }
 
@@ -3564,15 +3570,19 @@ function bonDiaAntes(d) {
   const k = Object.keys(BON.cierres || {}).filter(x => x < d).sort().pop();
   return k ? { d: k, px: BON.cierres[k].px || {}, est: /estimado/.test(BON.cierres[k].fuente || ''), fuente: BON.cierres[k].fuente || '' } : null;
 }
+const bonDC = (g, b) => g.dc ? g.dc(b) : [b + 'D', b + 'C'];
 function bonArmar(px) {
-  const grupos = BON_GRUPOS.map(g => ({ ...g, filas: [] })), usd = grupos.find(g => g.usd), bases = new Set();
+  const grupos = BON_GRUPOS.map(g => ({ ...g, filas: [], bases: new Set() })), dol = grupos.filter(g => g.usd);
   for (const [s, x] of px) {
     const g = grupos.find(g => g.re.test(s));
     if (g && !g.usd) g.filas.push({ tk: s, vto: bonVence(s, x.vto), ars: x });
-    else if (g) bases.add(s);
-    else if (/[CD]$/.test(s) && usd.re.test(s.slice(0, -1))) bases.add(s.slice(0, -1));
+    else if (g) g.bases.add(s);
+    else if (/[CD]$/.test(s)) { const u = dol.find(u => u.re.test(u.base ? u.base(s) : s.slice(0, -1))); if (u) u.bases.add(u.base ? u.base(s) : s.slice(0, -1)); }
   }
-  for (const b of bases) { const a = px.get(b) || null; usd.filas.push({ tk: b, vto: bonVence(b, a?.vto), ars: a, mep: px.get(b + 'D') || null, ccl: px.get(b + 'C') || null }); }
+  for (const u of dol) for (const b of u.bases) {
+    const a = px.get(b) || null, [d, c] = bonDC(u, b);
+    u.filas.push({ tk: b, vto: bonVence(b, a?.vto), ars: a, mep: px.get(d) || null, ccl: px.get(c) || null, tkD: d, tkC: c });
+  }
   grupos.forEach(g => g.filas.sort((a, b) => a.vto.localeCompare(b.vto) || a.tk.localeCompare(b.tk)));
   return grupos;
 }
@@ -3588,7 +3598,7 @@ function bonTsvTodo(grupos) {
   const out = ['Ticker\tPrecio\tAyer'], fila = (tk, x) => out.push(tk + '\t' + bonNum(x.v) + '\t' + bonNum(x.ant));
   for (const g of grupos) for (const f of g.filas) {
     if (f.ars) fila(f.tk, f.ars);
-    if (g.usd) { if (f.mep) fila(f.tk + 'D', f.mep); if (f.ccl) fila(f.tk + 'C', f.ccl); }
+    if (g.usd) { if (f.mep) fila(f.tkD, f.mep); if (f.ccl) fila(f.tkC, f.ccl); }
   }
   return out.join('\n');
 }
@@ -6469,14 +6479,14 @@ const METODO = [
 
   { id: 'bonos', t: 'Bonos y precios',
     items: [
-      { d: 'Precios de los bonos del Tesoro para pegar en Excel, sin tasas: Lecaps y Boncaps, duales, dólar linked, TAMAR, CER (Boncer y Lecer), Bonte y soberanos en dólares (Bonares y Globales, en pesos, MEP y cable).',
+      { d: 'Precios de los bonos del Tesoro y del BCRA para pegar en Excel, sin tasas: Lecaps y Boncaps, duales, dólar linked, TAMAR, CER (Boncer y Lecer), Bonte, BADLAR, soberanos en dólares (Bonares y Globales) y BOPREAL, estos dos en pesos, MEP y cable.',
         p: 'Hace de vector de precios: un ticker y su precio, para buscar con BUSCARV.' },
       { d: 'Fuente: los paneles de títulos públicos y de letras de los datos abiertos de BYMA, con 20 minutos de demora. Los pide el backend cuando se toca Actualizar y los guarda un minuto. Plazo: contado inmediato o 24 hs. Precio: el cierre del día si ya está; si no, el último operado; si no operó, el cierre anterior, en gris.',
         p: 'BYMA es gratis y oficial, no gasta créditos de 1816 y trae todas las especies, también las que no operaron en el día.' },
       { d: 'Si BYMA no contesta en 6 segundos (1 segundo si ya falló en los últimos 2 minutos) van los precios de data912, una API gratuita y no oficial: el último operado, que se actualiza cada 20 segundos, sin plazo. Si BYMA contesta después, reemplaza a data912.',
         p: 'El 16/11/2026 BYMA no contestaba ni desde el navegador ni desde el backend, y data912 sí.',
         o: 'data912 es un proyecto personal sin garantía (dice que es para uso educativo). No informa el plazo ni el cierre anterior, y trae solo lo que cotiza.' },
-      { d: 'Grupos por ticker, con las listas de 1816 (Soberanos ARS tasa fija, Duales, USD Linked, Tamar, CER, Botes, Bonares y Globales) y el mismo formato para las especies nuevas: S y T con día, mes y año (Lecap y Boncap); TT, TXM y TMV (duales); D con fecha y TZV (dólar linked); TM, y M con fecha (TAMAR); TX, TZX, X con fecha, DICP, PARP y CUAP (CER); TY con P (Bonte); AL, AE, AN, AO y GD (soberanos en dólares). Van ordenados por vencimiento.',
+      { d: 'Grupos por ticker, con las listas de 1816 (Soberanos ARS tasa fija, Duales, USD Linked, Tamar, CER, Botes, Bonares y Globales) y el mismo formato para las especies nuevas: S y T con día, mes y año (Lecap y Boncap); TT, TXM y TMV (duales); D con fecha y TZV (dólar linked); TM, y M con fecha (TAMAR); TX, TZX, X con fecha, DICP, PARP y CUAP (CER); TY con P (Bonte); PR, TB y TD (BADLAR); AL, AE, AN, AO y GD (soberanos en dólares, con MEP y cable en D y C: AL30D y AL30C); BPO con letra y año (BOPREAL, con MEP y cable en BP, letra, año y D o C: BPA7D y BPA7C). Van ordenados por vencimiento.',
         o: 'Una especie nueva con otro formato no aparece hasta sumarla a la lista.' },
       { d: 'Ayer: con BYMA, el cierre anterior en el mismo plazo. Con data912, que no lo da, el cierre que guarda la página cada noche en bonos.json (los días hábiles, después de las 17:05, de BYMA o si no contesta de data912) y, si todavía no hay, el que sale de la variación del día de data912, en gris. Sin BYMA ni data912, van los dos últimos cierres guardados.',
         p: 'La variación de data912 viene redondeada a dos decimales: el 16/11/2026 el estimado del AL30 daba 81.283 contra un cierre de 81.290 (1 bip). El cierre guardado no tiene ese error.',
