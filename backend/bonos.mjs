@@ -15,10 +15,12 @@ export function filaByma(x, panel) {
   };
 }
 
-// todas las páginas de cada panel; si un panel no responde siguen los otros, y si no responde ninguno, error
-export async function bymaBonos(fetchImpl, { paginas = 10, timeout = 15000 } = {}) {
-  const filas = [], errores = [];
-  for (const panel of PANELES) {
+// todas las páginas de cada panel, los dos paneles a la vez y 8 segundos por pedido: si BYMA no responde, la página ya
+// mostró la fuente de respaldo. Si un panel falla siguen los otros; si fallan todos, error
+export async function bymaBonos(fetchImpl, { paginas = 10, timeout = 8000 } = {}) {
+  const errores = [];
+  const porPanel = await Promise.all(PANELES.map(async panel => {
+    const filas = [];
     try {
       for (let pg = 1; pg <= paginas; pg++) {
         const r = await fetchImpl(BYMA_FREE + panel, {
@@ -32,7 +34,9 @@ export async function bymaBonos(fetchImpl, { paginas = 10, timeout = 15000 } = {
         if (!d.length || pg >= tot) break;
       }
     } catch (e) { errores.push(panel + ": " + e.message + (e.cause ? " (" + (e.cause.code || e.cause.message || e.cause) + ")" : "")); }
-  }
+    return filas;
+  }));
+  const filas = porPanel.flat();
   if (!filas.length) throw new Error("BYMA no respondió (" + errores.join("; ") + ")");
   return { filas, errores };
 }
