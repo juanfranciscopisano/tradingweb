@@ -157,7 +157,7 @@ async function caucion({ fetchImpl, root, log, now }) {
 // Bonos (pestaña Bonos): el cierre de cada día de los bonos del Tesoro, para la columna "Ayer" cuando BYMA no contesta y
 // la página va con data912, que no da el cierre anterior. Fuente: BYMA, 24 hs (el cierre del día, si no el último operado
 // y si no operó, el cierre anterior); si BYMA no contesta, data912 (el último operado, y el cierre anterior sale de la
-// variación del día, redondeada a dos decimales: hasta 0,005% de diferencia, y queda marcado como estimado).
+// variación del día, redondeada a dos decimales: hasta 1 bip de diferencia, y queda marcado como estimado).
 // bonos.json: { dias: { fecha: { fuente, px: { ticker: precio } } } }, los últimos 15 días.
 export const BONOS_RE = /^([ST]\d{2}[EFMAYJLGSOND]\d|TT[EFMAYJLGSOND]\d{2}|TXM[EFMAYJLGSOND]\d|TMV[EFMAYJLGSOND]\d|D\d{2}[EFMAYJLGSOND]\d|TZV\d{2}|TZV[EFMAYJLGSOND]\d|TM[EFMAYJLGSOND]\d{2}|M\d{2}[EFMAYJLGSOND]\d|TX\d{2}|TZX\d{2}|TZX[EFMAYJLGSOND]\d|X\d{2}[EFMAYJLGSOND]\d|DICP|PARP|CUAP|DIP0|PAP0|TY\d{2}P|TO\d{2}|(A[ELNO]\d{2}|GD\d{2}|PAY0)[CD]?)$/;
 const BYMA_FREE = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/";

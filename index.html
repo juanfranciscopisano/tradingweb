@@ -3533,7 +3533,7 @@ function bonVence(tk, vto) {
 // precio de cada especie, hoy (v) y ayer (ant). BYMA: hoy, el cierre del día si ya está, si no el último operado y si no
 // operó, el cierre anterior (va en gris); ayer, el cierre anterior. data912: hoy, el último; ayer, el cierre guardado la
 // noche anterior en bonos.json o, si no está, el que sale de la variación del día (redondeada a dos decimales: hasta
-// 0,005% de diferencia, marcado como estimado). Sin BYMA ni data912: los dos últimos cierres guardados
+// 1 bip de diferencia, marcado como estimado). Sin BYMA ni data912: los dos últimos cierres guardados
 const bonHoyArt = () => new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
 function bonPxByma(filas, plazo) {
   const px = new Map();
@@ -3678,7 +3678,7 @@ function renderBonos() {
   const antTxt = byma ? 'Ayer: el cierre anterior de BYMA en el mismo plazo.'
     : ayer && !ayer.est ? 'Ayer: el cierre del ' + ddmm(ayer.d) + ' que guarda la página cada noche (' + bonEsc(ayer.fuente) + ').'
     : guard ? 'Ayer: sin otro cierre guardado.'
-    : 'Ayer, en gris: estimado con la variación del día que informa data912, que viene redondeada (hasta 0,005% de diferencia con el cierre). Desde el cierre de hoy, la página guarda el de cada noche.';
+    : 'Ayer, en gris: estimado con la variación del día que informa data912, que viene redondeada (puede diferir del cierre en hasta 1 bip). Desde el cierre de hoy, la página guarda el de cada noche.';
   nota.innerHTML = (byma
     ? 'En gris, los que no operaron hoy en ese plazo: van con el cierre anterior.' + (d.errores?.length ? ' Faltó un panel de BYMA (' + (d.errores.some(e => /^lebacs/.test(e)) ? 'letras' : 'bonos') + ').' : '')
     : guard ? 'No contestó BYMA ni data912: van los cierres del ' + ddmm(d.d) + ' que guardó la página.'
@@ -6478,7 +6478,10 @@ const METODO = [
         o: 'data912 es un proyecto personal sin garantía (dice que es para uso educativo). No informa el plazo ni el cierre anterior, y trae solo lo que cotiza.' },
       { d: 'Grupos por ticker, con las listas de 1816 (Soberanos ARS tasa fija, Duales, USD Linked, Tamar, CER, Botes, Bonares y Globales) y el mismo formato para las especies nuevas: S y T con día, mes y año (Lecap y Boncap); TT, TXM y TMV (duales); D con fecha y TZV (dólar linked); TM, y M con fecha (TAMAR); TX, TZX, X con fecha, DICP, PARP y CUAP (CER); TY con P (Bonte); AL, AE, AN, AO y GD (soberanos en dólares). Van ordenados por vencimiento.',
         o: 'Una especie nueva con otro formato no aparece hasta sumarla a la lista.' },
-      { d: 'Copiar: cada grupo como se ve; Copiar todo, una fila por ticker, con los bonos en dólares también como AL30D y AL30C. Con coma decimal y sin separador de miles, para el Excel en castellano.' },
+      { d: 'Ayer: con BYMA, el cierre anterior en el mismo plazo. Con data912, que no lo da, el cierre que guarda la página cada noche en bonos.json (los días hábiles, después de las 17:05, de BYMA o si no contesta de data912) y, si todavía no hay, el que sale de la variación del día de data912, en gris. Sin BYMA ni data912, van los dos últimos cierres guardados.',
+        p: 'La variación de data912 viene redondeada a dos decimales: el 16/11/2026 el estimado del AL30 daba 81.283 contra un cierre de 81.290 (1 bip). El cierre guardado no tiene ese error.',
+        o: 'Si la corrida de la noche no llega, al día siguiente la columna vuelve a ser estimada.' },
+      { d: 'Copiar: cada grupo como se ve, con la columna de ayer; Copiar todo, una fila por ticker con el precio y el de ayer, y los bonos en dólares también como AL30D y AL30C. Con coma decimal y sin separador de miles, para el Excel en castellano.' },
     ] },
   { id: 'informe', t: 'Informe: gráficos en formato BAVSA',
     items: [
