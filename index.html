@@ -560,6 +560,10 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 .arg-title{font-weight:700;color:var(--ink);font-stretch:106%}
 .bon-grid{columns:270px 5;column-gap:18px}
 .bon-grid>.ov-card{break-inside:avoid;margin:0 0 18px;width:100%;display:block}
+.bon-grid>.bon-usd{column-span:all}
+.bon-card .ov-tbl tbody td.bon-ayer{color:var(--ink2)}
+.bon-usd .ov-tbl{max-width:900px}
+.bon-usd .ov-tbl thead th:nth-child(2n),.bon-usd .ov-tbl tbody td:nth-child(2n){padding-left:28px}
 .bon-nota{font-size:12.5px;color:var(--muted);line-height:1.5;max-width:110ch}
 .bon-nota:empty{display:none}
 .bon-head{display:flex;align-items:baseline;gap:8px}
@@ -3508,7 +3512,7 @@ const BON_GRUPOS = [
   { id: 'bonte', n: 'Bonte', re: /^(TY\d{2}P|TO\d{2})$/ },
   { id: 'usd', n: 'Soberanos en dólares', re: /^(A[ELNO]\d{2}|GD\d{2}|PAY0)$/, usd: true },
 ];
-const BON = { datos: null, grupos: null, cargando: false, error: null, tok: 0, bymaFallo: 0, plazo: (() => { try { return localStorage.getItem('bonPlazo') || '2'; } catch (e) { return '2'; } })() };
+const BON = { datos: null, grupos: null, cierres: null, cargando: false, error: null, tok: 0, bymaFallo: 0, plazo: (() => { try { return localStorage.getItem('bonPlazo') || '2'; } catch (e) { return '2'; } })() };
 
 // vencimiento para ordenar: el de BYMA si viene; si no, el del ticker (los de un solo dígito de año van de 2025 a 2034)
 function bonVence(tk, vto) {
@@ -3526,21 +3530,39 @@ function bonVence(tk, vto) {
   return { DICP: '2033-12-31', DIP0: '2033-12-31', PARP: '2038-12-31', PAP0: '2038-12-31', PAY0: '2038-12-31', CUAP: '2045-12-31' }[tk] || '9999';
 }
 
-// precio de cada especie: BYMA, el cierre del día si ya está, si no el último operado y si no operó, el cierre anterior
-// (va en gris); data912, el último
+// precio de cada especie, hoy (v) y ayer (ant). BYMA: hoy, el cierre del día si ya está, si no el último operado y si no
+// operó, el cierre anterior (va en gris); ayer, el cierre anterior. data912: hoy, el último; ayer, el cierre guardado la
+// noche anterior en bonos.json o, si no está, el que sale de la variación del día (redondeada a dos decimales: hasta
+// 0,005% de diferencia, marcado como estimado). Sin BYMA ni data912: los dos últimos cierres guardados
+const bonHoyArt = () => new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
 function bonPxByma(filas, plazo) {
   const px = new Map();
   for (const f of filas || []) {
     if (f.p !== plazo) continue;
     const v = f.cie || f.ult || f.ant; if (!(v > 0)) continue;
-    px.set(f.s, { v, viejo: !f.cie && !f.ult, hora: f.hora || '', vto: f.vto || '' });
+    px.set(f.s, { v, ant: f.ant || null, viejo: !f.cie && !f.ult, hora: f.hora || '', vto: f.vto || '' });
   }
   return px;
 }
-function bonPxData912(filas) {
+function bonPxData912(filas, ayer) {
   const px = new Map();
-  for (const f of filas || []) if (f && f.symbol && f.c > 0) px.set(String(f.symbol).trim(), { v: f.c, viejo: false, hora: '', vto: '' });
+  for (const f of filas || []) {
+    if (!(f && f.symbol && f.c > 0)) continue;
+    const s = String(f.symbol).trim(), g = ayer?.px?.[s];
+    const ant = g > 0 ? g : isFinite(f.pct_change) && f.pct_change > -100 ? +(f.c / (1 + f.pct_change / 100)).toPrecision(8) : null;
+    px.set(s, { v: f.c, ant, antEst: g > 0 ? !!ayer.est : ant != null, viejo: false, hora: '', vto: '' });
+  }
   return px;
+}
+function bonPxCierres(hoy, ayer) {
+  const px = new Map();
+  for (const [s, v] of Object.entries(hoy?.px || {})) if (v > 0) px.set(s, { v, ant: ayer?.px?.[s] || null, antEst: !!ayer?.est, viejo: false, hora: '', vto: '' });
+  return px;
+}
+// el último cierre guardado antes de una fecha
+function bonDiaAntes(d) {
+  const k = Object.keys(BON.cierres || {}).filter(x => x < d).sort().pop();
+  return k ? { d: k, px: BON.cierres[k].px || {}, est: /estimado/.test(BON.cierres[k].fuente || ''), fuente: BON.cierres[k].fuente || '' } : null;
 }
 function bonArmar(px) {
   const grupos = BON_GRUPOS.map(g => ({ ...g, filas: [] })), usd = grupos.find(g => g.usd), bases = new Set();
@@ -3556,17 +3578,17 @@ function bonArmar(px) {
 }
 
 // para Excel: coma decimal y sin separador de miles. Un grupo, como se ve; todo, una fila por ticker (AL30, AL30D y
-// AL30C por separado), para buscar con BUSCARV
+// AL30C por separado) con el precio y el de ayer, para buscar con BUSCARV
 const bonNum = v => (v > 0 ? String(+v.toFixed(6)).replace('.', ',') : '');
 function bonTsvGrupo(g) {
-  if (g.usd) return ['Ticker\tPesos\tMEP\tCable', ...g.filas.map(f => [f.tk, bonNum(f.ars?.v), bonNum(f.mep?.v), bonNum(f.ccl?.v)].join('\t'))].join('\n');
-  return ['Ticker\tPrecio', ...g.filas.map(f => f.tk + '\t' + bonNum(f.ars.v))].join('\n');
+  if (g.usd) return ['Ticker\tPesos\tPesos ayer\tMEP\tMEP ayer\tCable\tCable ayer', ...g.filas.map(f => [f.tk, bonNum(f.ars?.v), bonNum(f.ars?.ant), bonNum(f.mep?.v), bonNum(f.mep?.ant), bonNum(f.ccl?.v), bonNum(f.ccl?.ant)].join('\t'))].join('\n');
+  return ['Ticker\tPrecio\tAyer', ...g.filas.map(f => f.tk + '\t' + bonNum(f.ars.v) + '\t' + bonNum(f.ars.ant))].join('\n');
 }
 function bonTsvTodo(grupos) {
-  const out = ['Ticker\tPrecio'];
+  const out = ['Ticker\tPrecio\tAyer'], fila = (tk, x) => out.push(tk + '\t' + bonNum(x.v) + '\t' + bonNum(x.ant));
   for (const g of grupos) for (const f of g.filas) {
-    if (f.ars) out.push(f.tk + '\t' + bonNum(f.ars.v));
-    if (g.usd) { if (f.mep) out.push(f.tk + 'D\t' + bonNum(f.mep.v)); if (f.ccl) out.push(f.tk + 'C\t' + bonNum(f.ccl.v)); }
+    if (f.ars) fila(f.tk, f.ars);
+    if (g.usd) { if (f.mep) fila(f.tk + 'D', f.mep); if (f.ccl) fila(f.tk + 'C', f.ccl); }
   }
   return out.join('\n');
 }
@@ -3607,9 +3629,13 @@ function bonData912() {
   return Promise.all(['arg_bonds', 'arg_notes'].map(x => fetch('https://data912.com/live/' + x, { cache: 'no-store' })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }))).then(([b, n]) => [...b, ...n]);
 }
+function bonCierres() {
+  return fetch('bonos.json?_=' + Math.floor(Date.now() / 300000), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => j?.dias || null).catch(() => null);
+}
 async function loadBonos() {
   if (BON.cargando) return;
   const tok = ++BON.tok; BON.cargando = true; renderBonos();
+  const cierres = bonCierres().then(d => { if (d) BON.cierres = d; });
   const usar = d => { if (tok !== BON.tok) return; BON.datos = d; BON.error = null; if (d.fuente === 'byma') BON.bymaFallo = 0; renderBonos(); };
   const byma = bonByma(), d912 = bonData912();
   byma.catch(() => { BON.bymaFallo = Date.now(); }); d912.catch(() => {});
@@ -3619,8 +3645,13 @@ async function loadBonos() {
   if (r1.j) usar({ fuente: 'byma', filas: r1.j.filas, errores: r1.j.errores || [], at: new Date() });
   else {
     const tarde = 'no contestó en ' + espera / 1000 + (espera > 1000 ? ' segundos' : ' segundo');
-    try { usar({ fuente: 'data912', filas: await d912, at: new Date(), errByma: r1.e ? r1.e.message : tarde }); }
-    catch (e2) { if (tok === BON.tok) BON.error = 'No contestó ninguna fuente. BYMA: ' + (r1.e ? r1.e.message : tarde) + '. data912: ' + e2.message + '.'; }
+    try { const f = await d912; await cierres; usar({ fuente: 'data912', filas: f, at: new Date(), errByma: r1.e ? r1.e.message : tarde }); }
+    catch (e2) {
+      await cierres;
+      const k = Object.keys(BON.cierres || {}).sort();
+      if (k.length && (!BON.datos || BON.datos.fuente === 'cierres')) usar({ fuente: 'cierres', d: k.at(-1), at: new Date(), errByma: r1.e ? r1.e.message : tarde, err912: e2.message });
+      else if (tok === BON.tok) BON.error = 'No contestó ninguna fuente. BYMA: ' + (r1.e ? r1.e.message : tarde) + '. data912: ' + e2.message + '.';
+    }
     // BYMA tarde: si contesta, reemplaza a data912
     if (r1.tarde) byma.then(j => usar({ fuente: 'byma', filas: j.filas, errores: j.errores || [], at: new Date() }),
       e => { if (tok === BON.tok && BON.datos?.fuente === 'data912') { BON.datos.errByma = e.message; renderBonos(); } });
@@ -3639,21 +3670,30 @@ function renderBonos() {
     grid.innerHTML = '<div class="ov-loading">' + (BON.cargando ? 'Cargando precios…' : 'Sin precios. Probá Actualizar en un rato.') + '</div>';
     return;
   }
-  const byma = d.fuente === 'byma';
-  if (pz) { pz.style.opacity = byma ? '' : '.45'; pz.title = byma ? 'Plazo de liquidación' : 'data912 no informa el plazo'; }
-  st.textContent = (BON.cargando ? 'Actualizando… ' : '') + (byma ? 'BYMA, datos abiertos (20 minutos de demora), ' + hh(d.at) : 'data912, ' + hh(d.at)) + (BON.error ? '. ' + BON.error : '');
-  nota.title = byma ? (d.errores || []).join('; ') : d.errByma || '';
-  nota.innerHTML = byma
+  const byma = d.fuente === 'byma', guard = d.fuente === 'cierres', ddmm = x => x.slice(8, 10) + '/' + x.slice(5, 7);
+  if (pz) { pz.style.opacity = byma ? '' : '.45'; pz.title = byma ? 'Plazo de liquidación' : 'Sin BYMA no hay plazo para elegir'; }
+  const ayer = byma ? null : bonDiaAntes(guard ? d.d : bonHoyArt());
+  st.textContent = (BON.cargando ? 'Actualizando… ' : '') + (byma ? 'BYMA, datos abiertos (20 minutos de demora), ' + hh(d.at) : guard ? 'Cierre guardado del ' + ddmm(d.d) : 'data912, ' + hh(d.at)) + (BON.error ? '. ' + BON.error : '');
+  nota.title = byma ? (d.errores || []).join('; ') : [d.errByma, d.err912].filter(Boolean).join('; ');
+  const antTxt = byma ? 'Ayer: el cierre anterior de BYMA en el mismo plazo.'
+    : ayer && !ayer.est ? 'Ayer: el cierre del ' + ddmm(ayer.d) + ' que guarda la página cada noche (' + bonEsc(ayer.fuente) + ').'
+    : guard ? 'Ayer: sin otro cierre guardado.'
+    : 'Ayer, en gris: estimado con la variación del día que informa data912, que viene redondeada (hasta 0,005% de diferencia con el cierre). Desde el cierre de hoy, la página guarda el de cada noche.';
+  nota.innerHTML = (byma
     ? 'En gris, los que no operaron hoy en ese plazo: van con el cierre anterior.' + (d.errores?.length ? ' Faltó un panel de BYMA (' + (d.errores.some(e => /^lebacs/.test(e)) ? 'letras' : 'bonos') + ').' : '')
-    : 'BYMA no contestó: van los precios de data912, una API gratuita y no oficial, con el último operado y sin plazo. Si BYMA contesta, se reemplazan solos.';
-  nota.innerHTML += ' Copiar todo arma una fila por ticker (los bonos en dólares también como AL30D y AL30C), con coma decimal, para buscar con BUSCARV.';
-  const px = byma ? bonPxByma(d.filas, BON.plazo) : bonPxData912(d.filas), grupos = bonArmar(px); BON.grupos = grupos;
-  const fmt = x => x ? '<td' + (x.viejo ? ' class="bon-ant" title="Sin operaciones hoy: cierre anterior"' : x.hora ? ' title="Último a las ' + bonEsc(x.hora.slice(0, 5)) + '"' : '') + '>' + x.v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + '</td>' : '<td class="bon-ant">—</td>';
+    : guard ? 'No contestó BYMA ni data912: van los cierres del ' + ddmm(d.d) + ' que guardó la página.'
+    : 'BYMA no contestó: van los precios de data912, una API gratuita y no oficial, con el último operado y sin plazo. Si BYMA contesta, se reemplazan solos.')
+    + ' ' + antTxt + ' Copiar todo arma una fila por ticker con el precio y el de ayer (los bonos en dólares también como AL30D y AL30C), con coma decimal, para buscar con BUSCARV.';
+  const px = byma ? bonPxByma(d.filas, BON.plazo) : guard ? bonPxCierres(BON.cierres[d.d], ayer) : bonPxData912(d.filas, ayer), grupos = bonArmar(px); BON.grupos = grupos;
+  const num = v => v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  const fmt = x => x ? '<td' + (x.viejo ? ' class="bon-ant" title="Sin operaciones hoy: cierre anterior"' : x.hora ? ' title="Último a las ' + bonEsc(x.hora.slice(0, 5)) + '"' : '') + '>' + num(x.v) + '</td>' : '<td class="bon-ant">—</td>';
+  const fmtAnt = x => x && x.ant ? '<td class="bon-ayer' + (x.antEst ? ' bon-ant" title="Estimado con la variación del día de data912' : '') + '">' + num(x.ant) + '</td>' : '<td class="bon-ant">—</td>';
+  const fuenteTxt = byma ? 'BYMA' : guard ? 'los cierres guardados' : 'data912';
   grid.innerHTML = grupos.map((g, i) => '<div class="ov-card bon-card' + (g.usd ? ' bon-usd' : '') + '"><div class="bon-head"><div class="ov-card-title">' + g.n + (g.sub ? ' <span>' + g.sub + '</span>' : '') + '</div>'
     + '<button class="btn btn-ghost" onclick="copiarBonGrupo(' + i + ')"' + (g.filas.length ? '' : ' disabled') + '>Copiar</button></div>'
-    + (g.filas.length ? '<table class="ov-tbl"><thead><tr><th>Ticker</th>' + (g.usd ? '<th>Pesos</th><th>MEP</th><th>Cable</th>' : '<th>Precio</th>') + '</tr></thead><tbody>'
-      + g.filas.map(f => '<tr><td>' + f.tk + '</td>' + fmt(f.ars) + (g.usd ? fmt(f.mep) + fmt(f.ccl) : '') + '</tr>').join('') + '</tbody></table>'
-      : '<div class="bon-vacio">Sin precios en ' + (byma ? 'BYMA' : 'data912') + ' para este grupo.</div>') + '</div>').join('');
+    + (g.filas.length ? '<table class="ov-tbl"><thead><tr><th>Ticker</th>' + (g.usd ? '<th>Pesos</th><th>Ayer</th><th>MEP</th><th>Ayer</th><th>Cable</th><th>Ayer</th>' : '<th>Precio</th><th>Ayer</th>') + '</tr></thead><tbody>'
+      + g.filas.map(f => '<tr><td>' + f.tk + '</td>' + fmt(f.ars) + fmtAnt(f.ars) + (g.usd ? fmt(f.mep) + fmtAnt(f.mep) + fmt(f.ccl) + fmtAnt(f.ccl) : '') + '</tr>').join('') + '</tbody></table>'
+      : '<div class="bon-vacio">Sin precios en ' + fuenteTxt + ' para este grupo.</div>') + '</div>').join('');
 }
 
 // Gráficos chicos del Resumen (SPY y GGAL): 1D cada 5 min con el cierre anterior como base, 1M y 1A diarios

@@ -154,6 +154,67 @@ async function caucion({ fetchImpl, root, log, now }) {
   log(`cauciones.json: ${c1.length} días` + (c1.length ? `, último ${c1[c1.length - 1].join(" ")}` : ""));
 }
 
+// Bonos (pestaña Bonos): el cierre de cada día de los bonos del Tesoro, para la columna "Ayer" cuando BYMA no contesta y
+// la página va con data912, que no da el cierre anterior. Fuente: BYMA, 24 hs (el cierre del día, si no el último operado
+// y si no operó, el cierre anterior); si BYMA no contesta, data912 (el último operado, y el cierre anterior sale de la
+// variación del día, redondeada a dos decimales: hasta 0,005% de diferencia, y queda marcado como estimado).
+// bonos.json: { dias: { fecha: { fuente, px: { ticker: precio } } } }, los últimos 15 días.
+export const BONOS_RE = /^([ST]\d{2}[EFMAYJLGSOND]\d|TT[EFMAYJLGSOND]\d{2}|TXM[EFMAYJLGSOND]\d|TMV[EFMAYJLGSOND]\d|D\d{2}[EFMAYJLGSOND]\d|TZV\d{2}|TZV[EFMAYJLGSOND]\d|TM[EFMAYJLGSOND]\d{2}|M\d{2}[EFMAYJLGSOND]\d|TX\d{2}|TZX\d{2}|TZX[EFMAYJLGSOND]\d|X\d{2}[EFMAYJLGSOND]\d|DICP|PARP|CUAP|DIP0|PAP0|TY\d{2}P|TO\d{2}|(A[ELNO]\d{2}|GD\d{2}|PAY0)[CD]?)$/;
+const BYMA_FREE = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/";
+// qué rueda cerró según la hora de Buenos Aires: después de las 17:05, la del día; antes de las 11, la del día hábil
+// anterior (una corrida demorada pasada la medianoche); durante la rueda, ninguna (solo el cierre anterior)
+export function ruedaBonos(now) {
+  const art = new Date(now.getTime() - 3 * 3600000), d = art.toISOString().slice(0, 10), hm = art.getUTCHours() * 60 + art.getUTCMinutes(), dow = art.getUTCDay();
+  if (dow === 0 || dow === 6) { const c = prevWeekday(d); return { cierre: c, anterior: prevWeekday(c) }; }
+  if (hm >= 17 * 60 + 5) return { cierre: d, anterior: prevWeekday(d) };
+  if (hm < 11 * 60) { const c = prevWeekday(d); return { cierre: c, anterior: prevWeekday(c) }; }
+  return { cierre: null, anterior: prevWeekday(d) };
+}
+export function preciosBonos(filas, fuente) {
+  const hoy = {}, ant = {};
+  for (const x of filas || []) {
+    const s = String(x.symbol || "").trim(); if (!BONOS_RE.test(s)) continue;
+    if (fuente === "byma") {
+      if (String(x.settlementType) !== "2") continue;
+      const h = x.closingPrice > 0 ? x.closingPrice : x.trade > 0 ? x.trade : x.previousClosingPrice > 0 ? x.previousClosingPrice : null;
+      if (h) hoy[s] = h; if (x.previousClosingPrice > 0) ant[s] = x.previousClosingPrice;
+    } else if (x.c > 0) {
+      hoy[s] = x.c; if (isFinite(x.pct_change) && x.pct_change > -100) ant[s] = +(x.c / (1 + x.pct_change / 100)).toPrecision(8);
+    }
+  }
+  return { hoy, ant };
+}
+export function addBonos(dias, { fuente, hoy, ant }, now = new Date()) {
+  const out = { ...(dias || {}) }, { cierre, anterior } = ruedaBonos(now), est = fuente === "data912";
+  if (cierre && Object.keys(hoy).length) out[cierre] = { fuente: est ? "data912" : "BYMA (24 hs)", px: hoy };
+  if (anterior && Object.keys(ant).length && !out[anterior]) out[anterior] = { fuente: est ? "data912, estimado con la variación del día" : "BYMA (24 hs)", px: ant };
+  return Object.fromEntries(Object.entries(out).sort((a, b) => a[0].localeCompare(b[0])).slice(-15));
+}
+async function bonos({ fetchImpl, root, log, now }) {
+  let filas = [], fuente = "byma";
+  try {
+    for (const panel of ["public-bonds", "lebacs"]) for (let pg = 1; pg <= 10; pg++) {
+      const r = await fetchImpl(BYMA_FREE + panel, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ excludeZeroPxAndQty: false, T2: true, T1: true, T0: true, page_number: pg }), signal: AbortSignal.timeout(20000) });
+      if (!r.ok) throw new Error(panel + " HTTP " + r.status);
+      const j = await r.json(), d = Array.isArray(j) ? j : j.data || [];
+      filas.push(...d); if (!d.length || pg >= (j?.content?.page_count ?? 1)) break;
+    }
+    if (!filas.length) throw new Error("sin especies");
+  } catch (e) {
+    log("bonos: BYMA no contestó (" + e.message + "), van los de data912");
+    fuente = "data912";
+    filas = (await Promise.all(["arg_bonds", "arg_notes"].map(x => fetchImpl("https://data912.com/live/" + x, { signal: AbortSignal.timeout(20000) })
+      .then(r => { if (!r.ok) throw new Error("data912 " + x + " HTTP " + r.status); return r.json(); })))).flat();
+  }
+  const p = preciosBonos(filas, fuente);
+  let prev = { dias: {} };
+  try { prev = JSON.parse(await readFile(new URL("bonos.json", root), "utf8")); } catch (e) { /* primera vez */ }
+  const dias = addBonos(prev.dias, { fuente, ...p }, now);
+  await writeFile(new URL("bonos.json", root), JSON.stringify({ asOf: now.toISOString(), src: "BYMA, datos abiertos (24 hs); si no contesta, data912", dias }));
+  const f = Object.keys(dias);
+  log(`bonos.json: ${f.length} días (${f[0]} a ${f.at(-1)}), ${Object.keys(p.hoy).length} especies de ${fuente}`);
+}
+
 // Monedas de la región con las fuentes oficiales (el FX de Yahoo para emergentes tiene datos malos: CLP=X marcó 959,6 el
 // 26/10/2026 con el observado en 990,35; PEN=X alterna entre dos niveles 3% separados día por medio):
 //   real: PTAX venta del Banco Central do Brasil (SGS, serie 1)
@@ -295,6 +356,7 @@ export async function main({ fetchImpl = fetch, root = new URL("../", import.met
   // el MSCI MERVAL y la caución no frenan el ITCRM si BYMA no responde
   await msciMerval({ fetchImpl, root, log, now }).catch(e => log("MSCI MERVAL: " + e.message));
   await caucion({ fetchImpl, root, log, now }).catch(e => log("Caución: " + e.message));
+  await bonos({ fetchImpl, root, log, now }).catch(e => log("bonos: " + e.message));
   const r = await fetchImpl(ITCRM_URL, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; serie ITCRM)" } });
   if (!r.ok) throw new Error("BCRA ITCRM HTTP " + r.status);
   const buf = Buffer.from(await r.arrayBuffer());
