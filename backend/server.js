@@ -7,6 +7,7 @@ import express from "express";
 import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
+import { bymaBonos } from "./bonos.mjs";
 import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, bookQuarterly, fillPub, PUB_MAX_DAYS, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
@@ -365,6 +366,17 @@ app.get("/api/quote", async (req, res) => {
 
 const SPARK_RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "ytd", "1y", "2y", "5y"];
 const SPARK_INTERVALS = ["1d", "5m", "15m", "30m", "60m"];
+// precios de bonos y letras del Tesoro de BYMA (pestaña Bonos): un minuto en memoria, así el botón de actualizar no
+// le pega a BYMA más de una vez por minuto aunque lo toquen varios
+app.get("/api/byma/bonos", async (req, res) => {
+  try {
+    const data = await cached("byma:bonos", 60 * 1000, async () => ({ asOf: new Date().toISOString(), fuente: "BYMA, datos abiertos (20 minutos de demora)", ...(await bymaBonos(fetch)) }));
+    res.set("Cache-Control", "no-store").json(data);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 app.get("/api/spark", async (req, res) => {
   const syms = parseSyms(req.query.symbols);
   if (!syms.length) return res.status(400).json({ error: "symbols required" });
