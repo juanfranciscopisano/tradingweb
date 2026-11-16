@@ -558,6 +558,17 @@ a.cal-chip{text-decoration:none;cursor:pointer}
 
 /* argentina */
 .arg-title{font-weight:700;color:var(--ink);font-stretch:106%}
+.bon-grid{columns:270px 5;column-gap:18px}
+.bon-grid>.ov-card{break-inside:avoid;margin:0 0 18px;width:100%;display:block}
+.bon-nota{font-size:12.5px;color:var(--muted);line-height:1.5;max-width:110ch}
+.bon-nota:empty{display:none}
+.bon-head{display:flex;align-items:baseline;gap:8px}
+.bon-head .ov-card-title{margin-bottom:0}
+.bon-head .btn{margin-left:auto;font-size:12px;padding:3px 10px}
+.bon-card .ov-tbl{margin-top:10px}
+.bon-card .ov-tbl tbody td{font-variant-numeric:tabular-nums}
+.bon-card .ov-tbl tbody td.bon-ant{color:var(--muted)}
+.bon-vacio{font-size:12.5px;color:var(--muted);margin-top:10px}
 .arg-status{font-size:12.5px;color:var(--muted)}
 .arg-body{display:flex;flex-direction:column;gap:18px;padding:20px var(--side)}
 .arg-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1.2fr);gap:18px;align-items:start}
@@ -775,6 +786,7 @@ function checkPwd(){
   </div>
   <div class="tab" id="tab-overview" onclick="switchTab('overview')">Resumen</div>
   <div class="tab" id="tab-arg" onclick="switchTab('arg')">Argentina</div>
+  <div class="tab" id="tab-bonos" onclick="switchTab('bonos')">Bonos</div>
   <div class="tab" id="tab-fondos" onclick="switchTab('fondos')">Fondos</div>
   <div class="tab active" id="tab-screener" onclick="switchTab('screener')">Screener</div>
   <div class="tab" id="tab-chart" onclick="switchTab('chart')">Gráfico</div>
@@ -849,6 +861,25 @@ function checkPwd(){
     </div>
     <div class="arg-note" id="fciNota"></div>
   </div>
+</div>
+
+<div class="view view-scroll" id="view-bonos">
+  <div class="ov-clock-bar">
+    <span class="arg-title">Bonos y precios</span>
+    <span class="arg-status" id="bonStatus">—</span>
+    <div class="cs"></div>
+    <div class="pebg-period-btns" id="bonPlazo" role="group" aria-label="Plazo de liquidación">
+      <span class="pebg-period" data-p="1" onclick="setBonPlazo('1')">CI</span>
+      <span class="pebg-period active" data-p="2" onclick="setBonPlazo('2')">24 hs</span>
+    </div>
+    <button class="btn btn-ghost" id="bonActualizar" onclick="loadBonos(true)">Actualizar</button>
+    <button class="btn" onclick="copiarBonos()">Copiar todo</button>
+  </div>
+  <div class="arg-body">
+    <div class="bon-nota" id="bonNota"></div>
+    <div class="bon-grid" id="bonGrid"><div class="ov-loading">Cargando precios…</div></div>
+  </div>
+  <div class="inf-toast" id="bonToast" role="status" aria-live="polite"></div>
 </div>
 
 <div class="view view-scroll" id="view-arg">
@@ -1704,6 +1735,7 @@ function switchTab(t) {
   if(t==='cartera') { if(!carteraLoaded) loadCartera(); }
   if(t==='overview') { startClock(); if(!ovLoaded) loadOverview(); }
   if(t==='arg') { if(!argData && !argLoading) loadArg(); else drawArgCharts(); }
+  if(t==='bonos') { if(!BON.datos && !BON.cargando) loadBonos(); }
   if(t==='fondos') { if(!FCI) loadFondos(); else renderFondos(); }
   if(t==='sect') { if(!MULT) loadSect(); else renderSect(); }
   // bancos.json puede venir bajado de P/E histórico (el P/BV de los bancos argentinos): bcra.json se pide igual
@@ -3453,6 +3485,163 @@ async function loadOvDolar() {
   el.innerHTML = '<table class="ov-tbl ov-dolar-tbl"><thead><tr><th>Dólar</th><th>Plazo</th><th>Precio</th><th>1D</th></tr></thead><tbody>'
     + rows.map(r => '<tr><td>' + r.label + '</td><td class="ov-plazo">' + (r.plazo || '') + '</td><td>' + fmtArs(r.v, r.dec) + '</td><td>' + fmtVar(r.var) + '</td></tr>').join('')
     + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (ArgentinaDatos para oficial, mayorista y blue).</div>';
+}
+
+// ---- Bonos: precios de los bonos del Tesoro para pegar en Excel (sin tasas). Primero BYMA (datos abiertos, vía el
+// backend: todas las especies, también las que no operaron hoy, con su cierre anterior, y los plazos). Si BYMA no
+// contesta en 6 segundos van los de data912, una API gratuita y no oficial con el último precio de las que cotizan, y si
+// BYMA contesta después, se reemplazan. Los grupos salen del ticker: son las listas de 1816 (Soberanos ARS tasa fija,
+// Duales, USD Linked, Tamar, CER, Botes, Bonares y Globales), más las especies nuevas con el mismo formato.
+const BON_MES = 'EFMAYJLGSOND';
+const bonEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const BON_GRUPOS = [
+  { id: 'fija', n: 'Lecaps y Boncaps', re: /^[ST]\d{2}[EFMAYJLGSOND]\d$/ },
+  { id: 'duales', n: 'Duales', re: /^(TT[EFMAYJLGSOND]\d{2}|TXM[EFMAYJLGSOND]\d|TMV[EFMAYJLGSOND]\d)$/ },
+  { id: 'linked', n: 'Dólar linked', re: /^(D\d{2}[EFMAYJLGSOND]\d|TZV\d{2}|TZV[EFMAYJLGSOND]\d)$/ },
+  { id: 'tamar', n: 'TAMAR', re: /^(TM[EFMAYJLGSOND]\d{2}|M\d{2}[EFMAYJLGSOND]\d)$/ },
+  { id: 'cer', n: 'CER', sub: 'Boncer y Lecer', re: /^(TX\d{2}|TZX\d{2}|TZX[EFMAYJLGSOND]\d|X\d{2}[EFMAYJLGSOND]\d|DICP|PARP|CUAP|DIP0|PAP0)$/ },
+  { id: 'bonte', n: 'Bonte', re: /^(TY\d{2}P|TO\d{2})$/ },
+  { id: 'usd', n: 'Soberanos en dólares', re: /^(A[ELNO]\d{2}|GD\d{2}|PAY0)$/, usd: true },
+];
+const BON = { datos: null, grupos: null, cargando: false, error: null, tok: 0, plazo: (() => { try { return localStorage.getItem('bonPlazo') || '2'; } catch (e) { return '2'; } })() };
+
+// vencimiento para ordenar: el de BYMA si viene; si no, el del ticker (los de un solo dígito de año van de 2025 a 2034)
+function bonVence(tk, vto) {
+  if (vto) return vto;
+  const mes = c => String(BON_MES.indexOf(c) + 1).padStart(2, '0'), anio = d => { const y = 2020 + +d; return String(y < 2025 ? y + 10 : y); };
+  let m;
+  if ((m = tk.match(/^[STXDM](\d{2})([EFMAYJLGSOND])(\d)$/))) return anio(m[3]) + '-' + mes(m[2]) + '-' + m[1];
+  if ((m = tk.match(/^(?:TZ[XV]|TXM|TMV)([EFMAYJLGSOND])(\d)$/))) return anio(m[2]) + '-' + mes(m[1]) + '-15';
+  if ((m = tk.match(/^T[MT]([EFMAYJLGSOND])(\d{2})$/))) return '20' + m[2] + '-' + mes(m[1]) + '-15';
+  if ((m = tk.match(/^TZ[XV](\d{2})$/))) return '20' + m[1] + '-06-30';
+  if ((m = tk.match(/^TX(\d{2})$/))) return '20' + m[1] + '-11-09';
+  if ((m = tk.match(/^TY(\d{2})P$/))) return '20' + m[1] + '-05-30';
+  if ((m = tk.match(/^TO(\d{2})$/))) return '20' + m[1] + '-10-17';
+  if ((m = tk.match(/^(?:A[ELNO]|GD)(\d{2})$/))) return '20' + m[1] + '-07-09';
+  return { DICP: '2033-12-31', DIP0: '2033-12-31', PARP: '2038-12-31', PAP0: '2038-12-31', PAY0: '2038-12-31', CUAP: '2045-12-31' }[tk] || '9999';
+}
+
+// precio de cada especie: BYMA, el cierre del día si ya está, si no el último operado y si no operó, el cierre anterior
+// (va en gris); data912, el último
+function bonPxByma(filas, plazo) {
+  const px = new Map();
+  for (const f of filas || []) {
+    if (f.p !== plazo) continue;
+    const v = f.cie || f.ult || f.ant; if (!(v > 0)) continue;
+    px.set(f.s, { v, viejo: !f.cie && !f.ult, hora: f.hora || '', vto: f.vto || '' });
+  }
+  return px;
+}
+function bonPxData912(filas) {
+  const px = new Map();
+  for (const f of filas || []) if (f && f.symbol && f.c > 0) px.set(String(f.symbol).trim(), { v: f.c, viejo: false, hora: '', vto: '' });
+  return px;
+}
+function bonArmar(px) {
+  const grupos = BON_GRUPOS.map(g => ({ ...g, filas: [] })), usd = grupos.find(g => g.usd), bases = new Set();
+  for (const [s, x] of px) {
+    const g = grupos.find(g => g.re.test(s));
+    if (g && !g.usd) g.filas.push({ tk: s, vto: bonVence(s, x.vto), ars: x });
+    else if (g) bases.add(s);
+    else if (/[CD]$/.test(s) && usd.re.test(s.slice(0, -1))) bases.add(s.slice(0, -1));
+  }
+  for (const b of bases) { const a = px.get(b) || null; usd.filas.push({ tk: b, vto: bonVence(b, a?.vto), ars: a, mep: px.get(b + 'D') || null, ccl: px.get(b + 'C') || null }); }
+  grupos.forEach(g => g.filas.sort((a, b) => a.vto.localeCompare(b.vto) || a.tk.localeCompare(b.tk)));
+  return grupos;
+}
+
+// para Excel: coma decimal y sin separador de miles. Un grupo, como se ve; todo, una fila por ticker (AL30, AL30D y
+// AL30C por separado), para buscar con BUSCARV
+const bonNum = v => (v > 0 ? String(+v.toFixed(6)).replace('.', ',') : '');
+function bonTsvGrupo(g) {
+  if (g.usd) return ['Ticker\tPesos\tMEP\tCable', ...g.filas.map(f => [f.tk, bonNum(f.ars?.v), bonNum(f.mep?.v), bonNum(f.ccl?.v)].join('\t'))].join('\n');
+  return ['Ticker\tPrecio', ...g.filas.map(f => f.tk + '\t' + bonNum(f.ars.v))].join('\n');
+}
+function bonTsvTodo(grupos) {
+  const out = ['Ticker\tPrecio'];
+  for (const g of grupos) for (const f of g.filas) {
+    if (f.ars) out.push(f.tk + '\t' + bonNum(f.ars.v));
+    if (g.usd) { if (f.mep) out.push(f.tk + 'D\t' + bonNum(f.mep.v)); if (f.ccl) out.push(f.tk + 'C\t' + bonNum(f.ccl.v)); }
+  }
+  return out.join('\n');
+}
+function bonToast(msg) { const e = document.getElementById('bonToast'); if (!e) return; e.textContent = msg; e.classList.add('on'); clearTimeout(bonToast.t); bonToast.t = setTimeout(() => e.classList.remove('on'), 3200); }
+async function bonCopiar(t, msg) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove();
+    if (!ok) { bonToast('No se pudo copiar: el navegador no dio permiso'); return false; }
+  }
+  bonToast(msg); return true;
+}
+function copiarBonos() {
+  if (!BON.grupos) { bonToast('Todavía no hay precios'); return; }
+  const n = BON.grupos.reduce((k, g) => k + g.filas.reduce((j, f) => j + (f.ars ? 1 : 0) + (f.mep ? 1 : 0) + (f.ccl ? 1 : 0), 0), 0);
+  return bonCopiar(bonTsvTodo(BON.grupos), n + ' precios copiados: pegalos en Excel');
+}
+function copiarBonGrupo(i) { const g = BON.grupos?.[i]; if (g) return bonCopiar(bonTsvGrupo(g), g.n + ' copiados: pegalos en Excel'); }
+function setBonPlazo(p) {
+  BON.plazo = p; try { localStorage.setItem('bonPlazo', p); } catch (e) {}
+  document.querySelectorAll('#bonPlazo .pebg-period').forEach(x => x.classList.toggle('active', x.dataset.p === p));
+  renderBonos();
+}
+
+function bonByma() {
+  return fetch(BASE_URL + '/api/byma/bonos', { cache: 'no-store' }).then(async r => {
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !Array.isArray(j.filas)) throw new Error(j.error || 'HTTP ' + r.status);
+    return j;
+  });
+}
+function bonData912() {
+  return Promise.all(['arg_bonds', 'arg_notes'].map(x => fetch('https://data912.com/live/' + x, { cache: 'no-store' })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }))).then(([b, n]) => [...b, ...n]);
+}
+async function loadBonos() {
+  if (BON.cargando) return;
+  const tok = ++BON.tok; BON.cargando = true; renderBonos();
+  const usar = d => { if (tok !== BON.tok) return; BON.datos = d; BON.error = null; renderBonos(); };
+  const byma = bonByma(), d912 = bonData912();
+  byma.catch(() => {}); d912.catch(() => {});
+  const r1 = await Promise.race([byma.then(j => ({ j }), e => ({ e })), new Promise(res => setTimeout(() => res({ tarde: true }), 6000))]);
+  if (r1.j) usar({ fuente: 'byma', filas: r1.j.filas, errores: r1.j.errores || [], at: new Date() });
+  else {
+    try { usar({ fuente: 'data912', filas: await d912, at: new Date(), errByma: r1.e ? r1.e.message : 'no contestó en 6 segundos' }); }
+    catch (e2) { if (tok === BON.tok) BON.error = 'No contestó ninguna fuente. BYMA: ' + (r1.e ? r1.e.message : 'no contestó en 6 segundos') + '. data912: ' + e2.message + '.'; }
+    // BYMA tarde: si contesta, reemplaza a data912
+    if (r1.tarde) byma.then(j => usar({ fuente: 'byma', filas: j.filas, errores: j.errores || [], at: new Date() }),
+      e => { if (tok === BON.tok && BON.datos?.fuente === 'data912') { BON.datos.errByma = e.message; renderBonos(); } });
+  }
+  if (tok === BON.tok) { BON.cargando = false; renderBonos(); }
+}
+
+function renderBonos() {
+  const grid = document.getElementById('bonGrid'), st = document.getElementById('bonStatus'), nota = document.getElementById('bonNota'), btn = document.getElementById('bonActualizar'), pz = document.getElementById('bonPlazo');
+  if (!grid) return;
+  if (btn) btn.disabled = BON.cargando;
+  document.querySelectorAll('#bonPlazo .pebg-period').forEach(x => x.classList.toggle('active', x.dataset.p === BON.plazo));
+  const d = BON.datos, hh = t => t.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  if (!d) {
+    st.textContent = BON.cargando ? 'Actualizando…' : (BON.error || '—');
+    grid.innerHTML = '<div class="ov-loading">' + (BON.cargando ? 'Cargando precios…' : 'Sin precios. Probá Actualizar en un rato.') + '</div>';
+    return;
+  }
+  const byma = d.fuente === 'byma';
+  if (pz) { pz.style.opacity = byma ? '' : '.45'; pz.title = byma ? 'Plazo de liquidación' : 'data912 no informa el plazo'; }
+  st.textContent = (BON.cargando ? 'Actualizando… ' : '') + (byma ? 'BYMA, datos abiertos (20 minutos de demora), ' + hh(d.at) : 'data912, ' + hh(d.at)) + (BON.error ? '. ' + BON.error : '');
+  nota.title = byma ? (d.errores || []).join('; ') : d.errByma || '';
+  nota.innerHTML = byma
+    ? 'En gris, los que no operaron hoy en ese plazo: van con el cierre anterior.' + (d.errores?.length ? ' Faltó un panel de BYMA (' + (d.errores.some(e => /^lebacs/.test(e)) ? 'letras' : 'bonos') + ').' : '')
+    : 'BYMA no contestó: van los precios de data912, una API gratuita y no oficial, con el último operado y sin plazo. Si BYMA contesta, se reemplazan solos.';
+  nota.innerHTML += ' Copiar todo arma una fila por ticker (los bonos en dólares también como AL30D y AL30C), con coma decimal, para buscar con BUSCARV.';
+  const px = byma ? bonPxByma(d.filas, BON.plazo) : bonPxData912(d.filas), grupos = bonArmar(px); BON.grupos = grupos;
+  const fmt = x => x ? '<td' + (x.viejo ? ' class="bon-ant" title="Sin operaciones hoy: cierre anterior"' : x.hora ? ' title="Último a las ' + bonEsc(x.hora.slice(0, 5)) + '"' : '') + '>' + x.v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + '</td>' : '<td class="bon-ant">—</td>';
+  grid.innerHTML = grupos.map((g, i) => '<div class="ov-card bon-card' + (g.usd ? ' bon-usd' : '') + '"><div class="bon-head"><div class="ov-card-title">' + g.n + (g.sub ? ' <span>' + g.sub + '</span>' : '') + '</div>'
+    + '<button class="btn btn-ghost" onclick="copiarBonGrupo(' + i + ')"' + (g.filas.length ? '' : ' disabled') + '>Copiar</button></div>'
+    + (g.filas.length ? '<table class="ov-tbl"><thead><tr><th>Ticker</th>' + (g.usd ? '<th>Pesos</th><th>MEP</th><th>Cable</th>' : '<th>Precio</th>') + '</tr></thead><tbody>'
+      + g.filas.map(f => '<tr><td>' + f.tk + '</td>' + fmt(f.ars) + (g.usd ? fmt(f.mep) + fmt(f.ccl) : '') + '</tr>').join('') + '</tbody></table>'
+      : '<div class="bon-vacio">Sin precios en ' + (byma ? 'BYMA' : 'data912') + ' para este grupo.</div>') + '</div>').join('');
 }
 
 // Gráficos chicos del Resumen (SPY y GGAL): 1D cada 5 min con el cierre anterior como base, 1M y 1A diarios
@@ -6226,6 +6415,19 @@ const METODO = [
         p: 'El IPC sale con un mes y medio de rezago, y extenderlo con el último dato es la proyección más neutra sin meter una estimación propia.' },
     ] },
 
+  { id: 'bonos', t: 'Bonos y precios',
+    items: [
+      { d: 'Precios de los bonos del Tesoro para pegar en Excel, sin tasas: Lecaps y Boncaps, duales, dólar linked, TAMAR, CER (Boncer y Lecer), Bonte y soberanos en dólares (Bonares y Globales, en pesos, MEP y cable).',
+        p: 'Hace de vector de precios: un ticker y su precio, para buscar con BUSCARV.' },
+      { d: 'Fuente: los paneles de títulos públicos y de letras de los datos abiertos de BYMA, con 20 minutos de demora. Los pide el backend cuando se toca Actualizar y los guarda un minuto. Plazo: contado inmediato o 24 hs. Precio: el cierre del día si ya está; si no, el último operado; si no operó, el cierre anterior, en gris.',
+        p: 'BYMA es gratis y oficial, no gasta créditos de 1816 y trae todas las especies, también las que no operaron en el día.' },
+      { d: 'Si BYMA no contesta en 6 segundos van los precios de data912, una API gratuita y no oficial: el último operado, que se actualiza cada 20 segundos, sin plazo. Si BYMA contesta después, reemplaza a data912.',
+        p: 'El 16/11/2026 BYMA no contestaba ni desde el navegador ni desde el backend, y data912 sí.',
+        o: 'data912 es un proyecto personal sin garantía (dice que es para uso educativo). No informa el plazo ni el cierre anterior, y trae solo lo que cotiza.' },
+      { d: 'Grupos por ticker, con las listas de 1816 (Soberanos ARS tasa fija, Duales, USD Linked, Tamar, CER, Botes, Bonares y Globales) y el mismo formato para las especies nuevas: S y T con día, mes y año (Lecap y Boncap); TT, TXM y TMV (duales); D con fecha y TZV (dólar linked); TM, y M con fecha (TAMAR); TX, TZX, X con fecha, DICP, PARP y CUAP (CER); TY con P (Bonte); AL, AE, AN, AO y GD (soberanos en dólares). Van ordenados por vencimiento.',
+        o: 'Una especie nueva con otro formato no aparece hasta sumarla a la lista.' },
+      { d: 'Copiar: cada grupo como se ve; Copiar todo, una fila por ticker, con los bonos en dólares también como AL30D y AL30C. Con coma decimal y sin separador de miles, para el Excel en castellano.' },
+    ] },
   { id: 'informe', t: 'Informe: gráficos en formato BAVSA',
     items: [
       { d: 'Treasuries descompuestos: el modelo de Kim y Wright de la Reserva Federal separa el rendimiento cupón cero de 1 a 10 años en la tasa corta que el mercado espera para el plazo y el term premium; los TIPS separan el nominal en tasa real e inflación implícita: de 2 a 20 años con la curva que estima la Reserva Federal (Gürkaynak, Sack y Wright, rendimientos par) y a 30 con el plazo constante del Tesoro, que publica la real solo desde 5 años. Por plazo a la última fecha que tienen todos (con el valor de cada parte adentro de la columna y el año en que vencería), el de 10 años con el último dato de cada mes, o de dónde vino el cambio de la tasa nominal contra hace 1, 3, 6 y 12 meses: las dos partes apiladas, en bps, al plazo que se elija. Sale de FRED con las series macro.',
