@@ -1,6 +1,6 @@
 // Series macro que el navegador no puede bajar directo (el BCRA no habilita CORS en sus planillas) o que no tienen
 // historia pública. El Índice de Tipo de Cambio Real Multilateral (ITCRM) diario y los bilaterales con Brasil, Estados Unidos,
-// China y la Zona Euro, de la planilla ITCRMSerie.xlsx del BCRA (itcrm.json), los cierres del MSCI MERVAL
+// China y la Zona Euro, de la planilla del ITCRM del BCRA (itcrm.json), los cierres del MSCI MERVAL
 // (merval.json), la caución a 1 día (cauciones.json) y los tipos de cambio oficiales de la región (fx.json).
 // Escribe en la raíz del repo.
 //   node scripts/macro.mjs
@@ -8,7 +8,13 @@ import { readFile, writeFile } from "node:fs/promises";
 import { inflateRawSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 
-export const ITCRM_URL = "https://www.bcra.gob.ar/Pdfs/PublicacionesEstadisticas/ITCRMSerie.xlsx";
+// el BCRA mudó la página del ITCRM el 19/10/2026 y la planilla pasó a otra dirección; la vieja sigue respondiendo, pero con
+// el archivo congelado al 16/10. Se prueban las dos y queda la que llega más lejos (la nueva, si empatan)
+export const ITCRM_PAGINA = "https://www.bcra.gob.ar/indices-de-tipo-de-cambio-multilateral/";
+export const ITCRM_URLS = [
+  "https://www.bcra.gob.ar/archivos/Pdfs/PublicacionesEstadisticas/itcrm-serie.xlsx",
+  "https://www.bcra.gob.ar/Pdfs/PublicacionesEstadisticas/ITCRMSerie.xlsx",
+];
 // columnas que se guardan: nombre en el archivo de salida y cómo se reconoce el encabezado de la planilla
 export const ITCRM_COLS = [
   ["itcrm", /^itcrm$/i],
@@ -101,8 +107,28 @@ export function parseItcrm(sheets) {
     // si hay dos hojas (diaria y promedio mensual), la de más filas
     if (data.length > (best?.data.length || 0)) best = { sheet: name, data, encabezado: [rows[h - 1], rows[h], rows[h + 1]].map(r => (r || []).slice(0, 40)) };
   }
-  if (!best || best.data.length < 100) throw new Error("no encontré la serie diaria del ITCRM en la planilla");
+  if (!best || best.data.length < 100) throw new Error("no encontré la serie diaria del ITCRM en la planilla (hojas: " + Object.keys(sheets).join(", ") + ")");
   best.data.sort((a, b) => a[0].localeCompare(b[0]));
+  return best;
+}
+
+// baja las planillas de ITCRM_URLS y se queda con la que tiene el último dato más nuevo; avisa si igual quedó vieja
+export async function bajarItcrm({ fetchImpl = fetch, log = console.log, now = new Date() } = {}) {
+  let best = null; const errores = [];
+  const ult = p => p.data[p.data.length - 1][0];
+  for (const url of ITCRM_URLS) {
+    try {
+      const r = await fetchImpl(url, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; serie ITCRM)" }, signal: AbortSignal.timeout(90000) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const p = parseItcrm(readXlsx(Buffer.from(await r.arrayBuffer())));
+      log(`ITCRM: ${url} llega al ${ult(p)}`);
+      if (!best || ult(p) > ult(best)) best = { ...p, url };
+    } catch (e) { errores.push(`${url}: ${e.message || e}`); log(`ITCRM: ${url}: ${e.message || e}`); }
+  }
+  if (!best) throw new Error("BCRA ITCRM: " + errores.join("; "));
+  const dias = Math.round((now - Date.parse(ult(best) + "T12:00:00Z")) / 864e5);
+  // el BCRA publica con pocos días de demora: más de 10 es que la planilla dejó de actualizarse o cambió de lugar
+  if (dias > 10) log(`::warning::el ITCRM del BCRA termina el ${ult(best)} (hace ${dias} días); revisar la dirección de la planilla en ${ITCRM_PAGINA}`);
   return best;
 }
 
@@ -357,13 +383,10 @@ export async function main({ fetchImpl = fetch, root = new URL("../", import.met
   await msciMerval({ fetchImpl, root, log, now }).catch(e => log("MSCI MERVAL: " + e.message));
   await caucion({ fetchImpl, root, log, now }).catch(e => log("Caución: " + e.message));
   await bonos({ fetchImpl, root, log, now }).catch(e => log("bonos: " + e.message));
-  const r = await fetchImpl(ITCRM_URL, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; serie ITCRM)" } });
-  if (!r.ok) throw new Error("BCRA ITCRM HTTP " + r.status);
-  const buf = Buffer.from(await r.arrayBuffer());
-  const { sheet, data, encabezado } = parseItcrm(readXlsx(buf));
+  const { sheet, data, encabezado, url } = await bajarItcrm({ fetchImpl, log, now });
   const faltan = ITCRM_COLS.filter((c, i) => !data.some(r => r[i + 1] != null)).map(c => c[0]);
   if (faltan.length) log("sin datos para " + faltan.join(", ") + "; encabezado: " + JSON.stringify(encabezado));
-  const out = { asOf: new Date().toISOString(), src: ITCRM_URL, hoja: sheet, base: "17-12-15=100", cols: ["fecha", ...ITCRM_COLS.map(c => c[0])], data,
+  const out = { asOf: new Date().toISOString(), src: url, hoja: sheet, base: "17-12-15=100", cols: ["fecha", ...ITCRM_COLS.map(c => c[0])], data,
     ...(faltan.length ? { encabezado } : {}) };
   await writeFile(new URL("itcrm.json", root), JSON.stringify(out));
   log(`itcrm.json: ${data.length} días (${data[0][0]} a ${data[data.length - 1][0]}), hoja "${sheet}", último ITCRM ${data[data.length - 1][1]}`);
