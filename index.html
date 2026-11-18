@@ -6546,8 +6546,9 @@ const METODO = [
       { d: 'Curvas de futuros del Brent y del WTI: el cierre de cada contrato de NYMEX hasta tres años, por mes de entrega, del último día con precio de al menos el 80% de los contratos, contra el cierre del mismo contrato hace 1 semana, 1 mes, 3 o 6 meses o 1 año (de entrada, 1 semana, 1 mes y 6 meses). El valor de hoy va escrito en el primer contrato, en cada diciembre (el contrato de referencia de cada año) y en el último; el eje marca el mes del primer contrato y sigue cada 3 o 6 meses.',
         p: 'Contra el mismo contrato se ve cuánto se movió cada vencimiento con lo que hay: Yahoo no guarda los contratos vencidos. Durante la rueda Yahoo tiene el precio del día solo de los contratos que operaron (el 12/11/2026 al mediodía, 10 de los 19 del Brent): con el último precio de cada uno, la curva mezclaba hoy y ayer y salían escalones (el WTI de junio de 2028, 75 centavos arriba de mayo y de julio). Hasta que casi todos tienen precio, va el cierre anterior, y se anota.',
         o: 'Como no están los vencidos, una curva anterior no es la que había ese día: arranca, como la de hoy, en el primer contrato vivo. Del Brent lejano Yahoo tiene solo junio y diciembre, y la línea los une derecho; se anota abajo del gráfico, igual que una fecha sin cierres.' },
-      { d: 'Tipo de cambio: oficial = Comunicación A 3500 del BCRA; MEP y CCL, de argentinadatos (venta); DXY y real, de Yahoo. ITCRM y bilaterales con Brasil y EE.UU.: planilla diaria del BCRA (base 17/12/15 = 100), bajada todos los días por un workflow porque el BCRA no deja leerla desde el navegador.',
-        o: 'El BCRA publica el ITCRM con unos días de demora y los últimos valores son provisorios (usan inflación estimada).' },
+      { d: 'Tipo de cambio: oficial = Comunicación A 3500 del BCRA; MEP y CCL, de argentinadatos (venta); DXY y real, de Yahoo. ITCRM y bilaterales con Brasil y EE.UU.: planilla diaria del BCRA (base 17/12/15 = 100), bajada todos los días por un workflow porque el BCRA no deja leerla desde el navegador. En un gráfico en base 100 quedan en el índice del BCRA, en el mismo eje que el resto (o a la derecha, si se elige) y con la línea punteada en 100; «Índice BCRA», en Series del gráfico, los pasa a base 100 como las demás.',
+        p: 'El 100 del BCRA dice algo: es el tipo de cambio real del 17/12/2015, el día que se unificó el mercado de cambios. Llevado a base 100 se pierde ese nivel y queda solo la variación del período.',
+        o: 'El BCRA publica el ITCRM con unos días de demora y los últimos valores son provisorios (usan inflación estimada). Desde el 19/10/2026 la planilla está en otra dirección; la vieja sigue respondiendo con el archivo congelado al 16/10, y el workflow baja las dos y se queda con la que llega más lejos.' },
       { d: 'Merval: S&P Merval de Yahoo hasta el 16/10/2026; desde el 19/10 el índice lo calcula MSCI (MSCI MERVAL, otra base) y no tiene historia pública. La terminal guarda el cierre del MSCI MERVAL todos los días desde el 26/10/2026 (merval.json, de los datos abiertos de BYMA). En dólares: Merval / CCL del mismo día.',
         x: 'Empalmar las dos series: no se publicó la base ni la fecha base del MSCI MERVAL, y empalmar a ciegas metería un salto falso.' },
     ] },
@@ -7867,6 +7868,8 @@ const INF_SIZES = { ancho: [1200, 640, 'Ancho de página'], slide: [1280, 720, '
 const INF_PERIODS = [['1M', 30], ['3M', 91], ['6M', 182], ['YTD', 'ytd'], ['1A', 365], ['2A', 730], ['5A', 1826]];
 
 // catálogo de series: nombre, grupo, unidad (define el eje), fuente y cómo se carga. Las de flujo se acumulan en el período.
+// propio: un índice cuya base dice algo (el ITCRM del BCRA, 17/12/15 = 100); en un gráfico en base 100 queda en ese
+// índice, salvo que se pida llevarlo a base 100 como el resto (INF.reb)
 const INF_CAT = {
   a3500: { n: 'Dólar oficial (A3500)', g: 'Tipo de cambio', u: '$ por US$', src: 'BCRA', load: () => infBcra(5), par: { k: 1000, n: 'Peso oficial (US$ por $1.000)', u: 'US$ por $1.000', c: 'Oficial' } },
   mep: { n: 'Dólar MEP', g: 'Tipo de cambio', u: '$ por US$', src: 'argentinadatos', load: () => infDolar('bolsa'), par: { k: 1000, n: 'Peso MEP (US$ por $1.000)', u: 'US$ por $1.000', c: 'MEP' } },
@@ -7876,9 +7879,9 @@ const INF_CAT = {
   clp: { n: 'Peso chileno (CLP por US$)', g: 'Tipo de cambio', u: 'CLP por US$', src: 'Banco Central de Chile', load: () => infFx('clp', 'CLP=X'), par: { k: 1000, n: 'Peso chileno (US$ por CLP 1.000)', u: 'US$ por CLP 1.000', c: 'Chile' } },
   mxn: { n: 'Peso mexicano (MXN por US$)', g: 'Tipo de cambio', u: 'MXN por US$', src: 'BCE', load: () => infFx('mxn', 'MXN=X'), par: { k: 1, n: 'Peso mexicano (US$ por MXN)', u: 'US$ por MXN', c: 'México' } },
   pen: { n: 'Sol peruano (S/ por US$)', g: 'Tipo de cambio', u: 'S/ por US$', src: 'BCRP', load: () => infFx('pen', 'PEN=X'), par: { k: 1, n: 'Sol peruano (US$ por S/)', u: 'US$ por S/', c: 'Perú' } },
-  itcrm: { n: 'ITCRM', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(1) },
-  tcrBr: { n: 'TCR bilateral con Brasil', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(2) },
-  tcrUs: { n: 'TCR bilateral con EE.UU.', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', load: () => infItcrm(3) },
+  itcrm: { n: 'ITCRM', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', propio: true, load: () => infItcrm(1) },
+  tcrBr: { n: 'TCR bilateral con Brasil', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', propio: true, load: () => infItcrm(2) },
+  tcrUs: { n: 'TCR bilateral con EE.UU.', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', propio: true, load: () => infItcrm(3) },
   mervalEmp: { n: 'Merval (S&P y MSCI empalmados)', g: 'Acciones', u: 'puntos S&P Merval', src: 'Yahoo Finance y BYMA', load: () => infMervalEmp() },
   mervalUsd: { n: 'Merval en US$ CCL', g: 'Acciones', u: 'US$', src: 'Yahoo Finance, BYMA y argentinadatos', load: () => infRatio('mervalEmp', 'ccl') },
   merval: { n: 'S&P Merval (hasta 16/10/26)', g: 'Acciones', u: 'puntos S&P Merval', src: 'Yahoo Finance', load: () => infYahoo('^MERV') },
@@ -8017,7 +8020,7 @@ const INF_PRESETS = [
   { id: 'libre', n: 'Armar uno propio', mode: 'serie', keys: [], trans: 'nivel', period: '1A', t: '' },
 ];
 
-let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {},
+let INF = { preset: 'fx', mode: 'serie', keys: ['a3500', 'dxy', 'brl', 'itcrm'], trans: 'base', period: '1A', desde: '', inv: {}, bars: {}, reb: {},
   curva: 'fija', cmp: { s: true, m: true }, tasa: 'tna', ejeX: 'vto', ajuste: true, tickers: true,
   pagosPor: 'anio', pagosApilar: 'grupo', pagosInc: { bonares: true, globales: true, eur: true, bopreal: true, repo: true },
   tesoro: { por: 'mes', apilar: 'ajuste', moneda: 'ars', excl: {} }, tp: { desc: 'kw', vista: 'plazo' },
@@ -8364,6 +8367,10 @@ function infEjesAuto(ser) {
 }
 // una serie mensual: todos sus datos en el último día del mes (IPC, EMAE, salarios, saldos a fin de mes)
 const infEsMensual = pts => pts.length >= 2 && pts.every(p => p.d === indecFin(p.d.slice(0, 7)));
+// eje con series en base 100 y otras en su propio índice (el ITCRM)
+const INF_U_MIX = 'base 100 e índice propio';
+// unidades con un 100 que dice algo: va la línea punteada en 100
+const infEs100 = u => u === 'base 100' || u === INF_U_MIX || Object.values(INF_CAT).some(c => c.propio && c.u === u);
 async function infBuildSerie() {
   const keys = INF.keys.filter(k => INF_CAT[k]);
   if (!keys.length) return { kind: 'vacio', msg: 'Elegí al menos una serie de la lista.' };
@@ -8406,7 +8413,8 @@ async function infBuildSerie() {
     if (res[i].value.src && res[i].value.src !== c.src && /Yahoo/.test(res[i].value.src)) notes.push(c.n + ': Yahoo Finance sin los saltos de un día (la fuente oficial no respondió)');
     const mix = res[i].value.mezcla && pts[0].t < res[i].value.mezclaT;   // tramo viejo de Yahoo dentro del período
     if (mix) notes.push(c.n + ': ' + res[i].value.mezcla);
-    return { k, name: inv ? c.par.n : c.n, u: uReal || (inv ? c.par.u : c.u), src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k], mensual, enT };
+    return { k, name: inv ? c.par.n : c.n, u: uReal || (inv ? c.par.u : c.u), src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k], mensual, enT,
+      propio: !!(c.propio && !(INF.reb || {})[k]) };
   }).filter(Boolean);
   if (!ser.length) return { kind: 'vacio', msg: notes.join('. ') || 'Sin datos.' };
   if (cer && cer.ult && ser.some(s => s.u === '$ billones de hoy')) { notes.push('Pesos de hoy: ajustados por CER al ' + infDdmmaa(cer.ult.d)); ser.forEach(s => { if (s.u === '$ billones de hoy' && !/BCRA/.test(s.src)) s.src += ' y BCRA'; }); }
@@ -8427,15 +8435,23 @@ async function infBuildSerie() {
     base0 = fija ?? Math.max(...ser.map(s => s.pts[0].t));
     const iso = new Date(base0 * 1000).toISOString().slice(0, 10);
     baseTxt = mensuales ? MES_CORTO[+iso.slice(5, 7) - 1].toLowerCase() + '-' + iso.slice(2, 4) : infDdmmaa(iso);
-    ser = ser.map(s => { const b = fija ? enBase(s, fija) : valAt(s.pts, base0) || s.pts[0];
+    // el ITCRM y los bilaterales (propio) quedan en el índice del BCRA: arrancan en la misma fecha pero no se dividen
+    ser = ser.map(s => { const pts = s.pts.filter(p => fija || p.t >= base0 - 43200);
+      if (s.propio) return { ...s, pts };
+      const b = fija ? enBase(s, fija) : valAt(s.pts, base0) || s.pts[0];
       if (!b) { notes.push(s.name + ': no tiene datos al ' + baseTxt); return null; }
       if (!(b.v > 0)) { notes.push(s.name + ': no va en base 100 (en la base vale ' + numAR(b.v, 2, 2) + ')'); return null; }
-      return { ...s, u: 'base 100', pts: s.pts.filter(p => fija || p.t >= base0 - 43200).map(p => ({ d: p.d, t: p.t, v: p.v / b.v * 100 })) }; }).filter(Boolean);
+      return { ...s, u: 'base 100', pts: pts.map(p => ({ d: p.d, t: p.t, v: p.v / b.v * 100 })) }; }).filter(Boolean);
     // una serie que termina antes de que empiece otra no tiene base común (S&P Merval y MSCI MERVAL)
     ser = ser.filter(s => { if (s.pts.length >= 2) return true; notes.push(s.name + ': no tiene datos desde la base (' + baseTxt + ')'); return false; });
     if (!ser.length) return { kind: 'vacio', msg: notes.join('. '), notes };
-    units = ['base 100'];
-    ser.forEach(s => { s.axis = 'L'; });
+    // un solo eje: las que quedan en su índice lo comparten con las de base 100 (las dos tienen su 100), salvo que se pasen
+    // a la derecha
+    const hayReb = ser.some(s => !s.propio);
+    ser.forEach(s => { s.axis = s.propio && hayReb && ejes[s.k] === 'R' ? 'R' : 'L'; });
+    const uLado = side => { const L = ser.filter(s => s.axis === side); if (!L.length) return null;
+      const r = L.some(s => !s.propio), p = L.find(s => s.propio); return r && p ? INF_U_MIX : r ? 'base 100' : p.u; };
+    units = [uLado('L'), uLado('R')].filter(Boolean);
   } else {
     const auto = units.length > 2 ? infEjesAuto(ser) : Object.fromEntries(ser.map(s => [s.k, units.indexOf(s.u) === 1 ? 'R' : 'L']));
     ser.forEach(s => { s.axis = ejes[s.k] || auto[s.k] || 'L'; });
@@ -8456,7 +8472,9 @@ async function infBuildSerie() {
   const desfasadas = ser.filter(s => (Date.parse(last) - Date.parse(s.pts[s.pts.length - 1].d)) / 86400000 > 4);
   desfasadas.forEach(s => notes.push(s.name + ' llega hasta el ' + infDdmmaa(s.pts[s.pts.length - 1].d)));
   const preset = INF_PRESETS.find(p => p.id === INF.preset);
-  const unitTxt = u => u === 'base 100' ? 'base 100 = ' + baseTxt : u;
+  const propL = ser.filter(s => s.propio && s.axis === 'L');
+  const unitTxt = u => u === 'base 100' ? 'base 100 = ' + baseTxt
+    : u === INF_U_MIX ? 'base 100 = ' + baseTxt + ' (' + infJoinY(propL.map(s => s.name)) + ': ' + propL[0].u.replace(/^índice /, '') + ')' : u;
   const periodo = INF.desde ? 'desde el ' + infDdmmaa(INF.desde) : { '1M': 'último mes', '3M': 'últimos 3 meses', '6M': 'últimos 6 meses', 'YTD': 'en lo que va del año', '1A': 'último año', '2A': 'últimos 2 años', '5A': 'últimos 5 años' }[INF.period];
   const invIgual = ser.every(s => !!s.inv === !!(preset?.inv || {})[s.k]);   // el título del gráfico armado vale si los pares están como los trae
   const tAuto = (preset && preset.t && sameKeys(preset.keys, keys) && invIgual) ? preset.t : infJoinY(ser.map(s => s.name.replace(/ \(.*\)$/, '')));
@@ -8471,7 +8489,7 @@ async function infBuildSerie() {
     + (ser.some(s => /^pvlt?(Ar|GGAL|BMA|BBAR|SUPV|BPAT|BHIP|VALO)$/.test(s.k)) ? ' Bancos argentinos: valor libro llevado a pesos de cada semana con el IPC del INDEC.' : '')
     + (ser.some(s => s.k === 'roeAr') ? ' ROE argentino real: balances con ajuste por inflación.' : '');
   const fAuto = 'Fuente: ' + (srcs.length > 1 ? srcs.slice(0, -1).join(', ') + ' y ' + srcs[srcs.length - 1] : srcs[0]) + '.' + metod;
-  return { kind: 'serie', ser, units, unitTxt, tAuto, bAuto, fAuto, notes, last, first, flow: ser.some(s => INF_CAT[s.k]?.flow) };
+  return { kind: 'serie', base: trans === 'base', ser, units, unitTxt, tAuto, bAuto, fAuto, notes, last, first, flow: ser.some(s => INF_CAT[s.k]?.flow) };
 }
 // "a, b y c" (o "e" antes de i/hi)
 const infJoinY = L => L.length < 2 ? (L[0] || '') : L.slice(0, -1).join(', ') + (/^h?i/i.test(L[L.length - 1]) && !/^hi[aeou]/i.test(L[L.length - 1]) ? ' e ' : ' y ') + L[L.length - 1];
@@ -8793,10 +8811,13 @@ function renderInfEst() {
   const E = document.getElementById('infEst'); if (!E) return;
   const sp = infSpec;
   if (!sp || !sp.ser || !sp.ser.length || sp.kind === 'vacio') { E.innerHTML = ''; return; }
-  // columnas: eje (solo con valores: en base 100 hay uno solo), columnas, par invertido (si alguna lo tiene) y quitar. Una
-  // celda por columna en cada fila, vacía si a esa serie no le toca, para que las filas queden alineadas
-  const esSerie = sp.kind === 'serie', colEje = esSerie && sp.units[0] !== 'base 100', colInv = esSerie && sp.ser.some(s => INF_CAT[s.k]?.par);
-  const nCol = 3 + (colEje ? 1 : 0) + (esSerie ? 2 : 0) + (colInv ? 1 : 0);
+  // columnas: eje (con valores; en base 100 hay uno solo y lo elige solo la serie que queda en su índice), columnas, par
+  // invertido (si alguna lo tiene), índice del BCRA (en base 100, si hay ITCRM) y quitar. Una celda por columna en cada
+  // fila, vacía si a esa serie no le toca, para que las filas queden alineadas
+  const esSerie = sp.kind === 'serie', colInv = esSerie && sp.ser.some(s => INF_CAT[s.k]?.par);
+  const mixta = esSerie && sp.base && sp.ser.some(s => s.propio) && sp.ser.some(s => !s.propio);
+  const colEje = esSerie && (!sp.base || mixta), colProp = esSerie && sp.base && sp.ser.some(s => INF_CAT[s.k]?.propio);
+  const nCol = 3 + (colEje ? 1 : 0) + (esSerie ? 2 : 0) + (colInv ? 1 : 0) + (colProp ? 1 : 0);
   const rows = sp.ser.map(s => {
     const key = infEstKey(sp, s), q = "'" + key + "'", barras = infEnBarras(sp, s), c = esSerie ? INF_CAT[s.k] : null;
     const muestra = barras ? '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><rect x="11" y="0" width="12" height="12" fill="' + s.color + '"/></svg>' : infLineSvg(s.color, s.w, s.trazo, 34);
@@ -8804,10 +8825,11 @@ function renderInfEst() {
     h += '<div class="inf-sw" role="group" aria-label="Color de ' + s.name.replace(/"/g, '&quot;') + '">' + INF_COLORES.map(([n, col]) => '<button type="button" class="' + (col === s.color ? 'on' : '') + '" style="background:' + col + '" title="' + n[0].toUpperCase() + n.slice(1) + '" aria-label="' + n + '" aria-pressed="' + (col === s.color) + '" onclick="infColor(' + q + ', \'' + col + '\')"></button>').join('') + '</div>';
     h += '<div class="inf-seg inf-seg-ico" role="group" aria-label="Grosor">' + INF_GROSOR.map(([g, w, l]) => '<button type="button" class="' + (s.grosor === g ? 'on' : '') + '" title="' + l + '" aria-label="' + l + '" aria-pressed="' + (s.grosor === g) + '"' + (barras ? ' disabled' : '') + ' onclick="infGrosor(' + q + ', \'' + g + '\')">' + infLineSvg('currentColor', w, 'solida', 22) + '</button>').join('') + '</div>';
     h += '<div class="inf-seg inf-seg-ico" role="group" aria-label="Trazo">' + INF_TRAZO.map(([t, l]) => '<button type="button" class="' + (s.trazo === t ? 'on' : '') + '" title="' + l + '" aria-label="' + l + '" aria-pressed="' + (s.trazo === t) + '"' + (barras ? ' disabled' : '') + ' onclick="infTrazo(' + q + ', \'' + t + '\')">' + infLineSvg('currentColor', 2, t, 28) + '</button>').join('') + '</div>';
-    if (colEje) h += '<div class="inf-seg inf-seg-eje" role="group" aria-label="Eje de ' + s.name.replace(/"/g, '&quot;') + '">' + [['L', 'Izq.', 'Eje izquierdo'], ['R', 'Der.', 'Eje derecho']].map(([e, l, t]) => '<button type="button" class="' + (s.axis === e ? 'on' : '') + '" title="' + t + '" aria-pressed="' + (s.axis === e) + '" onclick="infEje(\'' + s.k + '\', \'' + e + '\')">' + l + '</button>').join('') + '</div>';
+    if (colEje) h += sp.base && !s.propio ? '<span></span>' : '<div class="inf-seg inf-seg-eje" role="group" aria-label="Eje de ' + s.name.replace(/"/g, '&quot;') + '">' + [['L', 'Izq.', 'Eje izquierdo'], ['R', 'Der.', 'Eje derecho']].map(([e, l, t]) => '<button type="button" class="' + (s.axis === e ? 'on' : '') + '" title="' + t + '" aria-pressed="' + (s.axis === e) + '" onclick="infEje(\'' + s.k + '\', \'' + e + '\')">' + l + '</button>').join('') + '</div>';
     const on = c && !!INF.bars[s.k], inv = c && !!INF.inv[s.k];
     if (esSerie) h += '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infBars(\'' + s.k + '\')"><span class="inf-bar-ico' + (on ? ' on' : '') + '"></span>Columnas</button>';
     if (colInv) h += c.par ? '<button type="button" class="inf-chip' + (inv ? ' on' : '') + '" aria-pressed="' + inv + '" title="' + (inv ? 'Volver a ' + c.u : 'Ver en ' + c.par.u) + '" onclick="infInv(\'' + s.k + '\', \'' + (inv ? 'n' : 'i') + '\')">⇄ Invertir</button>' : '<span></span>';
+    if (colProp) h += c.propio ? '<button type="button" class="inf-chip' + (s.propio ? ' on' : '') + '" aria-pressed="' + s.propio + '" title="' + (s.propio ? 'Pasar a base 100 como el resto' : 'Volver al ' + c.u + ' del BCRA') + '" onclick="infReb(\'' + s.k + '\')">Índice BCRA</button>' : '<span></span>';
     if (esSerie) h += '<button type="button" class="inf-x" title="Quitar del gráfico" aria-label="Quitar ' + s.name.replace(/"/g, '&quot;') + ' del gráfico" onclick="infToggle(\'' + s.k + '\')">×</button>';
     return h + '</div>';
   }).join('');
@@ -8942,8 +8964,8 @@ function infPlotSerie(ctx, sp, P) {
   ctx.font = `12px ${BV_SANS}`; ctx.fillStyle = BV.texto2; ctx.textAlign = 'center';
   ctx.strokeStyle = BV.borde; ctx.beginPath(); ctx.moveTo(x0, Math.round(y1) + 0.5); ctx.lineTo(x1, Math.round(y1) + 0.5); ctx.stroke();
   (mens ? infMesTicks(all, x1 - x0) : infDateTicks(t0, t1, x1 - x0)).forEach(([t, lbl]) => { ctx.fillText(lbl, xs(t), y1 + 17); });
-  // base 100: línea de referencia
-  if (sp.units[0] === 'base 100' && axes.L.lo < 100 && axes.L.hi > 100) { const yy = Math.round(ysOf(axes.L)(100)) + 0.5; ctx.strokeStyle = BV.texto2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]); }
+  // base 100 (o un índice con un 100 que dice algo, como el ITCRM): línea de referencia
+  if (infEs100(axes.L.u) && axes.L.lo < 100 && axes.L.hi > 100) { const yy = Math.round(ysOf(axes.L)(100)) + 0.5; ctx.strokeStyle = BV.texto2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]); }
   // el valor arriba (o abajo, si es negativo) de un punto, con un borde blanco para que se lea sobre la grilla. Sin pisarse:
   // primero los de las columnas y después los de cada línea, en el orden de las series; el que no entra ni arriba ni abajo
   // de su punto no va
@@ -9212,7 +9234,7 @@ function renderInfCtl() {
       + '<label class="inf-desde">Desde <input type="date" value="' + (INF.desde || '') + '" onchange="infDesde(this.value)"></label>';
     h += '<div class="inf-lbl">Escala</div>' + seg([['nivel', 'Valores'], ['base', 'Base 100']], INF.trans, 'infTrans');
     if (INF.trans === 'base') h += '<label class="inf-desde">Base 100 al <input type="date" max="' + new Date().toISOString().slice(0, 10) + '" value="' + (INF.base100 || '') + '" onchange="infBase100(this.value)"></label>'
-      + '<div class="inf-tes-datos inf-base-nota">' + (INF.base100 ? 'Con datos mensuales vale el mes de la fecha. <button type="button" class="inf-link" onclick="infBase100(\'\')">Volver al primer día con todas las series</button>' : 'Sin fecha: el primer día con todas las series. Con datos mensuales vale el mes de la fecha.') + '</div>';
+      + '<div class="inf-tes-datos inf-base-nota">' + (INF.base100 ? 'Con datos mensuales vale el mes de la fecha. <button type="button" class="inf-link" onclick="infBase100(\'\')">Volver al primer día con todas las series</button>' : 'Sin fecha: el primer día con todas las series. Con datos mensuales vale el mes de la fecha.') + infNotaPropio() + '</div>';
     h += '<div class="inf-lbl">Etiquetas</div>' + seg([['ult', 'Último valor'], ['todas', 'Cada dato'], ['no', 'Ninguna']], INF.etiq || 'ult', 'infEtiq');
     if (INF.keys.some(k => INF_CAT[k]?.u === '$ billones')) h += '<div class="inf-checks"><label><input type="checkbox"' + (INF.real ? ' checked' : '') + ' onchange="infSet(\'real\', this.checked)"> Agregados en pesos de hoy (CER)</label></div>';
     if (!infGrpOrd) infGrpOrd = infOrdenGrupos(INF.keys);
@@ -9240,6 +9262,12 @@ function renderInfCtl() {
   const chk = (id, v) => { const e = document.getElementById(id); if (e) e.checked = v; };
   chk('infTitulos', INF.titulos); chk('infLogoChk', INF.logo);
 }
+// en base 100, el ITCRM queda en el índice del BCRA: cómo pasarlo a base 100
+function infNotaPropio() {
+  const ks = INF.keys.filter(k => INF_CAT[k]?.propio && !(INF.reb || {})[k]); if (!ks.length) return '';
+  const uno = ks.length === 1, quien = infJoinY(ks.map(k => 'el ' + INF_CAT[k].n));
+  return ' ' + quien[0].toUpperCase() + quien.slice(1) + (uno ? ' queda' : ' quedan') + ' en el índice del BCRA (17/12/15 = 100); para pasar' + (uno ? 'lo' : 'los') + ' a base 100, tocá «Índice BCRA» en Series del gráfico.';
+}
 function infSyncTexts() {
   const sp = infSpec || {};
   [['t', 'infT', sp.tAuto], ['b', 'infB', sp.bAuto], ['f', 'infF', sp.fAuto]].forEach(([k, id, auto]) => { const e = document.getElementById(id); if (e && document.activeElement !== e) e.value = INF.edit[k] ? INF[k] : (auto || ''); });
@@ -9249,12 +9277,13 @@ function infPreset(id) {
   INF.preset = id; INF.mode = p.mode; INF.edit = { t: false, b: false, f: false }; INF.desde = '';
   if (p.mode === 'serie') infGrpOrd = infOrdenGrupos(p.keys);
   INF.ejes = { ...(p.ejes || {}) }; INF.base100 = '';
-  if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; INF.tramo = 'toda'; if (p.tasa) INF.tasa = p.tasa; }
+  if (p.mode === 'serie') { INF.keys = [...p.keys]; INF.trans = p.trans; INF.period = p.period; INF.bars = { ...(p.bars || {}) }; INF.inv = { ...(p.inv || {}) }; INF.reb = { ...(p.reb || {}) }; } else if (p.mode === 'curva') { INF.curva = p.curva; if (p.cmp) INF.cmp = { ...p.cmp }; INF.tramo = 'toda'; if (p.tasa) INF.tasa = p.tasa; }
   infUpdate();
 }
 function infToggle(k) { INF.keys = INF.keys.includes(k) ? INF.keys.filter(x => x !== k) : [...INF.keys, k]; infUpdate(); }
 function infInv(k, v) { INF.inv = { ...INF.inv, [k]: v === 'i' }; infUpdate(); }
 function infBars(k) { INF.bars = { ...INF.bars, [k]: !INF.bars[k] }; infUpdate(); }
+function infReb(k) { INF.reb = { ...(INF.reb || {}), [k]: !(INF.reb || {})[k] }; infUpdate(); }
 function infPeriod(p) { INF.period = p; INF.desde = ''; infUpdate(); }
 function infDesde(d) { INF.desde = d || ''; infUpdate(); }
 function infTrans(t) { INF.trans = t; infUpdate(); }
