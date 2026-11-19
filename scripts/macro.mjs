@@ -247,7 +247,8 @@ async function bonos({ fetchImpl, root, log, now }) {
 //   peso chileno: dólar observado del Banco Central de Chile (vía mindicador.cl)
 //   sol: tipo de cambio interbancario venta del BCRP (PD04638PD)
 //   peso mexicano: tipo de referencia del BCE (USD/MXN cruzado, vía Frankfurter); el FIX de Banxico pide token
-// fx.json: { brl|clp|pen|mxn: [[fecha, valor]] }, 5 años. Si una fuente no responde se queda lo que había.
+//   monedas emergentes: índice del dólar contra las monedas emergentes de la Reserva Federal (H.10), vía FRED
+// fx.json: { brl|clp|pen|mxn|cny|eme: [[fecha, valor]] }, 5 años. Si una fuente no responde se queda lo que había.
 const FX_MESES = { Ene: 1, Feb: 2, Mar: 3, Abr: 4, May: 5, Jun: 6, Jul: 7, Ago: 8, Set: 9, Sep: 9, Oct: 10, Nov: 11, Dic: 12 };
 export const FX_FUENTES = {
   brl: { src: "Banco Central do Brasil (PTAX)", get: async (f, d0, d1) => {
@@ -280,6 +281,11 @@ export const FX_FUENTES = {
     const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=MXN`);
     return Object.entries(j.rates || {}).map(([d, r]) => [d, +r.MXN]).filter(x => x[1] > 0);
   } },
+  // índice del dólar contra las monedas emergentes de la Reserva Federal (H.10): 19 monedas ponderadas por el comercio
+  // con EE.UU. (en 2026, el peso mexicano 29% y el yuan 21%). La Fed lo publica los lunes con los datos diarios hasta el
+  // viernes anterior, y al revisar las ponderaciones (una vez por año) cambia la historia: se baja entero cada vez
+  eme: { src: "Reserva Federal (índice H.10, vía FRED)", entero: true, get: async (f, d0) =>
+    parseFredCsv(await f(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXEMEGS&cosd=${d0}`, { texto: true })) },
   // yuan: para pasar a dólares el swap con China en las reservas netas
   cny: { src: "Banco Central Europeo (referencia, vía Frankfurter)", get: async (f, d0, d1) => {
     const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=CNY`);
@@ -290,27 +296,31 @@ export function mergeFx(prev, nuevo) {
   const m = new Map(prev || []); for (const [d, v] of nuevo || []) if (v > 0) m.set(d, +(+v).toFixed(4));
   return [...m].sort((a, b) => a[0].localeCompare(b[0]));
 }
-async function fxLatam({ fetchImpl, root, log, now }) {
+export async function fxLatam({ fetchImpl, root, log, now }) {
   let prev = {};
   try { prev = JSON.parse(await readFile(new URL("fx.json", root), "utf8")); } catch (e) { /* primera vez */ }
   const d1 = now.toISOString().slice(0, 10), d0 = new Date(now.getTime() - 5.3 * 365.25 * 86400000).toISOString().slice(0, 10);
   // hasta 3 intentos de 30 segundos (mindicador a veces tarda)
-  const f = async u => {
+  const f = async (u, { texto = false } = {}) => {
     let err;
     for (let k = 0; k < 3; k++) {
       try {
-        const r = await fetchImpl(u, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tipos de cambio)", Accept: "application/json" }, signal: AbortSignal.timeout(30000) });
+        const r = await fetchImpl(u, { headers: { "User-Agent": "Mozilla/5.0 (tradingweb; tipos de cambio)", Accept: texto ? "text/csv, */*" : "application/json" }, signal: AbortSignal.timeout(30000) });
         if (!r.ok) throw new Error(u.split("/")[2] + " HTTP " + r.status);
-        return await r.json();
+        return texto ? await r.text() : await r.json();
       } catch (e) { err = e; await new Promise(res => setTimeout(res, 2000 * (k + 1))); }
     }
     throw err;
   };
   const out = { asOf: now.toISOString(), src: {}, errores: {} };
   for (const [k, F] of Object.entries(FX_FUENTES)) {
-    // con historia guardada alcanza con los últimos 40 días
-    const desde = (prev[k] || []).length > 200 ? new Date(now.getTime() - 40 * 86400000).toISOString().slice(0, 10) : d0;
-    try { out[k] = mergeFx(prev[k], await F.get(f, desde, d1)); out.src[k] = F.src; }
+    // con historia guardada alcanza con los últimos 40 días (salvo las que se bajan enteras, porque se revisan)
+    const desde = !F.entero && (prev[k] || []).length > 200 ? new Date(now.getTime() - 40 * 86400000).toISOString().slice(0, 10) : d0;
+    try {
+      const nuevo = await F.get(f, desde, d1);
+      if (F.entero && nuevo.length < 100) throw new Error("devolvió " + nuevo.length + " datos");
+      out[k] = mergeFx(F.entero ? [] : prev[k], nuevo); out.src[k] = F.src;
+    }
     catch (e) { out[k] = prev[k] || []; out.src[k] = prev.src?.[k] || F.src; out.errores[k] = String(e.message || e).slice(0, 200); log(`fx ${k}: ${e.message} (queda lo que había)`); }
     log(`fx ${k}: ${out[k].length} días` + (out[k].length ? `, último ${out[k][out[k].length - 1].join(" ")}` : ""));
   }
