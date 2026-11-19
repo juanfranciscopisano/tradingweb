@@ -487,6 +487,7 @@ td:nth-child(-n+4){text-align:left}
 .ov-dolar-tbl th:nth-child(2),.ov-dolar-tbl td.ov-plazo{text-align:left!important;color:var(--muted)}
 .ov-src{color:var(--faint);font-weight:400;font-size:12px}
 .ov-dolar-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.ov-dolar-note a{color:var(--accent)}
 .ov-ggal{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .ov-treas-tbl tbody td:nth-child(2){font-weight:650;color:var(--ink)}
 .ov-sup{font-size:10px;color:var(--muted);margin-left:1px}
@@ -3467,6 +3468,9 @@ async function dolarBolsaByma() {
   return out;
 }
 
+// la rueda de cambios de A3 Mercados (ex MAE), en tiempo real: volumen, mínimo, máximo y último de cada especie y las
+// puntas de la rueda CAM1
+const A3_FOREX = 'https://marketdata.mae.com.ar/forex';
 async function loadOvDolar() {
   const el = document.getElementById('ovDolar');
   const [api, byma] = await Promise.allSettled([
@@ -3484,7 +3488,14 @@ async function loadOvDolar() {
     const v = x.venta || x.compra; const p = prev[casa]?.venta;
     rows.push({ label, plazo, v, dec, var: p ? (v / p - 1) * 100 : null });
   };
-  fromApi('mayorista', 'Mayorista <span class="ov-src">A3500</span>', '', 2);
+  // el mayorista de dolarapi no sigue la rueda (el 19/11/2026 tenía el dato de las 9:47 a las 14): va con la hora de
+  // su último dato, o el día si no es de hoy
+  const diaAR = t => new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const tMay = Date.parse(byCasa.mayorista?.fechaActualizacion);
+  const cuando = isNaN(tMay) ? '' : diaAR(tMay) === diaAR(Date.now())
+    ? new Date(tMay).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })
+    : diaAR(tMay).slice(8, 10) + '/' + diaAR(tMay).slice(5, 7);
+  fromApi('mayorista', 'Mayorista <span class="ov-src">dolarapi' + (cuando ? ', ' + cuando : '') + '</span>', '', 2);
   fromApi('oficial', 'Oficial <span class="ov-src">BNA</span>', '', 0);
   fromApi('blue', 'Blue', '', 0);
   let bolsaNote = '';
@@ -3503,7 +3514,9 @@ async function loadOvDolar() {
   if (!rows.length) { el.innerHTML = '<div class="ov-loading">Sin datos del dólar</div>'; return; }
   el.innerHTML = '<table class="ov-tbl ov-dolar-tbl"><thead><tr><th>Dólar</th><th>Plazo</th><th>Precio</th><th>1D</th></tr></thead><tbody>'
     + rows.map(r => '<tr><td>' + r.label + '</td><td class="ov-plazo">' + (r.plazo || '') + '</td><td>' + fmtArs(r.v, r.dec) + '</td><td>' + fmtVar(r.var) + '</td></tr>').join('')
-    + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (ArgentinaDatos para oficial, mayorista y blue).</div>';
+    + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (ArgentinaDatos para oficial, mayorista y blue).'
+    // A3 no deja mostrar su pantalla dentro de otra página ni leer sus datos desde otra web: se abre en una ventana aparte
+    + ' La rueda mayorista en vivo: <a href="' + A3_FOREX + '" target="a3fx" rel="noopener" onclick="window.open(this.href, \'a3fx\', \'width=640,height=880\'); return false">pantalla de A3</a>.</div>';
 }
 
 // ---- Bonos: precios de los bonos del Tesoro para pegar en Excel (sin tasas). Primero BYMA (datos abiertos, vía el
@@ -6451,6 +6464,9 @@ const METODO = [
       { d: 'Precios de Yahoo, con la hora del último dato de cada fila al pasar el mouse. La pestaña se refresca cada minuto mientras está a la vista.' },
       { d: 'Merval: el MSCI MERVAL de BYMA, con 20 minutos de demora.',
         p: 'Yahoo dejó de actualizar ^MERV y su historia es la del índice viejo, por eso esa fila no tiene retornos a plazo.' },
+      { d: 'Dólar mayorista: el de dolarapi, con la hora de su último dato (o el día, si no es de hoy). La rueda en vivo está en la pantalla de Forex de A3 Mercados (marketdata.mae.com.ar/forex, en tiempo real): volumen, mínimo, máximo y último de cada especie, y las puntas compradora y vendedora de la rueda CAM1 minuto a minuto. El enlace de abajo de la tabla la abre en una ventana aparte.',
+        p: 'dolarapi no sigue la rueda: el 19/11/2026 a las 14 tenía el dato de las 9:47 ($ 1.562), con el último de A3 en $ 1.563.',
+        x: 'Traer la pantalla de A3 a la página: A3 no deja mostrarla dentro de otra web (un marco) ni leer sus datos desde otra página, solo desde la suya. La vía formal es su API de Market Data, que pide registrar a la entidad y firmar sus términos.' },
       { d: 'Treasuries: toda la curva (3 meses, 1, 2, 5, 10 y 30 años) en tiempo real de Tradeweb, vía CNBC, con la historia diaria de la misma fuente para los cambios.',
         p: 'Antes 1 y 2 años salían de la curva oficial del Tesoro, que se publica al cierre, así que durante la rueda mostraban el movimiento de ayer al lado del de hoy de los otros plazos. Con una sola fuente, el día y los plazos se comparan sobre lo mismo. Si CNBC no responde, ese plazo vuelve a su fuente anterior (Yahoo con 15 minutos de demora, o la curva oficial) y se marca con asterisco.',
         x: 'Mezclar la curva oficial con Yahoo, que era lo que hacía antes.' },
