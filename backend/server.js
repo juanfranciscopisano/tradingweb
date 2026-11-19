@@ -8,6 +8,7 @@ import nodeFetch from "node-fetch";
 import cors from "cors";
 import { readFileSync } from "node:fs";
 import { bymaBonos } from "./bonos.mjs";
+import { a3Forex } from "./forex.mjs";
 import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, bookQuarterly, fillPub, PUB_MAX_DAYS, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
@@ -371,6 +372,18 @@ const SPARK_INTERVALS = ["1d", "5m", "15m", "30m", "60m"];
 app.get("/api/byma/bonos", async (req, res) => {
   try {
     const data = await cached("byma:bonos", 60 * 1000, async () => ({ asOf: new Date().toISOString(), fuente: "BYMA, datos abiertos (20 minutos de demora)", ...(await bymaBonos(fetch)) }));
+    res.set("Cache-Control", "no-store").json(data);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// la rueda de cambios de A3 (tarjeta "Dólar mayorista"): 30 segundos en memoria, así A3 recibe a lo sumo un pedido cada
+// medio minuto aunque la página se refresque más seguido o la miren varios. Si A3 no responde, 502 y la página queda
+// con el enlace a su pantalla
+app.get("/api/a3/forex", async (req, res) => {
+  try {
+    const data = await cached("a3:forex", 30 * 1000, async () => ({ asOf: new Date().toISOString(), ...(await a3Forex(fetch)) }));
     res.set("Cache-Control", "no-store").json(data);
   } catch (e) {
     res.status(502).json({ error: e.message });
