@@ -6523,10 +6523,10 @@ const METODO = [
         o: 'La API está en beta y el token vence a los 12 meses: hay que regenerarlo en el perfil y actualizar el secreto. Las variaciones calculadas del índice pueden diferir en una décima de las publicadas, por redondeo (el INDEC lo avisa). La inflación del nivel general sigue saliendo del BCRA (series 27 y 28), que replica al INDEC. El salario total incluye al no registrado sin correr, así que mezcla meses: para el salario real del mes conviene el registrado.' },
       { d: 'Monedas: cada par se puede ver invertido (US$ por R$, o el peso en dólares por cada $1.000), para que se mueva en contra del DXY cuando el dólar se fortalece. Real: PTAX venta del Banco Central do Brasil. Peso chileno: dólar observado del Banco Central de Chile vía mindicador.cl, que sin clave da solo el último mes; el workflow lo va guardando día a día y, para atrás de lo guardado, va Yahoo sin los saltos de un día, con aviso y las dos fuentes al pie. Sol: interbancario venta del BCRP. Peso mexicano: referencia del BCE (el FIX de Banxico pide clave). Los baja un workflow dos veces por día (fx.json).',
         p: 'El tipo de cambio de Yahoo para estas monedas tiene datos malos: el 26/10/2026 dio 959,6 pesos chilenos por dólar con el observado en 990,35, y el sol alterna entre dos niveles 3% separados día por medio. Si una fuente oficial no responde, se usa Yahoo sacando los saltos de un día (más de 2% contra los dos vecinos que vuelven).' },
-      { d: 'Índices del dólar de la Fed: los de la Reserva Federal (H.10), ponderados por el comercio con EE.UU. y con las ponderaciones revisadas cada año. El amplio, contra 26 monedas (la serie DTWEXBGS de FRED; en 2026, el euro pesa 21%, el peso mexicano 15%, el dólar canadiense 13% y el yuan 11%), y el de emergentes, contra 19 (DTWEXEMEGS; el peso mexicano 29%, el yuan 21% y el peso argentino 0,7%). Invertidos, suben cuando las monedas se aprecian contra el dólar, como el resto de las monedas de "Monedas de la región". Van en gris (el amplio, punteado; el de emergentes, a rayas) hasta que se elija otro estilo. Los baja el mismo workflow (fx.json), enteros en cada corrida.',
+      { d: 'Índices del dólar de la Fed: los de la Reserva Federal (H.10), ponderados por el comercio con EE.UU. y con las ponderaciones revisadas cada año. El amplio, contra 26 monedas (la serie DTWEXBGS de FRED; en 2026, el euro pesa 21%, el peso mexicano 15%, el dólar canadiense 13% y el yuan 11%), y el de emergentes, contra 19 (DTWEXEMEGS; el peso mexicano 29%, el yuan 21% y el peso argentino 0,7%). Invertidos, suben cuando las monedas se aprecian contra el dólar, como el resto de las monedas de "Monedas de la región". Van en gris (el amplio, punteado; el de emergentes, a rayas) hasta que se elija otro estilo. Los baja el mismo workflow (fx.json), enteros en cada corrida. Entre una publicación de la Fed y la siguiente, los dos se estiran día a día con los tipos de cambio de referencia del BCE (vía Frankfurter) y el dólar observado de Chile, con las ponderaciones de la Fed: cubren el 93% del amplio y el 87% del de emergentes. Lo que falta (el dólar taiwanés, el dong, los pesos colombiano y argentino y el rublo) se supone que se movió como el resto, y el riyal está fijo al dólar. Ese tramo va más claro en el gráfico, anotado abajo y marcado en la columna de Copiar datos; cuando la Fed publica, lo reemplaza.',
         p: 'El DXY tiene seis monedas con las ponderaciones de 1973 (el euro, 58%) y no tiene ni al yuan ni al peso mexicano; el índice amplio de la Fed es el que sigue el comercio de hoy. Y es el índice de monedas emergentes oficial y gratuito con datos diarios.',
         x: 'Para emergentes, el MSCI EM Currency, el que suelen citar los informes de mercado: MSCI no deja usar sus datos sin permiso escrito y la página es pública. El ETF CEW (WisdomTree), que además de la moneda suma la tasa de interés de cada país, así que en un año se separa del tipo de cambio.',
-        o: 'La Fed los publica los lunes con los datos diarios hasta el viernes anterior: las líneas terminan unos días antes que las demás, y se anota abajo del gráfico. Cuando revisa las ponderaciones, una vez por año, cambia la historia. Pesa el comercio con EE.UU. y no el tamaño de cada mercado, así que en el de emergentes México pesa mucho más que en el MSCI.' },
+        o: 'La Fed los publica los lunes con los datos diarios hasta el viernes anterior. Contra lo que después publicó (de mayo a noviembre de 2026), el estimado se apartó en promedio 15 bips en el amplio y entre 15 y 17 en el de emergentes, sin crecer con los días (en los días movidos, hasta 80 bips); dejar quieto el último dato se aparta 19 bips a un día y 45 a cinco. Lo que queda es sobre todo la hora: el BCE fija a las 14:15 de Fráncfort y la Fed toma el mediodía de Nueva York. Cuando revisa las ponderaciones, una vez por año, cambia la historia. Pesa el comercio con EE.UU. y no el tamaño de cada mercado, así que en el de emergentes México pesa mucho más que en el MSCI.' },
       { d: 'Eje vertical: marcas en pasos de 1, 2 o 5 por potencia de 10 y con los decimales del paso, para que ninguna marca quede redondeada.' },
       { d: 'Curvas soberanas (dólares, CER, dólar linked y BOPREAL): TIR por duration modificada de la API de 1816, con precios de cierre de BYMA a 24 hs, hoy contra hace una semana y hace un mes. Los bonos en dólares, con el precio en dólares MEP. Fuera los que tienen menos de 0,15 años de duration.',
         p: 'La TIR de un bono a días del vencimiento se dispara con cualquier centavo de precio y desarma la curva; 0,15 años deja afuera también a los CER cuyo último cupón ya tiene el índice fijado, que rinden en pesos y no en tasa real. Globales y Bonares van en series separadas porque la diferencia entre las dos legislaciones es parte de lo que se mira. Un workflow consulta 1816 todas las noches (unos 1.000 créditos de los 100.000 diarios del plan) y guarda el resultado en soberanos.json; la clave vive en un secreto de GitHub y nunca llega a la página.' },
@@ -8116,7 +8116,10 @@ function infFx(k, sym) {
     let rows = j[k] || [];
     // el dólar observado de Chile: lo guardado (fx.json) más el último mes de mindicador.cl leído desde acá
     if (k === 'clp') { try { const m = new Map(rows); for (const p of await infObservadoChile()) m.set(p.d, p.v); rows = [...m].sort((a, b) => a[0].localeCompare(b[0])); } catch (e) {} }
-    const ofi = rows.map(([d, v]) => ({ d, t: argT(d), v }));
+    // los índices de la Fed: después del último dato publicado, el estimado con los tipos de cambio del BCE (fx.json)
+    const ult = rows.length ? rows[rows.length - 1][0] : null, est = ult ? ((j.est || {})[k] || []).filter(([d]) => d > ult) : [];
+    const ofi = [...rows, ...est].map(([d, v]) => ({ d, t: argT(d), v }));
+    if (est.length) ofi.estim = { desde: est[0][0], hasta: est[est.length - 1][0], cob: (j.estCob || {})[k] };
     // al pie, la fuente corta del catálogo: las de fx.json son largas y con seis monedas el pie no entraba
     if (ofi.length && Date.parse(ofi[0].d) <= Date.parse(INF_DESDE()) + 30 * 86400000) { ofi.src = INF_CAT[k].src; return ofi; }
     // sin par en Yahoo (el índice de la Fed): lo que haya
@@ -8437,8 +8440,11 @@ async function infBuildSerie() {
     if (res[i].value.src && res[i].value.src !== c.src && /Yahoo/.test(res[i].value.src)) notes.push(c.n + ': Yahoo Finance sin los saltos de un día (la fuente oficial no respondió)');
     const mix = res[i].value.mezcla && pts[0].t < res[i].value.mezclaT;   // tramo viejo de Yahoo dentro del período
     if (mix) notes.push(c.n + ': ' + res[i].value.mezcla);
+    // el tramo estimado de los índices de la Fed (de su última publicación a hoy): más claro en el gráfico y anotado
+    const estim = res[i].value.estim, estDesde = estim && pts.some(p => p.d >= estim.desde) ? estim.desde : null;
+    if (estDesde) notes.push((inv ? c.par.n : c.n) + ': ' + (estim.hasta !== estDesde ? 'del ' + infDdmmaa(estDesde) + ' al ' + infDdmmaa(estim.hasta) : 'el ' + infDdmmaa(estDesde)) + ', estimado con los tipos de cambio del BCE' + (estim.cob ? ' (' + Math.round(estim.cob * 100) + '% del índice)' : '') + ' hasta que publique la Fed');
     return { k, name: inv ? c.par.n : c.n, u: uReal || (inv ? c.par.u : c.u), src: (res[i].value.src || c.src) + (mix ? ' y Yahoo Finance' : ''), pts, inv, bars: !!INF.bars[k], mensual, enT,
-      propio: !!(c.propio && !(INF.reb || {})[k]) };
+      propio: !!(c.propio && !(INF.reb || {})[k]), estDesde, estT: estDesde ? argT(estDesde) : null };
   }).filter(Boolean);
   if (!ser.length) return { kind: 'vacio', msg: notes.join('. ') || 'Sin datos.' };
   if (cer && cer.ult && ser.some(s => s.u === '$ billones de hoy')) { notes.push('Pesos de hoy: ajustados por CER al ' + infDdmmaa(cer.ult.d)); ser.forEach(s => { if (s.u === '$ billones de hoy' && !/BCRA/.test(s.src)) s.src += ' y BCRA'; }); }
@@ -8912,7 +8918,8 @@ function infText(ctx, s, x, y, maxW, track) {
   if (track) try { ctx.letterSpacing = '0px'; } catch (e) {}
 }
 function infLegendItems(sp) {
-  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : ''), color: s.color, w: s.w, trazo: s.trazo, bars: infEnBarras(sp, s) }))
+  // el tramo estimado (más claro en el gráfico) se avisa en la leyenda, que va en la imagen
+  return sp.ser.map(s => ({ name: s.name + (sp.kind === 'serie' && sp.units.length === 2 ? (s.axis === 'R' ? ' (eje der.)' : ' (eje izq.)') : '') + (s.estDesde ? ', estimado desde el ' + s.estDesde.slice(8, 10) + '/' + s.estDesde.slice(5, 7) : ''), color: s.color, w: s.w, trazo: s.trazo, bars: infEnBarras(sp, s) }))
     .concat(sp.marca ? [{ name: sp.marca.name, color: sp.marca.color, w: 3, bars: false }] : []);
 }
 function infLegendRows(ctx, sp, maxW) {
@@ -9019,8 +9026,14 @@ function infPlotSerie(ctx, sp, P) {
   [...sp.ser].reverse().forEach(s => {
     if (s.bars && s.barPts) return;
     const ys = ysOf(axes[s.axis]);
-    ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2.25; ctx.lineJoin = 'round'; ctx.lineCap = s.cap || 'butt'; ctx.setLineDash(s.dash || []); ctx.beginPath();
-    s.pts.forEach((p, i) => i ? ctx.lineTo(xs(tx(p)), ys(p.v)) : ctx.moveTo(xs(tx(p)), ys(p.v))); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
+    const trazar = (pts, alfa) => {
+      if (pts.length < 2) return;
+      ctx.globalAlpha = alfa; ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2.25; ctx.lineJoin = 'round'; ctx.lineCap = s.cap || 'butt'; ctx.setLineDash(s.dash || []); ctx.beginPath();
+      pts.forEach((p, i) => i ? ctx.lineTo(xs(tx(p)), ys(p.v)) : ctx.moveTo(xs(tx(p)), ys(p.v))); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt'; ctx.globalAlpha = 1;
+    };
+    // el tramo estimado (los índices de la Fed hasta que publica) va más claro, desde el último dato publicado
+    const i0 = s.estT != null ? s.pts.findIndex(p => p.t >= s.estT) : -1;
+    if (i0 > 0) { trazar(s.pts.slice(0, i0), 1); trazar(s.pts.slice(i0 - 1), 0.4); } else trazar(s.pts, i0 === 0 ? 0.4 : 1);
   });
   sp.ser.forEach(s => {
     if ((s.bars && s.barPts) || !enCada(s)) return;
@@ -9189,7 +9202,7 @@ function infTsv() {
   const n = v => v == null ? '' : String(+v.toFixed(4)).replace('.', ',');
   if (sp.kind === 'serie') {
     const dates = [...new Set(sp.ser.flatMap(s => s.pts.map(p => p.d)))].sort(), maps = sp.ser.map(s => new Map(s.pts.map(p => [p.d, p.v])));
-    return ['Fecha\t' + sp.ser.map(s => s.name + (s.u ? ' (' + s.u + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
+    return ['Fecha\t' + sp.ser.map(s => s.name + (s.u || s.estDesde ? ' (' + [s.u, s.estDesde ? 'estimado desde el ' + infDdmmaa(s.estDesde) : ''].filter(Boolean).join('; ') + ')' : '')).join('\t'), ...dates.map(d => infDdmmaa(d).replace(/\/(\d\d)$/, '/20$1') + '\t' + maps.map(m => n(m.get(d))).join('\t'))].join('\n');
   }
   if (sp.kind === 'pagos') return [(sp.catHdr || 'Período') + ' (' + sp.units[0] + ')\t' + sp.ser.map(s => s.name).join('\t') + '\t' + (sp.marca ? sp.marca.name : 'Total'), ...sp.cats.map((c, i) => c + '\t' + sp.ser.map(s => n(s.vals[i])).join('\t') + '\t' + n(sp.marca ? sp.marca.vals[i] : sp.ser.reduce((a, s) => a + s.vals[i], 0)))].join('\n');
   if (sp.xMes) {
