@@ -488,6 +488,18 @@ td:nth-child(-n+4){text-align:left}
 .ov-src{color:var(--faint);font-weight:400;font-size:12px}
 .ov-dolar-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
 .ov-dolar-note a{color:var(--accent)}
+.ov-fx-puntas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:4px 0 8px}
+.ov-fx-p{border:1px solid var(--line);border-radius:6px;padding:5px 9px;line-height:1.25;min-width:0}
+.ov-fx-p span{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-fx-p b{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.ov-fx-p.ov-fx-ch b{font-size:14px;font-weight:500}
+.ov-fx-bid b{color:var(--up)}.ov-fx-off b{color:var(--down)}
+.ov-fx-box{height:150px;position:relative}
+.ov-fx-box canvas{touch-action:none}
+.ov-fx-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:2px 0 8px}
+.ov-fx-leg i{display:inline-block;width:14px;height:0;border-top:2px solid var(--up);vertical-align:middle;margin-right:5px}
+.ov-fx-leg i.off{border-top-color:var(--down)}.ov-fx-leg i.vw{border-top:2px dotted var(--accent)}.ov-fx-leg i.ay{border-top:1px dashed var(--muted)}
+.ov-fx-tbl td:first-child,.ov-fx-tbl th:first-child{text-align:left}
 .ov-ggal{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .ov-treas-tbl tbody td:nth-child(2){font-weight:650;color:var(--ink)}
 .ov-sup{font-size:10px;color:var(--muted);margin-left:1px}
@@ -981,6 +993,14 @@ function checkPwd(){
       <div class="ov-card">
         <div class="ov-card-title">Mercado local</div>
         <div id="ovDolar"><div class="ov-loading">Cargando...</div></div>
+        <div class="ov-ggal" id="ovFxWrap">
+          <div class="ov-ggal-top">
+            <span class="ov-ggal-name">Dólar mayorista</span>
+            <span id="fxHead"></span>
+          </div>
+          <div id="fxCuerpo"></div>
+          <div class="ov-dolar-note" id="fxNota"></div>
+        </div>
         <div class="ov-ggal">
           <div class="ov-ggal-top">
             <a class="ov-link ov-ggal-name" onclick="openChart('NASDAQ:GGAL','Grupo Galicia ADR')">GGAL ADR</a>
@@ -1700,6 +1720,7 @@ function toggleTheme() {
   if (BCO && document.getElementById('tab-bancos').classList.contains('active')) renderBancos();
   if (ggalCache[ggalRange]) drawGgal();
   if (MINI.spy.cache[MINI.spy.range]) drawMini('spy');
+  drawFx();
 }
 
 const SECTOR_MAP = {'A':'Healthcare','AAPL':'Technology','ABBV':'Healthcare','ABNB':'Consumer Cyclical','ABT':'Healthcare','ACGL':'Financial Services','ACN':'Technology','ADBE':'Technology','ADI':'Technology','ADM':'Consumer Defensive','ADP':'Industrials','ADSK':'Technology','AEE':'Utilities','AEP':'Utilities','AES':'Utilities','AFL':'Financial Services','AIG':'Financial Services','AIZ':'Financial Services','AJG':'Financial Services','AKAM':'Technology','ALB':'Basic Materials','ALGN':'Healthcare','ALL':'Financial Services','ALLE':'Industrials','AMAT':'Technology','AMCR':'Basic Materials','AMD':'Technology','AME':'Industrials','AMGN':'Healthcare','AMP':'Financial Services','AMT':'Real Estate','AMZN':'Consumer Cyclical','ANET':'Technology','AON':'Financial Services','AOS':'Industrials','APA':'Energy','APD':'Basic Materials','APH':'Technology','APO':'Financial Services','APP':'Communication Services','APTV':'Consumer Cyclical','ARE':'Real Estate','ARES':'Financial Services','ATO':'Utilities','AVGO':'Technology','AVY':'Basic Materials','AWK':'Utilities','AXON':'Industrials','AXP':'Financial Services','AZO':'Consumer Cyclical','BA':'Industrials','BAC':'Financial Services','BALL':'Basic Materials','BAX':'Healthcare','BBY':'Consumer Cyclical','BDX':'Healthcare','BE':'Industrials','BEN':'Financial Services','BF-B':'Consumer Defensive','BG':'Consumer Defensive','BIIB':'Healthcare','BKNG':'Consumer Cyclical','BKR':'Energy','BLK':'Financial Services','BMY':'Healthcare','BNY':'Financial Services','BR':'Industrials','BRK-B':'Financial Services','BRO':'Financial Services','BSX':'Healthcare','BX':'Financial Services','BXP':'Real Estate','C':'Financial Services','CAH':'Healthcare','CARR':'Industrials','CASY':'Consumer Defensive','CAT':'Industrials','CB':'Financial Services','CBOE':'Financial Services','CBRE':'Real Estate','CCI':'Real Estate','CCL':'Consumer Cyclical','CDNS':'Technology','CDW':'Technology','CEG':'Utilities','CF':'Basic Materials','CFG':'Financial Services','CHD':'Consumer Defensive','CHRW':'Industrials','CHTR':'Communication Services','CI':'Healthcare','CIEN':'Technology','CINF':'Financial Services','CL':'Consumer Defensive','CLX':'Consumer Defensive','CMCSA':'Communication Services','CME':'Financial Services','CMG':'Consumer Cyclical','CMI':'Industrials','CMS':'Utilities','CNC':'Healthcare','CNP':'Utilities','COF':'Financial Services','COHR':'Technology','COIN':'Financial Services','COO':'Healthcare','COP':'Energy','COR':'Healthcare','COST':'Consumer Defensive','CPAY':'Financial Services','CPRT':'Industrials','CPT':'Real Estate','CRH':'Basic Materials','CRL':'Healthcare','CRM':'Technology','CRWD':'Technology','CSCO':'Technology','CSGP':'Real Estate','CSX':'Industrials','CTAS':'Industrials','CTSH':'Technology','CVNA':'Consumer Cyclical','CVS':'Healthcare','CVX':'Energy','D':'Utilities','DAL':'Industrials','DASH':'Consumer Cyclical','DD':'Industrials','DDOG':'Technology','DE':'Industrials','DECK':'Consumer Cyclical','DELL':'Technology','DG':'Consumer Defensive','DGX':'Healthcare','DHI':'Consumer Cyclical','DHR':'Healthcare','DIS':'Communication Services','DLR':'Real Estate','DLTR':'Consumer Defensive','DOC':'Real Estate','DOV':'Industrials','DOW':'Basic Materials','DPZ':'Consumer Cyclical','DRI':'Consumer Cyclical','DTE':'Utilities','DUK':'Utilities','DVA':'Healthcare','DVN':'Energy','DXCM':'Healthcare','EBAY':'Consumer Cyclical','ECHO':'Communication Services','ECL':'Basic Materials','ED':'Utilities','EFX':'Industrials','EG':'Financial Services','EIX':'Utilities','EL':'Consumer Defensive','ELV':'Healthcare','EME':'Industrials','EMR':'Industrials','EOG':'Energy','EQIX':'Real Estate','EQT':'Energy','ERIE':'Financial Services','ES':'Utilities','ESS':'Real Estate','ETN':'Industrials','ETR':'Utilities','EVRG':'Utilities','EW':'Healthcare','EXC':'Utilities','EXE':'Energy','EXPD':'Industrials','EXPE':'Consumer Cyclical','EXR':'Real Estate','F':'Consumer Cyclical','FANG':'Energy','FAST':'Industrials','FCX':'Basic Materials','FDS':'Financial Services','FDX':'Industrials','FDXF':'Industrials','FE':'Utilities','FERG':'Industrials','FFIV':'Technology','FICO':'Technology','FIS':'Financial Services','FISV':'Financial Services','FITB':'Financial Services','FIX':'Industrials','FLEX':'Technology','FOX':'Communication Services','FOXA':'Communication Services','FRT':'Real Estate','FSLR':'Technology','FTNT':'Technology','FTV':'Industrials','GD':'Industrials','GDDY':'Technology','GE':'Industrials','GEHC':'Healthcare','GEN':'Technology','GEV':'Industrials','GILD':'Healthcare','GIS':'Consumer Defensive','GL':'Financial Services','GLW':'Technology','GM':'Consumer Cyclical','GNRC':'Industrials','GOOG':'Communication Services','GOOGL':'Communication Services','GPC':'Consumer Cyclical','GPN':'Financial Services','GRMN':'Consumer Cyclical','GS':'Financial Services','GWW':'Industrials','HAL':'Energy','HAS':'Consumer Cyclical','HBAN':'Financial Services','HCA':'Healthcare','HD':'Consumer Cyclical','HIG':'Financial Services','HII':'Industrials','HLT':'Consumer Cyclical','HON':'Industrials','HONA':'Industrials','HOOD':'Financial Services','HPE':'Technology','HPQ':'Technology','HRL':'Consumer Defensive','HSIC':'Healthcare','HST':'Real Estate','HSY':'Consumer Defensive','HUBB':'Industrials','HUM':'Healthcare','HWM':'Industrials','IBKR':'Financial Services','IBM':'Technology','ICE':'Financial Services','IDXX':'Healthcare','IEX':'Industrials','IFF':'Basic Materials','ILMN':'Healthcare','INCY':'Healthcare','INTC':'Technology','INTU':'Technology','INVH':'Real Estate','IP':'Basic Materials','IQV':'Healthcare','IR':'Industrials','IRM':'Real Estate','ISRG':'Healthcare','IT':'Technology','ITW':'Industrials','IVZ':'Financial Services','J':'Industrials','JBHT':'Industrials','JBL':'Technology','JCI':'Industrials','JKHY':'Financial Services','JNJ':'Healthcare','JPM':'Financial Services','KDP':'Consumer Defensive','KEY':'Financial Services','KEYS':'Technology','KHC':'Consumer Defensive','KIM':'Real Estate','KKR':'Financial Services','KLAC':'Technology','KMB':'Consumer Defensive','KMI':'Energy','KO':'Consumer Defensive','KR':'Consumer Defensive','KVUE':'Consumer Defensive','L':'Financial Services','LDOS':'Industrials','LEN':'Consumer Cyclical','LH':'Healthcare','LHX':'Industrials','LII':'Industrials','LIN':'Basic Materials','LITE':'Technology','LLY':'Healthcare','LMT':'Industrials','LNT':'Utilities','LOW':'Consumer Cyclical','LRCX':'Technology','LULU':'Consumer Cyclical','LUV':'Industrials','LVS':'Consumer Cyclical','LYB':'Basic Materials','LYV':'Communication Services','MA':'Financial Services','MAA':'Real Estate','MAR':'Consumer Cyclical','MAS':'Industrials','MCD':'Consumer Cyclical','MCHP':'Technology','MCK':'Healthcare','MCO':'Financial Services','MDLZ':'Consumer Defensive','MDT':'Healthcare','MET':'Financial Services','META':'Communication Services','MGM':'Consumer Cyclical','MKC':'Consumer Defensive','MLM':'Basic Materials','MMM':'Industrials','MNST':'Consumer Defensive','MO':'Consumer Defensive','MOS':'Basic Materials','MPC':'Energy','MPWR':'Technology','MRK':'Healthcare','MRNA':'Healthcare','MRSH':'Financial Services','MRVL':'Technology','MS':'Financial Services','MSCI':'Financial Services','MSFT':'Technology','MSI':'Technology','MTB':'Financial Services','MTD':'Healthcare','MU':'Technology','NCLH':'Consumer Cyclical','NDAQ':'Financial Services','NDSN':'Industrials','NEE':'Utilities','NEM':'Basic Materials','NFLX':'Communication Services','NI':'Utilities','NKE':'Consumer Cyclical','NOC':'Industrials','NOW':'Technology','NRG':'Utilities','NSC':'Industrials','NTAP':'Technology','NTRS':'Financial Services','NUE':'Basic Materials','NVDA':'Technology','NVR':'Consumer Cyclical','NWS':'Communication Services','NWSA':'Communication Services','NXPI':'Technology','O':'Real Estate','ODFL':'Industrials','OKE':'Energy','OMC':'Communication Services','ON':'Technology','ORCL':'Technology','ORLY':'Consumer Cyclical','OTIS':'Industrials','OXY':'Energy','P':'Technology','PANW':'Technology','PAYX':'Industrials','PCAR':'Industrials','PCG':'Utilities','PEG':'Utilities','PEP':'Consumer Defensive','PFE':'Healthcare','PFG':'Financial Services','PG':'Consumer Defensive','PGR':'Financial Services','PH':'Industrials','PHM':'Consumer Cyclical','PKG':'Basic Materials','PLD':'Real Estate','PLTR':'Technology','PM':'Consumer Defensive','PNC':'Financial Services','PNR':'Industrials','PNW':'Utilities','PODD':'Healthcare','PPG':'Basic Materials','PPL':'Utilities','PRU':'Financial Services','PSA':'Real Estate','PSX':'Energy','PTC':'Technology','PWR':'Industrials','PYPL':'Financial Services','Q':'Technology','QCOM':'Technology','RCL':'Consumer Cyclical','RDDT':'Communication Services','REG':'Real Estate','REGN':'Healthcare','RF':'Financial Services','RJF':'Financial Services','RL':'Consumer Cyclical','RMD':'Healthcare','ROK':'Industrials','ROL':'Industrials','ROP':'Technology','ROST':'Consumer Cyclical','RSG':'Industrials','RTX':'Industrials','RVTY':'Healthcare','SBAC':'Real Estate','SBUX':'Consumer Cyclical','SCHW':'Financial Services','SHW':'Basic Materials','SJM':'Consumer Defensive','SKYD':'Communication Services','SLB':'Energy','SMCI':'Technology','SNA':'Industrials','SNDK':'Technology','SNPS':'Technology','SO':'Utilities','SOLV':'Healthcare','SPG':'Real Estate','SPGI':'Financial Services','SRE':'Utilities','STE':'Healthcare','STLD':'Basic Materials','STT':'Financial Services','STX':'Technology','STZ':'Consumer Defensive','SW':'Basic Materials','SWK':'Industrials','SWKS':'Technology','SYF':'Financial Services','SYK':'Healthcare','SYY':'Consumer Defensive','T':'Communication Services','TDG':'Industrials','TDY':'Technology','TECH':'Healthcare','TEL':'Technology','TER':'Technology','TFC':'Financial Services','TGT':'Consumer Defensive','TJX':'Consumer Cyclical','TKO':'Communication Services','TMO':'Healthcare','TMUS':'Communication Services','TPL':'Energy','TPR':'Consumer Cyclical','TRGP':'Energy','TRMB':'Technology','TROW':'Financial Services','TRV':'Financial Services','TSCO':'Consumer Cyclical','TSLA':'Consumer Cyclical','TSN':'Consumer Defensive','TT':'Industrials','TTWO':'Communication Services','TWLO':'Technology','TXN':'Technology','TXT':'Industrials','TYL':'Technology','UAL':'Industrials','UBER':'Industrials','UDR':'Real Estate','UHS':'Healthcare','ULTA':'Consumer Cyclical','UNH':'Healthcare','UNP':'Industrials','UPS':'Industrials','URI':'Industrials','USB':'Financial Services','V':'Financial Services','VEEV':'Healthcare','VICI':'Real Estate','VLO':'Energy','VLTO':'Industrials','VMC':'Basic Materials','VMRK':'Real Estate','VRSK':'Industrials','VRSN':'Technology','VRT':'Industrials','VRTX':'Healthcare','VST':'Utilities','VTR':'Real Estate','VTRS':'Healthcare','VYLR':'Consumer Defensive','VZ':'Communication Services','WAB':'Industrials','WAT':'Healthcare','WDAY':'Technology','WDC':'Technology','WEC':'Utilities','WELL':'Real Estate','WFC':'Financial Services','WM':'Industrials','WMB':'Energy','WMT':'Consumer Defensive','WRB':'Financial Services','WSM':'Consumer Cyclical','WST':'Healthcare','WTW':'Financial Services','WY':'Real Estate','WYNN':'Consumer Cyclical','XEL':'Utilities','XOM':'Energy','XYL':'Industrials','XYZ':'Financial Services','YUM':'Consumer Cyclical','ZBH':'Healthcare','ZBRA':'Technology','ZTS':'Healthcare'};
@@ -3033,6 +3054,7 @@ async function loadOverview(silent) {
       'GC=F','SI=F','CL=F','BZ=F','HG=F','NG=F'
     ];
     loadOvDolar();
+    loadOvFx();
     loadGgal(silent ? ggalRange : undefined);
     loadMini('spy');
 
@@ -3481,8 +3503,8 @@ function dolarapiCuando(iso, ahora = Date.now()) {
   const dia = x => new Date(x - H3).toISOString().slice(0, 10), d = dia(t);
   return d === dia(ahora) ? new Date(t - H3).toISOString().slice(11, 16) : d.slice(8, 10) + '/' + d.slice(5, 7);
 }
+let ovDolarUlt = null;   // lo último que se bajó para el cuadro del dólar
 async function loadOvDolar() {
-  const el = document.getElementById('ovDolar');
   const [api, byma] = await Promise.allSettled([
     fetch('https://dolarapi.com/v1/dolares').then(r => r.json()),
     dolarBolsaByma(),
@@ -3491,6 +3513,12 @@ async function loadOvDolar() {
   const bm = byma.status === 'fulfilled' ? byma.value : {};
   const ref = cur.length ? new Date(Math.max(...cur.map(x => Date.parse(x.fechaActualizacion) || 0))) : new Date();
   const prev = await dolarPrevios(new Date(ref.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })));
+  ovDolarUlt = { cur, bm, prev };
+  renderOvDolar();
+}
+function renderOvDolar() {
+  const el = document.getElementById('ovDolar'); if (!ovDolarUlt || !el) return;
+  const { cur, bm, prev } = ovDolarUlt;
   const byCasa = {}; cur.forEach(x => { byCasa[x.casa] = x; });
   const rows = [];
   const fromApi = (casa, label, plazo, dec) => {
@@ -3498,10 +3526,15 @@ async function loadOvDolar() {
     const v = x.venta || x.compra; const p = prev[casa]?.venta;
     rows.push({ label, plazo, v, dec, var: p ? (v / p - 1) * 100 : null });
   };
-  // el mayorista de dolarapi no sigue la rueda (el 19/11/2026 a las 14:00 tenía el dato de las 12:47): va con la hora
-  // de su último dato, o el día si no es de hoy
-  const cuando = dolarapiCuando(byCasa.mayorista?.fechaActualizacion);
-  fromApi('mayorista', 'Mayorista <span class="ov-src">dolarapi' + (cuando ? ', ' + cuando : '') + '</span>', '', 2);
+  // mayorista: el último de la rueda de A3 (UST$T de contado) si llegó y tiene puntas de hoy, con su variación. Si no,
+  // el de dolarapi, que no sigue la rueda (el 19/11/2026 a las 14:00 tenía el dato de las 12:47): va con la hora de su
+  // último dato, o el día si no es de hoy
+  const fx = fxVigente(), fxP = fx && fxPrincipal(fx);
+  if (fxP && fxP.ult) rows.push({ label: 'Mayorista <span class="ov-src">A3, ' + fxHora(fx) + '</span>', plazo: '', v: fxP.ult, dec: 2, var: fxP.var });
+  else {
+    const cuando = dolarapiCuando(byCasa.mayorista?.fechaActualizacion);
+    fromApi('mayorista', 'Mayorista <span class="ov-src">dolarapi' + (cuando ? ', ' + cuando : '') + '</span>', '', 2);
+  }
   fromApi('oficial', 'Oficial <span class="ov-src">BNA</span>', '', 0);
   fromApi('blue', 'Blue', '', 0);
   let bolsaNote = '';
@@ -3520,9 +3553,123 @@ async function loadOvDolar() {
   if (!rows.length) { el.innerHTML = '<div class="ov-loading">Sin datos del dólar</div>'; return; }
   el.innerHTML = '<table class="ov-tbl ov-dolar-tbl"><thead><tr><th>Dólar</th><th>Plazo</th><th>Precio</th><th>1D</th></tr></thead><tbody>'
     + rows.map(r => '<tr><td>' + r.label + '</td><td class="ov-plazo">' + (r.plazo || '') + '</td><td>' + fmtArs(r.v, r.dec) + '</td><td>' + fmtVar(r.var) + '</td></tr>').join('')
-    + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (ArgentinaDatos para oficial, mayorista y blue).'
-    // A3 no deja mostrar su pantalla dentro de otra página ni leer sus datos desde otra web: se abre en una ventana aparte
-    + ' La rueda mayorista en vivo: <a href="' + A3_FOREX + '" target="a3fx" rel="noopener" onclick="window.open(this.href, \'a3fx\', \'width=640,height=880\'); return false">pantalla de A3</a>.</div>';
+    + '</tbody></table><div class="ov-dolar-note">' + bolsaNote + ' Variación contra el cierre anterior (' + (fxP && fxP.ult ? 'el de A3 para el mayorista; ArgentinaDatos para oficial y blue' : 'ArgentinaDatos para oficial, mayorista y blue') + ').</div>';
+}
+
+// ---- Dólar mayorista: la rueda de cambios de A3 Mercados (ex MAE). Los datos de su pantalla pública de Forex llegan
+// por el backend (A3 no deja leerlos desde otra página): de cada especie, último, variación, mínimo, máximo, volumen y
+// monto, de donde sale el VWAP (monto en pesos / volumen en dólares) y el cierre de ayer (último / (1 + variación)); y
+// del UST$T de contado, la mejor punta compradora y la mejor vendedora de la rueda CAM1, minuto a minuto. No hay caja
+// de puntas: A3 no publica profundidad ni cantidades. Se refresca con el Resumen, cada minuto
+let ovFx = null;        // { t, d }: la última respuesta buena
+let fxHover = null;     // minuto bajo el cursor en el gráfico de puntas
+const fxLink = txt => '<a href="' + A3_FOREX + '" target="a3fx" rel="noopener" onclick="window.open(this.href, \'a3fx\', \'width=640,height=880\'); return false">' + txt + '</a>';
+const fxMin = hm => +hm.slice(0, 2) * 60 + +hm.slice(3, 5);
+const fxHm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(Math.round(m % 60)).padStart(2, '0');
+const fxNum = (v, dec = 2) => v == null || !isFinite(v) ? '<span class="na">—</span>' : v.toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+// la hora de la última punta de hoy; sin puntas no se puede saber si las filas son de la rueda de hoy
+const fxHora = d => [d.puntas?.bid, d.puntas?.offer].map(a => (a && a.length ? a[a.length - 1][0] : '')).sort().pop() || '';
+const fxPrincipal = d => d.filas.find(f => f.t === 'UST$T' && f.plazo === '000' && f.seg === 'M');
+// las especies del dólar contra pesos del segmento mayorista: UST$T y USMEP, de contado y a 24 horas
+const fxMayoristas = d => d.filas.filter(f => f.seg === 'M' && /^US(T\$T|MEP)$/.test(f.t)).sort((a, b) => (b.vol || 0) - (a.vol || 0));
+// la respuesta sirve para el cuadro del dólar si tiene menos de 5 minutos y puntas de hoy
+const fxVigente = () => (ovFx && Date.now() - ovFx.t < 5 * 60000 && fxHora(ovFx.d) ? ovFx.d : null);
+// la punta vigente a un minuto dado: la última anterior o igual
+const fxPunta = (serie, min) => { let r = null; for (const [hm, v] of serie || []) { if (fxMin(hm) <= min) r = v; else break; } return r; };
+
+async function loadOvFx() {
+  if (!document.getElementById('ovFxWrap')) return;
+  try {
+    const r = await fetch(BASE_URL + '/api/a3/forex', { cache: 'no-store', signal: AbortSignal.timeout(20000) });
+    const j = await r.json();
+    if (!r.ok || !Array.isArray(j.filas)) throw new Error(j.error || 'HTTP ' + r.status);
+    ovFx = { t: Date.now(), d: j };
+    renderOvFx();
+  } catch (e) { renderOvFx(e.message || String(e)); }
+  renderOvDolar();   // la fila Mayorista del cuadro de arriba sigue a la rueda de A3 (o vuelve a dolarapi)
+}
+function renderOvFx(err) {
+  const head = document.getElementById('fxHead'), cuerpo = document.getElementById('fxCuerpo'), nota = document.getElementById('fxNota');
+  if (!head || !cuerpo || !nota) return;
+  const d = ovFx && ovFx.d, P = d && fxPrincipal(d);
+  if (!d || !P) {
+    head.innerHTML = '<span class="na">' + (err ? 'A3 no respondió' : d ? 'sin operaciones' : 'Cargando...') + '</span>';
+    cuerpo.innerHTML = '';
+    nota.innerHTML = (err ? 'La rueda de A3 no llegó (' + String(err).replace(/[<>&]/g, '').slice(0, 90) + '). ' : d ? 'A3 todavía no tiene operaciones del UST$T de contado. ' : '') + (err || d ? 'Se puede ver en la ' + fxLink('pantalla de A3') + '.' : '');
+    return;
+  }
+  const hora = fxHora(d), bid = d.puntas?.bid || [], off = d.puntas?.offer || [];
+  const hayPuntas = bid.length + off.length > 0;
+  head.innerHTML = (P.ult ? '<span class="ov-ggal-px">' + fmtArs(P.ult, 2) + '</span> ' + fmtVar(P.var) : '<span class="na">sin operaciones</span>')
+    + ' <span class="ov-ggal-when">UST$T de contado' + (hora ? ', ' + hora : '') + '</span>';
+  const may = fxMayoristas(d), tot = may.reduce((a, f) => a + (f.vol || 0), 0);
+  const mm = v => (v / 1e6).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const plazo = f => (f.plazo === '000' ? 'T0' : f.plazo === '001' ? 'T1' : f.plazo);
+  cuerpo.innerHTML = '<div class="ov-fx-puntas">'
+    + '<div class="ov-fx-p ov-fx-bid"><span>Compra (bid)</span><b id="fxBid">—</b></div>'
+    + '<div class="ov-fx-p ov-fx-off"><span>Venta (offer)</span><b id="fxOff">—</b></div>'
+    + '<div class="ov-fx-p"><span>VWAP</span><b>' + fxNum(P.vwap) + '</b></div>'
+    + '<div class="ov-fx-p ov-fx-ch"><span>Ayer</span><b>' + fxNum(P.ayer) + '</b></div>'
+    + '<div class="ov-fx-p ov-fx-ch"><span>Mínimo</span><b>' + fxNum(P.min) + '</b></div>'
+    + '<div class="ov-fx-p ov-fx-ch"><span>Máximo</span><b>' + fxNum(P.max) + '</b></div></div>'
+    + (hayPuntas ? '<div class="ov-fx-box"><canvas id="fxCanvas" role="img" aria-label="Mejor punta compradora y vendedora del UST$T de contado, minuto a minuto"></canvas></div>'
+      + '<div class="ov-fx-leg"><span><i></i>Compra</span><span><i class="off"></i>Venta</span><span><i class="vw"></i>VWAP</span><span><i class="ay"></i>Ayer</span><span id="fxCuando"></span></div>' : '')
+    + '<table class="ov-tbl ov-fx-tbl"><thead><tr><th>Especie</th><th>Plazo</th><th>Último</th><th>1D</th><th>VWAP</th><th title="Volumen operado, en millones de dólares">US$ M</th></tr></thead><tbody>'
+    + may.map(f => '<tr title="' + (f.desc + (f.min ? '. Mínimo ' + fxNum(f.min) + ', máximo ' + fxNum(f.max) + ', ayer ' + fxNum(f.ayer) : '')).replace(/"/g, '&quot;') + '"><td>' + f.t + '</td><td class="ov-plazo">' + plazo(f) + '</td><td>' + fxNum(f.ult) + '</td><td>' + fmtVar(f.ult ? f.var : null) + '</td><td>' + fxNum(f.vwap) + '</td><td>' + (f.vol ? mm(f.vol) : '<span class="na">—</span>') + '</td></tr>').join('')
+    + '</tbody></table>';
+  const fetchHm = new Date(ovFx.t).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/Argentina/Buenos_Aires' });
+  nota.innerHTML = (err ? 'A3 no respondió recién: van los datos de las ' + fetchHm + '. ' : '')
+    + 'A3 Mercados, segmento mayorista, en tiempo real' + (d.estado ? ' (rueda: ' + String(d.estado).toLowerCase() + ')' : '') + '. Total operado: US$ ' + mm(tot) + ' millones. '
+    + 'Puntas: la mejor de cada lado en la rueda CAM1, sin cantidades (A3 no publica la caja). VWAP: monto en pesos sobre volumen en dólares del día. Ayer: el cierre contra el que A3 calcula la variación. T0: contado inmediato; T1: 24 h. '
+    + fxLink('Pantalla de A3') + '.';
+  fxHover = null;
+  drawFx();
+}
+// puntas del UST$T de contado: compra y venta minuto a minuto, de las 10 a las 15 (o hasta el último dato), con el VWAP
+// y el cierre de ayer de referencia. Con el cursor encima, las puntas de ese minuto
+function drawFx() {
+  const d = ovFx && ovFx.d, P = d && fxPrincipal(d); if (!d || !P) return;
+  const bid = d.puntas?.bid || [], off = d.puntas?.offer || [];
+  const ultMin = Math.max(...[...bid, ...off].map(p => fxMin(p[0])), 0);
+  const min = fxHover != null ? fxHover : ultMin;
+  const b = fxPunta(bid, min), o = fxPunta(off, min);
+  const eb = document.getElementById('fxBid'), eo = document.getElementById('fxOff'), ec = document.getElementById('fxCuando');
+  if (eb) eb.innerHTML = fxNum(b); if (eo) eo.innerHTML = fxNum(o);
+  if (ec) ec.textContent = fxHover != null ? 'Puntas de las ' + fxHm(min) : '';
+  const cv = document.getElementById('fxCanvas'); if (!cv || !(bid.length + off.length)) return;
+  const box = cv.parentElement, dpr = window.devicePixelRatio || 1, W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const up = cssVar('--up'), down = cssVar('--down'), grid = cssVar('--chart-grid'), text = cssVar('--chart-text'), acc = cssVar('--accent');
+  const M = { l: 6, r: 62, t: 8, b: 20 }, m0 = Math.min(600, fxMin((bid[0] || off[0])[0])), m1 = Math.max(900, ultMin);
+  // la escala no cuenta los primeros 5 minutos: la rueda abre con las puntas muy separadas (el 19/11/2026, 1.555 contra
+  // 1.570) y aplastaría el resto del día. Esos minutos se dibujan igual, hasta el borde
+  const mA = fxMin((bid[0] || off[0])[0]) + 5, todos = [...bid, ...off], tarde = todos.filter(p => fxMin(p[0]) >= mA);
+  const vals = (tarde.length >= 20 ? tarde : todos).map(p => p[1]).concat([P.vwap, P.ayer].filter(v => v > 0));
+  let mn = Math.min(...vals), mx = Math.max(...vals); const pad = (mx - mn) * 0.12 || 0.5; mn -= pad; mx += pad;
+  const xs = m => M.l + (m - m0) / (m1 - m0 || 1) * (W - M.l - M.r - 6), ys = v => M.t + (1 - (v - mn) / (mx - mn)) * (H - M.t - M.b);
+  ctx.font = `11.5px ${CANVAS_FONT}`; ctx.lineWidth = 1;
+  for (let k = 0; k < 3; k++) {
+    const v = mn + pad + (mx - mn - 2 * pad) * k / 2, y = Math.round(ys(v)) + 0.5;
+    ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(W - M.r, y); ctx.stroke();
+    ctx.fillStyle = text; ctx.textAlign = 'left'; ctx.fillText(v.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), W - M.r + 6, y + 4);
+  }
+  ctx.fillStyle = text;
+  [m0, Math.round((m0 + m1) / 2), m1].forEach((m, k) => { ctx.textAlign = k === 0 ? 'left' : k === 2 ? 'right' : 'center'; ctx.fillText(fxHm(m), k === 2 ? W - M.r : xs(m), H - 5); });
+  const ref = (v, color, dash, w) => { if (!(v > 0)) return; ctx.setLineDash(dash); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(M.l, Math.round(ys(v)) + 0.5); ctx.lineTo(W - M.r, Math.round(ys(v)) + 0.5); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.lineWidth = 1; };
+  ref(P.ayer, text, [4, 3], 1); ref(P.vwap, acc, [1.5, 3], 1.5);
+  const linea = (serie, color) => { if (!serie.length) return; ctx.beginPath(); serie.forEach(([hm, v], i) => (i ? ctx.lineTo(xs(fxMin(hm)), ys(v)) : ctx.moveTo(xs(fxMin(hm)), ys(v)))); ctx.strokeStyle = color; ctx.lineWidth = 1.75; ctx.lineJoin = 'round'; ctx.stroke(); ctx.lineWidth = 1; };
+  ctx.save(); ctx.beginPath(); ctx.rect(M.l, M.t - 6, W - M.l - M.r, H - M.t - M.b + 8); ctx.clip();
+  linea(off, down); linea(bid, up);
+  ctx.restore();
+  [[b, up], [o, down]].forEach(([v, color]) => { if (v == null) return; ctx.fillStyle = color; ctx.beginPath(); ctx.arc(xs(Math.min(min, ultMin)), ys(v), 3.2, 0, Math.PI * 2); ctx.fill(); });
+  if (fxHover != null) { ctx.strokeStyle = text; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(Math.round(xs(min)) + 0.5, M.t); ctx.lineTo(Math.round(xs(min)) + 0.5, H - M.b); ctx.stroke(); ctx.globalAlpha = 1; }
+  cv.onpointermove = e => {
+    const r = cv.getBoundingClientRect(), m = Math.round(m0 + (e.clientX - r.left - M.l) / (W - M.l - M.r - 6) * (m1 - m0));
+    fxHover = Math.max(fxMin((bid[0] || off[0])[0]), Math.min(ultMin, m)); drawFx();
+  };
+  cv.onpointerleave = () => { fxHover = null; drawFx(); };
 }
 
 // ---- Bonos: precios de los bonos del Tesoro para pegar en Excel (sin tasas). Primero BYMA (datos abiertos, vía el
@@ -6140,7 +6287,7 @@ const METODO = [
       { d: 'Composición del S&P 500: la lista de datasets/s-and-p-500-companies, que sale de Wikipedia, con sector y subindustria GICS y el CIK de cada empresa.',
         p: 'S&P no publica la composición gratis. Wikipedia se actualiza el día de cada cambio, y el CIK permite cruzar cada empresa con la SEC sin depender del ticker.' },
       { d: 'Tasas y Fed: curva oficial del Tesoro, Yahoo para los plazos con dato intradiario, la Fed de Nueva York para la EFFR y el rango objetivo, y FRED como respaldo.' },
-      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora) y dolarapi y argentinadatos para el dólar; argentinadatos también para el riesgo país. Bancos: la Información de entidades financieras del BCRA (un archivo por mes desde 2001, con el balance de cada entidad desde 1996 y sus indicadores), que baja un workflow cada día y la página lee en bcra.json.' },
+      { d: 'Argentina: la API de estadísticas del BCRA, los datos abiertos de BYMA (cauciones y Merval, con 20 minutos de demora), la rueda de cambios de A3 Mercados para el dólar mayorista (en tiempo real) y dolarapi y argentinadatos para el resto del dólar; argentinadatos también para el riesgo país. Bancos: la Información de entidades financieras del BCRA (un archivo por mes desde 2001, con el balance de cada entidad desde 1996 y sus indicadores), que baja un workflow cada día y la página lee en bcra.json.' },
       { d: 'INDEC: su API (Catálogo API-INDEC, en beta) para IPC por región y apertura, EMAE, industria, precios mayoristas, salarios, canastas y mercado de trabajo. Pide token, así que la consulta un workflow y la página lee indec.json.' },
       { d: 'Fondos: la API de FCI de 1816, con los datos diarios que publica la CAFCI (patrimonio, suscripciones netas, fees, facturación y valor de la cuotaparte de cada clase).' },
       { d: 'Empresas argentinas del Merval (panel del Merval y P/E histórico): 20-F de la SEC con NIIF de las que tienen ADR, los balances de Yahoo, el IPC del INDEC, el dólar oficial del BCRA (Comunicación A 3500) y el contado con liquidación de argentinadatos. Bancos, de la pestaña Bancos.',
@@ -6470,10 +6617,10 @@ const METODO = [
       { d: 'Precios de Yahoo, con la hora del último dato de cada fila al pasar el mouse. La pestaña se refresca cada minuto mientras está a la vista.' },
       { d: 'Merval: el MSCI MERVAL de BYMA, con 20 minutos de demora.',
         p: 'Yahoo dejó de actualizar ^MERV y su historia es la del índice viejo, por eso esa fila no tiene retornos a plazo.' },
-      { d: 'Dólar mayorista: el de dolarapi, con la hora de su último dato (o el día, si no es de hoy). La rueda en vivo está en la pantalla de Forex de A3 Mercados (marketdata.mae.com.ar/forex, en tiempo real): volumen, mínimo, máximo y último de cada especie, y las puntas compradora y vendedora de la rueda CAM1 minuto a minuto. El enlace de abajo de la tabla la abre en una ventana aparte.',
-        p: 'dolarapi no sigue la rueda: el 19/11/2026 a las 14:00 tenía el dato de las 12:47 ($ 1.562), con el último de A3 en $ 1.563; el dato siguiente fue el de las 13:55.',
-        o: 'dolarapi informa la hora del mayorista, el oficial y el tarjeta en hora de Buenos Aires pero rotulada como UTC (el blue, el MEP y el CCL sí vienen en UTC). Se toma como hora local, salvo que así quede en el futuro.',
-        x: 'Traer la pantalla de A3 a la página: A3 no deja mostrarla dentro de otra web (un marco) ni leer sus datos desde otra página, solo desde la suya. La vía formal es su API de Market Data, que pide registrar a la entidad y firmar sus términos.' },
+      { d: 'Dólar mayorista: la rueda de cambios de A3 Mercados (ex MAE), con los datos de su pantalla pública de Forex (marketdata.mae.com.ar/forex), en tiempo real. Del UST$T de contado (dólar por transferencia contra pesos, el que A3 muestra como referencia): último, variación, mínimo, máximo, VWAP, cierre de ayer y la mejor punta compradora y la mejor vendedora de la rueda CAM1, minuto a minuto. Abajo, una fila por cada especie del segmento mayorista contra pesos (UST$T y USMEP, de contado y a 24 horas) con su volumen. VWAP = monto operado en pesos / volumen en dólares del día. Ayer = último / (1 + variación): el cierre contra el que A3 calcula la variación. La fila Mayorista del cuadro del dólar es ese último, con la hora de la última punta. Se refresca cada minuto con el Resumen, y el backend le pide a A3 a lo sumo una vez cada 30 segundos.',
+        p: 'A3 no deja mostrar su pantalla dentro de otra web ni leer sus datos desde otra página (solo desde la suya): los pide el backend, sin clave y sin hacerse pasar por el sitio de A3. El 19/11/2026 a las 14:43 el UST$T de contado daba último $ 1.565, VWAP $ 1.562,20 y cierre de ayer $ 1.559,50, con US$ 238 millones operados.',
+        x: 'El mayorista de dolarapi como dato principal: no sigue la rueda (el 19/11/2026 a las 14:00 tenía el dato de las 12:47, $ 1.562, con el último de A3 en $ 1.563). Queda de respaldo, con la hora de su dato, si A3 no responde o todavía no tiene puntas del día.',
+        o: 'Es la API interna de la pantalla de A3, no un servicio que A3 ofrezca: puede cambiar o dejar de responder sin aviso. Si pasa, quedan los últimos datos con un aviso y el enlace a la pantalla de A3; la vía formal es su API de Market Data, que pide registrar a la entidad. No hay caja de puntas: A3 no publica profundidad ni cantidades, solo la mejor punta de cada lado. La escala del gráfico no cuenta los primeros 5 minutos de la rueda, que abre con las puntas muy separadas (el 19/11/2026, 1.555 contra 1.570). dolarapi informa la hora del mayorista, el oficial y el tarjeta en hora de Buenos Aires rotulada como UTC: se toma como hora local, salvo que así quede en el futuro.' },
       { d: 'Treasuries: toda la curva (3 meses, 1, 2, 5, 10 y 30 años) en tiempo real de Tradeweb, vía CNBC, con la historia diaria de la misma fuente para los cambios.',
         p: 'Antes 1 y 2 años salían de la curva oficial del Tesoro, que se publica al cierre, así que durante la rueda mostraban el movimiento de ayer al lado del de hoy de los otros plazos. Con una sola fuente, el día y los plazos se comparan sobre lo mismo. Si CNBC no responde, ese plazo vuelve a su fuente anterior (Yahoo con 15 minutos de demora, o la curva oficial) y se marca con asterisco.',
         x: 'Mezclar la curva oficial con Yahoo, que era lo que hacía antes.' },
@@ -9417,7 +9564,7 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('resize', ()=>{ if(document.getElementById('tab-heatmap').classList.contains('active')) renderHeatmap(); });
-window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active')) { if (ggalCache[ggalRange]) drawGgal(); if (MINI.spy.cache[MINI.spy.range]) drawMini('spy'); } });
+window.addEventListener('resize', ()=>{ if(document.getElementById('tab-overview').classList.contains('active')) { if (ggalCache[ggalRange]) drawGgal(); if (MINI.spy.cache[MINI.spy.range]) drawMini('spy'); drawFx(); } });
 
 pegAxisSwitch(null);
 updThemeBtn(); syncEpsButtons(); syncPebgPeriodBtns(); syncPebgMetricBtns(); syncPebgBandBtns(); syncPebgAxisBtns(); syncPebgScaleBtns(); paintHmLegend();
