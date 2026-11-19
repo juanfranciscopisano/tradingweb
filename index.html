@@ -7883,7 +7883,8 @@ const INF_PERIODS = [['1M', 30], ['3M', 91], ['6M', 182], ['YTD', 'ytd'], ['1A',
 
 // catálogo de series: nombre, grupo, unidad (define el eje), fuente y cómo se carga. Las de flujo se acumulan en el período.
 // propio: un índice cuya base dice algo (el ITCRM del BCRA, 17/12/15 = 100); en un gráfico en base 100 queda en ese
-// índice, salvo que se pida llevarlo a base 100 como el resto (INF.reb)
+// índice, salvo que se pida llevarlo a base 100 como el resto (INF.reb). est: el estilo si no se eligió otro (una
+// referencia, como el índice de monedas emergentes, gris y a rayas)
 const INF_CAT = {
   a3500: { n: 'Dólar oficial (A3500)', g: 'Tipo de cambio', u: '$ por US$', src: 'BCRA', load: () => infBcra(5), par: { k: 1000, n: 'Peso oficial (US$ por $1.000)', u: 'US$ por $1.000', c: 'Oficial' } },
   mep: { n: 'Dólar MEP', g: 'Tipo de cambio', u: '$ por US$', src: 'argentinadatos', load: () => infDolar('bolsa'), par: { k: 1000, n: 'Peso MEP (US$ por $1.000)', u: 'US$ por $1.000', c: 'MEP' } },
@@ -7894,7 +7895,8 @@ const INF_CAT = {
   mxn: { n: 'Peso mexicano (MXN por US$)', g: 'Tipo de cambio', u: 'MXN por US$', src: 'BCE', load: () => infFx('mxn', 'MXN=X'), par: { k: 1, n: 'Peso mexicano (US$ por MXN)', u: 'US$ por MXN', c: 'México' } },
   pen: { n: 'Sol peruano (S/ por US$)', g: 'Tipo de cambio', u: 'S/ por US$', src: 'BCRP', load: () => infFx('pen', 'PEN=X'), par: { k: 1, n: 'Sol peruano (US$ por S/)', u: 'US$ por S/', c: 'Perú' } },
   // el índice del dólar contra monedas emergentes de la Reserva Federal (H.10); invertido, las monedas contra el dólar
-  eme: { n: 'Dólar contra emergentes (índice de la Fed)', g: 'Tipo de cambio', u: 'índice ene-06 = 100', src: 'Reserva Federal (índice H.10, vía FRED)', load: () => infFx('eme'), par: { k: 10000, n: 'Monedas emergentes (índice de la Fed)', u: 'índice ene-06 = 100', c: 'Emergentes' } },
+  eme: { n: 'Dólar contra emergentes (índice de la Fed)', g: 'Tipo de cambio', u: 'índice ene-06 = 100', src: 'Reserva Federal (vía FRED)', load: () => infFx('eme'), par: { k: 10000, n: 'Monedas emergentes (índice de la Fed)', u: 'índice ene-06 = 100', c: 'Emergentes' },
+    est: { color: BV.texto2, trazo: 'rayas' } },
   itcrm: { n: 'ITCRM', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', propio: true, load: () => infItcrm(1) },
   tcrBr: { n: 'TCR bilateral con Brasil', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', propio: true, load: () => infItcrm(2) },
   tcrUs: { n: 'TCR bilateral con EE.UU.', g: 'Tipo de cambio', u: 'índice 17/12/15 = 100', src: 'BCRA', propio: true, load: () => infItcrm(3) },
@@ -8112,13 +8114,14 @@ function infFx(k, sym) {
     // el dólar observado de Chile: lo guardado (fx.json) más el último mes de mindicador.cl leído desde acá
     if (k === 'clp') { try { const m = new Map(rows); for (const p of await infObservadoChile()) m.set(p.d, p.v); rows = [...m].sort((a, b) => a[0].localeCompare(b[0])); } catch (e) {} }
     const ofi = rows.map(([d, v]) => ({ d, t: argT(d), v }));
-    if (ofi.length && Date.parse(ofi[0].d) <= Date.parse(INF_DESDE()) + 30 * 86400000) { ofi.src = (j.src || {})[k] || INF_CAT[k].src; return ofi; }
+    // al pie, la fuente corta del catálogo: las de fx.json son largas y con seis monedas el pie no entraba
+    if (ofi.length && Date.parse(ofi[0].d) <= Date.parse(INF_DESDE()) + 30 * 86400000) { ofi.src = INF_CAT[k].src; return ofi; }
     // sin par en Yahoo (el índice de la Fed): lo que haya
-    if (!sym) { if (!ofi.length) throw new Error('todavía no está en fx.json'); ofi.src = (j.src || {})[k] || INF_CAT[k].src; return ofi; }
+    if (!sym) { if (!ofi.length) throw new Error('todavía no está en fx.json'); ofi.src = INF_CAT[k].src; return ofi; }
     // si la serie oficial es corta, para atrás va Yahoo sin los saltos de un día
     let y = []; try { y = infSinSaltos(await infYahoo(sym)); } catch (e) { if (!ofi.length) throw e; }
     const desde = ofi.length ? ofi[0].t : Infinity, pts = [...y.filter(p => p.t < desde), ...ofi];
-    pts.src = ofi.length ? (j.src || {})[k] || INF_CAT[k].src : 'Yahoo Finance';
+    pts.src = ofi.length ? INF_CAT[k].src : 'Yahoo Finance';
     if (ofi.length && y.length && y[0].t < desde) { pts.mezcla = 'Yahoo Finance sin los saltos de un día antes del ' + infDdmmaa(ofi[0].d); pts.mezclaT = desde; }
     return pts;
   });
@@ -8794,14 +8797,15 @@ const infEnBarras = (sp, s) => sp.kind === 'pagos' || (sp.kind === 'serie' && !!
 function infEstilar(sp) {
   if (!sp || !sp.ser) return;
   const est = INF.estilo || {}, usados = new Set();
-  sp.ser.forEach(s => { if (s.color0 == null) s.color0 = s.color || null; const c = (est[infEstKey(sp, s)] || {}).color; s.color = c && !usados.has(c) ? c : null; if (s.color) usados.add(s.color); });
+  const estDe = s => ({ ...((sp.kind === 'serie' && INF_CAT[s.k]?.est) || {}), ...(est[infEstKey(sp, s)] || {}) });
+  sp.ser.forEach(s => { if (s.color0 == null) s.color0 = s.color || null; const c = estDe(s).color; s.color = c && !usados.has(c) ? c : null; if (s.color) usados.add(s.color); });
   const pick = (pal, i0) => { for (let j = 0; j < pal.length; j++) { const c = pal[(i0 + j) % pal.length]; if (!usados.has(c)) return c; } return pal[i0 % pal.length]; };
   let li = 0, bi = 0;
   sp.ser.forEach(s => {
     const lineas = !infEnBarras(sp, s);
     if (!s.color) { s.color = sp.kind !== 'serie' && s.color0 && !usados.has(s.color0) ? s.color0 : lineas ? pick(INF_LINEAS, li) : pick(INF_BARRAS, bi); usados.add(s.color); }
     lineas ? li++ : bi++;
-    const e = est[infEstKey(sp, s)] || {}, g = INF_GROSOR.find(x => x[0] === e.grosor);
+    const e = estDe(s), g = INF_GROSOR.find(x => x[0] === e.grosor);
     s.w = g ? g[1] : sp.kind === 'curva' ? (s.k[0] === 'h' ? 2.5 : 2) : 2.25;
     s.trazo = INF_TRAZO.some(x => x[0] === e.trazo) ? e.trazo : sp.kind === 'curva' && s.k[0] === 'm' ? 'rayas' : 'solida';
     s.grosor = g ? g[0] : 'auto'; s.dash = infDash(s.trazo, s.w); s.cap = infCap(s.trazo);
