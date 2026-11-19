@@ -247,9 +247,11 @@ async function bonos({ fetchImpl, root, log, now }) {
 //   peso chileno: dólar observado del Banco Central de Chile (vía mindicador.cl)
 //   sol: tipo de cambio interbancario venta del BCRP (PD04638PD)
 //   peso mexicano: tipo de referencia del BCE (USD/MXN cruzado, vía Frankfurter); el FIX de Banxico pide token
-//   monedas emergentes: índice del dólar contra las monedas emergentes de la Reserva Federal (H.10), vía FRED
-// fx.json: { brl|clp|pen|mxn|cny|eme: [[fecha, valor]] }, 5 años. Si una fuente no responde se queda lo que había.
+//   índices del dólar de la Reserva Federal (H.10), vía FRED: el amplio y el de monedas emergentes
+// fx.json: { brl|clp|pen|mxn|cny|dtw|eme: [[fecha, valor]] }, 5 años. Si una fuente no responde se queda lo que había.
 const FX_MESES = { Ene: 1, Feb: 2, Mar: 3, Abr: 4, May: 5, Jun: 6, Jul: 7, Ago: 8, Set: 9, Sep: 9, Oct: 10, Nov: 11, Dic: 12 };
+// una serie diaria de FRED, sin clave
+const fredFx = id => async (f, d0) => parseFredCsv(await f(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${d0}`, { texto: true }));
 export const FX_FUENTES = {
   brl: { src: "Banco Central do Brasil (PTAX)", get: async (f, d0, d1) => {
     const ddmm = d => d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4);
@@ -281,11 +283,12 @@ export const FX_FUENTES = {
     const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=MXN`);
     return Object.entries(j.rates || {}).map(([d, r]) => [d, +r.MXN]).filter(x => x[1] > 0);
   } },
-  // índice del dólar contra las monedas emergentes de la Reserva Federal (H.10): 19 monedas ponderadas por el comercio
-  // con EE.UU. (en 2026, el peso mexicano 29% y el yuan 21%). La Fed lo publica los lunes con los datos diarios hasta el
-  // viernes anterior, y al revisar las ponderaciones (una vez por año) cambia la historia: se baja entero cada vez
-  eme: { src: "Reserva Federal (índice H.10, vía FRED)", entero: true, get: async (f, d0) =>
-    parseFredCsv(await f(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXEMEGS&cosd=${d0}`, { texto: true })) },
+  // índices del dólar de la Reserva Federal (H.10), ponderados por el comercio con EE.UU.: el amplio, contra 26 monedas
+  // (en 2026, el euro 21%, el peso mexicano 15%, el dólar canadiense 13% y el yuan 11%), y el de emergentes, contra 19
+  // (el peso mexicano 29% y el yuan 21%). La Fed los publica los lunes con los datos diarios hasta el viernes anterior, y
+  // al revisar las ponderaciones (una vez por año) cambia la historia: se bajan enteros cada vez
+  dtw: { src: "Reserva Federal (índice H.10, vía FRED)", entero: true, get: fredFx("DTWEXBGS") },
+  eme: { src: "Reserva Federal (índice H.10, vía FRED)", entero: true, get: fredFx("DTWEXEMEGS") },
   // yuan: para pasar a dólares el swap con China en las reservas netas
   cny: { src: "Banco Central Europeo (referencia, vía Frankfurter)", get: async (f, d0, d1) => {
     const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=CNY`);
