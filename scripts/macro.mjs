@@ -327,7 +327,74 @@ export async function fxLatam({ fetchImpl, root, log, now }) {
     catch (e) { out[k] = prev[k] || []; out.src[k] = prev.src?.[k] || F.src; out.errores[k] = String(e.message || e).slice(0, 200); log(`fx ${k}: ${e.message} (queda lo que había)`); }
     log(`fx ${k}: ${out[k].length} días` + (out[k].length ? `, último ${out[k][out[k].length - 1].join(" ")}` : ""));
   }
+  try { await estimarFed({ f, out, now, log }); }
+  catch (e) { out.errores.est = String(e.message || e).slice(0, 200); log(`índices de la Fed, estimado: ${e.message}`); }
   await writeFile(new URL("fx.json", root), JSON.stringify(out));
+}
+
+// ---- Los índices del dólar de la Fed entre su publicación (los lunes, con los datos hasta el viernes) y hoy: se estiran
+// con los tipos de cambio de referencia del BCE (vía Frankfurter) y el dólar observado de Chile, con las ponderaciones de
+// la Fed. El índice es una media geométrica ponderada de los tipos de cambio (moneda por dólar): su variación es el
+// producto de la de cada moneda elevada a su ponderación. Lo que el BCE no cubre (el dólar taiwanés, el dong, los pesos
+// colombiano y argentino y el rublo) se supone que se movió como el resto; el riyal está fijo al dólar y entra sin cambio.
+// Ponderaciones de 2026 (federalreserve.gov/releases/h10/weights); la Fed las revisa una vez por año
+export const FED_PESOS = { EUR: 21.007, MXN: 14.801, CAD: 12.769, CNY: 10.891, GBP: 5.246, JPY: 5.182, KRW: 3.621, INR: 3.351, TWD: 2.983, CHF: 2.975, VND: 2.614, SGD: 2.212, BRL: 1.889, MYR: 1.439, AUD: 1.436, THB: 1.426, HKD: 1.070, ILS: 0.874, CLP: 0.691, IDR: 0.688, COP: 0.664, SEK: 0.624, PHP: 0.621, SAR: 0.462, ARS: 0.377, RUB: 0.087 };
+export const FED_AFE = ["EUR", "CAD", "JPY", "GBP", "CHF", "AUD", "SEK"];
+export const FED_MONEDAS = { dtw: Object.keys(FED_PESOS), eme: Object.keys(FED_PESOS).filter(m => !FED_AFE.includes(m)) };
+const BCE_MONEDAS = ["EUR", "MXN", "CAD", "CNY", "GBP", "JPY", "KRW", "INR", "CHF", "SGD", "BRL", "MYR", "AUD", "THB", "HKD", "ILS", "IDR", "SEK", "PHP"];
+const FED_FIJAS = ["SAR"];
+const ultimoHasta = (arr, d) => { for (let i = arr.length - 1; i >= 0; i--) if (arr[i][0] <= d) return arr[i][1]; return null; };
+// el índice en la fecha d estimado desde el dato publicado t0 = [fecha, valor]; tc: { MON: [[fecha, moneda por dólar]] }
+export function estimarDesde(t0, d, tc, monedas) {
+  let lg = 0, pc = 0;
+  for (const m of monedas) {
+    if (FED_FIJAS.includes(m)) { pc += FED_PESOS[m]; continue; }
+    const a = tc[m] && ultimoHasta(tc[m], t0[0]), b = tc[m] && ultimoHasta(tc[m], d);
+    if (!(a > 0 && b > 0)) continue;
+    lg += FED_PESOS[m] * Math.log(b / a); pc += FED_PESOS[m];
+  }
+  return pc ? { v: t0[1] * Math.exp(lg / pc), cob: pc / monedas.reduce((x, m) => x + FED_PESOS[m], 0) } : null;
+}
+// los días del BCE después del último dato publicado
+export function estirarFed(oficial, tc, monedas) {
+  const t0 = oficial[oficial.length - 1]; if (!t0) return { serie: [], cob: 0 };
+  let cob = 0;
+  const serie = (tc.EUR || []).map(x => x[0]).filter(d => d > t0[0]).map(d => { const e = estimarDesde(t0, d, tc, monedas); if (!e) return null; cob = e.cob; return [d, +e.v.toFixed(4)]; }).filter(Boolean);
+  return { serie, cob };
+}
+// contra lo que después publicó la Fed: cada día publicado desde "desde", estimado desde el dato de 1 a 5 días antes; y lo
+// que daría dejar el último dato quieto, para comparar
+export function errorEstimado(oficial, tc, monedas, desde) {
+  const por = {};
+  for (let i = 1; i < oficial.length; i++) {
+    if (oficial[i][0] < desde) continue;
+    for (let k = 1; k <= 5 && i - k >= 0; k++) {
+      const t0 = oficial[i - k]; if (t0[0] < desde) continue;
+      const e = estimarDesde(t0, oficial[i][0], tc, monedas); if (!e) continue;
+      (por[k] ||= []).push([Math.abs(e.v / oficial[i][1] - 1) * 1e4, Math.abs(t0[1] / oficial[i][1] - 1) * 1e4]);
+    }
+  }
+  const out = {};
+  for (const [k, xs] of Object.entries(por)) out[k] = { n: xs.length, bips: +(xs.reduce((a, x) => a + x[0], 0) / xs.length).toFixed(1), max: +Math.max(...xs.map(x => x[0])).toFixed(1), quieto: +(xs.reduce((a, x) => a + x[1], 0) / xs.length).toFixed(1) };
+  return out;
+}
+async function estimarFed({ f, out, now, log }) {
+  const d1 = now.toISOString().slice(0, 10), d0 = new Date(now.getTime() - 200 * 86400000).toISOString().slice(0, 10);
+  const j = await f(`https://api.frankfurter.dev/v1/${d0}..${d1}?from=USD&to=${BCE_MONEDAS.join(",")}`);
+  const tc = {};
+  for (const [d, r] of Object.entries(j.rates || {}).sort((a, b) => a[0].localeCompare(b[0]))) for (const [m, v] of Object.entries(r)) if (v > 0) (tc[m] ||= []).push([d, +v]);
+  if (out.clp?.length) tc.CLP = out.clp;
+  if (!tc.EUR?.length) throw new Error("el BCE no devolvió tipos de cambio");
+  out.est = {}; out.estCob = {}; out.estErr = {};
+  const desdeErr = new Date(Date.parse(d0) + 10 * 86400000).toISOString().slice(0, 10);
+  for (const [k, monedas] of Object.entries(FED_MONEDAS)) {
+    const of = out[k] || []; if (!of.length) continue;
+    const { serie, cob } = estirarFed(of, tc, monedas);
+    out.est[k] = serie; out.estCob[k] = +cob.toFixed(3);
+    const err = out.estErr[k] = errorEstimado(of, tc, monedas, desdeErr);
+    const r = n => err[n] ? `a ${n} día${n > 1 ? "s" : ""} ${err[n].bips} bips (máx. ${err[n].max}; sin estimar, ${err[n].quieto})` : "";
+    log(`${k}: estimado ${serie.length} días desde ${of[of.length - 1][0]} (cubre ${Math.round(cob * 100)}% del índice); contra la Fed desde ${desdeErr}: ${[1, 3, 5].map(r).filter(Boolean).join("; ")}`);
+  }
 }
 
 // ---- Tasas de EE.UU. descompuestas (tasas_usa.json), de FRED sin clave:
