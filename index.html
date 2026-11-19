@@ -3471,6 +3471,16 @@ async function dolarBolsaByma() {
 // la rueda de cambios de A3 Mercados (ex MAE), en tiempo real: volumen, mínimo, máximo y último de cada especie y las
 // puntas de la rueda CAM1
 const A3_FOREX = 'https://marketdata.mae.com.ar/forex';
+// la hora del dato de dolarapi (hh:mm de Buenos Aires; el día, si no es de hoy). El oficial, el mayorista y el tarjeta
+// traen la hora de Buenos Aires rotulada como UTC (el 19/11/2026 a las 14:04 el oficial decía 14:00Z y el mayorista,
+// 13:55Z); el blue, el MEP y el CCL, UTC de verdad. Se toma como hora local, salvo que así quede en el futuro
+function dolarapiCuando(iso, ahora = Date.now()) {
+  let t = Date.parse(iso); if (isNaN(t)) return '';
+  const H3 = 3 * 3600e3;                                   // Buenos Aires: UTC−3, sin horario de verano
+  if (/Z$/.test(iso) && t + H3 <= ahora + 120e3) t += H3;  // 13:55 "Z" es 13:55 de Buenos Aires: 16:55 UTC
+  const dia = x => new Date(x - H3).toISOString().slice(0, 10), d = dia(t);
+  return d === dia(ahora) ? new Date(t - H3).toISOString().slice(11, 16) : d.slice(8, 10) + '/' + d.slice(5, 7);
+}
 async function loadOvDolar() {
   const el = document.getElementById('ovDolar');
   const [api, byma] = await Promise.allSettled([
@@ -3488,13 +3498,9 @@ async function loadOvDolar() {
     const v = x.venta || x.compra; const p = prev[casa]?.venta;
     rows.push({ label, plazo, v, dec, var: p ? (v / p - 1) * 100 : null });
   };
-  // el mayorista de dolarapi no sigue la rueda (el 19/11/2026 tenía el dato de las 9:47 a las 14): va con la hora de
-  // su último dato, o el día si no es de hoy
-  const diaAR = t => new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
-  const tMay = Date.parse(byCasa.mayorista?.fechaActualizacion);
-  const cuando = isNaN(tMay) ? '' : diaAR(tMay) === diaAR(Date.now())
-    ? new Date(tMay).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })
-    : diaAR(tMay).slice(8, 10) + '/' + diaAR(tMay).slice(5, 7);
+  // el mayorista de dolarapi no sigue la rueda (el 19/11/2026 a las 14:00 tenía el dato de las 12:47): va con la hora
+  // de su último dato, o el día si no es de hoy
+  const cuando = dolarapiCuando(byCasa.mayorista?.fechaActualizacion);
   fromApi('mayorista', 'Mayorista <span class="ov-src">dolarapi' + (cuando ? ', ' + cuando : '') + '</span>', '', 2);
   fromApi('oficial', 'Oficial <span class="ov-src">BNA</span>', '', 0);
   fromApi('blue', 'Blue', '', 0);
@@ -6465,7 +6471,8 @@ const METODO = [
       { d: 'Merval: el MSCI MERVAL de BYMA, con 20 minutos de demora.',
         p: 'Yahoo dejó de actualizar ^MERV y su historia es la del índice viejo, por eso esa fila no tiene retornos a plazo.' },
       { d: 'Dólar mayorista: el de dolarapi, con la hora de su último dato (o el día, si no es de hoy). La rueda en vivo está en la pantalla de Forex de A3 Mercados (marketdata.mae.com.ar/forex, en tiempo real): volumen, mínimo, máximo y último de cada especie, y las puntas compradora y vendedora de la rueda CAM1 minuto a minuto. El enlace de abajo de la tabla la abre en una ventana aparte.',
-        p: 'dolarapi no sigue la rueda: el 19/11/2026 a las 14 tenía el dato de las 9:47 ($ 1.562), con el último de A3 en $ 1.563.',
+        p: 'dolarapi no sigue la rueda: el 19/11/2026 a las 14:00 tenía el dato de las 12:47 ($ 1.562), con el último de A3 en $ 1.563; el dato siguiente fue el de las 13:55.',
+        o: 'dolarapi informa la hora del mayorista, el oficial y el tarjeta en hora de Buenos Aires pero rotulada como UTC (el blue, el MEP y el CCL sí vienen en UTC). Se toma como hora local, salvo que así quede en el futuro.',
         x: 'Traer la pantalla de A3 a la página: A3 no deja mostrarla dentro de otra web (un marco) ni leer sus datos desde otra página, solo desde la suya. La vía formal es su API de Market Data, que pide registrar a la entidad y firmar sus términos.' },
       { d: 'Treasuries: toda la curva (3 meses, 1, 2, 5, 10 y 30 años) en tiempo real de Tradeweb, vía CNBC, con la historia diaria de la misma fuente para los cambios.',
         p: 'Antes 1 y 2 años salían de la curva oficial del Tesoro, que se publica al cierre, así que durante la rueda mostraban el movimiento de ayer al lado del de hoy de los otros plazos. Con una sola fuente, el día y los plazos se comparan sobre lo mismo. Si CNBC no responde, ese plazo vuelve a su fuente anterior (Yahoo con 15 minutos de demora, o la curva oficial) y se marca con asterisco.',
