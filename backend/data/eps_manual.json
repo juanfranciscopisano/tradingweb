@@ -512,6 +512,14 @@
     "acciones": 1342,
     "eps": 3.2042,
     "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281426002838/, 000129281426004045/ (estados en US$)"
+   },
+   {
+    "q": "2026Q3",
+    "fin": "2026-09-30",
+    "resultado": 129,
+    "acciones": 1342,
+    "eps": 2.4031,
+    "fuente": "https://www.sec.gov/Archives/edgar/data/1469395/000129281426005116/ex99-1.htm"
    }
   ]
  }
