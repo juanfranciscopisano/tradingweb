@@ -1,0 +1,35 @@
+name: Vencimientos del Tesoro de 1816 (la tabla que trae el favorito)
+
+on:
+  schedule:
+    - cron: "*/15 11-23 * * 1-5"   # cada 15 minutos, de 8 a 20 de Buenos Aires: pasa a buscar al backend la tabla que mandó la página
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: venc1816
+  cancel-in-progress: false
+
+jobs:
+  guardar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Pedir la tabla al backend
+        run: node scripts/venc1816-pull.mjs
+      - name: Commit si cambió
+        run: |
+          [ -f venc1816.json ] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add venc1816.json
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "1816: vencimientos del Tesoro (licitación del $(node -p "require('./venc1816.json').asOf"))"
+          git pull --rebase -q
+          git push

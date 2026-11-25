@@ -6705,8 +6705,8 @@ const METODO = [
       { d: 'Curvas: tasa en TNA 365, TEA o TEM; eje por días al vencimiento, por vencimiento o por duration modificada; tramo corto, medio, largo o toda la curva. Los cortes van por días al vencimiento: tasa fija hasta 90 y 270 días; dólares hasta 3 y 9 años; CER hasta 1 y 3 años; dólar linked hasta 6 y 18 meses; BOPREAL hasta 1 y 2 años; Treasuries hasta 1 y 7 años.',
         p: 'En las curvas de 1816 la TNA es la que calcula 1816 sobre 365 días: con capitalización semestral en los bonos con cupón (dólares, CER, BOPREAL) y simple al vencimiento en las letras dólar linked. En tasa fija la TNA es simple al vencimiento y la duration modificada de una letra es plazo / (1 + TEA). Los cortes de cada tramo cambian por curva porque los plazos también: lo corto de los bonos en dólares es más largo que toda la curva de LECAP.' },
       { d: 'Vencimientos del Tesoro (1816): capital e intereses de toda la deuda en títulos negociables, por día e instrumento, de la pantalla Vencimientos del Tesoro de 1816 (Datasets › Macro › Tesoro), con los valores nominales actualizados hasta la última licitación. Por mes, trimestre o año, apilado por ajuste (tasa fija, CER, TAMAR, BADLAR, duales, dólar linked, dólares, euros) o por curva, en $ billones o en US$ millones al oficial que usa 1816.',
-        p: 'Esa tabla no está en la API de 1816 (el módulo de mercado no tiene montos; volví a probar en noviembre de 2026), así que la trae un favorito del navegador que la lee de la web de 1816 con la sesión de quien la tiene abierta y abre el Informe con los datos. El Informe la manda al backend, que la guarda en el repositorio (venc1816.json) para que se vea desde cualquier navegador; queda también en el navegador que la trajo y, si la de ese navegador es más nueva que la de la web, se sube sola.',
-        o: 'Hay que tocar el favorito después de cada licitación. Para escribir en el repositorio, el backend necesita un token de GitHub en Render (GITHUB_TOKEN); sin token, la tabla queda solo en el navegador que la trajo y el Informe lo avisa. El repositorio es público: cualquiera puede bajar la tabla.' },
+        p: 'Esa tabla no está en la API de 1816 (el módulo de mercado no tiene montos; volví a probar en noviembre de 2026), así que la trae un favorito del navegador que la lee de la web de 1816 con la sesión de quien la tiene abierta y abre el Informe con los datos. La página la manda al backend, que la tiene en memoria, y una Action de GitHub la pasa a buscar cada 15 minutos en días hábiles de 8 a 20 y la guarda en el repositorio (venc1816.json), con el permiso propio de las Actions, sin tokens. Desde ahí se ve en cualquier navegador. Queda también en el navegador que la trajo: si al abrir la página esa copia es más nueva que la de la web (porque Render se durmió antes de que pasara la Action), se vuelve a mandar.',
+        o: 'Hay que tocar el favorito después de cada licitación; entre que se toca y que aparece en otros navegadores pasan hasta 15 minutos (o hasta el día hábil siguiente, si se trajo fuera de ese horario). El repositorio es público: cualquiera puede bajar la tabla. Y el backend acepta la tabla de quien la mande, validada (fechas, montos, formato) y sin pisar una licitación más nueva: alguien que conozca la dirección podría cargar una tabla falsa con la licitación del día.' },
       { d: 'Merval: el S&P Merval hasta el 16/10/2026 y desde el 19/10 la variación del MSCI MERVAL, que lo reemplazó y arrancó con base 100.000 en el cierre del 16/10. La serie empalmada queda en puntos del S&P Merval; el MSCI MERVAL suelto sigue en sus propios puntos. Las ruedas del 19 al 23/10 son las que publicó EFE (BYMA da solo el día).' },
       { d: 'Vencimientos en dólares del Tesoro y el BCRA: los del Tesoro, de la tabla de 1816 cuando está cargada (Bonares, Globales y Globales en euros, con los nominales de la última licitación); si no, flujos de 1816 por montos de BYMA, sin los Globales en euros. Los del BCRA: BOPREAL (flujos de 1816 por montos de BYMA) y el REPO.' },
       { d: 'Reservas netas: brutas menos los encajes de los depósitos en dólares (cuentas corrientes en moneda extranjera de los bancos en el BCRA) y menos el swap con China (130.000 millones de yuanes al tipo de cambio de referencia del BCE de cada día). Todo del BCRA, por día.',
@@ -8235,31 +8235,33 @@ function infRecibir1816() {
 }
 infRecibir1816();
 // la copia de la web (venc1816.json) y la de este navegador: vale la de la licitación más nueva (y, si es la misma, la
-// traída más tarde). Si la de este navegador es más nueva, se sube sola (una vez por visita)
+// traída más tarde). Si la de este navegador es más nueva, se manda al backend, que la tiene hasta que la Action venc1816
+// la guarda en el repositorio. Se revisa al abrir la página: si Render se durmió antes de que pasara la Action, se manda otra vez
 let infV16Web = null, infV16WebP = null, infV16Sub = { estado: '', msg: '' };
-const infV16Clave = d => d ? d.asOf + '|' + (d.cargado || d.subido || '') : '';
+const infV16Nueva = (a, b) => !!a && (!b || a.asOf > b.asOf || (a.asOf === b.asOf && (a.cargado || '') > (b.cargado || '')));
 function infVenc1816Local() { try { const d = JSON.parse(localStorage.getItem('venc1816') || 'null'); return d && Array.isArray(d.rows) ? d : null; } catch (e) { return null; } }
 function infVenc1816Web() {
-  return infV16WebP || (infV16WebP = fetch('venc1816.json?d=' + new Date().toISOString().slice(0, 13), { cache: 'no-cache' })
+  return infV16WebP || (infV16WebP = fetch('venc1816.json?d=' + new Date().toISOString().slice(0, 15), { cache: 'no-cache' })
     .then(r => r.ok ? r.json() : null).catch(() => null).then(j => (infV16Web = j && Array.isArray(j.rows) ? j : null)));
 }
 async function infVenc1816Cargar() {
   const w = await infVenc1816Web(), l = infVenc1816Local();
-  if (l && (!w || l.asOf > w.asOf || (l.asOf === w.asOf && !l.subido && (l.cargado || '') > (w.subido || ''))) && !infV16Sub.estado) infSubir1816(l);
-  else if (l && w && !infV16Sub.estado) infV16Sub = { estado: 'ok', msg: '' };
+  if (!l || infV16Sub.estado) return;
+  if (infV16Nueva(l, w)) infSubir1816(l);
+  else infV16Sub = { estado: 'ok', msg: '' };
 }
 async function infSubir1816(d) {
   infV16Sub = { estado: 'subiendo', msg: '' };
   try {
-    const r = await fetch(BASE_URL + '/api/venc1816', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ v: 1, asOf: d.asOf, nota: d.nota || '', fx: d.fx, rows: d.rows }), signal: AbortSignal.timeout(60000) });
+    const r = await fetch(BASE_URL + '/api/venc1816', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ v: 1, asOf: d.asOf, nota: d.nota || '', fx: d.fx, cargado: d.cargado || '', rows: d.rows }), signal: AbortSignal.timeout(90000) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
-    infV16Web = { ...d, subido: j.subido }; infV16Sub = { estado: 'ok', msg: '' };
-    try { localStorage.setItem('venc1816', JSON.stringify({ ...d, subido: j.subido })); } catch (e) {}
-    infToast('Vencimientos de 1816 subidos a la web: se ven desde cualquier navegador en un par de minutos');
+    infV16Sub = { estado: 'pendiente', msg: '' };
+    if (window._venc1816Nuevo) infToast('Vencimientos de 1816 mandados: en unos minutos se ven desde cualquier navegador');
   } catch (e) { infV16Sub = { estado: 'error', msg: String(e.message || e).replace(/[<>&]/g, '').slice(0, 120) }; }
   if (INF.mode === 'tesoro' && document.getElementById('infCtl')) renderInfCtl();
 }
+if (infVenc1816Local()) infVenc1816Cargar();
 
 // ---- datos (una sola carga por fuente; 5 años)
 const infMemo = {};
@@ -8734,8 +8736,7 @@ function infBarPts(pts, ancho) {
 const INF_AJ = [['Tasa fija', BV.navy], ['Inflación', BV.azul], ['Tamar', BV.teal], ['Badlar', BV.medio], ['Dual', BV.celeste], ['USD linked', BV.claro], ['USD', BV.texto2], ['EUR', '#b9b9cf']];
 function infVenc1816() {
   const l = infVenc1816Local(), w = infV16Web;
-  if (!l || !w) return l || w;
-  return l.asOf > w.asOf || (l.asOf === w.asOf && (l.cargado || '') >= (w.subido || '')) ? l : w;
+  return infV16Nueva(w, l) ? w : l || w;
 }
 // el favorito: cambia la vista de 1816 a "diario, por ajuste, curva e instrumento", lee la tabla en pesos y en dólares (para
 // el tipo de cambio que usa 1816), devuelve la vista como estaba y abre esta página con los datos en el hash
@@ -9467,9 +9468,10 @@ function renderInfCtl() {
       + (ajs.length ? '<div class="inf-lbl">Incluir</div><div class="inf-chips">' + ajs.map(a => { const on = !T.excl[a], c = (INF_AJ.find(x => x[0] === a) || [])[1];
         return '<button type="button" class="inf-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="infTesExcl(\'' + a + '\')"><span class="inf-dot" style="background:' + (on ? c : 'transparent') + '"></span>' + a + '</button>'; }).join('') + '</div>' : '')
       + '<div class="inf-lbl">Datos de 1816</div><div class="inf-tes-datos">' + (d ? 'Licitación del ' + infDdmmaa(d.asOf) + '; traídos el ' + infDdmmaa((d.cargado || d.subido || d.asOf).slice(0, 10)) + '. '
-        + (infV16Sub.estado === 'subiendo' ? 'Subiéndolos a la web…'
-          : infV16Sub.estado === 'error' ? 'Solo en este navegador: no se pudieron subir a la web (' + infV16Sub.msg + ').'
-          : d === infV16Web || infV16Sub.estado === 'ok' ? 'En la web: se ven desde cualquier navegador.'
+        + (d === infV16Web || infV16Sub.estado === 'ok' ? 'En la web: se ven desde cualquier navegador.'
+          : infV16Sub.estado === 'subiendo' ? 'Mandándolos a la web…'
+          : infV16Sub.estado === 'pendiente' ? 'Mandados: en unos minutos se ven desde cualquier navegador.'
+          : infV16Sub.estado === 'error' ? 'Solo en este navegador: no se pudieron mandar a la web (' + infV16Sub.msg + '). Se vuelve a probar al abrir la página.'
           : 'Solo en este navegador.') : 'Todavía no hay datos.')
       + '<br>Para actualizarlos, arrastrá este botón a la barra de favoritos y tocalo con Vencimientos del Tesoro abierto en 1816 (Datasets › Macro › Tesoro):</div>'
       + '<a class="btn btn-ghost inf-fav" href="' + infFavorito1816() + '" onclick="infToast(\'Arrastralo a la barra de favoritos; se usa desde la página de 1816\'); return false;">Traer de 1816</a>';

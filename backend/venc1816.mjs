@@ -1,12 +1,15 @@
 // Vencimientos del Tesoro de 1816 (gráfico del Informe): la tabla no está en la API de 1816, así que la trae un favorito
-// del navegador desde la pantalla de 1816 con la sesión de quien la tiene abierta. La página la manda acá y el backend la
-// guarda en el repositorio (venc1816.json), así se ve desde cualquier navegador. Escribe con un token de GitHub que vive
-// solo en Render (GITHUB_TOKEN: fine-grained, este repositorio, Contents de lectura y escritura).
+// del navegador desde la pantalla de 1816 con la sesión de quien la tiene abierta. La página la manda acá, el backend la
+// valida y la tiene en memoria, y la Action venc1816 la pasa a buscar y la guarda en el repositorio (venc1816.json) con el
+// permiso propio de GitHub Actions: no hace falta ningún token. Si Render se duerme antes de que pase la Action, la página
+// la vuelve a mandar en la visita siguiente, porque la de la web todavía es más vieja.
 export const VENC_PATH = "venc1816.json";
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_T = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 const DIA = 86400000;
 
-// lo que manda el favorito: { v: 1, asOf, nota, fx, rows: [[fecha de pago, instrumento, curva, ajuste, millones de $]] }.
+// lo que manda el favorito: { v: 1, asOf, nota, fx, cargado, rows: [[fecha de pago, instrumento, curva, ajuste, millones de $]] }.
+// cargado es cuándo la trajo el favorito: con la misma licitación, vale la traída más tarde.
 // Se valida todo: el endpoint es público y lo que pasa queda en el repositorio
 export function validarVenc1816(d, now = new Date()) {
   if (!d || typeof d !== "object") throw new Error("no es una tabla");
@@ -22,10 +25,15 @@ export function validarVenc1816(d, now = new Date()) {
     return [r[0], r[1], r[2], r[3], Math.round(r[4] * 100) / 100];
   });
   const nota = typeof d.nota === "string" ? d.nota.replace(/[<>]/g, "").slice(0, 200) : "";
-  return { v: 1, asOf: d.asOf, nota, fx: +d.fx.toFixed(4), rows };
+  const cargado = typeof d.cargado === "string" && ISO_T.test(d.cargado) && Date.parse(d.cargado) < now.getTime() + 2 * DIA ? d.cargado : "";
+  return { v: 1, asOf: d.asOf, nota, fx: +d.fx.toFixed(4), cargado, rows };
 }
 
-// a lo sumo 6 subidas por hora (el favorito se toca después de cada licitación)
+// a es más nueva que b: licitación posterior o, la misma, traída más tarde
+export const masNueva = (a, b) => !!a && (!b || a.asOf > b.asOf || (a.asOf === b.asOf && (a.cargado || "") > (b.cargado || "")));
+export const mismaTabla = (a, b) => !!a && !!b && a.asOf === b.asOf && (a.cargado || "") === (b.cargado || "");
+
+// a lo sumo 6 tablas distintas por hora (el favorito se toca después de cada licitación)
 const subidas = [];
 export function limiteSubidas(now = Date.now()) {
   while (subidas.length && subidas[0] < now - 3600e3) subidas.shift();
@@ -33,26 +41,19 @@ export function limiteSubidas(now = Date.now()) {
   subidas.push(now); return true;
 }
 
-// escribe venc1816.json con la API de contenidos de GitHub. No pisa una licitación más nueva que la que ya está
-export async function subirVenc1816(d, { fetchImpl, token, repo = "juanfranciscopisano/tradingweb", branch = "main", now = new Date() }) {
-  if (!token) { const e = new Error("falta GITHUB_TOKEN en Render"); e.status = 503; throw e; }
-  const datos = validarVenc1816(d, now);
-  const api = `https://api.github.com/repos/${repo}/contents/${VENC_PATH}`;
-  const h = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "tradingweb-backend" };
-  const g = await fetchImpl(api + "?ref=" + branch, { headers: h, signal: AbortSignal.timeout(15000) });
-  let sha = null;
-  if (g.status === 200) {
-    const cur = await g.json(); sha = cur.sha;
-    try {
-      const prev = JSON.parse(Buffer.from(cur.content || "", "base64").toString("utf8"));
-      if (prev.asOf > datos.asOf) { const e = new Error("ya está la licitación del " + prev.asOf + ", más nueva"); e.status = 409; throw e; }
-    } catch (e) { if (e.status) throw e; }
-  } else if (g.status !== 404) { const e = new Error(g.status === 401 || g.status === 403 ? "GitHub rechazó el token (" + g.status + "): revisá que sea de este repo y con Contents de lectura y escritura" : "GitHub respondió " + g.status + " al leer"); e.status = 502; throw e; }
-  const out = { ...datos, subido: now.toISOString() };
-  const p = await fetchImpl(api, {
-    method: "PUT", headers: { ...h, "Content-Type": "application/json" }, signal: AbortSignal.timeout(20000),
-    body: JSON.stringify({ message: "1816: vencimientos del Tesoro (licitación del " + datos.asOf + ")", content: Buffer.from(JSON.stringify(out)).toString("base64"), branch, ...(sha ? { sha } : {}) }),
-  });
-  if (!p.ok) { const e = new Error(p.status === 401 || p.status === 403 ? "GitHub rechazó el token (" + p.status + "): falta permiso de escritura en Contents" : "GitHub respondió " + p.status + " al guardar"); e.status = 502; throw e; }
-  return { ok: true, asOf: datos.asOf, filas: datos.rows.length, subido: out.subido };
+// la tabla más nueva recibida desde que arrancó el backend, hasta que la pase a buscar la Action
+let pendiente = null;
+export const verPendiente = () => pendiente;
+export function _reset() { pendiente = null; subidas.length = 0; }
+
+// lo que hace POST /api/venc1816: { status, body }
+export function recibirVenc1816(d, now = new Date()) {
+  let datos;
+  try { datos = validarVenc1816(d, now); } catch (e) { return { status: 400, body: { error: e.message } }; }
+  const resp = () => ({ status: 200, body: { ok: true, asOf: datos.asOf, filas: datos.rows.length, pendiente: true } });
+  if (mismaTabla(datos, pendiente)) return resp();          // la misma que ya está: no cuenta para el límite
+  if (pendiente && !masNueva(datos, pendiente)) return { status: 409, body: { error: "ya tengo la licitación del " + pendiente.asOf + ", más nueva" } };
+  if (!limiteSubidas(now.getTime())) return { status: 429, body: { error: "demasiadas subidas en la última hora" } };
+  pendiente = { ...datos, recibido: now.toISOString() };
+  return resp();
 }

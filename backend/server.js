@@ -9,7 +9,7 @@ import cors from "cors";
 import { readFileSync } from "node:fs";
 import { bymaBonos } from "./bonos.mjs";
 import { a3Forex } from "./forex.mjs";
-import { subirVenc1816, limiteSubidas } from "./venc1816.mjs";
+import { recibirVenc1816, verPendiente } from "./venc1816.mjs";
 import { rawFromFacts, makeSplitFactor, gaapQuarterly, normalizedQuarterly, mergeRaw, cashDebt, quality, quarterSeries, bookQuarterly, fillPub, PUB_MAX_DAYS, PREDECESSOR_CIK, EPS_PER_SHARE_DIV } from "./edgar.mjs";
 
 const fetch = globalThis.fetch || nodeFetch; // Node 18+ trae fetch nativo
@@ -348,7 +348,7 @@ app.get("/debug", (req, res) => res.json({
   uptimeMin: Math.round((Date.now() - BOOT) / 60000),
   finnhub: FINNHUB_KEY ? `set (len=${FINNHUB_KEY.length})` : "missing",
   secUA: process.env.SEC_UA ? "custom" : "default (definir SEC_UA)",
-  githubToken: process.env.GITHUB_TOKEN ? "definido" : "falta (vencimientos de 1816 solo en el navegador)",
+  venc1816: verPendiente() ? "licitación del " + verPendiente().asOf + ", recibida " + verPendiente().recibido : "nada pendiente",
   cacheEntries: cache.size,
 }));
 
@@ -392,16 +392,17 @@ app.get("/api/a3/forex", async (req, res) => {
   }
 });
 
-// vencimientos del Tesoro de 1816: la página manda la tabla que trajo el favorito y queda en el repositorio
-// (venc1816.json), para cualquier navegador. Escribe con GITHUB_TOKEN (Render); sin token, 503 y la tabla queda solo en
-// el navegador que la trajo
-app.post("/api/venc1816", express.json({ limit: "4mb" }), async (req, res) => {
-  if (!limiteSubidas()) return res.status(429).json({ error: "demasiadas subidas en la última hora" });
-  try {
-    res.json(await subirVenc1816(req.body, { fetchImpl: fetch, token: process.env.GITHUB_TOKEN || "", repo: process.env.GITHUB_REPO || "juanfranciscopisano/tradingweb" }));
-  } catch (e) {
-    res.status(e.status || 400).json({ error: e.message });
-  }
+// vencimientos del Tesoro de 1816: la página manda la tabla que trajo el favorito; queda en memoria hasta que la pasa a
+// buscar la Action venc1816, que la guarda en el repositorio (venc1816.json) para cualquier navegador
+app.post("/api/venc1816", express.json({ limit: "4mb" }), (req, res) => {
+  const r = recibirVenc1816(req.body);
+  res.status(r.status).json(r.body);
+});
+app.get("/api/venc1816", (req, res) => {
+  const p = verPendiente();
+  res.set("Cache-Control", "no-store");
+  if (!p) return res.status(204).end();
+  res.json(p);
 });
 
 app.get("/api/spark", async (req, res) => {
